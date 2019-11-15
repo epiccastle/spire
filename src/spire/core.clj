@@ -44,38 +44,46 @@
         h (-> sec (quot 60) (quot 60))]
     (cond
       (and (zero? m) (zero? h))
-      (str s "s")
+      (format "%ds" s)
 
       (zero? h)
-      (str m "m" s "s")
+      (format "%dm%02ds" m s)
 
       :else
-      (str h "h" m "m" s "s"))))
+      (format "%dh%02dm%02ds" h m s))))
+
+(def columns 114)
 
 (defn progress-bar [bytes total frac {:keys [start-time start-bytes]}]
   (let [
         now (time/now)
         first? (not start-time)
-        width 80
-        percent (int (* width frac))
-        num-chars (int (* width frac))
-        num-spaces (- width num-chars)
-        bar (apply str (take num-chars (repeat "=")))
-        spaces (apply str (take num-spaces (repeat " ")))
+
         duration (when-not first? (time/in-seconds (time/interval start-time now)))
         bytes-since-start (when-not first? (- bytes start-bytes))
         bytes-per-second (when (some-> duration pos?) (int (/ bytes-since-start duration)))
         bytes-remaining (- total bytes)
         eta (when (and bytes-remaining bytes-per-second)
               (int (/ bytes-remaining bytes-per-second)))
-        ]
-    (.write *out* (str "\r|" bar spaces "| " percent "% "
+
+        right-side-buffer 32
+        width (- columns right-side-buffer)
+        percent (int (* width frac))
+        num-chars (int (* width frac))
+        num-spaces (- width num-chars)
+        bar (apply str (take num-chars (repeat "=")))
+        spaces (apply str (take num-spaces (repeat " ")))
+
+        line-str (str "\r|" bar spaces "| " percent "% "
                        (when bytes-per-second
                          (speed-string bytes-per-second))
                        (when eta
-                         (str " eta:" (eta-string eta)))
+                         (str " eta:" (eta-string eta))))
+        line-len (count line-str)
+        eraser (apply str (take (inc (- columns line-len)) (repeat " ")))
 
-                       "   "))
+        ]
+    (.write *out* (str line-str eraser))
     (.flush *out*)
     {:start-time (or start-time now)
      :start-bytes (or start-bytes bytes)}
