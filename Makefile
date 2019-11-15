@@ -6,6 +6,7 @@ all: build/spire
 clean:
 	-rm -rf build target
 	lein clean
+	rm src/c/*.o
 
 target/uberjar/spire-$(VERSION)-standalone.jar: $(SRC)
 	GRAALVM_HOME=$(GRAALVM) lein uberjar
@@ -34,3 +35,9 @@ build/spire: target/uberjar/spire-$(VERSION)-standalone.jar
 		"-J-Xmx6g" \
 		-H:+TraceClassInitialization -H:+PrintClassInitialization
 	cp build/spire spire
+
+%.o: %.c
+	gcc -c -Wall -o $@ $<
+
+ioctl: src/c/ioctl.o
+	gcc -o $@ $<
