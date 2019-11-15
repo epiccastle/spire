@@ -64,11 +64,12 @@
               (recur new-window))))))))
 
 (def slug-choice "0123456789abcdefghijklmnopqrstuvwxyz")
+(def slug-length 8)
 
 (defn make-slug []
   (->> slug-choice
        rand-nth
-       (for [_ (range 8)])
+       (for [_ (range slug-length)])
        (apply str)))
 
 (defn run-raw [{:keys [out-reader err-reader] :as proc} command]
@@ -91,3 +92,33 @@
         {:keys [out]} (run-raw proc "echo $EXIT_CODE")
         exit-code (Integer/parseInt (string/trim out))]
     (assoc result :exit exit-code)))
+
+(defn copy [src target dest]
+  (let [{:keys [process] :as result} (proc ["scp" src (str target ":" dest)])]
+    (.waitFor ^Process process)
+    result))
+
+(defn copy-with-progress [src target dest progress-fn]
+  (let [file (io/as-file src)
+        size (.length file)
+        task (proc ["ssh" target])
+        chunk-size 1024 ;;(inc (int (/ size 100)))
+        input-stream (io/input-stream file)
+        chunk (byte-array chunk-size)
+        ]
+    (feed-from-string task (str "cat > \"" dest "\"\n"))
+    (loop [offset 0 context nil]
+      (let [bytes-read (.read input-stream chunk)
+            new-offset (+ bytes-read offset)]
+        (if (= bytes-read chunk-size)
+          ;; full chunk
+          (do (io/copy chunk (:in-stream task))
+              (recur new-offset (progress-fn new-offset size (float (/ new-offset size)) context)))
+
+          ;; last partial chunk
+          (do
+            (io/copy (byte-array (take bytes-read chunk)) (:in-stream task))
+            (progress-fn new-offset size (float (/ new-offset size)) context)))))
+    (.flush (:in-stream task))))
+
+#_ (copy-with-progress "./spire" "localhost" "/tmp/spire" println)
