@@ -8,6 +8,8 @@
                  [mvxcvi/puget "1.2.0"]
                  [digest "1.4.9"]
                  [clj-time "0.15.2"]]
+  :source-paths ["src/clj"]
+  :java-source-paths ["src/java"]
   :main ^:skip-aot spire.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
