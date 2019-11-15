@@ -68,7 +68,7 @@
 
         right-side-buffer 32
         width (- columns right-side-buffer)
-        percent (int (* width frac))
+        percent (int (* 100 frac))
         num-chars (int (* width frac))
         num-spaces (- width num-chars)
         bar (apply str (take num-chars (repeat "=")))
