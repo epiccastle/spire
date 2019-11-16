@@ -10,6 +10,7 @@
                  [clj-time "0.15.2"]]
   :source-paths ["src/clj"]
   :java-source-paths ["src/c"]
+  :jvm-opts ["-Djava.library.path=./"]
   :main ^:skip-aot spire.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})

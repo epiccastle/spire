@@ -79,7 +79,7 @@
                        (when eta
                          (str " eta:" (eta-string eta))))
         line-len (count line-str)
-        eraser (apply str (take (inc (- columns line-len)) (repeat " ")))
+        eraser (apply str (take (- columns line-len) (repeat " ")))
 
         ]
     (.write *out* (str line-str eraser))
@@ -124,15 +124,12 @@
                              first)
         properties  (into {} (map (fn [[k v]] [(keyword k) v]) (System/getProperties)))
         ]
-    (when (not spire-remote)
+    (when (or (not spire-remote) (not= spire-md5 spire-remote))
       (sh/copy-with-progress "./spire" host-string remote-path progress-bar)
-      (println)
-      )
+      (println))
 
     (puget/cprint {:spire-local spire-md5
                    :spire-remote spire-remote
                    :paths paths
                    :lsb-release lsb-release
-                   :properties properties})
-
-    ))
+                   :properties properties})))
