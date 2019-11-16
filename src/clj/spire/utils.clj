@@ -1,8 +1,5 @@
 (ns spire.utils
-  (:require [spire.shell :as sh]
-            [puget.printer :as puget]
-            [digest :as digest]
-            [clj-time.core :as time]
+  (:require [clj-time.core :as time]
             [clojure.string :as string]
             [clojure.java.io :as io]))
 
