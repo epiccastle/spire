@@ -88,6 +88,9 @@
      :start-bytes (or start-bytes bytes)}
     ))
 
+(defn exe-bin-path []
+  (.getCanonicalPath (io/as-file "/proc/self/exe")))
+
 (defn -main
   "ssh to ourselves and collect paths"
   [& args]
@@ -132,4 +135,5 @@
                    :spire-remote spire-remote
                    :paths paths
                    :lsb-release lsb-release
-                   :properties properties})))
+                   :properties properties
+                   :bin (exe-bin-path)})))
