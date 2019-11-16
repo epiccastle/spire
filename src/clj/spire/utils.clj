@@ -1,5 +1,7 @@
 (ns spire.utils
-  (:require [clj-time.core :as time]
+  (:require [spire.shell :as shell]
+            [clj-time.core :as time]
+            [digest :as digest]
             [clojure.string :as string]
             [clojure.java.io :as io]))
 
@@ -48,7 +50,7 @@
       :else
       (format "%dh%02dm%02ds" h m s))))
 
-(defn exe-bin-path []
+(defn executing-bin-path []
   (.getCanonicalPath (io/as-file "/proc/self/exe")))
 
 (defn progress-bar [bytes total frac {:keys [start-time start-bytes]}]
@@ -85,3 +87,27 @@
     (.flush *out*)
     {:start-time (or start-time now)
      :start-bytes (or start-bytes bytes)}))
+
+(defn which-spire []
+  (let [executable (executing-bin-path)
+        java? (string/ends-with? executable "java")]
+    (if java?
+      (when (.exists (io/as-file "./spire")) "./spire")
+      executable)))
+
+(defn push
+  "push the local-file to the remote box as remote-file"
+  [{:keys [md5sum]} conn host-string local-path remote-path]
+  (let [run (fn [command]
+               (let [{:keys [out exit]} (shell/run conn command)]
+                 (when (zero? exit)
+                   (string/trim out))))
+        local-md5 (digest/md5 (io/as-file local-path))
+        remote-md5 (some-> (run (format "%s -b \"%s\"" md5sum remote-path))
+                           (string/split #"\s+")
+                           first)]
+    (println local-md5 remote-md5)
+    (println local-path remote-path)
+    (when (or (not remote-md5) (not= local-md5 remote-md5))
+      (shell/copy-with-progress local-path host-string remote-path progress-bar)
+      (println))))
