@@ -52,10 +52,9 @@
       :else
       (format "%dh%02dm%02ds" h m s))))
 
-(def columns 114)
-
 (defn progress-bar [bytes total frac {:keys [start-time start-bytes]}]
   (let [
+        columns (SpireUtils/get_terminal_width)
         now (time/now)
         first? (not start-time)
 
@@ -92,6 +91,7 @@
 (defn -main
   "ssh to ourselves and collect paths"
   [& args]
+  (System/loadLibrary "spire")
   (let [host-string (or (first args) "localhost")
         proc (sh/proc ["ssh" host-string])
         run (fn [command]
@@ -134,4 +134,5 @@
                    :paths paths
                    :lsb-release lsb-release
                    :properties properties})
+
     ))
