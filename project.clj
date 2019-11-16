@@ -9,7 +9,7 @@
                  [digest "1.4.9"]
                  [clj-time "0.15.2"]]
   :source-paths ["src/clj"]
-  :java-source-paths ["src/java"]
+  :java-source-paths ["src/c"]
   :main ^:skip-aot spire.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
