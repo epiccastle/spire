@@ -102,7 +102,7 @@
   (let [file (io/as-file src)
         size (.length file)
         task (proc ["ssh" target])
-        chunk-size 1024 ;;(inc (int (/ size 100)))
+        chunk-size (min 4096 (inc (int (/ size 100))))
         input-stream (io/input-stream file)
         chunk (byte-array chunk-size)
         ]

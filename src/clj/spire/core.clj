@@ -58,7 +58,7 @@
         now (time/now)
         first? (not start-time)
 
-        duration (when-not first? (time/in-seconds (time/interval start-time now)))
+        duration (when-not first? (/ (float (time/in-millis (time/interval start-time now))) 1000))
         bytes-since-start (when-not first? (- bytes start-bytes))
         bytes-per-second (when (some-> duration pos?) (int (/ bytes-since-start duration)))
         bytes-remaining (- total bytes)
@@ -79,7 +79,7 @@
                        (when eta
                          (str " eta:" (eta-string eta))))
         line-len (count line-str)
-        eraser (apply str (take (- columns line-len) (repeat " ")))
+        eraser (apply str (take (- columns line-len 1) (repeat " ")))
 
         ]
     (.write *out* (str line-str eraser))
