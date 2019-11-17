@@ -26,9 +26,13 @@
   [libs-dir]
   (doseq [filename libs-set]
     (when-let [file (io/resource filename)]
-      (let [[_ name] (path-split (.getFile file))]
-        ;; (println "installing:" name)
-        (io/copy (io/input-stream file) (io/file (path-join libs-dir name)))))))
+      (let [[_ name] (path-split (.getFile file))
+            dest-path (path-join libs-dir name)]
+        ;; writing to a library while running its code can result in segfault
+        ;; TODO: version the c library code.
+        (when (not (.exists (io/file dest-path)))
+          ;; (println "installing:" name "to:" )
+          (io/copy (io/input-stream file) (io/file dest-path)))))))
 
 (defn init! []
   (let [native-image?
