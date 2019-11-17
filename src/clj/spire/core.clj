@@ -8,7 +8,11 @@
             [sci.core :as sci]
             [clojure.string :as string]
             [clojure.java.io :as io]
-            [clojure.tools.cli :as cli])
+            [clojure.tools.cli :as cli]
+            [cognitect.transit :as transit]
+            [edamame.core :as edamame]
+            )
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream])
   (:gen-class))
 
 (defmacro embed [filename]
@@ -48,11 +52,17 @@
       (println "Version:" version)
 
       (:server options)
-      (do (println "Running server version " version)
-          (let [lines (line-seq (java.io.BufferedReader. *in*))]
-            (doseq [line lines]
-              (puget/cprint (sci/eval-string line))))
-          (println "done"))
+      (let [out (ByteArrayOutputStream. 4096)
+            writer (transit/writer out :json)]
+        (doseq [line (line-seq (java.io.BufferedReader. *in*))]
+          (try
+            (pr (sci/eval-string line))
+            (catch Exception e
+              (binding [*out* *err*]
+                (pr e))))
+          (println "---end-stdout---")
+          (binding [*out* *err*]
+            (println "---end-stderr---"))))
 
       :else
       (let [host-string (or (first arguments) "localhost")
@@ -67,8 +77,17 @@
         ;; sync binary
         (utils/push commands proc host-string local-spire spire-dest)
 
-        (puget/cprint
-         (shell/run proc (format "echo \"(+ 1 2 3)\" | %s --server" spire-dest)))
+        (shell/feed-from-string proc (format "%s --server\n" spire-dest))
+        (doseq [line (line-seq (java.io.BufferedReader. *in*))]
+          (shell/feed-from-string proc (str line "\n"))
+          (let [[_ out] (shell/capture-until (:out-reader proc) "---end-stdout---\n")
+                [_ err] (shell/capture-until (:err-reader proc) "---end-stderr---\n")]
+            (puget/cprint {:out (edamame/parse-string out)
+                           :err (when (pos? (count err))
+                                  (edamame/parse-string (subs err 6)))})
+            ))
+
+        #_ (shell/run proc (format "echo \"(+ 1 2 3)\" | %s --server" spire-dest))
 
         #_(puget/cprint {:commands commands
                          :lsb-release (probe/lsb-release proc)
