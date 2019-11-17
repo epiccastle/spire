@@ -5,6 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [org.clojure/tools.cli "0.4.2"]
+                 [borkdude/sci "0.0.11-alpha.9"]
                  [fipp "0.6.21"]
                  [mvxcvi/puget "1.2.0"]
                  [digest "1.4.9"]

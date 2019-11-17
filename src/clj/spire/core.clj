@@ -5,6 +5,7 @@
             [spire.config :as config]
             [puget.printer :as puget]
             [digest :as digest]
+            [sci.core :as sci]
             [clojure.string :as string]
             [clojure.java.io :as io]
             [clojure.tools.cli :as cli])
@@ -48,7 +49,9 @@
 
       (:server options)
       (do (println "Running server version " version)
-          (Thread/sleep 5000)
+          (let [lines (line-seq (java.io.BufferedReader. *in*))]
+            (doseq [line lines]
+              (puget/cprint (sci/eval-string line))))
           (println "done"))
 
       :else
@@ -65,7 +68,7 @@
         (utils/push commands proc host-string local-spire spire-dest)
 
         (puget/cprint
-         (shell/run proc (format "%s --server" spire-dest)))
+         (shell/run proc (format "echo \"(+ 1 2 3)\" | %s --server" spire-dest)))
 
         #_(puget/cprint {:commands commands
                          :lsb-release (probe/lsb-release proc)
