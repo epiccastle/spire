@@ -106,8 +106,9 @@
         remote-md5 (some-> (run (format "%s -b \"%s\"" md5sum remote-path))
                            (string/split #"\s+")
                            first)]
-    (println local-md5 remote-md5)
-    (println local-path remote-path)
+    ;; (println local-md5 remote-md5)
+    ;; (println local-path remote-path)
     (when (or (not remote-md5) (not= local-md5 remote-md5))
       (shell/copy-with-progress local-path host-string remote-path progress-bar)
-      (println))))
+      (println)
+      (run (format "chmod a+x \"%s\"" remote-path)))))

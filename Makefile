@@ -71,6 +71,7 @@ lib: $(LIB_FILE)
 $(LIB_FILE): $(C_FILE) $(C_HEADER)
 	$(CC) $(INCLUDE_ARGS) -shared $(C_FILE) -o $(LIB_FILE) -fPIC
 	cp $(LIB_FILE) ./
+	cp $(LIB_FILE) ./resources/
 
 clean:
 	lein clean

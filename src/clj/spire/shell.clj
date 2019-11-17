@@ -113,12 +113,15 @@
         (if (= bytes-read chunk-size)
           ;; full chunk
           (do (io/copy chunk (:in-stream task))
+              (.flush (:in-stream task))
               (recur new-offset (progress-fn new-offset size (float (/ new-offset size)) context)))
 
           ;; last partial chunk
           (do
             (io/copy (byte-array (take bytes-read chunk)) (:in-stream task))
+            (.flush (:in-stream task))
             (progress-fn new-offset size (float (/ new-offset size)) context)))))
-    (.flush (:in-stream task))))
+    (.close (:in-stream task))
+    (.waitFor ^Process (:process task))))
 
 #_ (copy-with-progress "./spire" "localhost" "/tmp/spire" println)
