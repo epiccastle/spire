@@ -9,7 +9,12 @@
                  [fipp "0.6.21"]
                  [mvxcvi/puget "1.2.0"]
                  [digest "1.4.9"]
-                 [clj-time "0.15.2"]]
+                 [clj-time "0.15.2"]
+
+                 ;; dev
+                 [nrepl "0.6.0"]
+                 ]
+  :plugins [[cider/cider-nrepl "0.21.1"]]
   :source-paths ["src/clj"]
   :java-source-paths ["src/c"]
   :jvm-opts ["-Djava.library.path=./"]

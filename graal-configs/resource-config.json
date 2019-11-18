@@ -1,0 +1,9 @@
+{
+  "resources": [
+      {"pattern": "libsunec.so$"},
+      {"pattern": "libsunec.dylib$"},
+      {"pattern": "sunec.dll$"},
+      {"pattern": "sunec.lib$"},
+      {"pattern": "libspire.so$"}
+  ]
+}

@@ -3,6 +3,7 @@
             [spire.probe :as probe]
             [spire.utils :as utils]
             [spire.config :as config]
+            [spire.namespaces :as namespaces]
             [puget.printer :as puget]
             [digest :as digest]
             [sci.core :as sci]
@@ -21,6 +22,7 @@
   [
    ["-h" "--help" "Print the command line help"]
    ["-v" "--version" "Print the version string and exit"]
+   ["-e" "--evaluate CODE" "Evaluate the code passed in on the command line" ]
    [nil "--server" "Run in server mode on the other end of the connection"]])
 
 (defn initialise []
@@ -51,7 +53,8 @@
       (:server options)
       (doseq [line (line-seq (java.io.BufferedReader. *in*))]
         (try
-          (pr (sci/eval-string line))
+          (pr (sci/eval-string line {:namespaces namespaces/namespaces
+                                     :bindings namespaces/bindings}))
           (catch Exception e
             (binding [*out* *err*]
               (pr e))))
@@ -59,38 +62,56 @@
         (binding [*out* *err*]
           (println "---end-stderr---")))
 
+      (:evaluate options)
+      (let [script (->> options :evaluate)]
+        (->
+         (sci/eval-string script {:namespaces namespaces/namespaces
+                                  :bindings namespaces/bindings})
+         puget/cprint))
+
+      (pos? (count arguments))
+      (let [script (slurp (first arguments))]
+        (->
+         (sci/eval-string script {:namespaces namespaces/namespaces
+                                  :bindings namespaces/bindings})
+         puget/cprint))
+
       :else
-      (let [host-string (or (first arguments) "localhost")
-            proc (shell/proc ["ssh" host-string])
-            snapshot? (string/ends-with? version "-SNAPSHOT")
-            release? (not snapshot?)
-            commands  (probe/commands proc)
-            local-spire (utils/which-spire)
-            local-spire-digest (digest/md5 (io/as-file local-spire))
-            spire-dest (str "/tmp/spire-" local-spire-digest)
-            ]
-        ;; sync binary
-        (utils/push commands proc host-string local-spire spire-dest)
+      ;; repl
+      (puget/cprint 0)
 
-        (shell/feed-from-string proc (format "%s --server\n" spire-dest))
-        (.write *out* "> ")
-        (.flush *out*)
-        (doseq [line (line-seq (java.io.BufferedReader. *in*))]
-          (shell/feed-from-string proc (str line "\n"))
-          (let [[_ out] (shell/capture-until (:out-reader proc) "---end-stdout---\n")
-                [_ err] (shell/capture-until (:err-reader proc) "---end-stderr---\n")]
-            (puget/cprint {:out (edamame/parse-string out)
-                           :err (when (pos? (count err))
-                                  (edamame/parse-string (subs err 6)))})
-            (.write *out* "> ")
-            (.flush *out*)
-            ))
 
-        #_ (shell/run proc (format "echo \"(+ 1 2 3)\" | %s --server" spire-dest))
+      #_ (let [host-string (or (first arguments) "localhost")
+               proc (shell/proc ["ssh" host-string])
+               snapshot? (string/ends-with? version "-SNAPSHOT")
+               release? (not snapshot?)
+               commands  (probe/commands proc)
+               local-spire (utils/which-spire)
+               local-spire-digest (digest/md5 (io/as-file local-spire))
+               spire-dest (str "/tmp/spire-" local-spire-digest)
+               ]
+           ;; sync binary
+           (utils/push commands proc host-string local-spire spire-dest)
 
-        #_(puget/cprint {:commands commands
-                         :lsb-release (probe/lsb-release proc)
-                         :github-reachable? (probe/reach-website? proc commands "http://github.com")}))
+           (shell/feed-from-string proc (format "%s --server\n" spire-dest))
+           (.write *out* "> ")
+           (.flush *out*)
+           (doseq [line (line-seq (java.io.BufferedReader. *in*))]
+             (shell/feed-from-string proc (str line "\n"))
+             (let [[_ out] (shell/capture-until (:out-reader proc) "---end-stdout---\n")
+                   [_ err] (shell/capture-until (:err-reader proc) "---end-stderr---\n")]
+               (puget/cprint {:out (edamame/parse-string out)
+                              :err (when (pos? (count err))
+                                     (edamame/parse-string (subs err 6)))})
+               (.write *out* "> ")
+               (.flush *out*)
+               ))
+
+           #_ (shell/run proc (format "echo \"(+ 1 2 3)\" | %s --server" spire-dest))
+
+           #_(puget/cprint {:commands commands
+                            :lsb-release (probe/lsb-release proc)
+                            :github-reachable? (probe/reach-website? proc commands "http://github.com")}))
       )
 
 
