@@ -26,4 +26,4 @@
               (edamame/parse-string (subs err 6)))})))
 
 (defmacro ssh [host-string & body]
-  `(ssh-line ~host-string '~@body))
+  `(ssh-line ~host-string '(vector ~@body)))
