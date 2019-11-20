@@ -82,7 +82,6 @@
       ;; repl
       (puget/cprint 0)
 
-
       #_ (let [host-string (or (first arguments) "localhost")
                proc (shell/proc ["ssh" host-string])
                snapshot? (string/ends-with? version "-SNAPSHOT")
@@ -113,11 +112,7 @@
 
            #_(puget/cprint {:commands commands
                             :lsb-release (probe/lsb-release proc)
-                            :github-reachable? (probe/reach-website? proc commands "http://github.com")}))
-      )
-
-
-    )
+                            :github-reachable? (probe/reach-website? proc commands "http://github.com")}))))
 
   #_ (let [host-string (or (first args) "localhost")
            proc (sh/proc ["ssh" host-string])
