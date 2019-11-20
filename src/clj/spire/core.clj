@@ -53,8 +53,10 @@
       (:server options)
       (doseq [line (line-seq (java.io.BufferedReader. *in*))]
         (try
-          (pr (sci/eval-string line {:namespaces namespaces/namespaces
-                                     :bindings namespaces/bindings}))
+          (-> line
+              (sci/eval-string {:namespaces namespaces/namespaces
+                                :bindings namespaces/bindings})
+              pr)
           (catch Exception e
             (binding [*out* *err*]
               (pr e))))
@@ -64,17 +66,17 @@
 
       (:evaluate options)
       (let [script (->> options :evaluate)]
-        (->
-         (sci/eval-string script {:namespaces namespaces/namespaces
-                                  :bindings namespaces/bindings})
-         puget/cprint))
+        (-> script
+            (sci/eval-string {:namespaces namespaces/namespaces
+                              :bindings namespaces/bindings})
+            puget/cprint))
 
       (pos? (count arguments))
       (let [script (slurp (first arguments))]
-        (->
-         (sci/eval-string script {:namespaces namespaces/namespaces
-                                  :bindings namespaces/bindings})
-         puget/cprint))
+        (-> script
+            (sci/eval-string {:namespaces namespaces/namespaces
+                              :bindings namespaces/bindings})
+            puget/cprint))
 
       :else
       ;; repl
