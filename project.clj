@@ -15,6 +15,9 @@
                  [nrepl "0.6.0"]
 
                  [com.jcraft/jsch "0.1.55"]
+
+                 ;; base64
+                 [commons-codec/commons-codec "1.12"]
                  ]
   :plugins [[cider/cider-nrepl "0.21.1"]]
   :source-paths ["src/clj"]
