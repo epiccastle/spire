@@ -1,7 +1,7 @@
 (ns spire.core
   (:require [spire.shell :as shell]
-            [spire.probe :as probe]
-            [spire.utils :as utils]
+            [spire.known-hosts :as known-hosts]
+            [spire.ssh-agent :as ssh-agent]
             [spire.config :as config]
             [spire.namespaces :as namespaces]
             [puget.printer :as puget]
@@ -11,6 +11,21 @@
             [clojure.java.io :as io]
             [clojure.tools.cli :as cli]
             [edamame.core :as edamame])
+  (:import [com.jcraft.jsch JSch UserInfo]
+           [java.io
+            File InputStream OutputStream StringReader
+            FileInputStream FileOutputStream
+            ByteArrayInputStream ByteArrayOutputStream
+            PipedInputStream PipedOutputStream]
+           [com.jcraft.jsch
+            JSch Session Channel ChannelShell ChannelExec ChannelSftp JSchException
+            Identity IdentityFile IdentityRepository Logger KeyPair LocalIdentityRepository
+            HostKeyRepository HostKey]
+           [org.apache.commons.codec.binary Base64]
+           [org.apache.commons.codec.digest HmacUtils HmacAlgorithms]
+
+           )
+
   (:gen-class))
 
 (defmacro embed [filename]
