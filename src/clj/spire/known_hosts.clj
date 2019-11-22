@@ -1,5 +1,6 @@
 (ns spire.known-hosts
-  (:require [clojure.string :as string]
+  (:require [spire.ssh-agent :as ssh-agent]
+            [clojure.string :as string]
             [clojure.java.io :as io]
             [edamame.core :as edamame])
   (:import [org.apache.commons.codec.binary Base64]
@@ -116,3 +117,15 @@
 #_ (-> (users-known-hosts-filename)
        read-known-hosts-file
        (find-matching-host-entries "epiccastle.io"))
+
+(defn decode-key [data]
+  (let [[type data1] (ssh-agent/decode-string data)
+        [unknown data2] (ssh-agent/decode-string data1)
+        [key data3] (ssh-agent/decode-string data2)]
+    (assert (empty? data3) "unexpected trailing data")
+    {:type (keyword (apply str (map char type)))
+     :unknown unknown
+     :key key}))
+
+(defn decode-base64-key [base64-key]
+  (decode-key (map int (Base64/decodeBase64 base64-key))))
