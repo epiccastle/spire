@@ -124,15 +124,8 @@
         (throw (ex-info "improper response code from ssh-agent" {:code (first read)}))))))
 
 (defn open-auth-socket []
-  (let [ssh-auth-sock (System/getenv "SSH_AUTH_SOCK")
-        sock (SpireUtils/ssh-open-auth-socket ssh-auth-sock)]
-    (println "FD:" sock)
+  (when-let [ssh-auth-sock (System/getenv "SSH_AUTH_SOCK")]
+    (SpireUtils/ssh-open-auth-socket ssh-auth-sock)))
 
-    (let [identites (ssh2-agentc-request-identities sock)]
-      (println "identities:" (count identites))
-      (println "sign:" (ssh2-agentc-sign-request
-                        sock
-                        (get-in identites [3 0])
-                        (byte-array (range 32)))))
-
-    (SpireUtils/ssh-close-auth-socket sock)))
+(defn close-auth-socket [sock]
+  (SpireUtils/ssh-close-auth-socket sock))
