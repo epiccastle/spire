@@ -53,7 +53,235 @@
         options-summary]
        (string/join \newline)))
 
+(defn- to-camel-case [^String a]
+  (apply str (map string/capitalize (.split (name a) "-"))))
+
+(defn ^Session make-session
+  "Start a SSH session.
+Requires hostname.  You can also pass values for :username, :password and :port
+keys.  All other option key pairs will be passed as SSH config options."
+  [^JSch agent hostname
+   {:keys [port username password] :or {port 22} :as options}]
+  (let [username (or username (System/getProperty "user.name"))
+        session-options (dissoc options :username :port :password :agent)
+        session (.getSession agent username hostname port)]
+    (when password (.setPassword session password))
+    (doseq [[k v] options]
+      (.setConfig session (to-camel-case k) (name v)))
+    session))
+
+(defn ssh-exec-proc
+  "Run a command via exec, returning a map with the process streams."
+  [^Session session ^String cmd
+   {:keys [agent-forwarding pty in out err] :as opts}]
+  (let [^ChannelExec exec (.openChannel session "exec")]
+    (doto exec
+      (.setCommand cmd)
+      (.setInputStream in false))
+    (when (contains? opts :pty)
+      (.setPty exec (boolean (opts :pty))))
+    (when (contains? opts :agent-forwarding)
+      (.setAgentForwarding exec (boolean (opts :agent-forwarding))))
+
+    (when out
+      (.setOutputStream exec out))
+    (when err
+      (.setErrStream exec err))
+    (let [resp {:channel exec
+                :out (or out (.getInputStream exec))
+                :err (or err (.getErrStream exec))
+                :in (or in (.getOutputStream exec))}]
+      (.connect exec)
+      resp)))
+(def ^java.nio.charset.Charset ascii
+  (java.nio.charset.Charset/forName "US-ASCII"))
+
+(def ^java.nio.charset.Charset utf-8
+  (java.nio.charset.Charset/forName "UTF-8"))
+
+(def
+  ^{:dynamic true
+    :doc (str "The buffer size (in bytes) for the piped stream used to implement
+    the :stream option for :out. If your ssh commands generate a high volume of
+    output, then this buffer size can become a bottleneck. You might also
+    increase the frequency with which you read the output stream if this is an
+    issue.")}
+  *piped-stream-buffer-size* (* 1024 10))
+
+(defn- streams-for-out
+  [out]
+  (if (= :stream out)
+    (let [os (PipedOutputStream.)]
+      [os (PipedInputStream. os (int *piped-stream-buffer-size*))])
+    [(ByteArrayOutputStream.) nil]))
+
+(defn string-stream
+  "Return an input stream with content from the string s."
+  [^String s]
+  {:pre [(string? s)]}
+  (ByteArrayInputStream. (.getBytes s utf-8)))
+
+(defn ssh-exec
+  "Run a command via ssh-exec."
+  [^Session session ^String cmd in out opts]
+  (let [[^PipedOutputStream out-stream
+         ^PipedInputStream out-inputstream] (streams-for-out out)
+        [^PipedOutputStream err-stream
+         ^PipedInputStream err-inputstream] (streams-for-out out)
+        proc (ssh-exec-proc
+              session cmd
+              (merge
+               {:in (if (string? in) (string-stream in) in)
+                :out out-stream
+                :err err-stream}
+               opts))
+        ^ChannelExec exec (:channel proc)]
+    (if out-inputstream
+      {:channel exec
+       :out-stream out-inputstream
+       :err-stream err-inputstream}
+      (do (while (.isConnected exec)
+            (Thread/sleep 100))
+          {:exit (.getExitStatus exec)
+           :out (if (= :bytes out)
+                  (.toByteArray ^ByteArrayOutputStream out-stream)
+                  (.toString out-stream))
+           :err (if (= :bytes out)
+                  (.toByteArray ^ByteArrayOutputStream err-stream)
+                  (.toString err-stream))}))))
+
+
 (defn -main
+  [& args]
+  (initialise)
+  #_ (ssh/open-auth-socket)
+  (let [agent (JSch.)
+
+        session (make-session agent "localhost" {:username "crispin"
+                                                 :strict-host-key-checking :yes ;;:no
+                                                 })
+
+        ;;_ (.setConfig session "PreferredAuthentications" "publickey")
+
+        irepo (proxy [IdentityRepository] []
+                (getIdentities []
+                  (println "IdentityRepository::getIdentities")
+                  (let [sock (ssh-agent/open-auth-socket)
+                        _ (println "SOCK:" sock)
+                        identites (ssh-agent/request-identities sock)]
+                    (ssh-agent/close-auth-socket sock)
+
+                    (java.util.Vector.
+                     (into []
+                           (for [[blob comment] identites]
+                             (proxy [Identity] []
+                               (getPublicKeyBlob []
+                                 (println "getPublicKeyBlob" comment)
+                                 (byte-array blob))
+                               (getSignature [data]
+                                 (println "getSignature" comment)
+                                 (let [sock (ssh-agent/open-auth-socket)
+                                       signature (ssh-agent/sign-request
+                                                  sock
+                                                  blob
+                                                  data)]
+                                   (ssh-agent/close-auth-socket sock)
+                                   (byte-array signature)))
+                               (getName []
+                                 (println "getName" comment)
+                                 comment)
+                               (getAlgName []
+                                 (println "getAlgName" comment)
+                                 (->> blob ssh-agent/decode-string first (map char) (apply str)))
+                               (isEncrypted []
+                                 (println "isEncrypted" comment)
+                                 false)
+                               (setPassphrase [passphrase]
+                                 (println "setPassphrase" comment passphrase)
+                                 true)
+                               ))))))
+                (add [identity]
+                  (println "IdentityRepository::add" identity)
+                  true)
+                (remove [identity]
+                  (println "IdentityRepository::remove" identity))
+                (removeAll []
+                  (println "IdentityRepository::removeAll"))
+                (getName []
+                  (println "IdentityRepository::getName")
+                  "ssh-agent")
+                (getStatus []
+                  (println "IdentityRepository::getStatus")
+                  0))
+
+        _ (when (System/getenv "SSH_AUTH_SOCK")
+            (.setIdentityRepository session irepo))
+
+        user-info (proxy [UserInfo] []
+                    (getPassword [] (println "getPassword") "wrong-password")
+                    (promptYesNo [s] (println 1 s 2) true)
+                    (getPassphrase [] "foo")
+                    (promptPassphrase [s] (println 2 s) true)
+                    (promptPassword [s] (println 3 s) true)
+                    (showMessage [s] (println 4 s))
+                    (promptKeyboardInteractive [dest name inst prompt echo]
+                      (println dest)
+                      (println name)
+                      (println inst)
+                      (println prompt)
+                      (println echo)
+                      "yes"))
+
+        host-key-repo (proxy [HostKeyRepository] []
+                        (check [hostname network-key-data]
+
+                          ;; find key
+                          (let [{:keys [type]} (known-hosts/decode-key network-key-data)
+                                found-key (-> (known-hosts/users-known-hosts-filename)
+                                              known-hosts/read-known-hosts-file
+                                              (known-hosts/find-matching-host-entries hostname)
+                                              (some->> (filter #(= type (:type %)))
+                                                       first))]
+                            (if (:key found-key)
+                              ;; hostname matches. compare key
+                              (if (= (:key found-key) (String. (Base64/encodeBase64 network-key-data)))
+                                ;; matches (OK)
+                                0
+
+                                ;; doesn't match (CHANGED)
+                                2
+                                )
+
+                              ;; not found (NOT_INCLUDED)
+                              1
+                              )))
+                        (getKnownHostsRepositoryID []
+                          (println "getKnownHostsRepositoryID"))
+                        (getHostKey
+                          ([]
+                           (println "getHostKey"))
+                          ([hostname type]
+                           (println "getHostKey/2" hostname type)
+                           (let [found-key (-> (known-hosts/users-known-hosts-filename)
+                                               known-hosts/read-known-hosts-file
+                                               (known-hosts/find-matching-host-entries hostname)
+                                               (some->> (filter #(= (keyword type) (:type %)))
+                                                        first))]
+                             (when (:key found-key)
+                               (into-array HostKey [(HostKey. hostname (Base64/decodeBase64 (:key found-key)))]))))))
+        ]
+
+    (.setHostKeyRepository session host-key-repo)
+    (.setUserInfo session user-info)
+
+    (.connect session)
+    (println (ssh-exec session "whoami" "" "" {}))
+    (.disconnect session)
+
+    )
+  )
+
+(defn -other-main
   "ssh to ourselves and collect paths"
   [& args]
   (initialise)
