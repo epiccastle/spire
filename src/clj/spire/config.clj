@@ -27,11 +27,14 @@
   (doseq [filename libs-set]
     (when-let [file (io/resource filename)]
       (let [[_ name] (path-split (.getFile file))
-            dest-path (path-join libs-dir name)]
+            dest-path (path-join libs-dir name)
+            resource-size (with-open [out (java.io.ByteArrayOutputStream.)]
+                            (io/copy (io/input-stream file) out)
+                            (count (.toByteArray out)))]
         ;; writing to a library while running its code can result in segfault
-        ;; TODO: version the c library code.
-        (when (not (.exists (io/file dest-path)))
-          ;; (println "installing:" name "to:" )
+        ;; only write if filesize is different or it doesnt exist
+        (when (or (not (.exists (io/file dest-path)))
+                  (not= (.length (io/file dest-path)) resource-size))
           (io/copy (io/input-stream file) (io/file dest-path)))))))
 
 (defn init! []
