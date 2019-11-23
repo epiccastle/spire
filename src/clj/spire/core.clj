@@ -1,5 +1,5 @@
 (ns spire.core
-  (:require [spire.shell :as shell]
+  (:require [spire.ssh :as ssh]
             [spire.known-hosts :as known-hosts]
             [spire.ssh-agent :as ssh-agent]
             [spire.config :as config]
@@ -158,117 +158,19 @@ keys.  All other option key pairs will be passed as SSH config options."
   (let [agent (JSch.)
 
         session (make-session agent "localhost" {:username "crispin"
-                                                 :strict-host-key-checking :yes ;;:no
+                                                 ;;:strict-host-key-checking :yes ;;:no
                                                  })
 
         ;;_ (.setConfig session "PreferredAuthentications" "publickey")
 
-        irepo (proxy [IdentityRepository] []
-                (getIdentities []
-                  (println "IdentityRepository::getIdentities")
-                  (let [sock (ssh-agent/open-auth-socket)
-                        _ (println "SOCK:" sock)
-                        identites (ssh-agent/request-identities sock)]
-                    (ssh-agent/close-auth-socket sock)
-
-                    (java.util.Vector.
-                     (into []
-                           (for [[blob comment] identites]
-                             (proxy [Identity] []
-                               (getPublicKeyBlob []
-                                 (println "getPublicKeyBlob" comment)
-                                 (byte-array blob))
-                               (getSignature [data]
-                                 (println "getSignature" comment)
-                                 (let [sock (ssh-agent/open-auth-socket)
-                                       signature (ssh-agent/sign-request
-                                                  sock
-                                                  blob
-                                                  data)]
-                                   (ssh-agent/close-auth-socket sock)
-                                   (byte-array signature)))
-                               (getName []
-                                 (println "getName" comment)
-                                 comment)
-                               (getAlgName []
-                                 (println "getAlgName" comment)
-                                 (->> blob ssh-agent/decode-string first (map char) (apply str)))
-                               (isEncrypted []
-                                 (println "isEncrypted" comment)
-                                 false)
-                               (setPassphrase [passphrase]
-                                 (println "setPassphrase" comment passphrase)
-                                 true)
-                               ))))))
-                (add [identity]
-                  (println "IdentityRepository::add" identity)
-                  true)
-                (remove [identity]
-                  (println "IdentityRepository::remove" identity))
-                (removeAll []
-                  (println "IdentityRepository::removeAll"))
-                (getName []
-                  (println "IdentityRepository::getName")
-                  "ssh-agent")
-                (getStatus []
-                  (println "IdentityRepository::getStatus")
-                  0))
+        irepo (ssh-agent/make-identity-repository)
 
         _ (when (System/getenv "SSH_AUTH_SOCK")
             (.setIdentityRepository session irepo))
 
-        user-info (proxy [UserInfo] []
-                    (getPassword [] (println "getPassword") "wrong-password")
-                    (promptYesNo [s] (println 1 s 2) true)
-                    (getPassphrase [] "foo")
-                    (promptPassphrase [s] (println 2 s) true)
-                    (promptPassword [s] (println 3 s) true)
-                    (showMessage [s] (println 4 s))
-                    (promptKeyboardInteractive [dest name inst prompt echo]
-                      (println dest)
-                      (println name)
-                      (println inst)
-                      (println prompt)
-                      (println echo)
-                      "yes"))
+        user-info (ssh/make-user-info)
 
-        host-key-repo (proxy [HostKeyRepository] []
-                        (check [hostname network-key-data]
-
-                          ;; find key
-                          (let [{:keys [type]} (known-hosts/decode-key network-key-data)
-                                found-key (-> (known-hosts/users-known-hosts-filename)
-                                              known-hosts/read-known-hosts-file
-                                              (known-hosts/find-matching-host-entries hostname)
-                                              (some->> (filter #(= type (:type %)))
-                                                       first))]
-                            (if (:key found-key)
-                              ;; hostname matches. compare key
-                              (if (= (:key found-key) (String. (Base64/encodeBase64 network-key-data)))
-                                ;; matches (OK)
-                                0
-
-                                ;; doesn't match (CHANGED)
-                                2
-                                )
-
-                              ;; not found (NOT_INCLUDED)
-                              1
-                              )))
-                        (getKnownHostsRepositoryID []
-                          (println "getKnownHostsRepositoryID"))
-                        (getHostKey
-                          ([]
-                           (println "getHostKey"))
-                          ([hostname type]
-                           (println "getHostKey/2" hostname type)
-                           (let [found-key (-> (known-hosts/users-known-hosts-filename)
-                                               known-hosts/read-known-hosts-file
-                                               (known-hosts/find-matching-host-entries hostname)
-                                               (some->> (filter #(= (keyword type) (:type %)))
-                                                        first))]
-                             (when (:key found-key)
-                               (into-array HostKey [(HostKey. hostname (Base64/decodeBase64 (:key found-key)))]))))))
+        host-key-repo (known-hosts/make-host-key-repository)
         ]
 
     (.setHostKeyRepository session host-key-repo)
