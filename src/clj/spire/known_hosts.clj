@@ -19,7 +19,7 @@
           non-marked-parts (if (or revoked? cert-authority?)
                              (rest parts)
                              parts)
-          zos-key-ring-label? (.contains line "zos-key-ring-label")
+          zos-key-ring-label? (.contains ^String line "zos-key-ring-label")
           non-marked-parts (if zos-key-ring-label?
                              [(first non-marked-parts) (string/join " " (rest non-marked-parts))]
                              non-marked-parts)
