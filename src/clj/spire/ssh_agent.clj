@@ -1,5 +1,7 @@
 (ns spire.ssh-agent
-  (:require [spire.pack :as pack]))
+  (:require [spire.pack :as pack])
+  (:import [com.jcraft.jsch Identity IdentityRepository]
+           [java.util Vector]))
 
 (def codes {:ssh-agent-failure 5
             :request-identities 11
@@ -95,3 +97,36 @@
 
 (defn close-auth-socket [sock]
   (SpireUtils/ssh-close-auth-socket sock))
+
+(defn make-identity [[blob comment]]
+  (proxy [Identity] []
+    (getPublicKeyBlob []
+      (byte-array blob))
+    (getSignature [data]
+      (let [sock (open-auth-socket)
+            signature (sign-request sock blob data)]
+        (close-auth-socket sock)
+        (byte-array signature)))
+    (getName []
+      comment)
+    (getAlgName []
+      (->> blob pack/decode-string first (map char) (apply str)))
+    (isEncrypted []
+      false)
+    (setPassphrase [passphrase]
+      true)))
+
+(def identity-repository-unavailable 0)
+(def identity-repository-not-running 1)
+(def identity-repository-running 2)
+
+(defn make-identity-repository []
+  (proxy [IdentityRepository] []
+    (getIdentities []
+      (let [sock (open-auth-socket)
+            identites (request-identities sock)]
+        (close-auth-socket sock)
+        (Vector.
+         (mapv make-identity identites))))
+    (getName [] "ssh-agent")
+    (getStatus [] identity-repository-running)))
