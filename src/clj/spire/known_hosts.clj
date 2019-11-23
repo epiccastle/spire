@@ -5,6 +5,7 @@
             [edamame.core :as edamame])
   (:import [org.apache.commons.codec.binary Base64]
            [org.apache.commons.codec.digest HmacUtils HmacAlgorithms]
+           [com.jcraft.jsch HostKey HostKeyRepository]
            ))
 
 (defn process-hosts [hosts]
@@ -130,3 +131,34 @@
 
 (defn decode-base64-key [base64-key]
   (decode-key (map int (Base64/decodeBase64 base64-key))))
+
+(def host-key-repository-ok 0)
+(def host-key-repository-not-included 1)
+(def host-key-repository-changed 2)
+
+(defn make-host-key-repository []
+  (let [known-hosts-keys (-> (users-known-hosts-filename)
+                             read-known-hosts-file)]
+    (proxy [HostKeyRepository] []
+      (check [hostname network-key-data]
+        ;; find key
+        (let [{:keys [type]} (decode-key network-key-data)
+              found-key (some->> hostname
+                                 (find-matching-host-entries known-hosts-keys)
+                                 (filter #(= type (:type %)))
+                                 first)]
+          (if (:key found-key)
+            ;; hostname matches. compare key
+            (if (= (:key found-key) (String. (Base64/encodeBase64 network-key-data)))
+              host-key-repository-ok
+              host-key-repository-changed)
+            host-key-repository-not-included)))
+      (getHostKey
+        ([])
+        ([hostname type]
+         (let [found-key (some->> hostname
+                                  (find-matching-host-entries known-hosts-keys)
+                                  (filter #(= (keyword type) (:type %)))
+                                  first)]
+           (when (:key found-key)
+             (into-array HostKey [(HostKey. hostname (Base64/decodeBase64 (:key found-key)))]))))))))
