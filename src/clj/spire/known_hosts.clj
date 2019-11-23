@@ -79,10 +79,10 @@
 
 #_ (read-known-hosts-file "/home/crispin/.ssh/known_hosts")
 
-(defn hash-hostname [salt-base64 hostname]
+(defn hash-hostname-raw [salt hostname]
   (let [digest (HmacUtils/getInitializedMac
                 HmacAlgorithms/HMAC_SHA_1
-                (Base64/decodeBase64 salt-base64))]
+                salt)]
     (->> hostname
          (map int)
          byte-array
@@ -91,6 +91,9 @@
         .doFinal
         Base64/encodeBase64
         String.)))
+
+(defn hash-hostname [salt-base64 hostname]
+  (hash-hostname-raw (Base64/decodeBase64 salt-base64) hostname))
 
 #_ (= (hash-hostname "HgJpEdpLnX36OnIZukqcj1dIFHk=" "epiccastle.io")
       "fbmG7ZxLUNDo5MDO9BSfGWITzF8=")
@@ -132,6 +135,36 @@
 (defn decode-base64-key [base64-key]
   (decode-key (map int (Base64/decodeBase64 base64-key))))
 
+(defn make-salt []
+  (byte-array (map (fn [_] (rand-int 256)) (range 20))))
+
+(defn make-hostname-hash-string [hostname]
+  (let [salt (make-salt)
+        hashed (hash-hostname-raw salt hostname)
+        hostname-hash-string (str "|1|" (String. (Base64/encodeBase64 salt)) "|" hashed)
+        ]
+    hostname-hash-string))
+
+#_(make-hostname-hash-string "epiccastle.io")
+
+(defn make-host-key-line [hostname type key & [comment]]
+  (str
+   (make-hostname-hash-string hostname)
+   " "
+   type
+   " "
+   key
+   " "
+   comment))
+
+#_ (make-host-key-line "epiccastle.io" "ssh-rsa" "mykey")
+
+(defn append-host-key-to-file [filename hostname type key & [comment]]
+  (spit
+   filename
+   (str (make-host-key-line hostname type key comment) "\n")
+   :append true))
+
 (def host-key-repository-ok 0)
 (def host-key-repository-not-included 1)
 (def host-key-repository-changed 2)
@@ -161,4 +194,20 @@
                                   (filter #(= (keyword type) (:type %)))
                                   first)]
            (when (:key found-key)
-             (into-array HostKey [(HostKey. hostname (Base64/decodeBase64 (:key found-key)))]))))))))
+             (into-array HostKey [(HostKey. hostname (Base64/decodeBase64 (:key found-key)))])))))
+      (add [hostkey userinfo]
+        (append-host-key-to-file
+         (users-known-hosts-filename)
+         (.getHost hostkey)
+         (.getType hostkey)
+         (.getKey hostkey)
+         (.getComment hostkey))
+        (comment
+          (println "add" hostkey userinfo)
+          (println "host" (.getHost hostkey))
+          (println "type" (.getType hostkey))
+          (println "key" (.getKey hostkey))
+          (println "fingerprint" (.getFingerPrint hostkey (JSch.)))
+          (println "comment" (.getComment hostkey))
+          (println "marker" (.getMarker hostkey)))
+        ))))
