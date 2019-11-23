@@ -1,5 +1,5 @@
 (ns spire.known-hosts
-  (:require [spire.ssh-agent :as ssh-agent]
+  (:require [spire.pack :as pack]
             [clojure.string :as string]
             [clojure.java.io :as io]
             [edamame.core :as edamame])
@@ -120,9 +120,9 @@
        (find-matching-host-entries "epiccastle.io"))
 
 (defn decode-key [data]
-  (let [[type data1] (ssh-agent/decode-string data)
-        [unknown data2] (ssh-agent/decode-string data1)
-        [key data3] (ssh-agent/decode-string data2)]
+  (let [[type data1] (pack/decode-string data)
+        [unknown data2] (pack/decode-string data1)
+        [key data3] (pack/decode-string data2)]
     (assert (empty? data3) "unexpected trailing data")
     {:type (keyword (apply str (map char type)))
      :unknown unknown

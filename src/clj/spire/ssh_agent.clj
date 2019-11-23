@@ -1,4 +1,5 @@
-(ns spire.ssh-agent)
+(ns spire.ssh-agent
+  (:require [spire.pack :as pack]))
 
 (def codes {:ssh-agent-failure 5
             :request-identities 11
@@ -11,48 +12,18 @@
        (map (comp vec reverse))
        (into {})))
 
-(defn pack-byte [n]
-  [(bit-and n 0xff)])
-
-(defn pack-int [n]
-  [(-> n (bit-shift-right 24) (bit-and 0xff))
-   (-> n (bit-shift-right 16) (bit-and 0xff))
-   (-> n (bit-shift-right 8) (bit-and 0xff))
-   (-> n (bit-and 0xff))])
-
-(defn pack-data [data]
-  (let [len (count data)]
-    (concat
-     (pack-int len)
-     data)))
-
-(defn unpack-int [[b1 b2 b3 b4]]
-  (bit-or
-   (-> b1 (bit-and 0xff) (bit-shift-left 24))
-   (-> b2 (bit-and 0xff) (bit-shift-left 16))
-   (-> b3 (bit-and 0xff) (bit-shift-left 8))
-   (-> b4 (bit-and 0xff))))
-
-#_ (unpack-int (pack-int 123456789))
-
-(defn decode-string
-  "returns (byte-stream remaining-data)"
-  [data]
-  (let [[v data] (split-at 4 data)]
-    (split-at (unpack-int v) data)))
-
 (defn read-identity
   "returns [[byte-stream comment] remaining-data]"
   [data]
-  (let [[byte-stream data] (decode-string data)
-        [comment data] (decode-string data)]
+  (let [[byte-stream data] (pack/decode-string data)
+        [comment data] (pack/decode-string data)]
     [[byte-stream (apply str (map char comment))] data]))
 
 (defn decode-identities
   "returns vector of identities. Each identity is [byte-seq comment-string]"
   [data]
   (let [[val data] (split-at 4 data)
-        num-identities (unpack-int val)]
+        num-identities (pack/unpack-int val)]
     (loop [n num-identities
            data data
            identities []]
@@ -65,19 +36,19 @@
             (conj identities id)))))))
 
 (defn send-query [sock query-data]
-  (let [query (concat (pack-int (count query-data)) query-data)
+  (let [query (concat (pack/pack-int (count query-data)) query-data)
         qarr (byte-array query)
         n (count query)]
     (SpireUtils/ssh-auth-socket-write sock qarr n)))
 
 (defn request-identities [sock]
   ;; send query
-  (send-query sock (pack-byte (codes :request-identities)))
+  (send-query sock (pack/pack-byte (codes :request-identities)))
 
   ;; read response
   (let [read (byte-array 4)]
     (SpireUtils/ssh-auth-socket-read sock read 4)
-    (let [size (unpack-int read)
+    (let [size (pack/unpack-int read)
           read (byte-array size)]
       (SpireUtils/ssh-auth-socket-read sock read size)
       (case (code->keyword (first read))
@@ -95,20 +66,20 @@
   (send-query
    sock
    (concat
-    (pack-byte (codes :sign-request))
-    (pack-data blob)
-    (pack-data data)
-    (pack-int 0)))
+    (pack/pack-byte (codes :sign-request))
+    (pack/pack-data blob)
+    (pack/pack-data data)
+    (pack/pack-int 0)))
 
   ;; read response
   (let [read (byte-array 4)]
     (SpireUtils/ssh-auth-socket-read sock read 4)
-    (let [size (unpack-int read)
+    (let [size (pack/unpack-int read)
           read (byte-array size)]
       (SpireUtils/ssh-auth-socket-read sock read size)
       (case (code->keyword (first read))
         :sign-response
-        (let [[blob data] (decode-string (drop 1 read))]
+        (let [[blob data] (pack/decode-string (drop 1 read))]
           (assert (empty? data) "trailing data should not exist")
           blob)
 
