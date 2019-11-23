@@ -44,7 +44,8 @@
                          [label value] (string/split key-ring #"=")]
                      {:hosts hosts
                       (keyword label) (edamame/parse-string value)})
-                 (throw (ex-info "malformed hosts line" {:line line})))
+                 (throw (ex-info "malformed hosts line" {:filename filename
+                                                         :line-num line-num})))
           annotated (if (or revoked? cert-authority?)
                       (assoc host
                              :marker (cond revoked? :revoked cert-authority? :cert-authority)
