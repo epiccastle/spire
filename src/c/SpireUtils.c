@@ -54,8 +54,8 @@ strlcpy(char * __restrict dst, const char * __restrict src, size_t dsize)
         return(src - osrc - 1);	/* count does not include NUL */
 }
 
-
-
+/* same error as openbsd ssh code uses */
+#define SSH_ERR_SYSTEM_ERROR			-24
 
 /*
  * Class:     SpireUtils
