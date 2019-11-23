@@ -76,3 +76,9 @@ $(LIB_FILE): $(C_FILE) $(C_HEADER)
 clean:
 	lein clean
 	rm -rf $(JNI_DIR)
+
+copy-libs-to-resource:
+	-cp $(GRAALVM)/jre/lib/sunec.lib resources
+	-cp $(GRAALVM)/jre/bin/sunec.dll resources
+	-cp $(GRAALVM)/jre/lib/libsunec.dylib resources
+	-cp $(GRAALVM)/jre/lib/amd64/libsunec.so resources
