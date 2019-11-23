@@ -1,131 +1,75 @@
-(ns spire.ssh)
+(ns spire.ssh
+  (:import [com.jcraft.jsch UserInfo]))
 
-(def codes {:ssh-agent-failure 5
-            :ssh2-agentc-request-identities 11
-            :ssh2-agent-identities-answer 12
-            :ssh2-agentc-sign-request 13
-            :ssh2-agent-sign-response 14})
+;; #define SANE_SET 1		/* Set in `sane' mode. */
+;; #define SANE_UNSET 2		/* Unset in `sane' mode. */
+;; #define REV 4			/* Can be turned off by prepending `-'. */
+;; #define OMIT 8			/* Don't display value. */
 
-(def code->keyword
-  (->> codes
-       (map (comp vec reverse))
-       (into {})))
+;; termios.h
+;; #define ECHO	0000010
+;; #define ECHOE	0000020
+;; #define ECHOK	0000040
+;; #define ECHONL	0000100
 
-(defn pack-byte [n]
-  [(bit-and n 0xff)])
+;; name             /* Name given on command line.  */
+;; mode_type type   /* Which structure element to change. */
+;; flags            /* Setting and display options.  */
+;; bits             /* Bits to set for this mode.  */
+;; mask             /* Other bits to turn off for this mode.  */
 
-(defn pack-int [n]
-  [(-> n (bit-shift-right 24) (bit-and 0xff))
-   (-> n (bit-shift-right 16) (bit-and 0xff))
-   (-> n (bit-shift-right 8) (bit-and 0xff))
-   (-> n (bit-and 0xff))])
+;; "echo", local, SANE_SET | REV, ECHO, 0
 
-(defn pack-blob [data]
-  (let [len (count data)]
-    (concat
-     (pack-int len)
-     data)))
+;; display_settings (output_type, &mode, device_name);
 
-(defn unpack-int [[b1 b2 b3 b4]]
-  (bit-or
-   (-> b1 (bit-and 0xff) (bit-shift-left 24))
-   (-> b2 (bit-and 0xff) (bit-shift-left 16))
-   (-> b3 (bit-and 0xff) (bit-shift-left 8))
-   (-> b4 (bit-and 0xff))))
+;; match_found = set_mode (&mode_info[i], reversed, &mode);
+;; require_set_attr = true;
 
-#_ (unpack-int (pack-int 123456789))
 
-(defn decode-string
-  "returns (byte-stream remaining-data)"
-  [data]
-  (let [[v data] (split-at 4 data)]
-    (split-at (unpack-int v) data)))
 
-(defn read-identity
-  "returns [[byte-stream comment] remaining-data]"
-  [data]
-  (let [[byte-stream data] (decode-string data)
-        [comment data] (decode-string data)]
-    [[byte-stream (apply str (map char comment))] data]))
+(defn make-user-info []
+  (let [state (atom nil)]
+    (proxy [UserInfo] []
 
-(defn decode-identities
-  "returns vector of identities. Each identity is [byte-seq comment-string]"
-  [data]
-  (let [[val data] (split-at 4 data)
-        num-identities (unpack-int val)]
-    (loop [n num-identities
-           data data
-           identities []]
-      (let [[id data] (read-identity data)]
-        (if (pos? (dec n))
-          (recur (dec n) data (conj identities id))
+      (getPassword []
+        (print (str "Enter " @state ": "))
+        (.flush *out*)
+        (SpireUtils/enter-raw-mode 0)
+        (let [password (read-line)]
+          (SpireUtils/leave-raw-mode 0)
+          (println)
+          password))
 
-          (do
-            (assert (empty? data) "data should be empty now")
-            (conj identities id)))))))
+      (promptYesNo [s]
+        (print (str s " "))
+        (.flush *out*)
+        (let [response (read-line)
+              first-char (first response)]
+          (boolean (#{\y \Y} first-char))))
 
-(defn ssh2-agentc-request-identities [sock]
-  ;; send query
-  (let [query (concat (pack-int 1) (pack-byte (codes :ssh2-agentc-request-identities)))
-        qarr (byte-array query)
-        n (count query)]
-    ;;(println "writing" n "bytes")
-    (SpireUtils/ssh-auth-socket-write sock qarr n))
+      (getPassphrase []
+        (println "getPassphrase")
+        "foo")
 
-  ;; read response
-  (let [read (byte-array 4)]
-    ;;(println "reading 4 bytes")
-    (SpireUtils/ssh-auth-socket-read sock read 4)
-    (let [size (unpack-int read)
-          read (byte-array size)]
-      ;;(println "size is" size)
-      (SpireUtils/ssh-auth-socket-read sock read size)
-      ;;(println "read:" (map int read))
-      (case (code->keyword (first read))
-        :ssh2-agent-identities-answer
-        (decode-identities (drop 1 read))
+      (promptPassphrase [s]
+        (println 2 s)
+        true)
 
-        :ssh-agent-failure
-        (throw (ex-info "ssh-agent failure" {}))
+      (promptPassword [s]
+        (reset! state s)
+        ;; return true to continue
+        ;; false to cancel auth
+        true
+        )
 
-        (throw (ex-info "improper response code from ssh-agent" {:code (first read)}))))))
+      (showMessage [s]
+        (println 4 s))
 
-(defn ssh2-agentc-sign-request [sock blob data]
-  ;; write request query
-  (let [query (concat
-               (pack-int (+ 1 4 (count blob) 4 (count data) 4))
-               (pack-byte (codes :ssh2-agentc-sign-request))
-               (pack-blob blob)
-               (pack-blob data)
-               (pack-int 0))
-        qarr (byte-array query)
-        n (count query)]
-    (SpireUtils/ssh-auth-socket-write sock qarr n))
-
-  ;; read response
-  (let [read (byte-array 4)]
-    ;;(println "reading 4 bytes")
-    (SpireUtils/ssh-auth-socket-read sock read 4)
-    (let [size (unpack-int read)
-          read (byte-array size)]
-      ;;(println "size is" size)
-      (SpireUtils/ssh-auth-socket-read sock read size)
-      ;;(println "read:" (map int read))
-      (case (code->keyword (first read))
-        :ssh2-agent-sign-response
-        (let [[blob data] (decode-string (drop 1 read))]
-          (assert (empty? data) "trailing data should not exist")
-          blob)
-
-        :ssh-agent-failure
-        (throw (ex-info "ssh-agent failure" {:code (first read)
-                                             :reason "couldn't access key"}))
-
-        (throw (ex-info "improper response code from ssh-agent" {:code (first read)}))))))
-
-(defn open-auth-socket []
-  (when-let [ssh-auth-sock (System/getenv "SSH_AUTH_SOCK")]
-    (SpireUtils/ssh-open-auth-socket ssh-auth-sock)))
-
-(defn close-auth-socket [sock]
-  (SpireUtils/ssh-close-auth-socket sock))
+      (promptKeyboardInteractive [dest name inst prompt echo]
+        (println "promptKeyboardInteractive")
+        (println dest)
+        (println name)
+        (println inst)
+        (println prompt)
+        (println echo)
+        "yes"))))
