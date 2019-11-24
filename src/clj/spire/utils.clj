@@ -95,7 +95,7 @@
       (when (.exists (io/as-file "./spire")) "./spire")
       executable)))
 
-(defn push
+(defn push-old
   "push the local-file to the remote box as remote-file"
   [{:keys [md5sum]} conn host-string local-path remote-path]
   (let [run (fn [command]
@@ -112,3 +112,9 @@
       (shell/copy-with-progress local-path host-string remote-path progress-bar)
       (println)
       (run (format "chmod a+x \"%s\"" remote-path)))))
+
+(defn push
+  [{:keys [md5sum]} session local-path remote-path]
+
+
+  )
