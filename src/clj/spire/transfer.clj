@@ -1,29 +1,60 @@
 (ns spire.transfer
-  (:require [spire.shell :as shell]
-            [spire.probe :as probe]
+  (:require [spire.probe :as probe]
             [spire.utils :as utils]
+            [spire.ssh-agent :as ssh-agent]
+            [spire.ssh :as ssh]
+            [spire.known-hosts :as known-hosts]
             [digest :as digest]
-            [edamame.core :as edamame]
             [clojure.java.io :as io]
-            ))
+            [clojure.string :as string])
+  (:import [com.jcraft.jsch JSch]))
+
+(defn- make-run [ssh-runner]
+  (fn [command]
+    (let [{:keys [out exit]} (ssh-runner command "" "" {})]
+      (when (zero? exit)
+        (string/trim out)))))
+
+(defn commands [ssh-runner]
+  (let [run (make-run ssh-runner)
+        which #(run (str "which " %))
+        paths {:md5sum (which "md5sum")
+               :crc32 (which "crc32")
+               :sha256sum (which "sha256sum")
+               :curl (which "curl")
+               :wget (which "wget")
+               :ping (which "ping")}]
+    paths)
+  )
 
 (defn ssh-line [host-string line]
-  (let [proc (shell/proc ["ssh" host-string])
-        snapshot? true ;;(string/ends-with? version "-SNAPSHOT")
-        commands  (probe/commands proc)
-        local-spire (utils/which-spire)
-        local-spire-digest (digest/md5 (io/as-file local-spire))
-        spire-dest (str "/tmp/spire-" local-spire-digest)
+  (let [
+        [username hostname] (ssh/split-host-string host-string)
+        agent (JSch.)
+        session (ssh/make-session
+                 agent hostname
+                 {:username username})
+        irepo (ssh-agent/make-identity-repository)
+        _ (when (System/getenv "SSH_AUTH_SOCK")
+            (.setIdentityRepository session irepo))
+        user-info (ssh/make-user-info)
         ]
-    ;; sync binary
-    (utils/push commands proc host-string local-spire spire-dest)
-    (shell/feed-from-string proc (format "%s --server\n" spire-dest))
-    (shell/feed-from-string proc (str line "\n"))
-    (let [[_ out] (shell/capture-until (:out-reader proc) "---end-stdout---\n")
-          [_ err] (shell/capture-until (:err-reader proc) "---end-stderr---\n")]
-      {:out (edamame/parse-string out)
-       :err (when (pos? (count err))
-              (edamame/parse-string (subs err 6)))})))
+    (doto session
+      (.setHostKeyRepository (known-hosts/make-host-key-repository))
+      (.setUserInfo user-info)
+      (.connect))
+
+    (let [runner (partial ssh/ssh-exec session)
+          commands (probe/commands runner)
+          local-spire (utils/which-spire)
+          local-spire-digest (digest/md5 (io/as-file local-spire))
+          spire-dest (str "/tmp/spire-" local-spire-digest)
+
+          ;;result (utils/push commands proc host-string local-spire spire-dest)
+          ]
+      (.disconnect session)
+      commands)
+    ))
 
 (defmacro ssh [host-string & body]
   `(ssh-line ~host-string '(vector ~@body)))
