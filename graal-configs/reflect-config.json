@@ -439,7 +439,13 @@
         "allDeclaredMethods": true,
         "allPublicMethods": true
     },
-
+    {
+        "name": "com.jcraft.jsch.HostKey",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
     {
         "name": "org.apache.commons.codec.digest.HmacUtils",
         "allDeclaredConstructors": true,
