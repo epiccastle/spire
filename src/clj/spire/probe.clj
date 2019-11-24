@@ -3,14 +3,14 @@
             [spire.shell :as shell]
             [clojure.string :as string]))
 
-(defn- make-run [ssh-proc]
+(defn- make-run [ssh-runner]
   (fn [command]
-    (let [{:keys [out exit]} (shell/run ssh-proc command)]
+    (let [{:keys [out exit]} (ssh-runner command "" "" {})]
       (when (zero? exit)
         (string/trim out)))))
 
-(defn commands [ssh-proc]
-  (let [run (make-run ssh-proc)
+(defn commands [runner]
+  (let [run (make-run runner)
         which #(run (str "which " %))
         paths {:md5sum (which "md5sum")
                :crc32 (which "crc32")
@@ -20,13 +20,13 @@
                :ping (which "ping")}]
     paths))
 
-(defn lsb-release [ssh-proc]
-  (let [run (make-run ssh-proc)]
+(defn lsb-release [runner]
+  (let [run (make-run runner)]
     (some-> "lsb_release -a" run utils/lsb-process)))
 
-(defn reach-website? [ssh-proc {:keys [curl wget]} url]
+(defn reach-website? [runner {:keys [curl wget]} url]
   (let [{:keys [exit]}
-        (shell/run ssh-proc
+        (shell/run runner
           (cond
             curl (format "%s -I \"%s\"" curl url)
             wget (format "%s -S --spider \"%s\"" wget url)))]
