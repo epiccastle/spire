@@ -156,6 +156,6 @@ keys.  All other option key pairs will be passed as SSH config options."
                   (.toString err-stream))}))))
 
 (defn split-host-string [host-string]
-  (if (.contains host-string "@")
+  (if (.contains ^String host-string "@")
     (string/split host-string #"@")
     [(System/getProperty "user.name") host-string]))
