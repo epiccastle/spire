@@ -111,10 +111,4 @@
     (when (or (not remote-md5) (not= local-md5 remote-md5))
       (println (format "Transfering %s to %s:%s" local-path host-string remote-path))
       (scp/scp-to session local-path remote-path :mode 0775 :progress-fn progress-bar)
-      (println)
-      (comment
-        (shell/copy-with-progress local-path host-string remote-path progress-bar)
-        (println)
-        (run (format "chmod a+x \"%s\"" remote-path)))))
-
-  )
+      (println))))
