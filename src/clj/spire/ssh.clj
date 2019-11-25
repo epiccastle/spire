@@ -120,6 +120,11 @@ keys.  All other option key pairs will be passed as SSH config options."
       [os (PipedInputStream. os (int *piped-stream-buffer-size*))])
     [(ByteArrayOutputStream.) nil]))
 
+(defn streams-for-in
+  []
+  (let [os (PipedInputStream. (int *piped-stream-buffer-size*))]
+    [os (PipedOutputStream. os)]))
+
 (defn string-stream
   "Return an input stream with content from the string s."
   [^String s]
@@ -127,7 +132,17 @@ keys.  All other option key pairs will be passed as SSH config options."
   (ByteArrayInputStream. (.getBytes s utf-8)))
 
 (defn ssh-exec
-  "Run a command via ssh-exec."
+  "Run a command via ssh-exec.
+
+  cmd        specifies a command string to exec.  If no cmd is given, a shell
+             is started and input is taken from :in.
+  in         specifies input to the remote shell. A string or a stream.
+  out        specify :stream to obtain a an [inputstream shell]
+             specify :bytes to obtain a byte array
+             or specify a string with an encoding specification for a
+             result string.  In the case of :stream, the shell can
+             be polled for connected status.
+  "
   [^Session session ^String cmd in out opts]
   (let [[^PipedOutputStream out-stream
          ^PipedInputStream out-inputstream] (streams-for-out out)
