@@ -14,7 +14,6 @@
    ;;'copy transfer/copy
    ;;'template transfer/template
 
-
    'ssh (with-meta @#'transfer/ssh {:sci/macro true})
    })
 
