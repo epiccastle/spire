@@ -1,6 +1,5 @@
 (ns spire.utils
-  (:require [spire.shell :as shell]
-            [spire.scp :as scp]
+  (:require [spire.scp :as scp]
             [clj-time.core :as time]
             [digest :as digest]
             [clojure.string :as string]

@@ -1,6 +1,5 @@
 (ns spire.probe
   (:require [spire.utils :as utils]
-            [spire.shell :as shell]
             [clojure.string :as string]))
 
 (defn- make-run [ssh-runner]
@@ -25,8 +24,9 @@
     (some-> "lsb_release -a" run utils/lsb-process)))
 
 (defn reach-website? [runner {:keys [curl wget]} url]
-  (let [{:keys [exit]}
-        (shell/run runner
+  (let [run (make-run runner)
+        {:keys [exit]}
+        (run
           (cond
             curl (format "%s -I \"%s\"" curl url)
             wget (format "%s -S --spider \"%s\"" wget url)))]
