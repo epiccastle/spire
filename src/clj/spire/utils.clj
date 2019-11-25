@@ -1,5 +1,6 @@
 (ns spire.utils
   (:require [spire.shell :as shell]
+            [spire.scp :as scp]
             [clj-time.core :as time]
             [digest :as digest]
             [clojure.string :as string]
@@ -95,11 +96,10 @@
       (when (.exists (io/as-file "./spire")) "./spire")
       executable)))
 
-(defn push-old
-  "push the local-file to the remote box as remote-file"
-  [{:keys [md5sum]} conn host-string local-path remote-path]
+(defn push
+  [{:keys [md5sum]} host-string runner session local-path remote-path]
   (let [run (fn [command]
-               (let [{:keys [out exit]} (shell/run conn command)]
+               (let [{:keys [out exit]} (runner command "" "" {})]
                  (when (zero? exit)
                    (string/trim out))))
         local-md5 (digest/md5 (io/as-file local-path))
@@ -109,12 +109,12 @@
     ;; (println local-md5 remote-md5)
     ;; (println local-path remote-path)
     (when (or (not remote-md5) (not= local-md5 remote-md5))
-      (shell/copy-with-progress local-path host-string remote-path progress-bar)
+      (println (format "Transfering %s to %s:%s" local-path host-string remote-path))
+      (scp/scp-to session local-path remote-path :mode 0775 :progress-fn progress-bar)
       (println)
-      (run (format "chmod a+x \"%s\"" remote-path)))))
-
-(defn push
-  [{:keys [md5sum]} session local-path remote-path]
-
+      (comment
+        (shell/copy-with-progress local-path host-string remote-path progress-bar)
+        (println)
+        (run (format "chmod a+x \"%s\"" remote-path)))))
 
   )
