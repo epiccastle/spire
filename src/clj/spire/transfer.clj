@@ -6,7 +6,8 @@
             [spire.known-hosts :as known-hosts]
             [digest :as digest]
             [clojure.java.io :as io]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [edamame.core :as edamame])
   (:import [com.jcraft.jsch JSch]))
 
 (defn- make-run [ssh-runner]
@@ -48,12 +49,14 @@
           commands (probe/commands runner)
           local-spire (utils/which-spire)
           local-spire-digest (digest/md5 (io/as-file local-spire))
-          spire-dest (str "/tmp/spire-" local-spire-digest)
+          spire-dest (str "/tmp/spire-" local-spire-digest)]
+      (utils/push commands host-string runner session local-spire spire-dest)
 
-          ;;result (utils/push commands proc host-string local-spire spire-dest)
-          ]
-      (.disconnect session)
-      commands)
+      (let [result (runner (format "%s --server" spire-dest)
+                           (pr-str line)
+                           "" {})]
+        (.disconnect session)
+        (update result :out edamame/parse-string)))
     ))
 
 (defmacro ssh [host-string & body]
