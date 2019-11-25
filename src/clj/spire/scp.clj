@@ -8,8 +8,10 @@
 
 ;; https://web.archive.org/web/20170215184048/https://blogs.oracle.com/janp/entry/how_the_scp_protocol_works
 
-(def debug println)
-(def debugf (comp println format))
+;; (def debug println)
+;; (def debugf (comp println format))
+(defmacro debug [& args])
+(defmacro debugf [& args])
 
 (defn- scp-send-ack
   "Send acknowledgement to the specified output stream"
@@ -35,7 +37,7 @@
 (defn- scp-copy-file
   "Send acknowledgement to the specified output stream"
   [^OutputStream send ^InputStream recv ^File file
-   {:keys [mode buffer-size preserve]
+   {:keys [mode buffer-size preserve progress-fn]
     :or {mode 0644 buffer-size 1024 preserve false}}]
 
   (when preserve
@@ -46,7 +48,28 @@
    send recv
    (format "C%04o %d %s" mode (.length file) (.getName file)))
   (debugf "Sending %s" (.getAbsolutePath file))
-  (io/copy file send :buffer-size buffer-size)
+  (if progress-fn
+    (let [size (.length file)
+          input-stream (io/input-stream file)
+          chunk-size (* 1024 32)
+          chunk (byte-array chunk-size)]
+      (loop [offset 0 context nil]
+        (let [bytes-read (.read input-stream chunk)
+              new-offset (+ bytes-read offset)]
+          (if (= bytes-read chunk-size)
+            ;; full chunk
+            (do
+              (io/copy chunk send)
+              (.flush send)
+              (recur new-offset (progress-fn new-offset size (float (/ new-offset size)) context)))
+
+            ;; last partial chunk
+            (do
+              (io/copy (byte-array (take bytes-read chunk)) send)
+              (.flush send)
+              (progress-fn new-offset size (float (/ new-offset size)) context))))))
+    ;; no progress callback
+    (io/copy file send :buffer-size buffer-size))
   (scp-send-ack send)
   (debug "Receiving ACK after send")
   (scp-receive-ack recv))
@@ -91,7 +114,7 @@
    :preserve   flag for preserving mode, mtime and atime. atime is not available
                in java, so is set to mtime. mode is not readable in java."
   [session local-paths remote-path
-   & {:keys [username password port mode dir-mode recursive preserve] :as opts}]
+   & {:keys [username password port mode dir-mode recursive preserve progress-fn] :as opts}]
   (let [local-paths (if (sequential? local-paths) local-paths [local-paths])
         files (scp-files local-paths recursive)]
     (let [[^PipedInputStream in
@@ -101,8 +124,7 @@
           {:keys [^PipedInputStream out-stream]}
           (ssh/ssh-exec session cmd in :stream opts)
           recv out-stream]
-      (debugf
-       "scp-to %s %s" (string/join " " local-paths) remote-path)
+      (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)
       (debug "Receive initial ACK")
       (scp-receive-ack recv)
       (doseq [^File file files]
