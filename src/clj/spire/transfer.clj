@@ -6,29 +6,19 @@
             [spire.known-hosts :as known-hosts]
             [digest :as digest]
             [clojure.java.io :as io]
+            [clojure.java.shell :as shell]
             [clojure.string :as string]
             [edamame.core :as edamame])
   (:import [com.jcraft.jsch JSch]))
 
-(defn- make-run [ssh-runner]
-  (fn [command]
-    (let [{:keys [out exit]} (ssh-runner command "" "" {})]
-      (when (zero? exit)
-        (string/trim out)))))
+(defn read-until-newline [inputstream]
+  (loop [data []]
+    (let [c (.read inputstream)]
+      (if (= (int \newline) c)
+        (str (apply str (map char data)))
+        (recur (conj data c))))))
 
-(defn commands [ssh-runner]
-  (let [run (make-run ssh-runner)
-        which #(run (str "which " %))
-        paths {:md5sum (which "md5sum")
-               :crc32 (which "crc32")
-               :sha256sum (which "sha256sum")
-               :curl (which "curl")
-               :wget (which "wget")
-               :ping (which "ping")}]
-    paths)
-  )
-
-(defn ssh-line [host-string line]
+(defn ssh-line [host-string lines]
   (let [
         [username hostname] (ssh/split-host-string host-string)
         agent (JSch.)
