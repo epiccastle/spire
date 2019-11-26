@@ -3,7 +3,8 @@
             [clj-time.core :as time]
             [digest :as digest]
             [clojure.string :as string]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [clojure.java.shell :as shell]))
 
 (defn to-camelcase [s]
   (-> s
@@ -96,7 +97,7 @@
       executable)))
 
 (defn push
-  [{:keys [md5sum]} host-string runner session local-path remote-path]
+  [{{md5sum :md5sum} :paths} host-string runner session local-path remote-path]
   (let [run (fn [command]
                (let [{:keys [out exit]} (runner command "" "" {})]
                  (when (zero? exit)
@@ -111,3 +112,18 @@
       (println (format "Transfering %s to %s:%s" local-path host-string remote-path))
       (scp/scp-to session local-path remote-path :mode 0775 :progress-fn progress-bar)
       (println))))
+
+(defn compatible-arch? [{{:keys [processor]} :arch}]
+  (let [local-processor-arch (string/trim (:out (shell/sh "uname" "-p")))]
+    (= local-processor-arch processor)))
+
+(defn- escape-code [n]
+  (str "\033[" (or n 0) "m"))
+
+(def colour-map
+  {:red 31
+   :green 32
+   :yellow 33})
+
+(defn colour [& [colour-name]]
+  (escape-code (colour-map colour-name)))
