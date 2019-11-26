@@ -49,14 +49,13 @@
       (println "Version:" version)
 
       (:server options)
-      (do
-        (doseq [line (line-seq (java.io.BufferedReader. *in*))]
-          (try
-            (-> line evaluate prn)
-            (catch Exception e
-              (binding [*out* *err*]
-                (prn e)))))
-        (shutdown-agents))
+      (doseq [line (line-seq (java.io.BufferedReader. *in*))]
+        (try
+          (-> line evaluate prn)
+          (catch Exception e
+            (binding [*out* *err*]
+              (prn e)))))
+
 
       (:evaluate options)
       (->> options :evaluate evaluate puget/cprint)
@@ -66,4 +65,6 @@
 
       :else
       ;; repl
-      (puget/cprint 0))))
+      (puget/cprint 0))
+
+    (shutdown-agents)))
