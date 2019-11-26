@@ -36,18 +36,72 @@
       (.connect))
 
     (let [runner (partial ssh/ssh-exec session)
-          commands (probe/commands runner)
-          local-spire (utils/which-spire)
-          local-spire-digest (digest/md5 (io/as-file local-spire))
-          spire-dest (str "/tmp/spire-" local-spire-digest)]
-      (utils/push commands host-string runner session local-spire spire-dest)
+          facts (probe/facts runner)
+          compatible? (utils/compatible-arch? facts)
+          result (if-not compatible?
+                   (binding [*out* *err*]
+                     (println (str
+                               (utils/colour :red)
+                               (format "spire ssh error: %s machine has unsupported architecture/OS (%s %s)"
+                                       hostname
+                                       (get-in facts [:arch :processor])
+                                       (get-in facts [:arch :os]))
+                               (utils/colour))))
+                   (let [local-spire (utils/which-spire)
+                         local-spire-digest (digest/md5 (io/as-file local-spire))
+                         spire-dest (str "/tmp/spire-" local-spire-digest)]
+                     (utils/push facts host-string runner session local-spire spire-dest)
 
-      (let [result (runner (format "%s --server" spire-dest)
-                           (pr-str line)
-                           "" {})]
-        (.disconnect session)
-        (update result :out edamame/parse-string)))
-    ))
+                     ;;(println "starting")
+                     (let [write-stream (java.io.PipedOutputStream.)
+                           in-stream (java.io.PipedInputStream. write-stream)
+                           result (runner (format "%s --server" spire-dest)
+                                              in-stream
+                                              :stream {})
+                           out-stream (:out-stream result)
+                           err-stream (:err-stream result)
+                           ]
+                       ;;(println "RESULT" in-stream)
+                       ;;(prn result)
+
+
+                       ;; feed forms, print status, gather responses
+                       (loop [forms lines
+                              results []]
+                         (let [form (first forms)
+                               remain (rest forms)]
+                           (pr form)
+                           (print " ... ")
+                           (.flush *out*)
+
+                           (let [;; result (runner (format "%s --server" spire-dest)
+                                 ;;                (pr-str form)
+                                 ;;                "" {})
+                                 ;; result (edamame/parse-string (:out result))
+
+                                 _ (.write write-stream (.getBytes (str (pr-str form) "\n") ssh/utf-8))
+                                 _ (.flush write-stream)
+
+                                 result (edamame/parse-string (read-until-newline out-stream))
+
+                                 ;;_ (println "read-result")
+                                 ;;_ (prn result)
+                                 ;;_ (println)
+                                 results (conj results result)
+                                 ]
+                             (if (zero? (:exit result))
+                               (println (str "[" (utils/colour :green) "ok" (utils/colour) "]"))
+                               (println (str "[" (utils/colour :red) "failed" (utils/colour) "]")))
+
+                             (if (seq remain)
+                               (recur remain results)
+                               results)
+
+                             #_(update result :out edamame/parse-string)
+
+                             ))))))]
+      (.disconnect session)
+      result)))
 
 (defmacro ssh [host-string & body]
-  `(ssh-line ~host-string '(vector ~@body)))
+  `(ssh-line ~host-string '[~@body]))
