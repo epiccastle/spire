@@ -9,11 +9,12 @@
             [clojure.java.shell :as shell]
             [clojure.string :as string]
             [edamame.core :as edamame])
-  (:import [com.jcraft.jsch JSch]))
+  (:import [com.jcraft.jsch JSch]
+           [java.io PipedInputStream PipedOutputStream]))
 
 (defn read-until-newline [inputstream]
   (loop [data []]
-    (let [c (.read inputstream)]
+    (let [c (.read ^PipedInputStream inputstream)]
       (if (= (int \newline) c)
         (str (apply str (map char data)))
         (recur (conj data c))))))
@@ -53,8 +54,8 @@
                      (utils/push facts host-string runner session local-spire spire-dest)
 
                      ;;(println "starting")
-                     (let [write-stream (java.io.PipedOutputStream.)
-                           in-stream (java.io.PipedInputStream. write-stream)
+                     (let [write-stream (PipedOutputStream.)
+                           in-stream (PipedInputStream. write-stream)
                            result (runner (format "%s --server" spire-dest)
                                               in-stream
                                               :stream {})
