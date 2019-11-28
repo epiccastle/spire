@@ -1,5 +1,6 @@
 (ns spire.namespaces
   (:require [spire.system :as system]
+            [spire.utils :as utils]
             [spire.transfer :as transfer]
             [spire.transport :as transport])
   )
@@ -44,11 +45,15 @@
                   'pop-thread-bindings clojure.core/pop-thread-bindings
                   ;;                  'var (with-meta @#'clojure.core/var {:sci/macro true})
                   'println println
+                  'prn prn
+                  'pr pr
                   }
    'clojure.set {'intersection clojure.set/intersection
                  }
    'spire.transport {'connect transport/connect
                      'disconnect transport/disconnect
                      '*sessions* #'transport/*sessions*
+                     'flush-out transport/flush-out
                      }
+   'spire.utils {'colour utils/colour}
    })
