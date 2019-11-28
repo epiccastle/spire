@@ -1,5 +1,6 @@
 (ns spire.transport
   (:require [spire.ssh :as ssh]
+            [spire.utils :as utils]
             [spire.ssh-agent :as ssh-agent]
             [spire.known-hosts :as known-hosts]
             [clojure.set :as set])
@@ -50,12 +51,19 @@
      (finally
        (disconnect ~host-string))))
 
+(defn flush-out []
+  (.flush *out*))
+
 (defmacro ssh-group [host-strings & body]
   `(try
      (doseq [host-string ~host-strings]
        (connect host-string))
      (binding [*sessions* ~host-strings]
-       ~@body)
+       ~@body
+       #_(for [form body]
+           `(do (pr '~form)
+                (flush-out)
+                ~form)))
      (finally
        (doseq [host-string ~host-strings]
          (disconnect host-string)))))
@@ -69,6 +77,7 @@
 
 (defn sh [cmd in out & [opts]]
   (let [opts (or opts {})
+        ;;_ (println *sessions*)
         channel-futs
         (->> *sessions*
              (map
@@ -79,9 +88,27 @@
                    :username username
                    :hostname hostname
                    :session session
-                   :fut (future (ssh/ssh-exec session cmd in out opts))})))
+                   :fut (future
+                          ;;(println host-string)
+                          (let [{:keys [exit] :as result} (ssh/ssh-exec session cmd in out opts)]
+                            (if (zero? exit)
+                              (print
+                               (str " "
+                                    (utils/colour :green)
+                                    "[" host-string "]"
+                                    (utils/colour)))
+                              (print
+                               (str " "
+                                    (utils/colour :red)
+                                    "[" host-string "]"
+                                    (utils/colour)))
+                              )
+                            (flush-out)
+                            result))})))
              doall)]
-    (->> channel-futs
-         (map (fn [{:keys [host-string fut] :as exec}]
-                [host-string @fut]))
-         (into {}))))
+    (let [result (->> channel-futs
+                      (map (fn [{:keys [host-string fut] :as exec}]
+                             [host-string @fut]))
+                      (into {}))]
+      (println)
+      result)))
