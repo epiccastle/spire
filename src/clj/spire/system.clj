@@ -1,52 +1,59 @@
 (ns spire.system
   (:require [clojure.java.shell :as shell]
+            [clojure.string :as string]
             [spire.transport :as transport]
             )
   )
 
-(def apt-env
-  {"DEBIAN_FRONTEND" "noninteractive"})
+(def apt-command "DEBIAN_FRONTEND=noninteractive apt-get")
 
-(defn make-env []
-  (into apt-env (System/getenv)))
+(defn apt-get [& args]
+  (transport/sh (string/join " " (concat [apt-command] args)) "" ""))
 
 (defmulti apt (fn [state & args] state))
 
 (defmethod apt :update [_]
-  #_(shell/sh "apt-get" "update" :env (make-env))
-  (transport/sh "DEBIAN_FRONTEND=noninteractive apt-get update" "" ""))
+  (print "(apt :update)")
+  (.flush *out*)
+  (apt-get "update"))
 
 (defmethod apt :upgrade [_]
-  (shell/sh "apt-get" "upgrade" "-y" :env (make-env)))
+  (print "(apt :upgrade)")
+  (.flush *out*)
+  (apt-get "upgrade" "-y"))
 
 (defmethod apt :dist-upgrade [_]
-  (shell/sh "apt-get" "dist-upgrade" "-y" :env (make-env)))
+  (apt-get "dist-upgrade" "-y"))
 
 (defmethod apt :autoremove [_]
-  (shell/sh "apt-get" "autoremove" "-y" :env (make-env)))
+  (apt-get "autoremove" "-y"))
 
 (defmethod apt :clean [_]
-  (shell/sh "apt-get" "clean" "-y" :env (make-env)))
+  (apt-get "clean" "-y"))
 
 (defmethod apt :install [_ package-or-packages]
+  (print (format "(apt :install %s)" (pr-str package-or-packages)))
+  (.flush *out*)
   (if (string? package-or-packages)
-    (shell/sh "apt-get" "install" "-y" package-or-packages :env (make-env))
-    (apply shell/sh "apt-get" "install" "-y" (concat package-or-packages [:env (make-env)]))))
+    (apt-get "install" "-y" package-or-packages)
+    (apt-get "install" "-y" (string/join " " package-or-packages))))
 
 (defmethod apt :remove [_ package-or-packages]
+  (print (format "(apt :remove %s)" (pr-str package-or-packages)))
+  (.flush *out*)
   (if (string? package-or-packages)
-    (shell/sh "apt-get" "remove" "-y" package-or-packages :env (make-env))
-    (apply shell/sh "apt-get" "remove" "-y" (concat package-or-packages [:env (make-env)]))))
+    (apt-get "remove" "-y" package-or-packages)
+    (apt-get "remove" "-y" (string/join " " package-or-packages))))
 
 (defmethod apt :purge [_ package-or-packages]
   (if (string? package-or-packages)
-    (shell/sh "apt-get" "purge" "-y" package-or-packages :env (make-env))
-    (apply shell/sh "apt-get" "purge" "-y" (concat package-or-packages [:env (make-env)]))))
+    (apt-get "purge" "-y" package-or-packages)
+    (apt-get "purge" "-y" (string/join " " package-or-packages))))
 
 (defmethod apt :download [_ package-or-packages]
   (if (string? package-or-packages)
-    (shell/sh "apt-get" "download" "-y" package-or-packages :env (make-env))
-    (apply shell/sh "apt-get" "download" "-y" (concat package-or-packages [:env (make-env)]))))
+    (apt-get "download" "-y" package-or-packages)
+    (apt-get "download" "-y" (string/join " " package-or-packages))))
 
 #_ (apt :download ["iputils-ping" "traceroute"])
 #_ (apt :autoremove)
