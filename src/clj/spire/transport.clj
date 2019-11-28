@@ -1,7 +1,8 @@
 (ns spire.transport
   (:require [spire.ssh :as ssh]
             [spire.ssh-agent :as ssh-agent]
-            [spire.known-hosts :as known-hosts])
+            [spire.known-hosts :as known-hosts]
+            [clojure.set :as set])
   (:import [com.jcraft.jsch JSch]))
 
 ;; all the open ssh connections
@@ -12,6 +13,8 @@
 
 ;; the currect execution sessions
 (def ^:dynamic *sessions* [])
+
+;;(defonce )
 
 (defn connect [host-string]
   (let [[username hostname] (ssh/split-host-string host-string)
@@ -40,12 +43,45 @@
              (dissoc s [username hostname])))))
 
 (defmacro ssh [host-string & body]
-  `(do
-     (binding [*sessions* [(connect ~host-string)]]
+  `(try
+     (connect ~host-string)
+     (binding [*sessions* ~[host-string]]
        ~@body)
-     (disconnect ~host-string)))
+     (finally
+       (disconnect ~host-string))))
+
+(defmacro ssh-group [host-strings & body]
+  `(try
+     (doseq [host-string ~host-strings]
+       (connect host-string))
+     (binding [*sessions* ~host-strings]
+       ~@body)
+     (finally
+       (doseq [host-string ~host-strings]
+         (disconnect host-string)))))
+
+(defmacro on [host-strings & body]
+  `(let [present-sessions# (into #{} @*sessions*)
+         sessions# (into #{} ~host-strings)
+         subset# (into [] (clojure.set/intersection present-sessions# sessions#))]
+     (binding [*sessions* subset#]
+       ~@body)))
 
 (defn sh [cmd in out & [opts]]
   (let [opts (or opts {})
-        channel-futs (doall (map #(future (ssh/ssh-exec % cmd in out opts)) *sessions*))]
-    (map deref channel-futs)))
+        channel-futs
+        (->> *sessions*
+             (map
+              (fn [host-string]
+                (let [[username hostname] (ssh/split-host-string host-string)
+                      session (get @state [username hostname])]
+                  {:host-string host-string
+                   :username username
+                   :hostname hostname
+                   :session session
+                   :fut (future (ssh/ssh-exec session cmd in out opts))})))
+             doall)]
+    (->> channel-futs
+         (map (fn [{:keys [host-string fut] :as exec}]
+                [host-string @fut]))
+         (into {}))))

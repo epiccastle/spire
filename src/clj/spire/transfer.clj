@@ -101,6 +101,7 @@
                              #_(update result :out edamame/parse-string)
 
                              ))))))]
+      (println "closing session")
       (.disconnect session)
       result)))
 

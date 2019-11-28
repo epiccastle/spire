@@ -1,5 +1,7 @@
 (ns spire.system
-  (:require [clojure.java.shell :as shell])
+  (:require [clojure.java.shell :as shell]
+            [spire.transport :as transport]
+            )
   )
 
 (def apt-env
@@ -11,7 +13,8 @@
 (defmulti apt (fn [state & args] state))
 
 (defmethod apt :update [_]
-  (shell/sh "apt-get" "update" :env (make-env)))
+  #_(shell/sh "apt-get" "update" :env (make-env))
+  (transport/sh "DEBIAN_FRONTEND=noninteractive apt-get update" "" ""))
 
 (defmethod apt :upgrade [_]
   (shell/sh "apt-get" "upgrade" "-y" :env (make-env)))
