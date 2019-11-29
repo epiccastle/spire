@@ -1,10 +1,12 @@
 (ns spire.core
-  (:require [spire.config :as config]
+  (:require [spire.state]
+            [spire.config :as config]
             [spire.namespaces :as namespaces]
             [puget.printer :as puget]
             [sci.core :as sci]
             [clojure.string :as string]
-            [clojure.tools.cli :as cli])
+            [clojure.tools.cli :as cli]
+            )
   (:gen-class))
 
 (defmacro embed [filename]

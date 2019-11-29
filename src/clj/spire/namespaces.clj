@@ -2,7 +2,9 @@
   (:require [spire.system :as system]
             [spire.utils :as utils]
             [spire.transfer :as transfer]
-            [spire.transport :as transport])
+            [spire.transport :as transport]
+            [spire.state :as state]
+            )
   )
 
 (defn binding*
@@ -57,9 +59,19 @@
                  }
    'spire.transport {'connect transport/connect
                      'disconnect transport/disconnect
-                     '*sessions* #'transport/*sessions*
+
                      'flush-out transport/flush-out
                      'on (with-meta @#'transport/on {:sci/macro true})
                      }
    'spire.utils {'colour utils/colour}
+   'spire.state {
+                 '*sessions* #'state/*sessions*
+                 }
+   ;; 'spire.system {
+   ;;                '*form* #'system/*form*
+   ;;                'apt* #'system/apt*
+   ;;                }
+   ;; 'spire.output {
+   ;;                'print-form spire.output/print-form
+   ;;                }
    })

@@ -1,6 +1,7 @@
 (ns spire.transport
   (:require [spire.ssh :as ssh]
             [spire.output :as output]
+            [spire.state :as state]
             [spire.ssh-agent :as ssh-agent]
             [spire.known-hosts :as known-hosts]
             [clojure.set :as set])
@@ -11,11 +12,6 @@
 ;; value => session
 (defonce state
   (atom {}))
-
-;; the currect execution sessions
-(def ^:dynamic *sessions* [])
-
-;;(defonce )
 
 (defn connect [host-string]
   (let [[username hostname] (ssh/split-host-string host-string)
@@ -46,7 +42,7 @@
 (defmacro ssh [host-string & body]
   `(try
      (connect ~host-string)
-     (binding [*sessions* ~[host-string]]
+     (binding [state/*sessions* ~[host-string]]
        ~@body)
      (finally
        (disconnect ~host-string))))
@@ -58,7 +54,7 @@
   `(try
      (doseq [host-string ~host-strings]
        (connect host-string))
-     (binding [*sessions* ~host-strings]
+     (binding [state/*sessions* ~host-strings]
        ~@body
        #_(for [form body]
            `(do (pr '~form)
@@ -72,7 +68,7 @@
   `(try
      (doseq [host-string ~host-strings]
        (connect host-string))
-     (binding [*sessions* ~host-strings]
+     (binding [state/*sessions* ~host-strings]
        (let [futs (for [host-string# ~host-strings]
                     (future
                       (on [host-string#]
@@ -86,17 +82,17 @@
          (disconnect host-string)))))
 
 (defmacro on [host-strings & body]
-  `(let [present-sessions# (into #{} @*sessions*)
+  `(let [present-sessions# (into #{} @state/*sessions*)
          sessions# (into #{} ~host-strings)
          subset# (into [] (clojure.set/intersection present-sessions# sessions#))]
-     (binding [*sessions* subset#]
+     (binding [state/*sessions* subset#]
        ~@body)))
 
 (defn psh [cmd in out & [opts]]
   (let [opts (or opts {})
         ;;_ (println *sessions*)
         channel-futs
-        (->> *sessions*
+        (->> state/*sessions*
              (map
               (fn [host-string]
                 (let [[username hostname] (ssh/split-host-string host-string)
@@ -137,7 +133,7 @@
 
 (defn pipelines [form func]
   (let [channel-futs
-        (->> *sessions*
+        (->> state/*sessions*
              (map
               (fn [host-string]
                 (let [[username hostname] (ssh/split-host-string host-string)
