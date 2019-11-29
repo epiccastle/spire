@@ -1,6 +1,6 @@
 (ns spire.transport
   (:require [spire.ssh :as ssh]
-            [spire.utils :as utils]
+            [spire.output :as output]
             [spire.ssh-agent :as ssh-agent]
             [spire.known-hosts :as known-hosts]
             [clojure.set :as set])
@@ -68,6 +68,23 @@
        (doseq [host-string ~host-strings]
          (disconnect host-string)))))
 
+(defmacro ssh-parallel [host-strings & body]
+  `(try
+     (doseq [host-string ~host-strings]
+       (connect host-string))
+     (binding [*sessions* ~host-strings]
+       (let [futs (for [host-string# ~host-strings]
+                    (future
+                      (on [host-string#]
+                          ~@body
+                          )))]
+         (doall
+          (map deref futs))
+         ))
+     (finally
+       (doseq [host-string ~host-strings]
+         (disconnect host-string)))))
+
 (defmacro on [host-strings & body]
   `(let [present-sessions# (into #{} @*sessions*)
          sessions# (into #{} ~host-strings)
@@ -118,7 +135,7 @@
       (println)
       result)))
 
-(defn pipelines [func]
+(defn pipelines [form func]
   (let [channel-futs
         (->> *sessions*
              (map
@@ -132,7 +149,8 @@
                     :fut (future
                            (let [{:keys [result] :as data}
                                  (func host-string username hostname session)]
-                             (print
+                             (output/print-result form result (str "[" host-string "]"))
+                             #_(print
                               (str " "
                                    (utils/colour
                                     (case result
@@ -142,12 +160,11 @@
                                       :blue))
                                    "[" host-string "]"
                                    (utils/colour)))
-                             (flush-out)
+                             #_(flush-out)
                              data))}])))
              (into {}))]
     (let [result (->> channel-futs
                       (map (fn [[host-string {:keys [fut]}]]
                              [host-string @fut]))
                       (into {}))]
-        (println)
         result)))

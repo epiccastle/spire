@@ -3,8 +3,11 @@
             [clojure.string :as string]
             [spire.transport :as transport]
             [spire.ssh :as ssh]
+            [spire.output :as output]
             )
   )
+
+(def ^:dynamic *form* nil)
 
 (def apt-command "DEBIAN_FRONTEND=noninteractive apt-get")
 
@@ -30,6 +33,7 @@
   #_(transport/psh (string/join " " (concat [apt-command] args)) "" "")
 
   (transport/pipelines
+   *form*
    (fn [host-string username hostname session]
      (let [{:keys [exit out] :as result}
            (ssh/ssh-exec session (string/join " " (concat [apt-command] args)) "" "UTF-8" {})]
@@ -53,6 +57,7 @@
 
 (defmethod apt* :update [_]
   (transport/pipelines
+   *form*
    (fn [_ _ _ session]
      (let [{:keys [exit out] :as result}
            (ssh/ssh-exec session "apt-get update" "" "UTF-8" {})]
@@ -74,6 +79,7 @@
 
 (defmethod apt* :upgrade [_]
   (transport/pipelines
+   *form*
    (fn [_ _ _ session]
      (let [{:keys [exit out] :as result}
            (ssh/ssh-exec session "apt-get upgrade" "" "UTF-8" {})]
@@ -99,6 +105,7 @@
                          package-or-packages
                          (string/join " " package-or-packages))]
     (transport/pipelines
+     *form*
      (fn [_ _ _ session]
        (let [{:keys [exit out] :as result}
              (ssh/ssh-exec session
@@ -132,6 +139,7 @@
                          package-or-packages
                          (string/join " " package-or-packages))]
     (transport/pipelines
+     *form*
      (fn [_ _ _ session]
        (let [{:keys [exit out] :as result}
              (ssh/ssh-exec session
@@ -172,10 +180,9 @@
     (apt-get "download" "-y" (string/join " " package-or-packages))))
 
 (defn apt [& args]
-  (pr (concat '(apt) args))
-  (.flush *out*)
-  (apply apt* args)
-    )
+  (binding [*form* (concat '(apt) args)]
+    (output/print-form *form*)
+    (apply apt* args)))
 
 
 #_ (apt* :download ["iputils-ping" "traceroute"])

@@ -29,6 +29,7 @@
 
    'ssh (with-meta @#'transport/ssh {:sci/macro true})
    'ssh-group (with-meta @#'transport/ssh-group {:sci/macro true})
+   'ssh-parallel (with-meta @#'transport/ssh-parallel {:sci/macro true})
    'on (with-meta @#'transport/on {:sci/macro true})
 
    'binding (with-meta @#'clojure.core/binding {:sci/macro true})
@@ -47,6 +48,10 @@
                   'println println
                   'prn prn
                   'pr pr
+
+                  'future (with-meta @#'clojure.core/future {:sci/macro true})
+                  'future-call clojure.core/future-call
+
                   }
    'clojure.set {'intersection clojure.set/intersection
                  }
@@ -54,6 +59,7 @@
                      'disconnect transport/disconnect
                      '*sessions* #'transport/*sessions*
                      'flush-out transport/flush-out
+                     'on (with-meta @#'transport/on {:sci/macro true})
                      }
    'spire.utils {'colour utils/colour}
    })
