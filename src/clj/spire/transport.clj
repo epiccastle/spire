@@ -75,7 +75,7 @@
      (binding [*sessions* subset#]
        ~@body)))
 
-(defn sh [cmd in out & [opts]]
+(defn psh [cmd in out & [opts]]
   (let [opts (or opts {})
         ;;_ (println *sessions*)
         channel-futs
@@ -84,31 +84,70 @@
               (fn [host-string]
                 (let [[username hostname] (ssh/split-host-string host-string)
                       session (get @state [username hostname])]
-                  {:host-string host-string
-                   :username username
-                   :hostname hostname
-                   :session session
-                   :fut (future
-                          ;;(println host-string)
-                          (let [{:keys [exit] :as result} (ssh/ssh-exec session cmd in out opts)]
-                            (if (zero? exit)
-                              (print
-                               (str " "
-                                    (utils/colour :green)
-                                    "[" host-string "]"
-                                    (utils/colour)))
-                              (print
-                               (str " "
-                                    (utils/colour :red)
-                                    "[" host-string "]"
-                                    (utils/colour)))
-                              )
-                            (flush-out)
-                            result))})))
-             doall)]
-    (let [result (->> channel-futs
+                  (println username hostname)
+                  [host-string
+                   {:username username
+                    :hostname hostname
+                    :session session
+                    :fut (future
+                           ;;(println host-string)
+                           (ssh/ssh-exec session cmd in out opts)
+
+                           #_(let [{:keys [result] :as data} (ssh/ssh-exec session cmd in out opts)]
+                               (println result)
+                               (println data)
+                               (print
+                                (str " "
+                                     (utils/colour
+                                      (case result
+                                        :ok :green
+                                        :changed :yellow
+                                        :failed :red
+                                        :blue))
+                                     "[" host-string "]"
+                                     (utils/colour)))
+
+                               (flush-out)
+                               data))}])))
+             (into {}))]
+    channel-futs
+    #_(let [result (->> channel-futs
                       (map (fn [{:keys [host-string fut] :as exec}]
                              [host-string @fut]))
                       (into {}))]
       (println)
       result)))
+
+(defn pipelines [func]
+  (let [channel-futs
+        (->> *sessions*
+             (map
+              (fn [host-string]
+                (let [[username hostname] (ssh/split-host-string host-string)
+                      session (get @state [username hostname])]
+                  [host-string
+                   {:username username
+                    :hostname hostname
+                    :session session
+                    :fut (future
+                           (let [{:keys [result] :as data}
+                                 (func host-string username hostname session)]
+                             (print
+                              (str " "
+                                   (utils/colour
+                                    (case result
+                                      :ok :green
+                                      :changed :yellow
+                                      :failed :red
+                                      :blue))
+                                   "[" host-string "]"
+                                   (utils/colour)))
+                             (flush-out)
+                             data))}])))
+             (into {}))]
+    (let [result (->> channel-futs
+                      (map (fn [[host-string {:keys [fut]}]]
+                             [host-string @fut]))
+                      (into {}))]
+        (println)
+        result)))

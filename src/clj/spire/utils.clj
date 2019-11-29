@@ -123,7 +123,8 @@
 (def colour-map
   {:red 31
    :green 32
-   :yellow 33})
+   :yellow 33
+   :blue 34})
 
 (defn colour [& [colour-name]]
   (escape-code (colour-map colour-name)))
