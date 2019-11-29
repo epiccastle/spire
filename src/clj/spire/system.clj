@@ -68,7 +68,7 @@
            (assoc result
                   :result (if changed? :changed :ok)
                   :out-lines (string/split out #"\n")
-                  :data data
+                  :update data
                   ))
          (assoc result :result :failed))))))
 
@@ -95,14 +95,71 @@
   (apt-get "clean" "-y"))
 
 (defmethod apt* :install [_ package-or-packages]
-  (if (string? package-or-packages)
-    (apt-get "install" "-y" package-or-packages)
-    (apt-get "install" "-y" (string/join " " package-or-packages))))
+  (let [package-string (if (string? package-or-packages)
+                         package-or-packages
+                         (string/join " " package-or-packages))]
+    (transport/pipelines
+     (fn [_ _ _ session]
+       (let [{:keys [exit out] :as result}
+             (ssh/ssh-exec session
+                           (str "DEBIAN_FRONTEND=noninteractive apt-get install -y " package-string)
+                           "" "UTF-8" {})]
+         (if (zero? exit)
+           (let [[_ upgraded installed removed]
+                 (re-find #"(\d+)\s*\w*\s*upgrade\w*, (\d+)\s*\w*\s*newly instal\w*, (\d+) to remove" out)
+
+                 upgraded (Integer/parseInt upgraded)
+                 installed (Integer/parseInt installed)
+                 removed (Integer/parseInt removed)
+                 ]
+             (assoc result
+                    :result (if (and (zero? upgraded)
+                                     (zero? installed)
+                                     (zero? removed))
+                              :ok
+                              :changed)
+                    :out-lines (string/split out #"\n")
+                    :packages {:upgraded upgraded
+                               :installed installed
+                               :removed removed}
+                    ))
+           (assoc result :result :failed))))
+     )
+    ))
 
 (defmethod apt* :remove [_ package-or-packages]
-  (if (string? package-or-packages)
-    (apt-get "remove" "-y" package-or-packages)
-    (apt-get "remove" "-y" (string/join " " package-or-packages))))
+  (let [package-string (if (string? package-or-packages)
+                         package-or-packages
+                         (string/join " " package-or-packages))]
+    (transport/pipelines
+     (fn [_ _ _ session]
+       (let [{:keys [exit out] :as result}
+             (ssh/ssh-exec session
+                           (str "DEBIAN_FRONTEND=noninteractive apt-get remove -y " package-string)
+                           "" "UTF-8" {})]
+         (if (zero? exit)
+           (let [[_ upgraded installed removed]
+                 (re-find #"(\d+)\s*\w*\s*upgrade\w*, (\d+)\s*\w*\s*newly instal\w*, (\d+) to remove" out)
+
+                 upgraded (Integer/parseInt upgraded)
+                 installed (Integer/parseInt installed)
+                 removed (Integer/parseInt removed)
+                 ]
+             (assoc result
+                    :result (if (and (zero? upgraded)
+                                     (zero? installed)
+                                     (zero? removed))
+                              :ok
+                              :changed)
+                    :out-lines (string/split out #"\n")
+                    :packages {:upgraded upgraded
+                               :installed installed
+                               :removed removed}
+                    ))
+           (assoc result :result :failed))))
+     )
+    )
+  )
 
 (defmethod apt* :purge [_ package-or-packages]
   (if (string? package-or-packages)
