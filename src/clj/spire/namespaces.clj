@@ -4,6 +4,7 @@
             [spire.transfer :as transfer]
             [spire.transport :as transport]
             [spire.state :as state]
+            [spire.module.line-in-file :as line-in-file]
             )
   )
 
@@ -21,6 +22,7 @@
 (def bindings
   {'apt system/apt
    'hostname system/hostname
+   'line-in-file line-in-file/line-in-file
    ;;'ln system/ln
    ;;'mkdir system/mkdir
 
