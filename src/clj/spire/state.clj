@@ -18,3 +18,8 @@
 ;; this will be the complete set of hosts to operate on and will be
 ;; the same in parallel or lockstep modes
 (def ^:dynamic *connections* [])
+
+;; threadlocal *form* holds:
+;; the unevaluated clojure form that is presently executing
+;; used to print updates on progress to the output
+(def ^:dynamic *form* nil)

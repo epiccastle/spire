@@ -96,7 +96,7 @@
              (into {}))]
     channel-futs))
 
-(defn pipelines [form func]
+(defn pipelines [func]
   (let [channel-futs
         (->> state/*sessions*
              (map
@@ -110,7 +110,7 @@
                     :fut (future
                            (let [{:keys [result] :as data}
                                  (func host-string username hostname session)]
-                             (output/print-result form result host-string)
+                             (output/print-result result host-string)
                              data))}])))
              (into {}))]
     (->> channel-futs

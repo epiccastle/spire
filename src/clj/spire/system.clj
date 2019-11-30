@@ -4,10 +4,9 @@
             [spire.transport :as transport]
             [spire.ssh :as ssh]
             [spire.output :as output]
+            [spire.state :as state]
             )
   )
-
-(def ^:dynamic *form* nil)
 
 (def apt-command "DEBIAN_FRONTEND=noninteractive apt-get")
 
@@ -30,10 +29,7 @@
       result)))
 
 (defn apt-get [& args]
-  #_(transport/psh (string/join " " (concat [apt-command] args)) "" "")
-
   (transport/pipelines
-   *form*
    (fn [host-string username hostname session]
      (let [{:keys [exit out] :as result}
            (ssh/ssh-exec session (string/join " " (concat [apt-command] args)) "" "UTF-8" {})]
@@ -57,7 +53,6 @@
 
 (defmethod apt* :update [_]
   (transport/pipelines
-   *form*
    (fn [_ _ _ session]
      (let [{:keys [exit out] :as result}
            (ssh/ssh-exec session "apt-get update" "" "UTF-8" {})]
@@ -68,18 +63,15 @@
                          (filter #(re-find #"^\w+:\d+\s+" %))
                          (mapv process-apt-update-line))
                         )
-               changed? (some #(= % :get) (map :method data))
-               ]
+               changed? (some #(= % :get) (map :method data))]
            (assoc result
                   :result (if changed? :changed :ok)
                   :out-lines (string/split out #"\n")
-                  :update data
-                  ))
+                  :update data))
          (assoc result :result :failed))))))
 
 (defmethod apt* :upgrade [_]
   (transport/pipelines
-   *form*
    (fn [_ _ _ session]
      (let [{:keys [exit out] :as result}
            (ssh/ssh-exec session "apt-get upgrade" "" "UTF-8" {})]
@@ -88,8 +80,7 @@
                 :result :ok
                 :out-lines (string/split out #"\n")
                 )
-         (assoc result :result :failed))))
-   ))
+         (assoc result :result :failed))))))
 
 (defmethod apt* :dist-upgrade [_]
   (apt-get "dist-upgrade" "-y"))
@@ -105,7 +96,6 @@
                          package-or-packages
                          (string/join " " package-or-packages))]
     (transport/pipelines
-     *form*
      (fn [_ _ _ session]
        (let [{:keys [exit out] :as result}
              (ssh/ssh-exec session
@@ -128,18 +118,14 @@
                     :out-lines (string/split out #"\n")
                     :packages {:upgraded upgraded
                                :installed installed
-                               :removed removed}
-                    ))
-           (assoc result :result :failed))))
-     )
-    ))
+                               :removed removed}))
+           (assoc result :result :failed)))))))
 
 (defmethod apt* :remove [_ package-or-packages]
   (let [package-string (if (string? package-or-packages)
                          package-or-packages
                          (string/join " " package-or-packages))]
     (transport/pipelines
-     *form*
      (fn [_ _ _ session]
        (let [{:keys [exit out] :as result}
              (ssh/ssh-exec session
@@ -151,8 +137,7 @@
 
                  upgraded (Integer/parseInt upgraded)
                  installed (Integer/parseInt installed)
-                 removed (Integer/parseInt removed)
-                 ]
+                 removed (Integer/parseInt removed)]
              (assoc result
                     :result (if (and (zero? upgraded)
                                      (zero? installed)
@@ -162,12 +147,8 @@
                     :out-lines (string/split out #"\n")
                     :packages {:upgraded upgraded
                                :installed installed
-                               :removed removed}
-                    ))
-           (assoc result :result :failed))))
-     )
-    )
-  )
+                               :removed removed}))
+           (assoc result :result :failed)))))))
 
 (defmethod apt* :purge [_ package-or-packages]
   (if (string? package-or-packages)
@@ -180,10 +161,9 @@
     (apt-get "download" "-y" (string/join " " package-or-packages))))
 
 (defn apt [& args]
-  (binding [*form* (concat '(apt) args)]
-    (output/print-form *form*)
+  (binding [state/*form* (concat '(apt) args)]
+    (output/print-form state/*form*)
     (apply apt* args)))
-
 
 #_ (apt* :download ["iputils-ping" "traceroute"])
 #_ (apt* :autoremove)

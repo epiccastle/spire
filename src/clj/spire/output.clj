@@ -105,17 +105,13 @@
                       :connections state/*connections*
                       :results []})))))
 
-(defn print-result [form result host-string]
+(defn print-result [result host-string]
   (swap! state
          (fn [s]
-           ;; (println "1" s)
-           ;; (println "c" form result host-string)
-           ;; (println "f" (find-first-form-missing-hoststring-index s form host-string))
            (update
             s
-            (find-first-form-missing-hoststring-index s form host-string)
+            (find-first-form-missing-hoststring-index s state/*form* host-string)
             (fn [{:keys [width results] :as data}]
-              ;;(println "assoc:" data)
               (assoc data
                      :width (+ width (count host-string) 1)
                      :results (conj results
