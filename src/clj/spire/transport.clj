@@ -7,11 +7,6 @@
             [clojure.set :as set])
   (:import [com.jcraft.jsch JSch]))
 
-;; all the open ssh connections
-;; keys => [username hostname]
-;; value => session
-(defonce state
-  (atom {}))
 
 (defn connect [host-string]
   (let [[username hostname] (ssh/split-host-string host-string)
@@ -27,12 +22,12 @@
       (.setUserInfo user-info)
       (.connect))
 
-    (swap! state assoc [username hostname] session)
+    (swap! state/ssh-connections assoc [username hostname] session)
     session))
 
 (defn disconnect [host-string]
   (let [[username hostname] (ssh/split-host-string host-string)]
-    (swap! state
+    (swap! state/ssh-connections
            (fn [s]
              (-> s
                  (get [username hostname])
@@ -91,15 +86,13 @@
              (map
               (fn [host-string]
                 (let [[username hostname] (ssh/split-host-string host-string)
-                      session (get @state [username hostname])]
+                      session (get @state/ssh-connections [username hostname])]
                   (println username hostname)
                   [host-string
                    {:username username
                     :hostname hostname
                     :session session
-                    :fut (future
-                           ;;(println host-string)
-                           (ssh/ssh-exec session cmd in out opts))}])))
+                    :fut (future (ssh/ssh-exec session cmd in out opts))}])))
              (into {}))]
     channel-futs))
 
@@ -109,7 +102,7 @@
              (map
               (fn [host-string]
                 (let [[username hostname] (ssh/split-host-string host-string)
-                      session (get @state [username hostname])]
+                      session (get @state/ssh-connections [username hostname])]
                   [host-string
                    {:username username
                     :hostname hostname
@@ -120,8 +113,7 @@
                              (output/print-result form result host-string)
                              data))}])))
              (into {}))]
-    (let [result (->> channel-futs
-                      (map (fn [[host-string {:keys [fut]}]]
-                             [host-string @fut]))
-                      (into {}))]
-        result)))
+    (->> channel-futs
+         (map (fn [[host-string {:keys [fut]}]]
+                [host-string @fut]))
+         (into {}))))
