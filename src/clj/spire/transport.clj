@@ -56,11 +56,7 @@
        (connect host-string))
      (binding [state/*sessions* ~host-strings
                state/*connections* ~host-strings]
-       ~@body
-       #_(for [form body]
-           `(do (pr '~form)
-                (flush-out)
-                ~form)))
+       ~@body)
      (finally
        (doseq [host-string ~host-strings]
          (disconnect host-string)))))
@@ -74,11 +70,9 @@
        (let [futs (for [host-string# ~host-strings]
                     (future
                       (on [host-string#]
-                          ~@body
-                          )))]
+                          ~@body)))]
          (doall
-          (map deref futs))
-         ))
+          (map deref futs))))
      (finally
        (doseq [host-string ~host-strings]
          (disconnect host-string)))))
@@ -92,7 +86,6 @@
 
 (defn psh [cmd in out & [opts]]
   (let [opts (or opts {})
-        ;;_ (println *sessions*)
         channel-futs
         (->> state/*sessions*
              (map
@@ -106,32 +99,9 @@
                     :session session
                     :fut (future
                            ;;(println host-string)
-                           (ssh/ssh-exec session cmd in out opts)
-
-                           #_(let [{:keys [result] :as data} (ssh/ssh-exec session cmd in out opts)]
-                               (println result)
-                               (println data)
-                               (print
-                                (str " "
-                                     (utils/colour
-                                      (case result
-                                        :ok :green
-                                        :changed :yellow
-                                        :failed :red
-                                        :blue))
-                                     "[" host-string "]"
-                                     (utils/colour)))
-
-                               (flush-out)
-                               data))}])))
+                           (ssh/ssh-exec session cmd in out opts))}])))
              (into {}))]
-    channel-futs
-    #_(let [result (->> channel-futs
-                      (map (fn [{:keys [host-string fut] :as exec}]
-                             [host-string @fut]))
-                      (into {}))]
-      (println)
-      result)))
+    channel-futs))
 
 (defn pipelines [form func]
   (let [channel-futs
@@ -148,17 +118,6 @@
                            (let [{:keys [result] :as data}
                                  (func host-string username hostname session)]
                              (output/print-result form result host-string)
-                             #_(print
-                              (str " "
-                                   (utils/colour
-                                    (case result
-                                      :ok :green
-                                      :changed :yellow
-                                      :failed :red
-                                      :blue))
-                                   "[" host-string "]"
-                                   (utils/colour)))
-                             #_(flush-out)
                              data))}])))
              (into {}))]
     (let [result (->> channel-futs
