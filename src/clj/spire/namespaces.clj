@@ -66,6 +66,7 @@
    'spire.utils {'colour utils/colour}
    'spire.state {
                  '*sessions* #'state/*sessions*
+                 '*connections* #'state/*connections*
                  }
    ;; 'spire.system {
    ;;                '*form* #'system/*form*

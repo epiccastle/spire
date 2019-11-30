@@ -54,7 +54,8 @@
   `(try
      (doseq [host-string ~host-strings]
        (connect host-string))
-     (binding [state/*sessions* ~host-strings]
+     (binding [state/*sessions* ~host-strings
+               state/*connections* ~host-strings]
        ~@body
        #_(for [form body]
            `(do (pr '~form)
@@ -68,7 +69,8 @@
   `(try
      (doseq [host-string ~host-strings]
        (connect host-string))
-     (binding [state/*sessions* ~host-strings]
+     (binding [state/*sessions* ~host-strings
+               state/*connections* ~host-strings]
        (let [futs (for [host-string# ~host-strings]
                     (future
                       (on [host-string#]
@@ -145,7 +147,7 @@
                     :fut (future
                            (let [{:keys [result] :as data}
                                  (func host-string username hostname session)]
-                             (output/print-result form result (str "[" host-string "]"))
+                             (output/print-result form result host-string)
                              #_(print
                               (str " "
                                    (utils/colour

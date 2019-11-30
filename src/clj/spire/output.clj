@@ -28,12 +28,24 @@
 (defn find-last-form [s form]
   (last (find-forms s form)))
 
-(defn find-last-form-index [s form]
+(defn find-form-indices [s form]
   (->> s
        (map-indexed (fn [n f]
                       (when (= form (:form f)) n)))
-       (filter identity)
-       last))
+       (filter identity)))
+
+(defn find-last-form-index [s form]
+  (last (find-form-indices s form)))
+
+(defn find-form-missing-hoststring-indices [s form host-string]
+  (let [indices (find-form-indices s form)]
+    (->> indices
+         (filter (fn [i]
+                   (let [returned (into #{} (map :host-string (get-in s [i :results])))]
+                     (not (returned host-string))))))))
+
+(defn find-first-form-missing-hoststring-index [s form host-string]
+  (first (find-form-missing-hoststring-indices s form host-string)))
 
 #_ (find-last-form-index
     [{:form :a}
@@ -54,11 +66,12 @@
            (prn form)))
 
        ;; adding to existing form
-       #_(let [height (count n)]
+       (let [height (count n)]
          (doseq [[new old] (map vector n o)]
            (when (not= (:results new) (:results old))
              (let [new-results (subvec (:results new) (count (:results old)))]
-               (doseq [{:keys [result string pos]} new-results]
+               ;;(println "new-results:" new-results)
+               (doseq [{:keys [result host-string pos]} new-results]
                  (print "\r")
                  (up (- height (:line new)))
                  (right pos)
@@ -70,7 +83,7 @@
                                 :changed :yellow
                                 :failed :red
                                 :blue))
-                             string
+                             host-string
                              (utils/colour)))
 
                  (print "\r")
@@ -80,31 +93,32 @@
 (defn print-form [form]
   (swap! state
          (fn [s]
-           (println "f"
-                    (find-last-form s form)
-                    (count (get-in s [(find-last-form-index s form) :results]))
-                    (get-in s [(find-last-form-index s form) :max-results]))
-           (if (and
-                (find-last-form s form)
-                (< (count (get-in s [(find-last-form-index s form) :results]))
-                   (get-in s [(find-last-form-index s form) :max-results])))
+           (if
+             (->> state/*sessions*
+                  (map #(find-first-form-missing-hoststring-index s form %))
+                  (every? nil?)
+                  not)
              s
              (conj s {:form form
                       :line (count s)
                       :width (count (pr-str form))
-                      :max-results (count state/*sessions*)
+                      :connections state/*connections*
                       :results []})))))
 
-(defn print-result [form result string]
+(defn print-result [form result host-string]
   (swap! state
          (fn [s]
+           ;; (println "1" s)
+           ;; (println "c" form result host-string)
+           ;; (println "f" (find-first-form-missing-hoststring-index s form host-string))
            (update
             s
-            (find-last-form-index s form)
+            (find-first-form-missing-hoststring-index s form host-string)
             (fn [{:keys [width results] :as data}]
+              ;;(println "assoc:" data)
               (assoc data
-                     :width (+ width (count string) 1)
+                     :width (+ width (count host-string) 1)
                      :results (conj results
                                     {:result result
-                                     :string string
+                                     :host-string host-string
                                      :pos width})))))))
