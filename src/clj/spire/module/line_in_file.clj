@@ -105,47 +105,6 @@ exit 1
     (assoc result
            :result :failed)))
 
-#_(defn make-command [path {:keys [regexp line]}]
-  (format "
-RE_PATTERN=\"%s\"
-FILE=\"%s\"
-LINE=\"%s\"
-LINE_COUNT=`wc -l \"$FILE\" | awk '{print $1}'`
-LINE_NUM=`sed -n \"$RE_PATTERN=\" \"$FILE\"`
-LINE_NUM_AFTER=$((LINE_NUM + 1))
-LINE_AFTER=`sed -n \"${LINE_NUM_AFTER}p\" \"$FILE\"`
-
-if [ $LINE_NUM -eq $LINE_COUNT ]; then
-    echo \"$LINE\" >> \"$FILE\"
-    echo \"changed\"
-    exit 0
-fi
-
-if [ \"$LINE_AFTER\" != \"$LINE\" ]; then
-    sed -i \"${LINE_NUM_AFTER}i${LINE}\" \"$FILE\"
-    echo \"changed\"
-    exit 0
-fi
-
-echo \"ok\"
-exit 0
-"
-          (format "%s=" (re-pattern-to-sed regexp))
-          (path-escape path)
-          (path-escape line)))
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ;;
 ;; (line-in-file :get ...)
