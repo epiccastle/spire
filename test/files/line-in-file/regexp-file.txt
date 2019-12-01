@@ -1,0 +1,20 @@
+This is line #1
+This is line #2 and it contains a \ character
+This is line #3
+This is line #4 and it contains a ' character
+This is line #5 and it contains a " character
+This is line #6
+This is line #7
+This is line #8
+This is line #9 and it contains a / character
+This is line #10
+This is line #11
+This is line #12 and it contains a . character
+This is line #13 and it contains a * character
+This is line #14
+This is line #15 and it contains a $ character
+This is line #16
+This is line #17
+This is line #18 and it contains a | character
+This is line #19 and it contains a [ character
+This is line #20
