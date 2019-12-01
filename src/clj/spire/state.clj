@@ -1,7 +1,7 @@
 (ns spire.state)
 
 ;; all the open ssh connections
-;; keys => [username hostname]
+;; keys => host-string
 ;; value => session
 (defonce ssh-connections
   (atom {}))

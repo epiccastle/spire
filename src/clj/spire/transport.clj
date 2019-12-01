@@ -22,17 +22,16 @@
       (.setUserInfo user-info)
       (.connect))
 
-    (swap! state/ssh-connections assoc [username hostname] session)
+    (swap! state/ssh-connections assoc host-string session)
     session))
 
 (defn disconnect [host-string]
-  (let [[username hostname] (ssh/split-host-string host-string)]
-    (swap! state/ssh-connections
-           (fn [s]
-             (-> s
-                 (get [username hostname])
-                 .disconnect)
-             (dissoc s [username hostname])))))
+  (swap! state/ssh-connections
+         (fn [s]
+           (-> s
+               (get host-string)
+               .disconnect)
+           (dissoc s host-string))))
 
 (defmacro ssh [host-string & body]
   `(try
@@ -85,13 +84,9 @@
         (->> state/*sessions*
              (map
               (fn [host-string]
-                (let [[username hostname] (ssh/split-host-string host-string)
-                      session (get @state/ssh-connections [username hostname])]
-                  (println username hostname)
+                (let [session (get @state/ssh-connections host-string)]
                   [host-string
-                   {:username username
-                    :hostname hostname
-                    :session session
+                   {:session session
                     :fut (future (ssh/ssh-exec session cmd in out opts))}])))
              (into {}))]
     channel-futs))
@@ -101,15 +96,12 @@
         (->> state/*sessions*
              (map
               (fn [host-string]
-                (let [[username hostname] (ssh/split-host-string host-string)
-                      session (get @state/ssh-connections [username hostname])]
+                (let [session (get @state/ssh-connections host-string)]
                   [host-string
-                   {:username username
-                    :hostname hostname
-                    :session session
+                   {:session session
                     :fut (future
                            (let [{:keys [result] :as data}
-                                 (func host-string username hostname session)]
+                                 (func host-string session)]
                              (output/print-result result host-string)
                              data))}])))
              (into {}))]

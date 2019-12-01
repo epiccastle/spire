@@ -30,8 +30,8 @@
 
 (defn apt-get [& args]
   (transport/pipelines
-   (fn [host-string username hostname session]
-     (let [{:keys [exit out] :as result}
+   (fn [_ session]
+     (let [{:keys [exit out err] :as result}
            (ssh/ssh-exec session (string/join " " (concat [apt-command] args)) "" "UTF-8" {})]
        (if (zero? exit)
          (let [data (-> out
@@ -45,16 +45,21 @@
            (assoc result
                   :result (if changed? :changed :ok)
                   :out-lines (string/split out #"\n")
+                  :err-lines (string/split err #"\n")
                   :data data
                   ))
-         (assoc result :result :failed))))))
+         (assoc result
+                :result :failed
+                :out-lines (string/split out #"\n")
+                :err-lines (string/split err #"\n")
+                ))))))
 
 (defmulti apt* (fn [state & args] state))
 
 (defmethod apt* :update [_]
   (transport/pipelines
-   (fn [_ _ _ session]
-     (let [{:keys [exit out] :as result}
+   (fn [_ session]
+     (let [{:keys [exit out err] :as result}
            (ssh/ssh-exec session "apt-get update" "" "UTF-8" {})]
        (if (zero? exit)
          (let [data (-> out
@@ -67,12 +72,17 @@
            (assoc result
                   :result (if changed? :changed :ok)
                   :out-lines (string/split out #"\n")
+                  :err-lines (string/split err #"\n")
                   :update data))
-         (assoc result :result :failed))))))
+         (assoc result
+                :result :failed
+                :out-lines (string/split out #"\n")
+                :err-lines (string/split err #"\n")
+                ))))))
 
 (defmethod apt* :upgrade [_]
   (transport/pipelines
-   (fn [_ _ _ session]
+   (fn [_ session]
      (let [{:keys [exit out] :as result}
            (ssh/ssh-exec session "apt-get upgrade" "" "UTF-8" {})]
        (if (zero? exit)
@@ -96,7 +106,7 @@
                          package-or-packages
                          (string/join " " package-or-packages))]
     (transport/pipelines
-     (fn [_ _ _ session]
+     (fn [_ session]
        (let [{:keys [exit out] :as result}
              (ssh/ssh-exec session
                            (str "DEBIAN_FRONTEND=noninteractive apt-get install -y " package-string)
@@ -126,7 +136,7 @@
                          package-or-packages
                          (string/join " " package-or-packages))]
     (transport/pipelines
-     (fn [_ _ _ session]
+     (fn [_ session]
        (let [{:keys [exit out] :as result}
              (ssh/ssh-exec session
                            (str "DEBIAN_FRONTEND=noninteractive apt-get remove -y " package-string)
