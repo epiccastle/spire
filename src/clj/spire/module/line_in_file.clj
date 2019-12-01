@@ -23,13 +23,89 @@
 (defn path-quote [path]
   (double-quote (path-escape path)))
 
+(def failed-result {:exit 1 :out "" :err "" :result :failed})
+
 (defmulti make-script (fn [command opts] command))
 
 (defmulti preflight (fn [command opts] command))
 
 (defmulti process-result (fn [command opts result] command))
 
-#_ (defn make-command [path {:keys [regexp line]}]
+;;
+;; (line-in-file :present ...)
+;;
+(defmethod preflight :present [_ {:keys [path regexp]}]
+  (cond
+    (empty? path)
+    (assoc failed-result
+           :exit 4
+           :err ":path must be specified")))
+
+(defmethod make-script :present [_ {:keys [path regexp line-num line]}]
+  (format "
+REGEX=\"%s\"
+FILE=\"%s\"
+LINENUM=\"%s\"
+LINE=\"%s\"
+
+if [ ! -f \"$FILE\" ]; then
+  echo -n \"File not found.\" 1>&2
+  exit 1
+fi
+
+if [ ! -r \"$FILE\" ]; then
+  echo -n \"File not readable.\" 1>&2
+  exit 1
+fi
+
+LINECOUNT=$(wc -l \"$FILE\" | awk '{print $1}')
+
+# :present by linenum
+if [ \"$LINENUM\" ]; then
+  if [ \"$LINENUM\" -gt \"$LINECOUNT\" ]; then
+    echo -n \"No line number $LINENUM in file.\" 1>&2
+    exit 2
+  elif [ \"$LINENUM\" -lt \"-$LINECOUNT\" ]; then
+    echo -n \"No line number $LINENUM in file.\" 1>&2
+    exit 2
+  elif [ \"$LINENUM\" -lt 0 ]; then
+    LINENUM=$((LINECOUNT + LINENUM + 1))
+  fi
+
+  sed -i \"${LINENUM}c${LINE}\" \"$FILE\"
+  exit 0
+fi
+
+# :present by regexp
+if [ \"$REGEX\" ]; then
+  LINENUM=$(sed -n \"${REGEX}=\" \"$FILE\" | head -1)
+  if [ \"$LINENUM\" ]; then
+    sed -i \"${LINENUM}c${LINE}\" \"$FILE\"
+    exit 0
+  else
+    echo -n \"no match\"
+    exit 0
+  fi
+fi
+
+echo \"script error\" 1>&2
+exit 1
+"
+          (some->> regexp re-pattern-to-sed)
+          (some->> path path-escape)
+          (str line-num)
+          (str line)))
+
+(defmethod process-result :present
+  [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
+  (if (zero? exit)
+    (assoc result
+           :exit 0
+           :result :ok)
+    (assoc result
+           :result :failed)))
+
+#_(defn make-command [path {:keys [regexp line]}]
   (format "
 RE_PATTERN=\"%s\"
 FILE=\"%s\"
@@ -71,10 +147,25 @@ exit 0
 
 
 
+;;
+;; (line-in-file :get ...)
+;;
+(defmethod preflight :get [_ {:keys [path line-num regexp]}]
+  (cond
+    (empty? path)
+    (assoc failed-result
+           :exit 4
+           :err ":path must be specified")
 
+    (and line-num regexp)
+    (assoc failed-result
+           :exit 3
+           :err "Cannot specify both :line-num and :regexp to :get")
 
-
-
+    (= 0 line-num)
+    (assoc failed-result
+           :exit 2
+           :err "No line number 0 in file. File line numbers are 1 offset.")))
 
 (defmethod make-script :get [_ {:keys [path line-num regexp]}]
   (format "
@@ -130,23 +221,7 @@ exit 1
 "
           (some->> regexp re-pattern-to-sed)
           (some->> path path-escape)
-          (str line-num)
-          )
-  )
-
-(def failed-result {:exit 1 :out "" :err "" :result :failed})
-
-(defmethod preflight :get [_ {:keys [path line-num regexp]}]
-  (cond
-    (and line-num regexp)
-    (assoc failed-result
-           :exit 3
-           :err "Cannot specify both :line-num and :regexp to :get")
-
-    (= 0 line-num)
-    (assoc failed-result
-           :exit 2
-           :err "No line number 0 in file. File line numbers are 1 offset.")))
+          (str line-num)))
 
 (defmethod process-result :get [_
                                 {:keys [path line-num regexp]}
