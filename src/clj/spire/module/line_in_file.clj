@@ -23,35 +23,206 @@
 (defn path-quote [path]
   (double-quote (path-escape path)))
 
-(defn line-in-file* [path & [{:keys [regexp line state after before]
-                               :or {state :present}}]]
-  ;; (println "path" path)
-  ;; (println "regexp" regexp)
-  ;; (println "line" line)
-  ;; (println "state" state)
-  ;; (println "after" after)
-  ;; (println "before" before)
+(defmulti make-script (fn [command opts] command))
 
-  (assert regexp "missing option :regexp")
+(defmulti preflight (fn [command opts] command))
 
+(defmulti process-result (fn [command opts result] command))
+
+#_ (defn make-command [path {:keys [regexp line]}]
+  (format "
+RE_PATTERN=\"%s\"
+FILE=\"%s\"
+LINE=\"%s\"
+LINE_COUNT=`wc -l \"$FILE\" | awk '{print $1}'`
+LINE_NUM=`sed -n \"$RE_PATTERN=\" \"$FILE\"`
+LINE_NUM_AFTER=$((LINE_NUM + 1))
+LINE_AFTER=`sed -n \"${LINE_NUM_AFTER}p\" \"$FILE\"`
+
+if [ $LINE_NUM -eq $LINE_COUNT ]; then
+    echo \"$LINE\" >> \"$FILE\"
+    echo \"changed\"
+    exit 0
+fi
+
+if [ \"$LINE_AFTER\" != \"$LINE\" ]; then
+    sed -i \"${LINE_NUM_AFTER}i${LINE}\" \"$FILE\"
+    echo \"changed\"
+    exit 0
+fi
+
+echo \"ok\"
+exit 0
+"
+          (format "%s=" (re-pattern-to-sed regexp))
+          (path-escape path)
+          (path-escape line)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(defmethod make-script :get [_ {:keys [path line-num regexp]}]
+  (format "
+REGEX=\"%s\"
+FILE=\"%s\"
+LINENUM=\"%s\"
+
+if [ ! -f \"$FILE\" ]; then
+  echo -n \"File not found.\" 1>&2
+  exit 1
+fi
+
+if [ ! -r \"$FILE\" ]; then
+  echo -n \"File not readable.\" 1>&2
+  exit 1
+fi
+
+LINECOUNT=$(wc -l \"$FILE\" | awk '{print $1}')
+
+# :get by linenum
+if [ \"$LINENUM\" ]; then
+  if [ \"$LINENUM\" -gt \"$LINECOUNT\" ]; then
+    echo -n \"No line number $LINENUM in file.\" 1>&2
+    exit 2
+  elif [ \"$LINENUM\" -lt \"-$LINECOUNT\" ]; then
+    echo -n \"No line number $LINENUM in file.\" 1>&2
+    exit 2
+  elif [ \"$LINENUM\" -lt 0 ]; then
+    LINENUM=$((LINECOUNT + LINENUM + 1))
+  fi
+  echo $LINENUM
+  sed -n \"${LINENUM}p\" \"$FILE\"
+  exit 0
+fi
+
+# :get by regexp
+if [ \"$REGEX\" ]; then
+  LINENUMS=$(sed -n \"${REGEX}=\" \"$FILE\")
+  if [ \"$LINENUMS\" ]; then
+    SED_LP_CMD=$(echo $LINENUMS | sed 's/ /p;/g' | sed 's/$/p;/g')
+    LINECONTENTS=$(sed -n \"$SED_LP_CMD\" \"$FILE\")
+    echo $LINENUMS
+    echo \"$LINECONTENTS\"
+    exit 0
+  else
+    echo -n \"no match\"
+    exit 0
+  fi
+fi
+
+echo \"script error\" 1>&2
+exit 1
+"
+          (some->> regexp re-pattern-to-sed)
+          (some->> path path-escape)
+          (str line-num)
+          )
+  )
+
+(def failed-result {:exit 1 :out "" :err "" :result :failed})
+
+(defmethod preflight :get [_ {:keys [path line-num regexp]}]
+  (cond
+    (and line-num regexp)
+    (assoc failed-result
+           :exit 3
+           :err "Cannot specify both :line-num and :regexp to :get")
+
+    (= 0 line-num)
+    (assoc failed-result
+           :exit 2
+           :err "No line number 0 in file. File line numbers are 1 offset.")))
+
+(defmethod process-result :get [_
+                                {:keys [path line-num regexp]}
+                                {:keys [out err exit] :as result}]
+  (if (zero? exit)
+    (if regexp
+      (if (= "no match" out)
+        {:exit 0
+         :result :ok
+         :line-num nil
+         :line nil
+         :line-nums []
+         :lines []
+         :matches {}}
+        (let [out-lines (string/split out #"\n")
+              line-nums (-> out-lines first (string/split #"\s+")
+                            (->> (map #(Integer/parseInt %)) (into [])))
+              lines (into [] (rest out-lines))]
+          {:exit 0
+           :result :ok
+           :line-num (last line-nums)
+           :line (last lines)
+           :line-nums line-nums
+           :lines lines
+           :matches (into {} (mapv vector line-nums lines))})
+        )
+      (let [out-lines (string/split out #"\n")
+            [line-num line] out-lines
+            line-num (Integer/parseInt line-num)]
+        {:exit 0
+         :result :ok
+         :line-num line-num
+         :line line
+         :line-nums [line-num]
+         :lines [line]
+         :matches {line-num line}}))
+    (assoc result
+           :result :failed)))
+
+(defn line-in-file*
+  "# line-in-file
+
+  Manage lines in text files
+
+  ## Overview
+
+   * Get lines from a file, by line number or matching regular expression
+   * Ensure lines are in a file
+   * Ensure lines are not in a file
+   * Works with single lines only. Does not insert/replace blocks of text
+
+  ## Usage
+
+   `(line-in-file command opts)`
+
+  `command` is `:get`, `:present` or `:absent`
+
+  ## Options
+
+  The following are the keys of the entries in the hashmap passed into `opts`
+
+  | Key    | Value  |
+  |--------|--------|
+  |path|The location on the remote system of the file to process|
+  |line-num|The line number (1 offset) in the file to get/replace|
+  "
+  [command & [{:keys [path regexp line state after before]
+               :or {state :present}
+               :as opts}]]
   (transport/pipelines
-   (fn [_ _ _ session]
-     (println (re-pattern-to-sed regexp))
-     (println (path-escape path))
-     (let [{:keys [out err exit] :as result}
-           (ssh/ssh-exec
-            session
-            (str "sed -n "
-                 (double-quote (format "%s=" (re-pattern-to-sed regexp)))
-                 " "
-                 (path-quote path))
-            "" "UTF-8" {})]
-       (if (zero? exit)
-         (assoc result
-                :result :ok
-                :out-lines (string/split out #"\n"))
-         (assoc result
-                :result :failed))))))
+   (fn [_ session]
+     (or
+      (preflight command opts)
+      (->>
+       (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
+       (process-result command opts))))))
 
 (defn line-in-file [& args]
   (binding [state/*form* (concat '(line-in-file) args)]
