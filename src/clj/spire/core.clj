@@ -2,6 +2,7 @@
   (:require [spire.state]
             [spire.config :as config]
             [spire.namespaces :as namespaces]
+            [spire.utils :as utils]
             [puget.printer :as puget]
             [sci.core :as sci]
             [clojure.string :as string]
@@ -9,10 +10,7 @@
             )
   (:gen-class))
 
-(defmacro embed [filename]
-  (slurp filename))
-
-(def version (embed ".meta/VERSION"))
+(def version (utils/embed ".meta/VERSION"))
 
 (def cli-options
   [

@@ -3,28 +3,8 @@
             [spire.state :as state]
             [spire.transport :as transport]
             [spire.ssh :as ssh]
-            [clojure.string :as string]
-            [clojure.java.io :as io]))
-
-(defmacro embed [fname]
-  (slurp (io/file "src/clj" (.getParent (io/file *file*)) fname)))
-
-(defn re-pattern-to-sed [re]
-  (-> re
-      .pattern
-      (string/replace "\"" "\"")
-      (string/replace "/" "\\/")
-      (str "/")
-      (->> (str "/"))))
-
-(defn path-escape [path]
-  (string/replace path "\"" "\\\""))
-
-(defn double-quote [string]
-  (str "\"" string "\""))
-
-(defn path-quote [path]
-  (double-quote (path-escape path)))
+            [spire.utils :as utils]
+            [clojure.string :as string]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
@@ -52,13 +32,13 @@
 
 (defmethod make-script :present [_ {:keys [path regexp line-num line after before]}]
   (format
-   (embed "line_in_file_present.sh")
-   (some->> regexp re-pattern-to-sed)
-   (some->> path path-escape)
+   (utils/embed-src "line_in_file_present.sh")
+   (some->> regexp utils/re-pattern-to-sed)
+   (some->> path utils/path-escape)
    (str line-num)
    (str line)
-   (str (some->> after re-pattern-to-sed))
-   (str (some->> before re-pattern-to-sed))
+   (str (some->> after utils/re-pattern-to-sed))
+   (str (some->> before utils/re-pattern-to-sed))
    ))
 
 (defmethod process-result :present
@@ -93,9 +73,9 @@
 
 (defmethod make-script :get [_ {:keys [path line-num regexp]}]
   (format
-   (embed "line_in_file_get.sh")
-   (some->> regexp re-pattern-to-sed)
-   (some->> path path-escape)
+   (utils/embed-src "line_in_file_get.sh")
+   (some->> regexp utils/re-pattern-to-sed)
+   (some->> path utils/path-escape)
    (str line-num)))
 
 (defmethod process-result :get [_

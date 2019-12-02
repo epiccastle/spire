@@ -128,3 +128,26 @@
 
 (defn colour [& [colour-name]]
   (escape-code (colour-map colour-name)))
+
+(defmacro embed [filename]
+  (slurp filename))
+
+(defmacro embed-src [fname]
+  (slurp (io/file "src/clj" (.getParent (io/file *file*)) fname)))
+
+(defn re-pattern-to-sed [re]
+  (-> re
+      .pattern
+      (string/replace "\"" "\"")
+      (string/replace "/" "\\/")
+      (str "/")
+      (->> (str "/"))))
+
+(defn path-escape [path]
+  (string/replace path "\"" "\\\""))
+
+(defn double-quote [string]
+  (str "\"" string "\""))
+
+(defn path-quote [path]
+  (double-quote (path-escape path)))
