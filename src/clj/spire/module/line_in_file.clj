@@ -3,7 +3,11 @@
             [spire.state :as state]
             [spire.transport :as transport]
             [spire.ssh :as ssh]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.java.io :as io]))
+
+(defmacro embed [fname]
+  (slurp (io/file "src/clj" (.getParent (io/file *file*)) fname)))
 
 (defn re-pattern-to-sed [re]
   (-> re
@@ -12,7 +16,6 @@
       (string/replace "/" "\\/")
       (str "/")
       (->> (str "/"))))
-
 
 (defn path-escape [path]
   (string/replace path "\"" "\\\""))
@@ -48,82 +51,15 @@
     ))
 
 (defmethod make-script :present [_ {:keys [path regexp line-num line after before]}]
-  (format "
-REGEX=\"%s\"
-FILE=\"%s\"
-LINENUM=\"%s\"
-LINE=\"%s\"
-AFTER=\"%s\"
-BEFORE=\"%s\"
-
-if [ ! -f \"$FILE\" ]; then
-  echo -n \"File not found.\" 1>&2
-  exit 1
-fi
-
-if [ ! -r \"$FILE\" ]; then
-  echo -n \"File not readable.\" 1>&2
-  exit 1
-fi
-
-LINECOUNT=$(wc -l \"$FILE\" | awk '{print $1}')
-
-# :present by linenum
-if [ \"$LINENUM\" ]; then
-  if [ \"$LINENUM\" -gt \"$LINECOUNT\" ]; then
-    echo -n \"No line number $LINENUM in file.\" 1>&2
-    exit 2
-  elif [ \"$LINENUM\" -lt \"-$LINECOUNT\" ]; then
-    echo -n \"No line number $LINENUM in file.\" 1>&2
-    exit 2
-  elif [ \"$LINENUM\" -lt 0 ]; then
-    LINENUM=$((LINECOUNT + LINENUM + 1))
-  fi
-
-  sed -i \"${LINENUM}c${LINE}\" \"$FILE\"
-  exit 0
-fi
-
-# :present by regexp
-if [ \"$REGEX\" ]; then
-  LINENUM=$(sed -n \"${REGEX}=\" \"$FILE\" | head -1)
-  if [ \"$LINENUM\" ]; then
-    sed -i \"${LINENUM}c${LINE}\" \"$FILE\"
-    exit 0
-  elif [ \"$AFTER\" ]; then
-    MATCHPOINT=$(sed -n \"${AFTER}=\" \"$FILE\" | tail -1)
-    if [ \"$MATCHPOINT\" ]; then
-      sed -i \"${MATCHPOINT}a${LINE}\" \"$FILE\"
-      exit 0
-    else
-      sed -i \"\\$a${LINE}\" \"$FILE\"
-      exit 0
-    fi
-  elif [ \"$BEFORE\" ]; then
-    MATCHPOINT=$(sed -n \"${BEFORE}=\" \"$FILE\" | tail -1)
-    if [ \"$MATCHPOINT\" ]; then
-      sed -i \"${MATCHPOINT}i${LINE}\" \"$FILE\"
-      exit 0
-    else
-      sed -i \"\\$a${LINE}\" \"$FILE\"
-      exit 0
-    fi
-  else
-    sed -i \"\\$a${LINE}\" \"$FILE\"
-    exit 0
-  fi
-fi
-
-echo \"script error\" 1>&2
-exit 1
-"
-          (some->> regexp re-pattern-to-sed)
-          (some->> path path-escape)
-          (str line-num)
-          (str line)
-          (str (some->> after re-pattern-to-sed))
-          (str (some->> before re-pattern-to-sed))
-          ))
+  (format
+   (embed "line_in_file_present.sh")
+   (some->> regexp re-pattern-to-sed)
+   (some->> path path-escape)
+   (str line-num)
+   (str line)
+   (str (some->> after re-pattern-to-sed))
+   (str (some->> before re-pattern-to-sed))
+   ))
 
 (defmethod process-result :present
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
@@ -156,7 +92,9 @@ exit 1
            :err "No line number 0 in file. File line numbers are 1 offset.")))
 
 (defmethod make-script :get [_ {:keys [path line-num regexp]}]
-  (format "
+  (format
+   (embed "line_in_file_get.sh")
+   #_ "
 REGEX=\"%s\"
 FILE=\"%s\"
 LINENUM=\"%s\"
