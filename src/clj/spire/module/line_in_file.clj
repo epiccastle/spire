@@ -34,19 +34,27 @@
 ;;
 ;; (line-in-file :present ...)
 ;;
-(defmethod preflight :present [_ {:keys [path regexp]}]
+(defmethod preflight :present [_ {:keys [path regexp after before]}]
   (cond
     (empty? path)
     (assoc failed-result
            :exit 4
-           :err ":path must be specified")))
+           :err ":path must be specified")
 
-(defmethod make-script :present [_ {:keys [path regexp line-num line]}]
+    (and after before)
+    (assoc failed-result
+           :exit 3
+           :err "Cannot specify both :after and :before to :present")
+    ))
+
+(defmethod make-script :present [_ {:keys [path regexp line-num line after before]}]
   (format "
 REGEX=\"%s\"
 FILE=\"%s\"
 LINENUM=\"%s\"
 LINE=\"%s\"
+AFTER=\"%s\"
+BEFORE=\"%s\"
 
 if [ ! -f \"$FILE\" ]; then
   echo -n \"File not found.\" 1>&2
@@ -82,8 +90,26 @@ if [ \"$REGEX\" ]; then
   if [ \"$LINENUM\" ]; then
     sed -i \"${LINENUM}c${LINE}\" \"$FILE\"
     exit 0
+  elif [ \"$AFTER\" ]; then
+    MATCHPOINT=$(sed -n \"${AFTER}=\" \"$FILE\" | tail -1)
+    if [ \"$MATCHPOINT\" ]; then
+      sed -i \"${MATCHPOINT}a${LINE}\" \"$FILE\"
+      exit 0
+    else
+      sed -i \"\\$a${LINE}\" \"$FILE\"
+      exit 0
+    fi
+  elif [ \"$BEFORE\" ]; then
+    MATCHPOINT=$(sed -n \"${BEFORE}=\" \"$FILE\" | tail -1)
+    if [ \"$MATCHPOINT\" ]; then
+      sed -i \"${MATCHPOINT}i${LINE}\" \"$FILE\"
+      exit 0
+    else
+      sed -i \"\\$a${LINE}\" \"$FILE\"
+      exit 0
+    fi
   else
-    echo -n \"no match\"
+    sed -i \"\\$a${LINE}\" \"$FILE\"
     exit 0
   fi
 fi
@@ -94,7 +120,10 @@ exit 1
           (some->> regexp re-pattern-to-sed)
           (some->> path path-escape)
           (str line-num)
-          (str line)))
+          (str line)
+          (str (some->> after re-pattern-to-sed))
+          (str (some->> before re-pattern-to-sed))
+          ))
 
 (defmethod process-result :present
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
