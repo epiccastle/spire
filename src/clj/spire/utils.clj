@@ -135,6 +135,11 @@
 (defmacro embed-src [fname]
   (slurp (io/file "src/clj" (.getParent (io/file *file*)) fname)))
 
+(defmacro make-script [fname vars]
+  `(str
+    (apply str (for [[k# v#] ~vars] (str (name k#) "=\"" v# "\"\n")))
+    (embed-src ~fname)))
+
 (defn re-pattern-to-sed [re]
   (-> re
       .pattern

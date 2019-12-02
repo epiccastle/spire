@@ -31,15 +31,14 @@
     ))
 
 (defmethod make-script :present [_ {:keys [path regexp line-num line after before]}]
-  (format
-   (utils/embed-src "line_in_file_present.sh")
-   (some->> regexp utils/re-pattern-to-sed)
-   (some->> path utils/path-escape)
-   (str line-num)
-   (str line)
-   (str (some->> after utils/re-pattern-to-sed))
-   (str (some->> before utils/re-pattern-to-sed))
-   ))
+  (utils/make-script
+   "line_in_file_present.sh"
+   {:REGEX (some->> regexp utils/re-pattern-to-sed)
+    :FILE (some->> path utils/path-escape)
+    :LINENUM line-num
+    :LINE line
+    :AFTER (some->> after utils/re-pattern-to-sed)
+    :BEFORE (some->> before utils/re-pattern-to-sed)}))
 
 (defmethod process-result :present
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
@@ -72,11 +71,11 @@
            :err "No line number 0 in file. File line numbers are 1 offset.")))
 
 (defmethod make-script :get [_ {:keys [path line-num regexp]}]
-  (format
-   (utils/embed-src "line_in_file_get.sh")
-   (some->> regexp utils/re-pattern-to-sed)
-   (some->> path utils/path-escape)
-   (str line-num)))
+  (utils/make-script
+   "line_in_file_get.sh"
+   {:REGEX (some->> regexp utils/re-pattern-to-sed)
+    :FILE (some->> path utils/path-escape)
+    :LINENUM line-num}))
 
 (defmethod process-result :get [_
                                 {:keys [path line-num regexp]}

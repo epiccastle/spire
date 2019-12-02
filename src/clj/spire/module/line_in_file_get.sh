@@ -1,7 +1,3 @@
-REGEX="%s"
-FILE="%s"
-LINENUM="%s"
-
 if [ ! -f "$FILE" ]; then
   echo -n "File not found." 1>&2
   exit 1
