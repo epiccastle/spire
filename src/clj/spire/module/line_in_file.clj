@@ -6,53 +6,6 @@
             [spire.utils :as utils]
             [clojure.string :as string]))
 
-(def documentation
-  {
-   :module "line-in-file"
-   :description
-   [
-    "This module ensures a particular line is in a text file, or can replace an existing line using a regular excpression."
-    "It can ensure a particular line is absent from a file."
-    "It can gather a line or lines that match a regular expression from a file for further processing."
-    "This is most useful when only a few lines need changing. It is more often better to template the entire file with the [template] module."]
-   :opts
-   {
-    :regexp
-    {
-     :description
-     [
-      "The regular expression to look for in every line of the file"
-      "In [command=present] mode, the pattern to replace if found. Replaces the last occurance of that pattern."
-      "In [command=absent] mode, the pattern of lines to remove. All occurances of that line will be removed."
-      "In [command=get] mode, the pattern of lines to bre returned. All occurances that match will be returned."
-      "If the regular expression is not matched, the line will be added to the file. [before] and [after] will allow you to control where in the file the line is inserted."
-      "If [before] or [after] is not used then ensure the regular expression matches both the initial state of the line as well as its state after replacement to ensure idempotence."]
-     :type :regexp
-     :aliases [:regex]
-     :added "0.1"}
-
-    :path
-    {
-     :description ["Path to the file"]
-     :type :path
-     :required true
-     :aliases [:dest :name]
-     :added "0.1"}
-
-    :after
-    {
-     :description
-     [
-      "Used with [state=present]"
-      "If specified, the line will be inserted after the last match of the specified regular expression."
-      "If the first match is required, use [first-match=true]"
-      "If the specified regular expression has no matches, the line will be appended to the end of the file."
-      "If a match is found for [regexp], insertion is skipped and this parameter is ignored"
-      "May not be used in conjunction with [:before]"]
-     :type :regexp
-     :added "0.1"}}}
-  )
-
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
 (defmulti make-script (fn [command opts] command))
@@ -163,34 +116,6 @@
            :result :failed)))
 
 (defn line-in-file*
-  "
-### line-in-file
-
-Manage lines in text files
-
-#### Overview
-
- * Get lines from a file, by line number or matching regular expression
- * Ensure lines are in a file
- * Ensure lines are not in a file
- * Works with single lines only. Does not insert/replace blocks of text
-
-#### Usage
-
- `(line-in-file command opts)`
-
- `command` is `:get`, `:present` or `:absent`
-
-#### Options
-
-The following are the keys of the entries in the hashmap passed into `opts`
-
-| Key      | Value                                                    |
-| -------- | -------------------------------------------------------- |
-| path     | The location on the remote system of the file to process |
-| line-num | The line number (1 offset) in the file to get/replace    |
-
-  "
   [command & [{:keys [path regexp line state after before]
                :or {state :present}
                :as opts}]]
@@ -208,3 +133,75 @@ The following are the keys of the entries in the hashmap passed into `opts`
   (binding [state/*form* (concat '(line-in-file) args)]
     (output/print-form state/*form*)
     (apply line-in-file* args)))
+
+(def documentation
+  {
+   :module "line-in-file"
+   :blurb "Manage lines in text files"
+   :description
+   [
+    "This module ensures a particular line is in a text file, or can replace an existing line using a regular excpression."
+    "It can ensure a particular line is absent from a file."
+    "It can gather a line or lines that match a regular expression from a file for further processing."
+    "This is most useful when only a few lines need changing. Often it is better to template the entire file with the `template` module."]
+   :form "(line-in-file mode options)"
+   :args
+   [
+    [{:arg "mode"
+      :desc "The mode to operate in. Should be one of `:get`, `:present` or `:absent`"
+      :values
+      [[:get "Return all lines matching the regular expression `:regexp` from the file. Also returns their line numbers."]
+       [:present "Ensure that the passed in `:line` is in the file optionally placing it in the specified position."]
+       [:absent "Ensure that any lines maching the regular expression `:regexp` are not in the file."]]}]
+    ]
+   :opts
+   {
+    :regexp
+    {
+     :description
+     [
+      "The regular expression to look for in every line of the file"
+      "In `:present` mode, the pattern to replace if found. Replaces the last occurance of that pattern."
+      "In `:absent` mode, the pattern of lines to remove. All occurances of that line will be removed."
+      "In `:get` mode, the pattern of lines to bre returned. All occurances that match will be returned."
+      "If the regular expression is not matched, the line will be added to the file. `:before` and `:after` will allow you to control where in the file the line is inserted."
+      "If `:before` or `:after` is not used then ensure the regular expression matches both the initial state of the line as well as its state after replacement to ensure idempotence."]
+     :aliases [:regex]
+     :type :regexp}
+
+    :path
+    {
+     :description ["Path to the file"]
+     :type :string
+     :required true
+     :aliases [:dest :name]}
+
+    :after
+    {
+     :description
+     [
+      "Used with `:state :present`"
+      "If specified, the line will be inserted after the last match of the specified regular expression."
+      "If the first match is required, use `:first-match true`"
+      "If the specified regular expression has no matches, the line will be appended to the end of the file."
+      "If a match is found for `:regexp`, insertion is skipped and this parameter is ignored"
+      "May not be used in conjunction with `:before`"]
+     :type :regexp}}
+
+   :examples
+   [
+    {:description "Replace localhost entry with a custom line"
+     :form '(line-in-file :present
+                          {:path "/etc/hosts"
+                           :regexp #"^127\.0\.0\.1"
+                           :line "127.0.0.1 localhost local myhostname"
+                           })}
+
+    {:description "Add a comment to the web port definition in /etc/services"
+     :form '(line-in-file :present
+                          {:path "/etc/services"
+                           :regexp #"^# http service port"
+                           :line "# http service port"
+                           })}
+    ]}
+  )
