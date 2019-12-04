@@ -106,11 +106,11 @@ keys.  All other option key pairs will be passed as SSH config options."
 
 (def
   ^{:dynamic true
-    :doc (str "The buffer size (in bytes) for the piped stream used to implement
+    :doc "The buffer size (in bytes) for the piped stream used to implement
     the :stream option for :out. If your ssh commands generate a high volume of
     output, then this buffer size can become a bottleneck. You might also
     increase the frequency with which you read the output stream if this is an
-    issue.")}
+    issue."}
   *piped-stream-buffer-size* (* 1024 10))
 
 (defn- streams-for-out
