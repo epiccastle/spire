@@ -49,6 +49,37 @@
     (assoc result
            :result :failed)))
 
+;;
+;; (line-in-file :absent ...)
+;;
+(defmethod preflight :absent [_ {:keys [path regexp line-num]}]
+  (cond
+    (empty? path)
+    (assoc failed-result
+           :exit 4
+           :err ":path must be specified")
+
+    (not (or regexp line-num))
+    (assoc failed-result
+           :exit 3
+           :err "must specify :regexp or :line-num")))
+
+(defmethod make-script :absent [_ {:keys [path regexp line-num]}]
+  (utils/make-script
+   "line_in_file_absent.sh"
+   {:REGEX (some->> regexp utils/re-pattern-to-sed)
+    :FILE (some->> path utils/path-escape)
+    :LINENUM line-num}))
+
+(defmethod process-result :absent
+  [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
+  (if (zero? exit)
+    (assoc result
+           :exit 0
+           :result :ok)
+    (assoc result
+           :result :failed)))
+
 
 ;;
 ;; (line-in-file :get ...)
