@@ -5,6 +5,7 @@
             [spire.ssh :as ssh]
             [spire.output :as output]
             [spire.state :as state]
+            [sci.core :as sci]
             )
   )
 
@@ -171,7 +172,7 @@
     (apt-get "download" "-y" (string/join " " package-or-packages))))
 
 (defn apt [& args]
-  (binding [state/*form* (concat '(apt) args)]
+  (sci/with-bindings [state/*form* (concat '(apt) args)]
     (output/print-form state/*form*)
     (apply apt* args)))
 
