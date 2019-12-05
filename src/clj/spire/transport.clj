@@ -6,7 +6,8 @@
             [spire.known-hosts :as known-hosts]
             [clojure.set :as set]
 
-            ;;[sci.impl.vars :as vars]
+            [sci.core :as sci]
+            [sci.impl.vars :as vars]
             )
   (:import [com.jcraft.jsch JSch]))
 
@@ -95,8 +96,8 @@
     channel-futs))
 
 (defmacro future* [body]
-  `(let [f# (~'binding-conveyor-fn (fn [] ~@body))]
-     (~'future-call f#))
+  `(let [f# (~'sci.impl.vars/binding-conveyor-fn (fn [] ~@body))]
+     (~'clojure.core/future-call f#))
   )
 
 (defn pipelines [func]

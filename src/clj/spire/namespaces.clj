@@ -71,8 +71,8 @@
                   'prn prn
                   'pr pr
 
-                  'future (with-meta @#'clojure.core/future {:sci/macro true})
-                  'future-call clojure.core/future-call
+                  ;; 'future (with-meta @#'clojure.core/future {:sci/macro true})
+                  ;; 'future-call clojure.core/future-call
 
                   }
    'clojure.set {'intersection clojure.set/intersection
