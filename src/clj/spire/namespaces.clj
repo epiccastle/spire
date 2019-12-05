@@ -37,6 +37,11 @@
    'ssh-parallel (with-meta @#'transport/ssh-parallel {:sci/macro true})
    'on (with-meta @#'transport/on {:sci/macro true})
 
+   'future (defn future*
+             [_ _ & body]
+             `(let [f# (~'binding-conveyor-fn (fn [] ~@body))]
+                (~'future-call f#)))
+
    ;;'binding (with-meta @#'clojure.core/binding {:sci/macro true})
    })
 

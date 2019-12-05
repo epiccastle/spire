@@ -7,6 +7,7 @@
             [sci.core :as sci]
             [clojure.string :as string]
             [clojure.tools.cli :as cli]
+            [sci.impl.vars :as vars]
             )
   (:gen-class))
 
@@ -68,3 +69,10 @@
       (puget/cprint 0))
 
     (shutdown-agents)))
+
+#_
+(do
+  ()
+  (sci/eval-string "(def myvar (vars/dynamic-var '*form* nil))"
+                   {:namespaces {'vars {'dynamic-var 1}}}
+                   ))

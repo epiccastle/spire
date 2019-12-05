@@ -5,9 +5,7 @@
             [spire.ssh :as ssh]
             [spire.output :as output]
             [spire.state :as state]
-            [sci.core :as sci]
-            )
-  )
+            [sci.core :as sci]))
 
 (def apt-command "DEBIAN_FRONTEND=noninteractive apt-get")
 

@@ -5,6 +5,7 @@
             [spire.ssh-agent :as ssh-agent]
             [spire.known-hosts :as known-hosts]
             [clojure.set :as set]
+
             ;;[sci.impl.vars :as vars]
             )
   (:import [com.jcraft.jsch JSch]))
@@ -93,6 +94,11 @@
              (into {}))]
     channel-futs))
 
+(defmacro future* [body]
+  `(let [f# (~'binding-conveyor-fn (fn [] ~@body))]
+     (~'future-call f#))
+  )
+
 (defn pipelines [func]
   (let [channel-futs
         (->> state/*sessions*
@@ -101,7 +107,7 @@
                 (let [session (get @state/ssh-connections host-string)]
                   [host-string
                    {:session session
-                    :fut (future
+                    :fut (future*
                            (let [{:keys [result] :as data}
                                  (func host-string session)]
                              (output/print-result result host-string)
