@@ -4,7 +4,9 @@
             [spire.state :as state]
             [spire.ssh-agent :as ssh-agent]
             [spire.known-hosts :as known-hosts]
-            [clojure.set :as set])
+            [clojure.set :as set]
+            ;;[sci.impl.vars :as vars]
+            )
   (:import [com.jcraft.jsch JSch]))
 
 

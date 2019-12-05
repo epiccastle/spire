@@ -5,6 +5,7 @@
             [spire.transport :as transport]
             [spire.state :as state]
             [spire.module.line-in-file :as line-in-file]
+            ;;[sci.impl.vars :as vars]
             )
   )
 
@@ -36,7 +37,7 @@
    'ssh-parallel (with-meta @#'transport/ssh-parallel {:sci/macro true})
    'on (with-meta @#'transport/on {:sci/macro true})
 
-   'binding (with-meta @#'clojure.core/binding {:sci/macro true})
+   ;;'binding (with-meta @#'clojure.core/binding {:sci/macro true})
    })
 
 (def namespaces
@@ -45,9 +46,21 @@
                     'ssh (with-meta @#'transfer/ssh {:sci/macro true})
 
                     }
-   'clojure.core {'binding (with-meta binding* {:sci/macro true})
-                  'push-thread-bindings clojure.core/push-thread-bindings
-                  'pop-thread-bindings clojure.core/pop-thread-bindings
+   ;; 'vars {'push-thread-bindings(with-meta @#'vars/push-thread-bindings {:sci/macro true}) }
+   'clojure.core {
+                  ;;'binding (with-meta binding* {:sci/macro true})
+
+                  ;;'binding (with-meta vars/binding {:sci/macro true})
+                  ;; {:type :sci/error, :row 1, :col 1, :message "sci.impl.vars.SciVar cannot be cast to clojure.lang.Var [at line 1, column 1]"}
+
+                  ;;'binding (with-meta @#'vars/with-bindings {:sci/macro true})
+                  ;; Exception in thread "main" clojure.lang.ExceptionInfo: Could not resolve symbol: vars/push-thread-bindings [at line , column ] {:type :sci/error, :row nil, :col nil}
+
+                  ;;'binding (with-meta @#'vars/with-bindings {:sci/macro true})
+                  ;;'binding (with-meta @#'vars/with-sci-bindings {:sci/macro true})
+
+                  ;;'push-thread-bindings clojure.core/push-thread-bindings
+                  ;;'pop-thread-bindings clojure.core/pop-thread-bindings
                   ;;                  'var (with-meta @#'clojure.core/var {:sci/macro true})
                   'println println
                   'prn prn
@@ -67,8 +80,10 @@
                      }
    'spire.utils {'colour utils/colour}
    'spire.state {
-                 '*sessions* #'state/*sessions*
-                 '*connections* #'state/*connections*
+                 ;;'*sessions* (vars/dynamic-var 'state/*sessions*)
+                 ;;'*connections* (vars/dynamic-var 'state/*connections*)
+                 '*sessions* state/*sessions*
+                 '*connections* state/*connections*
                  }
    ;; 'spire.system {
    ;;                '*form* #'system/*form*
