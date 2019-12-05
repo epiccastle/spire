@@ -74,7 +74,7 @@
          (disconnect host-string)))))
 
 (defmacro on [host-strings & body]
-  `(let [present-sessions# (into #{} @state/*sessions*)
+  `(let [present-sessions# (into #{} state/*sessions*)
          sessions# (into #{} ~host-strings)
          subset# (into [] (clojure.set/intersection present-sessions# sessions#))]
      (binding [state/*sessions* subset#]
