@@ -22,37 +22,47 @@ if [ "$LINENUM" ]; then
     LINENUM=$((LINECOUNT + LINENUM + 1))
   fi
 
-  sed -i "${LINENUM}c${LINE}" "$FILE"
-  exit 0
+  LINECONTENT=$(sed -n "${LINENUM}p" "$FILE")
+  if [ "$LINECONTENT" == "$LINE" ]; then
+      exit 0
+  else
+      sed -i "${LINENUM}c${LINE}" "$FILE"
+      exit -1
+  fi
 fi
 
 # :present by regexp
 if [ "$REGEX" ]; then
   LINENUM=$(sed -n "${REGEX}=" "$FILE" | head -1)
-  if [ "$LINENUM" ]; then
-    sed -i "${LINENUM}c${LINE}" "$FILE"
+  LINECONTENT=$(sed -n "${LINENUM}p" "$FILE")
+  if [ "$LINECONTENT" == "$LINE" ]; then
     exit 0
-  elif [ "$AFTER" ]; then
-    MATCHPOINT=$(sed -n "${AFTER}=" "$FILE" | tail -1)
-    if [ "$MATCHPOINT" ]; then
-      sed -i "${MATCHPOINT}a${LINE}" "$FILE"
-      exit 0
-    else
-      sed -i "\$a${LINE}" "$FILE"
-      exit 0
-    fi
-  elif [ "$BEFORE" ]; then
-    MATCHPOINT=$(sed -n "${BEFORE}=" "$FILE" | tail -1)
-    if [ "$MATCHPOINT" ]; then
-      sed -i "${MATCHPOINT}i${LINE}" "$FILE"
-      exit 0
-    else
-      sed -i "\$a${LINE}" "$FILE"
-      exit 0
-    fi
   else
-    sed -i "\$a${LINE}" "$FILE"
-    exit 0
+    if [ "$LINENUM" ]; then
+      sed -i "${LINENUM}c${LINE}" "$FILE"
+      exit -1
+    elif [ "$AFTER" ]; then
+      MATCHPOINT=$(sed -n "${AFTER}=" "$FILE" | tail -1)
+      if [ "$MATCHPOINT" ]; then
+        sed -i "${MATCHPOINT}a${LINE}" "$FILE"
+        exit -1
+      else
+        sed -i "\$a${LINE}" "$FILE"
+        exit -1
+      fi
+    elif [ "$BEFORE" ]; then
+      MATCHPOINT=$(sed -n "${BEFORE}=" "$FILE" | tail -1)
+      if [ "$MATCHPOINT" ]; then
+        sed -i "${MATCHPOINT}i${LINE}" "$FILE"
+        exit -1
+      else
+        sed -i "\$a${LINE}" "$FILE"
+        exit -1
+      fi
+    else
+      sed -i "\$a${LINE}" "$FILE"
+      exit -1
+    fi
   fi
 fi
 

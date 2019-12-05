@@ -23,7 +23,7 @@ if [ "$LINENUM" ]; then
   fi
 
   sed -i "${LINENUM}d${LINE}" "$FILE"
-  exit 0
+  exit -1
 fi
 
 # :absent by regexp
@@ -31,7 +31,7 @@ if [ "$REGEX" ]; then
   LINENUM=$(sed -n "${REGEX}=" "$FILE" | head -1)
   if [ "$LINENUM" ]; then
     sed -i "${LINENUM}d${LINE}" "$FILE"
-    exit 0
+    exit -1
   else
     exit 0
   fi

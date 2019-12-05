@@ -42,10 +42,18 @@
 
 (defmethod process-result :present
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
-  (if (zero? exit)
+  (cond
+    (zero? exit)
     (assoc result
            :exit 0
            :result :ok)
+
+    (= 255 exit)
+    (assoc result
+           :exit 0
+           :result :changed)
+
+    :else
     (assoc result
            :result :failed)))
 
@@ -73,10 +81,18 @@
 
 (defmethod process-result :absent
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
-  (if (zero? exit)
+  (cond
+    (zero? exit)
     (assoc result
            :exit 0
            :result :ok)
+
+    (= 255 exit)
+    (assoc result
+           :exit 0
+           :result :changed)
+
+    :else
     (assoc result
            :result :failed)))
 
