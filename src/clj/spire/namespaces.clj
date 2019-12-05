@@ -9,6 +9,10 @@
             )
   )
 
+#_ (defn internal-future [_ _ & body]
+  `(let [f# (~'clojure.core/binding-conveyor-fn (fn [] ~@body))]
+     (~'clojure.core/future-call f#)))
+
 (defn binding*
   "This macro only works with symbols that evaluate to vars themselves. See `*in*` and `*out*` below."
   [_ _ bindings & body]
@@ -69,8 +73,11 @@
                   'prn prn
                   'pr pr
 
+                  'future (with-meta transport/internal-future
+                            {:sci/macro true})
+
                   ;; 'future (with-meta @#'clojure.core/future {:sci/macro true})
-                  ;; 'future-call clojure.core/future-call
+                  'future-call clojure.core/future-call
 
                   }
    'clojure.set {'intersection clojure.set/intersection

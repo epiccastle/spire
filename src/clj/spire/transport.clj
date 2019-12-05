@@ -6,8 +6,6 @@
             [spire.known-hosts :as known-hosts]
             [clojure.set :as set]
 
-            [sci.core :as sci]
-            [sci.impl.vars :as vars]
             )
   (:import [com.jcraft.jsch JSch]))
 
@@ -76,7 +74,7 @@
          (disconnect host-string)))))
 
 (defmacro on [host-strings & body]
-  `(let [present-sessions# (into #{} state/*sessions*)
+  `(let [present-sessions# (into #{} @state/*sessions*)
          sessions# (into #{} ~host-strings)
          subset# (into [] (clojure.set/intersection present-sessions# sessions#))]
      (binding [state/*sessions* subset#]
@@ -85,7 +83,7 @@
 (defn psh [cmd in out & [opts]]
   (let [opts (or opts {})
         channel-futs
-        (->> state/*sessions*
+        (->> @state/*sessions*
              (map
               (fn [host-string]
                 (let [session (get @state/ssh-connections host-string)]
@@ -105,7 +103,7 @@
 
 (defn pipelines [func]
   (let [channel-futs
-        (->> state/*sessions*
+        (->> @state/*sessions*
              (map
               (fn [host-string]
                 (let [session (get @state/ssh-connections host-string)]

@@ -170,7 +170,7 @@
     (apt-get "download" "-y" (string/join " " package-or-packages))))
 
 (defn apt [& args]
-  (sci/with-bindings [state/*form* (concat '(apt) args)]
+  (sci/with-bindings {state/*form* (concat '(apt) args)}
     (output/print-form state/*form*)
     (apply apt* args)))
 
