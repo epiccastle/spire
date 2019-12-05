@@ -95,10 +95,13 @@
              (into {}))]
     channel-futs))
 
-(defmacro future* [body]
+(defn internal-future [_ _ & body]
+  `(let [f# (~'clojure.core/binding-conveyor-fn (fn [] ~@body))]
+     (~'clojure.core/future-call f#)))
+
+(defmacro external-future [& body]
   `(let [f# (~'sci.impl.vars/binding-conveyor-fn (fn [] ~@body))]
-     (~'clojure.core/future-call f#))
-  )
+     (~'clojure.core/future-call f#)))
 
 (defn pipelines [func]
   (let [channel-futs
@@ -108,7 +111,7 @@
                 (let [session (get @state/ssh-connections host-string)]
                   [host-string
                    {:session session
-                    :fut (future*
+                    :fut (external-future
                            (let [{:keys [result] :as data}
                                  (func host-string session)]
                              (output/print-result result host-string)
