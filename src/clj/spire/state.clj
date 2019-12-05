@@ -23,3 +23,6 @@
 ;; the unevaluated clojure form that is presently executing
 ;; used to print updates on progress to the output
 (def ^:dynamic *form* nil)
+
+;; some helper functions for use inside sci evaluated code
+(defn get-sessions [] *sessions*)

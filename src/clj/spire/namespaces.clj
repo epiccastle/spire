@@ -61,7 +61,6 @@
                  }
    'spire.transport {'connect transport/connect
                      'disconnect transport/disconnect
-
                      'flush-out transport/flush-out
                      'on (with-meta @#'transport/on {:sci/macro true})
                      }
@@ -69,12 +68,9 @@
    'spire.state {
                  '*sessions* #'state/*sessions*
                  '*connections* #'state/*connections*
+                 '*form* #'state/*form*
+                 'get-sessions #'state/get-sessions
+
                  }
-   ;; 'spire.system {
-   ;;                '*form* #'system/*form*
-   ;;                'apt* #'system/apt*
-   ;;                }
-   ;; 'spire.output {
-   ;;                'print-form spire.output/print-form
-   ;;                }
+
    })
