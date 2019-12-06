@@ -5,6 +5,7 @@
             [spire.transport :as transport]
             [spire.state :as state]
             [spire.module.line-in-file :as line-in-file]
+            [spire.module.copy :as copy]
             )
   )
 
@@ -23,6 +24,7 @@
   {'apt system/apt
    'hostname system/hostname
    'line-in-file line-in-file/line-in-file
+   'copy copy/copy
    ;;'ln system/ln
    ;;'mkdir system/mkdir
 
