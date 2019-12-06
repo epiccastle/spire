@@ -156,3 +156,12 @@
 
 (defn path-quote [path]
   (double-quote (path-escape path)))
+
+(defmacro defmodule [name module-args pipeline-args & body]
+  `(defn ~name [& args#]
+     (binding [spire.state/*form* (concat '(~name) args#)]
+       (spire.output/print-form spire.state/*form*)
+       (let [~module-args args#]
+         (spire.transport/pipelines
+          (fn ~pipeline-args
+            ~@body))))))
