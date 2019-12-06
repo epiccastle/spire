@@ -6,6 +6,10 @@
             [spire.utils :as utils]
             [clojure.string :as string]))
 
+;; defaults
+(def options-match-choices #{:first :last :all})
+(def options-match-default :first)
+
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
 (defmulti make-script (fn [command opts] command))
@@ -17,7 +21,7 @@
 ;;
 ;; (line-in-file :present ...)
 ;;
-(defmethod preflight :present [_ {:keys [path regexp after before]}]
+(defmethod preflight :present [_ {:keys [path regexp after before match insert-at]}]
   (cond
     (empty? path)
     (assoc failed-result
@@ -28,9 +32,20 @@
     (assoc failed-result
            :exit 3
            :err "Cannot specify both :after and :before to :present")
-    ))
 
-(defmethod make-script :present [_ {:keys [path regexp line-num line after before]}]
+    (not (options-match-choices (or match options-match-default)))
+    (assoc failed-result
+           :exit 3
+           :err (format ":match needs to be one of %s"
+                        (prn-str options-match-choices)))
+
+    (not (#{:bof :eof} (or insert-at :eof)))
+    (assoc failed-result
+           :exit 3
+           :err (format ":insert-at needs to be one of %s"
+                        (prn-str #{:bof :eof})))))
+
+(defmethod make-script :present [_ {:keys [path regexp line-num line after before match insert-at]}]
   (utils/make-script
    "line_in_file_present.sh"
    {:REGEX (some->> regexp utils/re-pattern-to-sed)
@@ -38,7 +53,12 @@
     :LINENUM line-num
     :LINE line
     :AFTER (some->> after utils/re-pattern-to-sed)
-    :BEFORE (some->> before utils/re-pattern-to-sed)}))
+    :BEFORE (some->> before utils/re-pattern-to-sed)
+    :SELECTOR (case (or match options-match-default)
+                :first "head -1"
+                :last "tail -1"
+                :all "cat")
+    :INSERTAT (some->> insert-at name)}))
 
 (defmethod process-result :present
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
@@ -100,7 +120,7 @@
 ;;
 ;; (line-in-file :get ...)
 ;;
-(defmethod preflight :get [_ {:keys [path line-num regexp]}]
+(defmethod preflight :get [_ {:keys [path line-num regexp match]}]
   (cond
     (empty? path)
     (assoc failed-result
@@ -112,17 +132,27 @@
            :exit 3
            :err "Cannot specify both :line-num and :regexp to :get")
 
+    (not (options-match-choices (or match options-match-default)))
+    (assoc failed-result
+           :exit 3
+           :err (format ":match needs to be one of %s"
+                        (prn-str options-match-choices)))
+
     (= 0 line-num)
     (assoc failed-result
            :exit 2
            :err "No line number 0 in file. File line numbers are 1 offset.")))
 
-(defmethod make-script :get [_ {:keys [path line-num regexp]}]
+(defmethod make-script :get [_ {:keys [path line-num regexp match]}]
   (utils/make-script
    "line_in_file_get.sh"
    {:REGEX (some->> regexp utils/re-pattern-to-sed)
     :FILE (some->> path utils/path-escape)
-    :LINENUM line-num}))
+    :LINENUM line-num
+    :SELECTOR (case (or match options-match-default)
+                :first "head -1"
+                :last "tail -1"
+                :all "cat")}))
 
 (defmethod process-result :get [_
                                 {:keys [path line-num regexp]}
@@ -147,7 +177,8 @@
            :line (last lines)
            :line-nums line-nums
            :lines lines
-           :matches (into {} (mapv vector line-nums lines))})
+           :matches (into {} (mapv vector line-nums lines))
+           })
         )
       (let [out-lines (string/split out #"\n")
             [line-num line] out-lines

@@ -28,7 +28,7 @@ fi
 
 # :get by regexp
 if [ "$REGEX" ]; then
-  LINENUMS=$(sed -n "${REGEX}=" "$FILE")
+  LINENUMS=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
   if [ "$LINENUMS" ]; then
     SED_LP_CMD=$(echo $LINENUMS | sed 's/ /p;/g' | sed 's/$/p;/g')
     LINECONTENTS=$(sed -n "$SED_LP_CMD" "$FILE")

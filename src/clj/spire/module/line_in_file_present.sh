@@ -8,7 +8,6 @@ if [ ! -r "$FILE" ]; then
   exit 1
 fi
 
-SELECTOR="head -1"
 LINECOUNT=$(wc -l "$FILE" | awk '{print $1}')
 
 # :present by linenum
@@ -25,44 +24,56 @@ if [ "$LINENUM" ]; then
 
   LINECONTENT=$(sed -n "${LINENUM}p" "$FILE")
   if [ "$LINECONTENT" == "$LINE" ]; then
-      exit 0
+    exit 0
   else
-      sed -i "${LINENUM}c${LINE}" "$FILE"
-      exit -1
+    sed -i "${LINENUM}c${LINE}" "$FILE"
+    exit -1
   fi
 fi
 
 # :present by regexp
 if [ "$REGEX" ]; then
-  LINENUM=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
-  LINECONTENT=$(sed -n "${LINENUM}p" "$FILE")
-  if [ "$LINECONTENT" == "$LINE" ]; then
-    exit 0
+  LINENUMS=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
+
+  if [ "$LINENUMS" ]; then
+    REVERSE=""
+    for i in ${LINENUMS}; do REVERSE="${i} ${REVERSE}"; done
+    EXIT=0
+    for LINENUM in $REVERSE; do
+      LINECONTENT=$(sed -n "${LINENUM}p" "$FILE")
+      if [ "$LINECONTENT" != "$LINE" ]; then
+        sed -i "${LINENUM}c${LINE}" "$FILE"
+        EXIT=-1
+      fi
+    done
+    exit $EXIT
   else
-    if [ "$LINENUM" ]; then
-      sed -i "${LINENUM}c${LINE}" "$FILE"
-      exit -1
-    elif [ "$AFTER" ]; then
-      MATCHPOINT=$(sed -n "${AFTER}=" "$FILE" | $SELECTOR)
-      if [ "$MATCHPOINT" ]; then
-        sed -i "${MATCHPOINT}a${LINE}" "$FILE"
-        exit -1
-      else
-        sed -i "\$a${LINE}" "$FILE"
-        exit -1
-      fi
+    if [ "$AFTER" ]; then
+      MATCHPOINTS=$(sed -n "${AFTER}=" "$FILE" | $SELECTOR)
+      REVERSE=""
+      for i in ${MATCHPOINTS}; do REVERSE="${i} ${REVERSE}"; done
+      EXIT=0
+      for LINENUM in $REVERSE; do
+        LINECONTENT=$(sed -n "$((LINENUM+1))p" "$FILE")
+        if [ "$LINECONTENT" != "$LINE" ]; then
+          sed -i "${LINENUM}a${LINE}" "$FILE"
+          EXIT=-1
+        fi
+      done
+      exit $EXIT
     elif [ "$BEFORE" ]; then
-      MATCHPOINT=$(sed -n "${BEFORE}=" "$FILE" | $SELECTOR)
-      if [ "$MATCHPOINT" ]; then
-        sed -i "${MATCHPOINT}i${LINE}" "$FILE"
-        exit -1
-      else
-        sed -i "\$a${LINE}" "$FILE"
-        exit -1
-      fi
-    else
-      sed -i "\$a${LINE}" "$FILE"
-      exit -1
+      MATCHPOINTS=$(sed -n "${BEFORE}=" "$FILE" | $SELECTOR)
+      REVERSE=""
+      for i in ${MATCHPOINTS}; do REVERSE="${i} ${REVERSE}"; done
+      EXIT=0
+      for LINENUM in $REVERSE; do
+        LINECONTENT=$(if [ $LINENUM -gt 1 ]; then sed -n "$((LINENUM-1))p" "$FILE"; fi)
+        if [ "$LINECONTENT" != "$LINE" ]; then
+          sed -i "${LINENUM}i${LINE}" "$FILE"
+          EXIT=-1
+        fi
+      done
+      exit $EXIT
     fi
   fi
 fi
