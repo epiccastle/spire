@@ -8,6 +8,7 @@ if [ ! -r "$FILE" ]; then
   exit 1
 fi
 
+SELECTOR="head -1"
 LINECOUNT=$(wc -l "$FILE" | awk '{print $1}')
 
 # :absent by linenum
@@ -28,7 +29,7 @@ fi
 
 # :absent by regexp
 if [ "$REGEX" ]; then
-  LINENUM=$(sed -n "${REGEX}=" "$FILE" | head -1)
+  LINENUM=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
   if [ "$LINENUM" ]; then
     sed -i "${LINENUM}d${LINE}" "$FILE"
     exit -1

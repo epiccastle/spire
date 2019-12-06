@@ -8,6 +8,7 @@ if [ ! -r "$FILE" ]; then
   exit 1
 fi
 
+SELECTOR="head -1"
 LINECOUNT=$(wc -l "$FILE" | awk '{print $1}')
 
 # :present by linenum
@@ -33,7 +34,7 @@ fi
 
 # :present by regexp
 if [ "$REGEX" ]; then
-  LINENUM=$(sed -n "${REGEX}=" "$FILE" | head -1)
+  LINENUM=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
   LINECONTENT=$(sed -n "${LINENUM}p" "$FILE")
   if [ "$LINECONTENT" == "$LINE" ]; then
     exit 0
@@ -42,7 +43,7 @@ if [ "$REGEX" ]; then
       sed -i "${LINENUM}c${LINE}" "$FILE"
       exit -1
     elif [ "$AFTER" ]; then
-      MATCHPOINT=$(sed -n "${AFTER}=" "$FILE" | tail -1)
+      MATCHPOINT=$(sed -n "${AFTER}=" "$FILE" | $SELECTOR)
       if [ "$MATCHPOINT" ]; then
         sed -i "${MATCHPOINT}a${LINE}" "$FILE"
         exit -1
@@ -51,7 +52,7 @@ if [ "$REGEX" ]; then
         exit -1
       fi
     elif [ "$BEFORE" ]; then
-      MATCHPOINT=$(sed -n "${BEFORE}=" "$FILE" | tail -1)
+      MATCHPOINT=$(sed -n "${BEFORE}=" "$FILE" | $SELECTOR)
       if [ "$MATCHPOINT" ]; then
         sed -i "${MATCHPOINT}i${LINE}" "$FILE"
         exit -1
