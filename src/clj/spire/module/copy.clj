@@ -12,5 +12,6 @@
   (scp/scp-to session src dest
               :progress-fn
               ;;(fn [& args] (apply println host-string args))
-              utils/progress-bar
+              ;;utils/progress-bar
+              (fn [& args] (output/print-progress host-string args))
               ))

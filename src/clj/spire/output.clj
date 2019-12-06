@@ -68,27 +68,47 @@
        ;; adding to existing form
        (let [height (count n)]
          (doseq [[new old] (map vector n o)]
-           (when (not= (:results new) (:results old))
+           (cond
+             (not= (:results new) (:results old))
              (let [new-results (subvec (:results new) (count (:results old)))]
                ;;(println "new-results:" new-results)
                (doseq [{:keys [result host-string pos]} new-results]
                  (print "\r")
-                 (up (- height (:line new)))
+                 (up (- height (:line new) (- (count (:copy-progress new)))))
                  (right pos)
 
-                 (print (str " "
-                             (utils/colour
-                              (case result
-                                :ok :green
-                                :changed :yellow
-                                :failed :red
-                                :blue))
-                             host-string
-                             (utils/colour)))
+                 (print
+                  (str " "
+                       (utils/colour
+                        (case result
+                          :ok :green
+                          :changed :yellow
+                          :failed :red
+                          :blue))
+                       host-string
+                       (utils/colour)))
 
                  (print "\r")
                  (.flush *out*)
-                 (down (- height (:line new))))))))))))
+                 (down (- height (:line new) (- (count (:copy-progress new)))))))
+
+             (not= (:copy-progress new) (:copy-progress old))
+             (let [old-copy (:copy-progress old)
+                   new-copy (:copy-progress new)
+                   old-count (count old-copy)
+                   new-count (count new-copy)
+                   max-host-string-length (apply max (map (fn [[h _]] (count h)) new-copy))
+                   ]
+               (when (pos? old-count) (up old-count))
+               (doseq [[host-string args] new-copy]
+                 ;;(println host-string)
+                 (println (utils/progress-bar-from-stats host-string max-host-string-length args))
+                 )
+
+
+               )
+
+             )))))))
 
 (defn print-form [form]
   (swap! state
@@ -99,11 +119,17 @@
                   (every? nil?)
                   not)
              s
-             (conj s {:form form
-                      :line (count s)
-                      :width (count (pr-str form))
-                      :connections state/*connections*
-                      :results []})))))
+             (let [cumulative-widths (concat [0] (reductions + (map (comp inc count) (butlast state/*connections*))))
+                   form-width (count (pr-str form))
+                   offsets (map #(+ % form-width) cumulative-widths)
+                   host-positions (->> (map vector state/*connections* offsets)
+                                       (into {}))]
+               (conj s {:form form
+                        :line (count s)
+                        :width (count (pr-str form))
+                        :positions host-positions
+                        :connections state/*connections*
+                        :results []}))))))
 
 (defn print-result [result host-string]
   (swap! state
@@ -111,10 +137,26 @@
            (update
             s
             (find-first-form-missing-hoststring-index s state/*form* host-string)
-            (fn [{:keys [width results] :as data}]
-              (assoc data
-                     :width (+ width (count host-string) 1)
-                     :results (conj results
-                                    {:result result
-                                     :host-string host-string
-                                     :pos width})))))))
+            (fn [{:keys [width positions results] :as data}]
+              (-> data
+                  ;;(update :copy-progress dissoc host-string)
+                  (assoc
+                   :width (+ width (count host-string) 1)
+                   :results (conj results
+                                  {:result result
+                                   :host-string host-string
+                                   :pos width
+                                   ;;:pos (positions host-string)
+                                   }
+                                  ))))))))
+
+(defn print-progress [host-string progress-args]
+  (let [{:keys [progress context]} (apply utils/progress-stats progress-args)]
+    (swap! state
+           (fn [s]
+             (update
+              s
+              (find-first-form-missing-hoststring-index s state/*form* host-string)
+              (fn [{:keys [width results] :as data}]
+                (assoc-in data [:copy-progress host-string] progress)))))
+    context))

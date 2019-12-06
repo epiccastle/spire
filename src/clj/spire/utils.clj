@@ -89,6 +89,65 @@
     {:start-time (or start-time now)
      :start-bytes (or start-bytes bytes)}))
 
+(defn progress-stats [bytes total frac {:keys [start-time start-bytes]}]
+  (let [
+        columns (SpireUtils/get_terminal_width)
+        now (time/now)
+        first? (not start-time)
+
+        duration (when-not first? (/ (float (time/in-millis (time/interval start-time now))) 1000))
+        bytes-since-start (when-not first? (- bytes start-bytes))
+        bytes-per-second (when (some-> duration pos?) (int (/ bytes-since-start duration)))
+        bytes-remaining (- total bytes)
+        eta (when (and bytes-remaining bytes-per-second)
+              (int (/ bytes-remaining bytes-per-second)))
+
+        right-side-buffer 32
+        width (- columns right-side-buffer)
+        percent (int (* 100 frac))
+        num-chars (int (* width frac))
+        num-spaces (- width num-chars)
+        bar (apply str (take num-chars (repeat "=")))
+        spaces (apply str (take num-spaces (repeat " ")))
+
+        line-str (str "\r|" bar spaces "| " percent "% "
+                      (when bytes-per-second
+                        (speed-string bytes-per-second))
+                      (when eta
+                        (str " eta:" (eta-string eta))))
+        line-len (count line-str)
+        eraser (apply str (take (- columns line-len 1) (repeat " ")))
+
+        ]
+    {:progress {:bytes bytes
+                :total total
+                :frac frac
+                :bytes-per-second bytes-per-second
+                :eta eta}
+     :context {:start-time (or start-time now)
+               :start-bytes (or start-bytes bytes)}}))
+
+(defn progress-bar-from-stats [host-string max-len {:keys [bytes total frac bytes-per-second eta]}]
+  (let [
+        columns (SpireUtils/get_terminal_width)
+        right-side-buffer 32
+        width (- columns right-side-buffer max-len)
+        host-string-padding (apply str (map (fn [_] " ") (range (- max-len (count host-string)))))
+        percent (int (* 100 frac))
+        num-chars (int (* width frac))
+        num-spaces (- width num-chars)
+        bar (apply str (take num-chars (repeat "=")))
+        spaces (apply str (take num-spaces (repeat " ")))
+
+        line-str (str "|" bar spaces "| " percent "% "
+                      (when bytes-per-second
+                        (speed-string bytes-per-second))
+                      (when eta
+                        (str " eta:" (eta-string eta))))
+        line-len (count line-str)
+        eraser (apply str (take (- columns line-len max-len 1) (repeat " ")))]
+    (str host-string host-string-padding line-str eraser)))
+
 (defn which-spire []
   (let [executable (executing-bin-path)
         java? (string/ends-with? executable "java")]
