@@ -8,20 +8,27 @@
   (atom []))
 
 (defn up [n]
-  (print (str "\033[" n "A"))
-  (.flush *out*))
+  (cond
+    (pos? n) (do
+               (print (str "\033[" n "A"))
+               (.flush *out*))
+    (neg? n) (do
+               (print (str "\033[" (- n) "B"))
+               (.flush *out*))))
 
 (defn down [n]
-  (print (str "\033[" n "B"))
-  (.flush *out*))
+  (up (- n)))
 
 (defn right [n]
-  (print (str "\033[" n "C"))
-  (.flush *out*))
+  (cond
+    (pos? n) (do
+               (print (str "\033[" n "C"))
+               (.flush *out*))
+    (neg? n) (do (print (str "\033[" (- n) "D"))
+                 (.flush *out*))))
 
 (defn left [n]
-  (print (str "\033[" n "D"))
-  (.flush *out*))
+  (right (- n)))
 
 (defn find-forms [s form]
   (filter #(= form (:form %)) s))
@@ -58,64 +65,45 @@
 
 (def state-change-chan (chan))
 
-(defn state-change [[o n]]
-  (if (not= (count o) (count n))
-    ;; new form added. print it
-    (let [new-forms (subvec n (count o))]
-      (doseq [{:keys [form]} new-forms]
-        (prn form)))
+(defn calculate-heights [s]
+  (let [line-heights (for [l s] (inc (count (:copy-progress l))))
+        cumulative-height (reductions + line-heights)
+        line-offsets (conj (butlast cumulative-height) 0)
+        total-height (last cumulative-height)]
+    [line-offsets total-height]))
 
-    ;; adding to existing form
-    (let [height (count n)]
-      (doseq [[new old] (map vector n o)]
-        (cond
-          (not= (:results new) (:results old))
-          (let [new-results (subvec (:results new) (count (:results old)))]
-            ;;(println "new-results:" new-results)
-            (doseq [{:keys [result host-string pos]} new-results]
-              (print "\r")
-              (up (- height (:line new) (- (count (:copy-progress new)))))
-              (right pos)
-
-              (print
-               (str " "
-                    (utils/colour
-                     (case result
-                       :ok :green
-                       :changed :yellow
-                       :failed :red
-                       :blue))
-                    host-string
-                    (utils/colour)))
-
-              (print "\r")
-              (.flush *out*)
-              (down (- height (:line new) (- (count (:copy-progress new)))))
-              ))
-
-          (not= (:copy-progress new) (:copy-progress old))
-          (let [old-copy (:copy-progress old)
-                new-copy (:copy-progress new)
-                old-count (count old-copy)
-                new-count (count new-copy)
-                max-host-string-length (apply max (map (fn [[h _]] (count h)) new-copy))
-                ]
-            (when (pos? old-count)
-              (up old-count)
-              ;;(.flush *out*)
-              )
-            (doseq [[host-string args] new-copy]
-              ;;(println host-string)
-              (println (utils/progress-bar-from-stats host-string max-host-string-length args))
-              ;;(.flush *out*)
-              )
-
-
-            )
-
-          ))))
+(defn print-state [s]
+  (doseq [{:keys [form results copy-progress]} s]
+    (let [completed (for [{:keys [host-string result]} results]
+                      (str " "
+                           (utils/colour
+                            (case result
+                              :ok :green
+                              :changed :yellow
+                              :failed :red
+                              :blue))
+                           host-string
+                           (utils/colour)))
+          line (str (pr-str form) (apply str completed))
+          ]
+      (println (utils/append-erasure-to-line line)))
+    (let [max-host-string-length (when-not (empty? copy-progress)
+                                   (apply max (map (fn [[h _]] (count h)) copy-progress)))]
+      (doseq [[host-string progress] copy-progress]
+        (println (utils/progress-bar-from-stats host-string max-host-string-length progress))))
+    )
   )
 
+(defn state-change [[o n]]
+  (let [[_ old-total-height] (calculate-heights o)
+        [_ new-total-height] (calculate-heights n)]
+    (up old-total-height)
+    (print-state n)
+    (let [lines-lost (- old-total-height new-total-height )]
+      (when (pos? lines-lost)
+        (dotimes [n lines-lost]
+          (println (utils/erase-line)))
+        (up lines-lost)))))
 
 (defn print-thread []
   (thread
@@ -160,7 +148,7 @@
             (find-first-form-missing-hoststring-index s state/*form* host-string)
             (fn [{:keys [width positions results] :as data}]
               (-> data
-                  ;;(update :copy-progress dissoc host-string)
+                  (update :copy-progress dissoc host-string)
                   (assoc
                    :width (+ width (count host-string) 1)
                    :results (conj results
