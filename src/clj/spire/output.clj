@@ -72,6 +72,9 @@
         total-height (last cumulative-height)]
     [line-offsets total-height]))
 
+(defn state-line-complete? [{:keys [results connections]}]
+  (= (count results) (count connections)))
+
 (defn print-state [s]
   (doseq [{:keys [form results copy-progress]} s]
     (let [completed (for [{:keys [host-string result]} results]
@@ -96,9 +99,12 @@
 
 (defn state-change [[o n]]
   (let [[_ old-total-height] (calculate-heights o)
-        [_ new-total-height] (calculate-heights n)]
-    (up old-total-height)
-    (print-state n)
+        [_ new-total-height] (calculate-heights n)
+        completed-head (take-while state-line-complete? o)
+        completed-count (count completed-head)
+        ]
+    (up (- old-total-height completed-count))
+    (print-state (drop completed-count n))
     (let [lines-lost (- old-total-height new-total-height )]
       (when (pos? lines-lost)
         (dotimes [n lines-lost]

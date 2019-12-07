@@ -19,6 +19,18 @@
            (map (fn [[k v]] [(-> k to-camelcase keyword) v]))
            (into {}))))
 
+(defn- escape-code [n]
+  (str "\033[" (or n 0) "m"))
+
+(def colour-map
+  {:red 31
+   :green 32
+   :yellow 33
+   :blue 34})
+
+(defn colour [& [colour-name]]
+  (escape-code (colour-map colour-name)))
+
 (def kilobyte 1024)
 (def megabyte (* 1024 kilobyte))
 (def gigabyte (* 1024 megabyte))
@@ -168,7 +180,7 @@
         term-width (SpireUtils/get_terminal_width)]
     (if (> term-width len)
       (str s (n-spaces (- term-width len)))
-      (subs s 0 term-width))))
+      (str (subs s 0 term-width) (colour 0)))))
 
 (defn which-spire []
   (let [executable (executing-bin-path)
@@ -197,18 +209,6 @@
 (defn compatible-arch? [{{:keys [processor]} :arch}]
   (let [local-processor-arch (string/trim (:out (shell/sh "uname" "-p")))]
     (= local-processor-arch processor)))
-
-(defn- escape-code [n]
-  (str "\033[" (or n 0) "m"))
-
-(def colour-map
-  {:red 31
-   :green 32
-   :yellow 33
-   :blue 34})
-
-(defn colour [& [colour-name]]
-  (escape-code (colour-map colour-name)))
 
 (defmacro embed [filename]
   (slurp filename))
