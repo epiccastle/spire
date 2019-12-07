@@ -148,6 +148,28 @@
         eraser (apply str (take (- columns line-len max-len 1) (repeat " ")))]
     (str host-string host-string-padding line-str eraser)))
 
+(defn strip-colour-codes [s]
+  (string/replace s #"\033\[\d+m" "")
+  )
+
+(defn displayed-length
+  "Guess how long a line will be when printed (ignore colour commands)"
+  [s]
+  (count (strip-colour-codes s)))
+
+(defn n-spaces [n]
+  (apply str (map (fn [_] " ") (range n))))
+
+(defn erase-line []
+  (n-spaces (SpireUtils/get_terminal_width)))
+
+(defn append-erasure-to-line [s]
+  (let [len (displayed-length s)
+        term-width (SpireUtils/get_terminal_width)]
+    (if (> term-width len)
+      (str s (n-spaces (- term-width len)))
+      (subs s 0 term-width))))
+
 (defn which-spire []
   (let [executable (executing-bin-path)
         java? (string/ends-with? executable "java")]
