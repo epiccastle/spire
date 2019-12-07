@@ -10,7 +10,7 @@
    {:FILE (some->> path utils/path-escape)
     :OWNER owner
     :GROUP group
-    :MODE mode
+    :MODE (if (number? mode) (format "%o" mode)  mode)
     :ATTRS attrs}))
 
 (defn set-attrs [session opts]
