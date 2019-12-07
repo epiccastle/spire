@@ -213,8 +213,16 @@
 (defmacro embed [filename]
   (slurp filename))
 
-(defmacro embed-src [fname]
+#_ (defmacro embed-src [fname]
   (slurp (io/file "src/clj" (.getParent (io/file *file*)) fname)))
+
+(defmacro embed-src [fname]
+  (slurp
+   (let [f (io/file *file*)
+         p (.getParent f)]
+     (if (= (.getPath f) (.getAbsolutePath f))
+       (io/file p fname)
+       (io/file "src/clj" p fname)))))
 
 (defmacro make-script [fname vars]
   `(str
