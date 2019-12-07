@@ -10,7 +10,6 @@ FILE_OWNER_ID=$(stat -c '%u' "$FILE")
 FILE_GROUP_NAME=$(stat -c '%G' "$FILE")
 FILE_GROUP_ID=$(stat -c '%g' "$FILE")
 FILE_MODE_OCTAL=$(stat -c '%a' "$FILE")
-FILE_MODE_FLAGS=$(stat -c '%A' "$FILE")
 FILE_ATTRS=$(lsattr "$FILE" | awk '{print $1}')
 
 EXIT=0
@@ -34,9 +33,12 @@ fi
 if [ "$MODE_OCTAL" ] && [ "$MODE_OCTAL" != "$FILE_MODE_OCTAL" ]; then
   chmod "$MODE_OCTAL" "$FILE"
   EXIT=-1
-elif [ "$MODE_FLAGS" ] && [ "$MODE_FLAGS" != "$FILE_MODE_FLAGS" ]; then
+elif [ "$MODE_FLAGS" ]; then
   chmod "$MODE_FLAGS" "$FILE"
-  EXIT=-1
+  NEW_MODE=$(stat -c '%a' "$FILE")
+  if [ "$NEW_MODE" != "$FILE_MODE_OCTAL" ]; then
+    EXIT=-1
+  fi
 fi
 
 if [ "$ATTRS" ] && [ "$ATTRS" != "$FILE_ATTRS" ]; then
