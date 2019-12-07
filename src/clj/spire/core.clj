@@ -1,6 +1,7 @@
 (ns spire.core
   (:require [spire.state]
             [spire.config :as config]
+            [spire.output :as output]
             [spire.namespaces :as namespaces]
             [spire.utils :as utils]
             [puget.printer :as puget]
@@ -40,6 +41,7 @@
 (defn -main
   [& args]
   (initialise)
+  (output/print-thread)
   (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
     (cond
       (:help options)

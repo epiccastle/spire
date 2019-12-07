@@ -1,7 +1,8 @@
 (ns spire.output
   (:require [clojure.set :as set]
             [spire.utils :as utils]
-            [spire.state :as state]))
+            [spire.state :as state]
+            [clojure.core.async :refer [<!! put! go chan thread]]))
 
 (defonce state
   (atom []))
@@ -55,60 +56,80 @@
      {:form :d}]
     :b)
 
+(def state-change-chan (chan))
+
+(defn state-change [[o n]]
+  (if (not= (count o) (count n))
+    ;; new form added. print it
+    (let [new-forms (subvec n (count o))]
+      (doseq [{:keys [form]} new-forms]
+        (prn form)))
+
+    ;; adding to existing form
+    (let [height (count n)]
+      (doseq [[new old] (map vector n o)]
+        (cond
+          (not= (:results new) (:results old))
+          (let [new-results (subvec (:results new) (count (:results old)))]
+            ;;(println "new-results:" new-results)
+            (doseq [{:keys [result host-string pos]} new-results]
+              (print "\r")
+              (up (- height (:line new) (- (count (:copy-progress new)))))
+              (right pos)
+
+              (print
+               (str " "
+                    (utils/colour
+                     (case result
+                       :ok :green
+                       :changed :yellow
+                       :failed :red
+                       :blue))
+                    host-string
+                    (utils/colour)))
+
+              (print "\r")
+              (.flush *out*)
+              (down (- height (:line new) (- (count (:copy-progress new)))))
+              ))
+
+          (not= (:copy-progress new) (:copy-progress old))
+          (let [old-copy (:copy-progress old)
+                new-copy (:copy-progress new)
+                old-count (count old-copy)
+                new-count (count new-copy)
+                max-host-string-length (apply max (map (fn [[h _]] (count h)) new-copy))
+                ]
+            (when (pos? old-count)
+              (up old-count)
+              ;;(.flush *out*)
+              )
+            (doseq [[host-string args] new-copy]
+              ;;(println host-string)
+              (println (utils/progress-bar-from-stats host-string max-host-string-length args))
+              ;;(.flush *out*)
+              )
+
+
+            )
+
+          ))))
+  )
+
+
+(defn print-thread []
+  (thread
+    (loop []
+      (state-change (<!! state-change-chan))
+      (recur))))
+
 (defonce state-watcher
   (add-watch
    state :output
    (fn [k a o n]
-     (if (not= (count o) (count n))
-       ;; new form added. print it
-       (let [new-forms (subvec n (count o))]
-         (doseq [{:keys [form]} new-forms]
-           (prn form)))
-
-       ;; adding to existing form
-       (let [height (count n)]
-         (doseq [[new old] (map vector n o)]
-           (cond
-             (not= (:results new) (:results old))
-             (let [new-results (subvec (:results new) (count (:results old)))]
-               ;;(println "new-results:" new-results)
-               (doseq [{:keys [result host-string pos]} new-results]
-                 (print "\r")
-                 (up (- height (:line new) (- (count (:copy-progress new)))))
-                 (right pos)
-
-                 (print
-                  (str " "
-                       (utils/colour
-                        (case result
-                          :ok :green
-                          :changed :yellow
-                          :failed :red
-                          :blue))
-                       host-string
-                       (utils/colour)))
-
-                 (print "\r")
-                 (.flush *out*)
-                 (down (- height (:line new) (- (count (:copy-progress new)))))))
-
-             (not= (:copy-progress new) (:copy-progress old))
-             (let [old-copy (:copy-progress old)
-                   new-copy (:copy-progress new)
-                   old-count (count old-copy)
-                   new-count (count new-copy)
-                   max-host-string-length (apply max (map (fn [[h _]] (count h)) new-copy))
-                   ]
-               (when (pos? old-count) (up old-count))
-               (doseq [[host-string args] new-copy]
-                 ;;(println host-string)
-                 (println (utils/progress-bar-from-stats host-string max-host-string-length args))
-                 )
-
-
-               )
-
-             )))))))
+     (when (not= o n)
+       (put! state-change-chan [o n]))
+     )))
 
 (defn print-form [form]
   (swap! state
