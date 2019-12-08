@@ -6,6 +6,7 @@
             [spire.state :as state]
             [spire.module.line-in-file :as line-in-file]
             [spire.module.copy :as copy]
+            [spire.module.upload :as upload]
             )
   )
 
@@ -25,6 +26,8 @@
    'hostname system/hostname
    'line-in-file line-in-file/line-in-file
    'copy copy/copy
+   'upload upload/upload
+
    ;;'ln system/ln
    ;;'mkdir system/mkdir
 
@@ -74,5 +77,8 @@
                  'get-sessions #'state/get-sessions
 
                  }
+
+   'clojure.java.io {'file clojure.java.io/file
+                     }
 
    })
