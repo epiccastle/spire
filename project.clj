@@ -11,6 +11,7 @@
                  [mvxcvi/puget "1.2.0"]
                  [digest "1.4.9"]
                  [clj-time "0.15.2"]
+                 [selmer "1.12.18"]
 
                  ;; dev
                  [nrepl "0.6.0"]
