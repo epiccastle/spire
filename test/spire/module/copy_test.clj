@@ -25,7 +25,7 @@
         ;; second and later copys should not actually copy file contents
         (with-redefs [spire.scp/scp-to (fn [& args] (assert false "second copy should be skipped"))]
           (is (= (copy {:src "test/files/copy/test.txt" :dest tmp :mode 0777})
-                 {:result :ok}))
+                 {:result :ok :exit 0 :out "" :err ""}))
           (is (= (copy {:src "test/files/copy/test.txt" :dest tmp :mode "go-w"})
                  {:result :changed :exit 0 :out "" :err ""}))
           (is (= "755" (-> (shell/sh "stat" "-c" "%a" tmp) :out string/trim))))
@@ -43,7 +43,7 @@
             ;; second and later copys should not actually copy file contents
             (with-redefs [spire.scp/scp-to (fn [& args] (assert false "second copy should be skipped"))]
               (is (= (copy {:src "test/files/copy/test.txt" :dest tmp :mode 0777  :owner "root" :group "root"})
-                     {:result :ok}))
+                     {:result :ok :exit 0 :out "" :err ""}))
               (is (= (copy {:src "test/files/copy/test.txt" :dest tmp :owner username :group groupname})
                      {:result :changed :exit 0 :out "" :err ""}))
               (is (= "777" (-> (shell/sh "stat" "-c" "%a" tmp) :out string/trim)))
