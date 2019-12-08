@@ -1,0 +1,2 @@
+This is a text file
+It has two lines in it

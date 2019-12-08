@@ -13,7 +13,9 @@
   ;;(println command)
   (shell/sh "bash" "-c" command :in in))
 
-
+(defn test-scp-to [session local-paths remote-path & opts]
+  ;; just handles a single file for now
+  (io/copy (io/file local-paths) (io/file remote-path)))
 
 (defmacro ^{:private true} assert-args
   [& pairs]
@@ -51,13 +53,59 @@
     (io/copy (io/file src) tmp)
     (.getPath tmp)))
 
+(defn create-temp-file-name []
+  (let [tmp (io/file tmp-dir (str "spire-test-" (rand-string 8)))]
+    (.getPath tmp)))
+
 #_ (create-temp-file "project.clj")
 
 (defn remove-file [tmp]
-  (assert (string/starts-with? tmp "/tmp/"))
+  (assert (string/starts-with? tmp tmp-dir))
   (.delete (io/file tmp)))
 
 #_ (remove-file (create-temp-file "project.clj"))
 
 #_ (with-temp-files [f "project.clj"] (+ 10 20))
 #_ (with-temp-files [f "project.clj"] (+ 10 20) (throw (ex-info "foo" {})))
+
+(defmacro with-temp-file-names [syms & body]
+  (let [[sym & remain] syms]
+    (if-not remain
+      `(let [~sym (create-temp-file-name)]
+         (try ~@body
+              (finally (remove-file ~sym))))
+      `(let [~sym (create-temp-file-name)]
+         (try
+           (with-temp-files ~(subvec syms 1) ~@body)
+           (finally (remove-file ~sym)))))))
+
+(defn is-root? []
+  (= "root" (System/getProperty "user.name")))
+
+(defn last-line [f]
+  (last (line-seq (io/reader f))))
+
+(defn last-user []
+  (let [[username password uid gid userinfo homedir]
+        (-> "/etc/passwd"
+            last-line
+            (string/split #":")
+            )]
+    {:username username
+     :password password
+     :uid uid
+     :gid gid
+     :userinfo userinfo
+     :homedir homedir}))
+
+#_ (last-user)
+
+(defn last-group []
+  (let [[groupname _ gid]
+        (-> "/etc/group"
+            last-line
+            (string/split #":"))]
+    {:groupname groupname
+     :gid gid}))
+
+#_ (last-group)
