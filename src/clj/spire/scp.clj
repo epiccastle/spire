@@ -38,7 +38,7 @@
   "Send acknowledgement to the specified output stream"
   [^OutputStream send ^InputStream recv ^File file
    {:keys [mode buffer-size preserve progress-fn]
-    :or {mode 0644 buffer-size 1024 preserve false}}]
+    :or {mode 0644 buffer-size (* 32 1024) preserve false}}]
 
   (when preserve
     (scp-send-command
@@ -51,20 +51,23 @@
   (if progress-fn
     (let [size (.length file)
           input-stream (io/input-stream file)
-          chunk-size (* 1024 32)
+          chunk-size buffer-size
           chunk (byte-array chunk-size)]
       (loop [offset 0 context nil]
         (let [bytes-read (.read input-stream chunk)
               new-offset (+ bytes-read offset)]
+          (debugf "bytes read: %d" bytes-read)
           (if (= bytes-read chunk-size)
             ;; full chunk
             (do
+              (debug "full")
               (io/copy chunk send)
               (.flush send)
               (recur new-offset (progress-fn new-offset size (float (/ new-offset size)) context)))
 
             ;; last partial chunk
             (do
+              (debug "partial")
               (io/copy (byte-array (take bytes-read chunk)) send)
               (.flush send)
               (progress-fn new-offset size (float (/ new-offset size)) context))))))
@@ -73,6 +76,44 @@
   (scp-send-ack send)
   (debug "Receiving ACK after send")
   (scp-receive-ack recv))
+
+(defn- scp-copy-data
+  "Send acknowledgement to the specified output stream"
+  [^OutputStream send ^InputStream recv data size dest-name
+   {:keys [mode buffer-size progress-fn]
+    :or {mode 0644 buffer-size (* 32 1024) preserve false}}]
+  (let [size size #_(count data)]
+    (scp-send-command
+     send recv
+     (format "C%04o %d %s" mode size dest-name))
+    (debugf "Sending %d bytes. data: %s" size data)
+    (if progress-fn
+      (let [input-stream (io/input-stream data)
+            chunk-size buffer-size
+            chunk (byte-array chunk-size)]
+        (loop [offset 0 context nil]
+          (let [bytes-read (.read input-stream chunk)
+                new-offset (+ bytes-read offset)]
+            (debugf "bytes read: %d" bytes-read)
+            (if (= bytes-read chunk-size)
+              ;; full chunk
+              (do
+                (debug "full")
+                (io/copy chunk send)
+                (.flush send)
+                (recur new-offset (progress-fn new-offset size (float (/ new-offset size)) context)))
+
+              ;; last partial chunk
+              (do
+                (debug "partial")
+                (io/copy (byte-array (take bytes-read chunk)) send)
+                (.flush send)
+                (progress-fn new-offset size (float (/ new-offset size)) context))))))
+      ;; no progress callback
+      (io/copy (io/input-stream data) send :buffer-size buffer-size))
+    (scp-send-ack send)
+    (debug "Receiving ACK after send")
+    (scp-receive-ack recv)))
 
 (defn- scp-copy-dir
   "Send acknowledgement to the specified output stream"
@@ -136,3 +177,45 @@
       (.close send)
       (.close recv)
       nil)))
+
+(defn scp-data-to
+  "Copy local path(s) to remote path via scp.
+   Options are:
+   :username   username to use for authentication
+   :password   password to use for authentication
+   :port       port to use if no session specified
+   :mode       mode, as a 4 digit octal number (default 0644)
+   :dir-mode   directory mode, as a 4 digit octal number (default 0755)
+   :recursive  flag for recursive operation
+   :preserve   flag for preserving mode, mtime and atime. atime is not available
+               in java, so is set to mtime. mode is not readable in java."
+  [session data remote-path & {:as opts}]
+  (let [[^PipedInputStream in
+         ^PipedOutputStream send] (ssh/streams-for-in)
+        cmd (format "scp %s -t %s" (:remote-flags opts "") remote-path)
+        _ (debugf "scp-data-to: %s" cmd)
+        {:keys [^PipedInputStream out-stream]}
+        (ssh/ssh-exec session cmd in :stream opts)
+        recv out-stream]
+    #_ (debugf "scp-data-to %s %s" (string/join " " local-paths) remote-path)
+    (debug "Receive initial ACK")
+    (scp-receive-ack recv)
+    (debugf "scp-data-to: from %d" (count data))
+    (scp-copy-data
+     send recv
+     (if (string? data)
+       (.getBytes data)
+       data)
+     (if (string? data)
+       (count data)
+       (.length data))
+     (.getName (io/file remote-path))
+     opts)
+    (debug "Closing streams")
+    (.close send)
+    (.close recv)
+    nil))
+
+;; (.length (io/file "spire"))
+
+;; (.length (.getBytes "spire"))
