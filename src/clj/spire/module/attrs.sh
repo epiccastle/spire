@@ -5,9 +5,7 @@ if [ ! -f "$FILE" ]; then
   exit 1
 fi
 
-FILE_OWNER_ID=$(stat -c '%u' "$FILE")
-FILE_GROUP_ID=$(stat -c '%g' "$FILE")
-FILE_MODE_OCTAL=$(stat -c '%a' "$FILE")
+FILE_STAT=$(stat -c '%u %g %a' "$FILE")
 FILE_ATTRS=$(lsattr "$FILE" | awk '{print $1}')
 
 if [ "$OWNER" ]; then
@@ -26,12 +24,10 @@ if [ "$ATTRS" ]; then
   chattr "$ATTRS" "$FILE"
 fi
 
-NEW_FILE_OWNER_ID=$(stat -c '%u' "$FILE")
-NEW_FILE_GROUP_ID=$(stat -c '%g' "$FILE")
-NEW_FILE_MODE_OCTAL=$(stat -c '%a' "$FILE")
+NEW_FILE_STAT=$(stat -c '%u %g %a' "$FILE")
 NEW_FILE_ATTRS=$(lsattr "$FILE" | awk '{print $1}')
 
-if [ "$FILE_OWNER_ID" != "$NEW_FILE_OWNER_ID" ] || [ "$FILE_OWNER_ID" != "$NEW_FILE_OWNER_ID" ] || [ "$FILE_MODE_OCTAL" != "$NEW_FILE_MODE_OCTAL" ] || [ "$FILE_ATTRS" != "$NEW_FILE_ATTRS" ]; then
+if [ "$FILE_STAT" != "$NEW_FILE_STAT" ] || [ "$FILE_ATTRS" != "$NEW_FILE_ATTRS" ]; then
   exit -1
 fi
 
