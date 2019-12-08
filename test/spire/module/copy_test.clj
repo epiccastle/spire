@@ -20,14 +20,14 @@
 
       (test-utils/with-temp-file-names [tmp]
         (is (= (copy {:src "test/files/copy/test.txt" :dest tmp :mode 0777})
-               {:result :changed :exit 255 :out "" :err ""}))
+               {:result :changed :exit 0 :out "" :err ""}))
         (is (= "777" (-> (shell/sh "stat" "-c" "%a" tmp) :out string/trim)))
         ;; second and later copys should not actually copy file contents
         (with-redefs [spire.scp/scp-to (fn [& args] (assert false "second copy should be skipped"))]
           (is (= (copy {:src "test/files/copy/test.txt" :dest tmp :mode 0777})
                  {:result :ok}))
           (is (= (copy {:src "test/files/copy/test.txt" :dest tmp :mode "go-w"})
-                 {:result :changed :exit 255 :out "" :err ""}))
+                 {:result :changed :exit 0 :out "" :err ""}))
           (is (= "755" (-> (shell/sh "stat" "-c" "%a" tmp) :out string/trim))))
         )
 
@@ -36,7 +36,7 @@
               {:keys [groupname gid]} (test-utils/last-group)]
           (test-utils/with-temp-file-names [tmp]
             (is (= (copy {:src "test/files/copy/test.txt" :dest tmp :mode 0777 :owner "root" :group "root"})
-                   {:result :changed :exit 255 :out "" :err ""}))
+                   {:result :changed :exit 0 :out "" :err ""}))
             (is (= "777" (-> (shell/sh "stat" "-c" "%a" tmp) :out string/trim)))
             (is (= "0" (-> (shell/sh "stat" "-c" "%u" tmp) :out string/trim)))
             (is (= "0" (-> (shell/sh "stat" "-c" "%g" tmp) :out string/trim)))
@@ -45,7 +45,7 @@
               (is (= (copy {:src "test/files/copy/test.txt" :dest tmp :mode 0777  :owner "root" :group "root"})
                      {:result :ok}))
               (is (= (copy {:src "test/files/copy/test.txt" :dest tmp :owner username :group groupname})
-                     {:result :changed :exit 255 :out "" :err ""}))
+                     {:result :changed :exit 0 :out "" :err ""}))
               (is (= "777" (-> (shell/sh "stat" "-c" "%a" tmp) :out string/trim)))
               (is (= uid (-> (shell/sh "stat" "-c" "%u" tmp) :out string/trim)))
               (is (= gid (-> (shell/sh "stat" "-c" "%g" tmp) :out string/trim))))))))))
