@@ -74,6 +74,9 @@ if [ "$REGEX" ]; then
         fi
       done
       exit $EXIT
+    else
+      sed -i "\$a${LINE}" "$FILE"
+      exit -1
     fi
   fi
 fi

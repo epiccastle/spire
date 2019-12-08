@@ -19,12 +19,13 @@
   ;;
   (testing "line-in-file :get by line-num"
     (with-redefs [spire.transport/pipelines test-pipelines
-                  spire.ssh/ssh-exec test-ssh-exec]
+                  spire.ssh/ssh-exec test-ssh-exec
+                  spire.output/print-form identity]
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/missing-file" :line-num 3})
+           (line-in-file :get {:path "test/files/line-in-file/missing-file" :line-num 3})
            {:exit 1 :out "" :err "File not found." :result :failed}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/simple-file.txt" :line-num 1})
+           (line-in-file :get {:path "test/files/line-in-file/simple-file.txt" :line-num 1})
            {:exit 0
             :result :ok
             :line-num 1
@@ -33,7 +34,7 @@
             :lines ["This is line #1"]
             :matches {1 "This is line #1"}}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/simple-file.txt" :line-num 5})
+           (line-in-file :get {:path "test/files/line-in-file/simple-file.txt" :line-num 5})
            {:exit 0
             :result :ok
             :line-num 5
@@ -42,7 +43,7 @@
             :lines ["This is line #5"]
             :matches {5 "This is line #5"}}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/simple-file.txt" :line-num -1})
+           (line-in-file :get {:path "test/files/line-in-file/simple-file.txt" :line-num -1})
            {:exit 0
             :result :ok
             :line-num 10
@@ -51,7 +52,7 @@
             :lines ["This is line #10"]
             :matches {10 "This is line #10"}}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/simple-file.txt" :line-num 10})
+           (line-in-file :get {:path "test/files/line-in-file/simple-file.txt" :line-num 10})
            {:exit 0
             :result :ok
             :line-num 10
@@ -60,7 +61,7 @@
             :lines ["This is line #10"]
             :matches {10 "This is line #10"}}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/simple-file.txt" :line-num -3})
+           (line-in-file :get {:path "test/files/line-in-file/simple-file.txt" :line-num -3})
            {:exit 0
             :result :ok
             :line-num 8
@@ -69,7 +70,7 @@
             :lines ["This is line #8"]
             :matches {8 "This is line #8"}}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/simple-file.txt" :line-num -10})
+           (line-in-file :get {:path "test/files/line-in-file/simple-file.txt" :line-num -10})
            {:exit 0
             :result :ok
             :line-num 1
@@ -78,13 +79,13 @@
             :lines ["This is line #1"]
             :matches {1 "This is line #1"}}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/simple-file.txt" :line-num 0})
+           (line-in-file :get {:path "test/files/line-in-file/simple-file.txt" :line-num 0})
            {:exit 2 :out "" :err "No line number 0 in file. File line numbers are 1 offset." :result :failed}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/simple-file.txt" :line-num 20})
+           (line-in-file :get {:path "test/files/line-in-file/simple-file.txt" :line-num 20})
            {:exit 2 :out "" :err "No line number 20 in file." :result :failed}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/simple-file.txt" :line-num -20})
+           (line-in-file :get {:path "test/files/line-in-file/simple-file.txt" :line-num -20})
            {:exit 2 :out "" :err "No line number -20 in file." :result :failed}))))
 
   ;;
@@ -92,9 +93,10 @@
   ;;
   (testing "line-in-file :get by regexp"
     (with-redefs [spire.transport/pipelines test-pipelines
-                  spire.ssh/ssh-exec test-ssh-exec]
+                  spire.ssh/ssh-exec test-ssh-exec
+                  spire.output/print-form identity]
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/regexp-file.txt" :regexp #"no such line"})
+           (line-in-file :get {:path "test/files/line-in-file/regexp-file.txt" :regexp #"no such line"})
            {:exit 0
             :result :ok
             :line-num nil
@@ -103,7 +105,7 @@
             :lines []
             :matches {}}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/regexp-file.txt" :regexp #"and it contains" :match :all})
+           (line-in-file :get {:path "test/files/line-in-file/regexp-file.txt" :regexp #"and it contains" :match :all})
            {:exit 0
             :result :ok
             :line-num 19
@@ -129,7 +131,7 @@
                       18 "This is line #18 and it contains a | character"
                       19 "This is line #19 and it contains a [ character"}}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/regexp-file.txt" :regexp #"and it contains" :match :first})
+           (line-in-file :get {:path "test/files/line-in-file/regexp-file.txt" :regexp #"and it contains" :match :first})
            {:exit 0
             :result :ok
             :line-num 2
@@ -140,7 +142,7 @@
 
       ;; default for :match is :first
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/regexp-file.txt" :regexp #"and it contains"})
+           (line-in-file :get {:path "test/files/line-in-file/regexp-file.txt" :regexp #"and it contains"})
            {:exit 0
             :result :ok
             :line-num 2
@@ -149,7 +151,7 @@
             :lines ["This is line #2 and it contains a \\ character"]
             :matches {2 "This is line #2 and it contains a \\ character"}}))
       (is (=
-           (line-in-file* :get {:path "test/files/line-in-file/regexp-file.txt" :regexp #"and it contains" :match :last})
+           (line-in-file :get {:path "test/files/line-in-file/regexp-file.txt" :regexp #"and it contains" :match :last})
            {:exit 0
             :result :ok
             :line-num 19
@@ -209,14 +211,15 @@
 (deftest line-in-file-present-test
   (testing "line-in-file :present by line-num"
     (with-redefs [spire.transport/pipelines test-pipelines
-                  spire.ssh/ssh-exec test-ssh-exec]
+                  spire.ssh/ssh-exec test-ssh-exec
+                  spire.output/print-form identity]
       (is (=
-           (line-in-file* :present {:path "test/files/line-in-file/missing-file" :line-num 3})
+           (line-in-file :present {:path "test/files/line-in-file/missing-file" :line-num 3})
            {:exit 1 :out "" :err "File not found." :result :failed}))
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :line-num 3 :line "new line 3"})
+             (line-in-file :present {:path tmp :line-num 3 :line "new line 3"})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -232,7 +235,7 @@ This is line #10
 ")))
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :line-num 14 :line "new line 3"})
+             (line-in-file :present {:path tmp :line-num 14 :line "new line 3"})
              {:exit 2, :out "", :err "No line number 14 in file.", :result :failed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -249,7 +252,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :line-num -14 :line "new line 3"})
+             (line-in-file :present {:path tmp :line-num -14 :line "new line 3"})
              {:exit 2, :out "", :err "No line number -14 in file.", :result :failed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -269,10 +272,11 @@ This is line #10
   ;;
   (testing "line-in-file :present by regexp"
     (with-redefs [spire.transport/pipelines test-pipelines
-                  spire.ssh/ssh-exec test-ssh-exec]
+                  spire.ssh/ssh-exec test-ssh-exec
+                  spire.output/print-form identity]
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"line #3" :line "new line 3"})
+             (line-in-file :present {:path tmp :regexp #"line #3" :line "new line 3"})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -287,9 +291,9 @@ This is line #9
 This is line #10
 ")))
 
-      #_(with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
+      (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"line #3" :line "This is line #3"})
+             (line-in-file :present {:path tmp :regexp #"line #3" :line "This is line #3"})
              {:exit 0 :out "" :err "" :result :ok}))
         (is (= (slurp tmp)
                "This is line #1
@@ -304,26 +308,26 @@ This is line #9
 This is line #10
 ")))
 
+      (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
+        (is (=
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "new line"})
+             {:exit 0 :out "" :err "" :result :changed}))
+        (is (= (slurp tmp)
+               "This is line #1
+This is line #2
+This is line #3
+This is line #4
+This is line #5
+This is line #6
+This is line #7
+This is line #8
+This is line #9
+This is line #10
+new line
+")))
       #_ (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "new line"})
-             {:exit 0 :out "" :err "" :result :changed}))
-        (is (= (slurp tmp)
-               "This is line #1
-This is line #2
-This is line #3
-This is line #4
-This is line #5
-This is line #6
-This is line #7
-This is line #8
-This is line #9
-This is line #10
-new line
-")))
-      #_ (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
-        (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "new line" :insert-at :bof})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "new line" :insert-at :bof})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "new line
@@ -342,7 +346,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "new line" :after #"line #8"})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "new line" :after #"line #8"})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -360,7 +364,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"line #9" :line "This is line #9" :after #"line #8"})
+             (line-in-file :present {:path tmp :regexp #"line #9" :line "This is line #9" :after #"line #8"})
              {:exit 0 :out "" :err "" :result :ok}))
         (is (= (slurp tmp)
                "This is line #1
@@ -377,7 +381,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "new line" :after #"line #1" :match :first})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "new line" :after #"line #1" :match :first})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -394,29 +398,10 @@ This is line #10
 ")))
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "new line" :after #"line #1" :match :last})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "new line" :after #"line #1" :match :last})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #1
-This is line #2
-This is line #3
-This is line #4
-This is line #5
-This is line #6
-This is line #7
-This is line #8
-This is line #9
-This is line #10
-new line
-")))
-
-      (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
-        (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "new line" :after #"line #1" :match :all})
-             {:exit 0 :out "" :err "" :result :changed}))
-        (is (= (slurp tmp)
-               "This is line #1
-new line
 This is line #2
 This is line #3
 This is line #4
@@ -431,7 +416,26 @@ new line
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "This is line #2" :after #"line #1" :match :all})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "new line" :after #"line #1" :match :all})
+             {:exit 0 :out "" :err "" :result :changed}))
+        (is (= (slurp tmp)
+               "This is line #1
+new line
+This is line #2
+This is line #3
+This is line #4
+This is line #5
+This is line #6
+This is line #7
+This is line #8
+This is line #9
+This is line #10
+new line
+")))
+
+      (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
+        (is (=
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "This is line #2" :after #"line #1" :match :all})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -449,7 +453,7 @@ This is line #2
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "new line" :before #"line #8"})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "new line" :before #"line #8"})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -467,7 +471,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "This is line #7" :before #"line #8"})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "This is line #7" :before #"line #8"})
              {:exit 0 :out "" :err "" :result :ok}))
         (is (= (slurp tmp)
                "This is line #1
@@ -484,7 +488,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "new line" :before #"line #1" :match :first})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "new line" :before #"line #1" :match :first})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "new line
@@ -502,7 +506,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "new line" :before #"line #1" :match :last})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "new line" :before #"line #1" :match :last})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -520,7 +524,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "This is line #9" :before #"line #1" :match :last})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "This is line #9" :before #"line #1" :match :last})
              {:exit 0 :out "" :err "" :result :ok}))
         (is (= (slurp tmp)
                "This is line #1
@@ -537,7 +541,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "new line" :before #"line #1" :match :all})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "new line" :before #"line #1" :match :all})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "new line
@@ -556,7 +560,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "This is line #9" :before #"line #1" :match :all})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "This is line #9" :before #"line #1" :match :all})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #9
@@ -574,7 +578,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"unmatched" :line "new line" :before #"line #1$"})
+             (line-in-file :present {:path tmp :regexp #"unmatched" :line "new line" :before #"line #1$"})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "new line
@@ -592,7 +596,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"is line" :line "new line" :match :first})
+             (line-in-file :present {:path tmp :regexp #"is line" :line "new line" :match :first})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "new line
@@ -609,7 +613,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"is line" :line "new line" :match :last})
+             (line-in-file :present {:path tmp :regexp #"is line" :line "new line" :match :last})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -626,7 +630,7 @@ new line
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :present {:path tmp :regexp #"is line" :line "new line" :match :all})
+             (line-in-file :present {:path tmp :regexp #"is line" :line "new line" :match :all})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "new line
@@ -648,14 +652,15 @@ new line
 (deftest line-in-file-absent-test
   (testing "line-in-file :absent by line-num"
     (with-redefs [spire.transport/pipelines test-pipelines
-                  spire.ssh/ssh-exec test-ssh-exec]
+                  spire.ssh/ssh-exec test-ssh-exec
+                  spire.output/print-form identity]
       (is (=
-           (line-in-file* :absent {:path "test/files/line-in-file/missing-file" :line-num 3})
+           (line-in-file :absent {:path "test/files/line-in-file/missing-file" :line-num 3})
            {:exit 1 :out "" :err "File not found." :result :failed}))
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :absent {:path tmp :line-num 3})
+             (line-in-file :absent {:path tmp :line-num 3})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -672,10 +677,11 @@ This is line #10
 
   (testing "line-in-file :absent by regexp"
     (with-redefs [spire.transport/pipelines test-pipelines
-                  spire.ssh/ssh-exec test-ssh-exec]
+                  spire.ssh/ssh-exec test-ssh-exec
+                  spire.output/print-form identity]
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :absent {:path tmp :regexp #"line #3"})
+             (line-in-file :absent {:path tmp :regexp #"line #3"})
              {:exit 0 :out "" :err "" :result :changed}))
         (is (= (slurp tmp)
                "This is line #1
@@ -691,7 +697,7 @@ This is line #10
 
       (with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
         (is (=
-             (line-in-file* :absent {:path tmp :regexp #"unmatched"})
+             (line-in-file :absent {:path tmp :regexp #"unmatched"})
              {:exit 0 :out "" :err "" :result :ok}))
         (is (= (slurp tmp)
                "This is line #1
