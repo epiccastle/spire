@@ -1,5 +1,6 @@
 (ns spire.scp
   (:require [spire.ssh :as ssh]
+            [spire.utils :as utils]
             [clojure.java.io :as io]
             [clojure.string :as string])
   (:import [java.io InputStream OutputStream File
@@ -88,7 +89,7 @@
      (format "C%04o %d %s" mode size dest-name))
     (debugf "Sending %d bytes. data: %s" size data)
     (if progress-fn
-      (let [input-stream (io/input-stream data)
+      (let [input-stream (utils/content-stream data)
             chunk-size buffer-size
             chunk (byte-array chunk-size)]
         (loop [offset 0 context nil]
@@ -143,7 +144,7 @@
                 file)))]
     (map f paths)))
 
-(defn scp-to
+#_(defn scp-to
   "Copy local path(s) to remote path via scp.
    Options are:
    :username   username to use for authentication
@@ -178,7 +179,7 @@
       (.close recv)
       nil)))
 
-(defn scp-data-to
+#_(defn scp-data-to
   "Copy local path(s) to remote path via scp.
    Options are:
    :username   username to use for authentication
@@ -219,3 +220,39 @@
 ;; (.length (io/file "spire"))
 
 ;; (.length (.getBytes "spire"))
+
+(defn scp-to
+  "Copy local path(s) to remote path via scp"
+  [session local-paths remote-path & {:keys [recursive] :as opts}]
+  (let [local-paths (if (sequential? local-paths) local-paths [local-paths])
+        ;;files (scp-files local-paths recursive)
+        ]
+    (let [[^PipedInputStream in
+           ^PipedOutputStream send] (ssh/streams-for-in)
+          cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recursive "-r" "") remote-path)
+          _ (debugf "scp-to: %s" cmd)
+          {:keys [^PipedInputStream out-stream]}
+          (ssh/ssh-exec session cmd in :stream opts)
+          recv out-stream]
+      (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)
+      (debug "Receive initial ACK")
+      (scp-receive-ack recv)
+      (doseq [file-or-data local-paths]
+        (debugf "scp-to: from %s" (.getPath file-or-data))
+        (cond
+          (utils/content-recursive? file-or-data)
+          (scp-copy-dir send recv file-or-data opts)
+
+          (utils/content-file? file-or-data)
+          (scp-copy-file send recv file-or-data opts)
+
+          :else
+          (scp-copy-data send recv
+                         file-or-data (utils/content-size file-or-data) (.getName (io/file remote-path))
+                         opts
+                         )
+          ))
+      (debug "Closing streams")
+      (.close send)
+      (.close recv)
+      nil)))
