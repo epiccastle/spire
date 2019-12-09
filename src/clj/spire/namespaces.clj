@@ -46,10 +46,7 @@
 
 (def namespaces
   {
-   'spire.transfer {'ssh-line transfer/ssh-line
-                    'ssh (with-meta @#'transfer/ssh {:sci/macro true})
-
-                    }
+   'spire.transfer {'ssh (with-meta @#'transfer/ssh {:sci/macro true})}
    'clojure.core {'binding (with-meta binding* {:sci/macro true})
                   'push-thread-bindings clojure.core/push-thread-bindings
                   'pop-thread-bindings clojure.core/pop-thread-bindings

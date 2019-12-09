@@ -19,7 +19,7 @@
         (str (apply str (map char data)))
         (recur (conj data c))))))
 
-(defn ssh-line [host-string lines]
+#_ (defn ssh-line [host-string lines]
   (let [
         [username hostname] (ssh/split-host-string host-string)
         agent (JSch.)
