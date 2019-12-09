@@ -15,6 +15,27 @@
   result
   )
 
+(defn md5-local-dir [src]
+  (->> (file-seq (io/file src))
+       (filter #(.isFile %))
+       (map (fn [f] [(.getName f) (digest/md5 f)]))
+       (into {})))
+
+#_ (md5-local-dir "test/")
+#_ (file-seq (io/file "test/"))
+
+(defn md5-remote-dir [run dest]
+  (some-> (run (format "find \"%s\" -type f -exec md5sum {} \\;" dest))
+          string/split-lines
+          (->> (map #(string/split % #"\s+" 2))
+               (map reverse)
+               (into {}))))
+
+(defn md5-file [run dest]
+  (some-> (run (format "%s -b \"%s\"" "md5sum" dest))
+          (string/split #"\s+")
+          first))
+
 (utils/defmodule upload [{:keys [src dest owner group mode attrs] :as opts}]
   [host-string session]
   (or
@@ -32,7 +53,7 @@
                 (if (= local-md5 remote-md5)
                   false
                   (do
-                    (scp/scp-data-to session src dest :progress-fn (fn [& args] (output/print-progress host-string args)))
+                    (scp/scp-to session src dest :progress-fn (fn [& args] (output/print-progress host-string args)))
                     true))
                 passed-attrs? (or owner group mode attrs)]
             (if (not passed-attrs?)
@@ -48,3 +69,11 @@
                          :mode mode
                          :attrs attrs})])))
         (process-result opts))))
+
+
+
+
+
+
+
+(type (io/file "spire"))
