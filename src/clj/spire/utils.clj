@@ -254,3 +254,28 @@
          (spire.transport/pipelines
           (fn ~pipeline-args
             ~@body))))))
+
+(defmulti content-size type)
+(defmethod content-size java.io.File [f] (.length f))
+(defmethod content-size java.lang.String [f] (count f))
+(defmethod content-size (Class/forName "[B") [f] (count f))
+
+(defmulti content-recursive? type)
+(defmethod content-recursive? java.io.File [f] (.isDirectory f))
+(defmethod content-recursive? java.lang.String [f] false)
+(defmethod content-recursive? (Class/forName "[B") [f] false)
+
+(defmulti content-file? type)
+(defmethod content-file? java.io.File [f] (.isFile f))
+(defmethod content-file? java.lang.String [f] false)
+(defmethod content-file? (Class/forName "[B") [f] false)
+
+(defmulti content-stream type)
+(defmethod content-stream java.io.File [f] (io/input-stream f))
+(defmethod content-stream java.lang.String [f] (io/input-stream (.getBytes f)))
+(defmethod content-stream (Class/forName "[B") [f] (io/input-stream f))
+
+
+#_ (content-size (byte-array [1 2]))
+
+#_ (content-file? (io/file "./spire"))
