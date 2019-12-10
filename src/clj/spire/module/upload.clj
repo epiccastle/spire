@@ -9,7 +9,9 @@
             [clojure.string :as string]))
 
 (defn preflight [opts]
-  nil)
+
+
+  )
 
 (defn process-result [opts result]
   result
@@ -36,6 +38,7 @@
                )))
 
 
+
 (defn runner []
   (fn [cmd] (->> cmd
                  (clojure.java.shell/sh "bash" "-c")
@@ -49,7 +52,18 @@
           (string/split #"\s+")
           first))
 
-(utils/defmodule upload [{:keys [src dest owner group mode attrs] :as opts}]
+(defn same-files [local-md5s remote-md5s]
+  (->> (for [[f md5] local-md5s]
+         (when (= md5 (get remote-md5s f))
+           f))
+       (filterv identity)))
+
+#_ (same-files
+    (md5-local-dir "test")
+    (md5-remote-dir (runner) "/tmp/spire")
+    )
+
+(utils/defmodule upload [{:keys [src dest owner group mode attrs recurse force] :as opts}]
   [host-string session]
   (or
    (preflight opts)
@@ -57,17 +71,49 @@
                     (let [{:keys [out exit]}
                           (ssh/ssh-exec session command "" "UTF-8" {})]
                       (when (zero? exit)
-                        (string/trim out))))
-              local-md5 (digest/md5 src)
-              remote-md5 (some-> (run (format "%s -b \"%s\"" "md5sum" dest))
-                                 (string/split #"\s+")
-                                 first)]
+                        (string/trim out))))]
+          (if (utils/content-recursive? src)
+            ;; recursive copy
+            (let [local-md5-files (md5-local-dir src)
+                  remote-md5-files (md5-remote-dir run dest)
+                  remote-is-file? (and (= 1 (count remote-md5-files))
+                                       (= '("") (keys remote-md5-files)))]
+              (cond
+                (and remote-is-file? (not force))
+                {:result :failed :err "Cannot copy `src` directory over `dest`: destination is a file. Use :force to delete destination file and replace."}
+
+                (and remote-is-file? force)
+                (do
+                  (run (format "rm -f \"%s\"" dest))
+                  (scp/scp-to session src dest :progress-fn (fn [& args] (output/print-progress host-string args)) :recursive true))
+
+                (not remote-is-file?)
+                (scp/scp-to session src dest
+                            :progress-fn (fn [& args] (output/print-progress host-string args))
+                            :recursive true
+                            :skip-files (->> (same-files local-md5-files remote-md5-files)
+                                             (map #(.getPath (io/file src %)))
+                                             (into #{})))))
+
+            ;; straight copy
+            (let [local-md5 (if (utils/content-recursive? src)
+
+                              (digest/md5 src))
+                  remote-md5 (if (utils/content-recursive? src)
+                               (md5-remote-dir run dest)
+                               (some-> (run (format "%s -b \"%s\"" "md5sum" dest))
+                                       (string/split #"\s+")
+                                       first))]
+              (if (= local-md5 remote-md5)
+                false
+                (do
+                  (scp/scp-to session src dest :progress-fn (fn [& args] (output/print-progress host-string args)))
+                  true))))
+
+
+          #_
           (let [copied?
-                (if (= local-md5 remote-md5)
-                  false
-                  (do
-                    (scp/scp-to session src dest :progress-fn (fn [& args] (output/print-progress host-string args)))
-                    true))
+
                 passed-attrs? (or owner group mode attrs)]
             (if (not passed-attrs?)
               ;; just copied
@@ -81,12 +127,5 @@
                          :group group
                          :mode mode
                          :attrs attrs})])))
-        (process-result opts))))
 
-
-
-
-
-
-
-(type (io/file "spire"))
+        #_ (process-result opts))))

@@ -9,8 +9,8 @@
 
 ;; https://web.archive.org/web/20170215184048/https://blogs.oracle.com/janp/entry/how_the_scp_protocol_works
 
-;; (def debug println)
-;; (def debugf (comp println format))
+;;(def debug println)
+;;(def debugf (comp println format))
 (defmacro debug [& args])
 (defmacro debugf [& args])
 
@@ -118,15 +118,19 @@
 
 (defn- scp-copy-dir
   "Send acknowledgement to the specified output stream"
-  [send recv ^File dir {:keys [dir-mode] :or {dir-mode 0755} :as options}]
+  [send recv ^File dir {:keys [dir-mode skip-files] :or {dir-mode 0755} :as options}]
   (debugf "Sending directory %s" (.getAbsolutePath dir))
   (scp-send-command
    send recv
    (format "D%04o 0 %s" dir-mode (.getName dir)))
   (doseq [^File file (.listFiles dir)]
+    #_ (println "file:" file "skip?" (skip-files (.getPath file)))
     (cond
-     (.isFile file) (scp-copy-file send recv file options)
-     (.isDirectory file) (scp-copy-dir send recv file options)))
+      (and (.isFile file) (not (skip-files (.getPath file))))
+      (scp-copy-file send recv file options)
+
+      (.isDirectory file)
+      (scp-copy-dir send recv file options)))
   (scp-send-command send recv "E"))
 
 (defn- scp-files
@@ -238,7 +242,7 @@
       (debug "Receive initial ACK")
       (scp-receive-ack recv)
       (doseq [file-or-data local-paths]
-        (debugf "scp-to: from %s" (.getPath file-or-data))
+        (debugf "scp-to: from %s name: %s" (.getPath file-or-data) (.getName file-or-data))
         (cond
           (utils/content-recursive? file-or-data)
           (scp-copy-dir send recv file-or-data opts)
