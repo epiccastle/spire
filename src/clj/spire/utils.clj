@@ -4,7 +4,8 @@
             [digest :as digest]
             [clojure.string :as string]
             [clojure.java.io :as io]
-            [clojure.java.shell :as shell]))
+            [clojure.java.shell :as shell])
+  (:import [java.nio.file Paths]))
 
 (defn to-camelcase [s]
   (-> s
@@ -279,3 +280,15 @@
 #_ (content-size (byte-array [1 2]))
 
 #_ (content-file? (io/file "./spire"))
+
+
+(defn relativise
+  "return the relative path that gets you from a working directory
+  `source` to the file or directory `target`"
+  [source target]
+  (let [source-path (Paths/get (.toURI (io/as-file (.getCanonicalPath (io/as-file source)))))
+        target-path (Paths/get (.toURI (io/as-file (.getCanonicalPath (io/as-file target)))))]
+    (-> source-path
+        (.relativize target-path)
+        .toFile
+        .getPath)))
