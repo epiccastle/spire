@@ -134,8 +134,8 @@
   (scp-send-command send recv "E"))
 
 (defn- scp-files
-  [paths recursive]
-  (let [f (if recursive
+  [paths recurse]
+  (let [f (if recurse
             #(File. ^String %)
             (fn [^String path]
               (let [file (File. path)]
@@ -143,7 +143,7 @@
                   (throw
                    (ex-info
                     (format
-                     "Copy of dir %s requested without recursive flag" path)
+                     "Copy of dir %s requested without recurse flag" path)
                     {:type :clj-ssh/scp-directory-copy-requested})))
                 file)))]
     (map f paths)))
@@ -156,16 +156,16 @@
    :port       port to use if no session specified
    :mode       mode, as a 4 digit octal number (default 0644)
    :dir-mode   directory mode, as a 4 digit octal number (default 0755)
-   :recursive  flag for recursive operation
+   :recurse  flag for recurse operation
    :preserve   flag for preserving mode, mtime and atime. atime is not available
                in java, so is set to mtime. mode is not readable in java."
   [session local-paths remote-path
-   & {:keys [username password port mode dir-mode recursive preserve progress-fn] :as opts}]
+   & {:keys [username password port mode dir-mode recurse preserve progress-fn] :as opts}]
   (let [local-paths (if (sequential? local-paths) local-paths [local-paths])
-        files (scp-files local-paths recursive)]
+        files (scp-files local-paths recurse)]
     (let [[^PipedInputStream in
            ^PipedOutputStream send] (ssh/streams-for-in)
-          cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recursive "-r" "") remote-path)
+          cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
           _ (debugf "scp-to: %s" cmd)
           {:keys [^PipedInputStream out-stream]}
           (ssh/ssh-exec session cmd in :stream opts)
@@ -191,7 +191,7 @@
    :port       port to use if no session specified
    :mode       mode, as a 4 digit octal number (default 0644)
    :dir-mode   directory mode, as a 4 digit octal number (default 0755)
-   :recursive  flag for recursive operation
+   :recurse  flag for recurse operation
    :preserve   flag for preserving mode, mtime and atime. atime is not available
                in java, so is set to mtime. mode is not readable in java."
   [session data remote-path & {:as opts}]
@@ -227,13 +227,13 @@
 
 (defn scp-to
   "Copy local path(s) to remote path via scp"
-  [session local-paths remote-path & {:keys [recursive] :as opts}]
+  [session local-paths remote-path & {:keys [recurse] :as opts}]
   (let [local-paths (if (sequential? local-paths) local-paths [local-paths])
-        ;;files (scp-files local-paths recursive)
+        ;;files (scp-files local-paths recurse)
         ]
     (let [[^PipedInputStream in
            ^PipedOutputStream send] (ssh/streams-for-in)
-          cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recursive "-r" "") remote-path)
+          cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
           _ (debugf "scp-to: %s" cmd)
           {:keys [^PipedInputStream out-stream]}
           (ssh/ssh-exec session cmd in :stream opts)
@@ -259,4 +259,6 @@
       (debug "Closing streams")
       (.close send)
       (.close recv)
-      nil)))
+
+      ;; files copied?
+      true)))
