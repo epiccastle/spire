@@ -63,6 +63,18 @@
     (md5-remote-dir (runner) "/tmp/spire")
     )
 
+(defn gather-file-sizes [src local-files identical-files]
+  (let [file-set (clojure.set/difference (into #{} local-files) (into #{} identical-files))]
+    (into {}
+          (for [f file-set]
+            [f (.length (io/file src f))]
+            ))
+    )
+  )
+
+#_
+(gather-file-sizes "test" (keys (md5-local-dir "test")) '("files/copy/test.txt"))
+
 (utils/defmodule upload [{:keys [src dest
                                  owner group mode attrs
                                  dir-mode preserve recurse force]
@@ -104,12 +116,16 @@
                                                  (into #{}))]
                         (when (not= (count identical-files) (count local-md5-files))
                           (scp/scp-to session src dest
-                                      :progress-fn (fn [& args] (output/print-progress host-string args))
+                                      :progress-fn (fn [& args] (output/print-progress host-string args (gather-file-sizes src (keys local-md5-files) identical-files)))
                                       :preserve preserve
                                       :dir-mode (or dir-mode 0755)
                                       :mode (or mode 0644)
                                       :recurse true
-                                      :skip-files identical-files)))))
+                                      :skip-files identical-files
+                                      :fileset-total (apply + (vals (gather-file-sizes src (keys local-md5-files) identical-files)))
+                                      :max-filename-length (->> (keys local-md5-files)
+                                                                (map #(count (str (io/file src %))))
+                                                                (apply max)))))))
 
                   ;; straight copy
                   (let [local-md5 (digest/md5 src)

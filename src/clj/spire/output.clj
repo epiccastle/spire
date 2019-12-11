@@ -91,9 +91,12 @@
           ]
       (println (utils/append-erasure-to-line line)))
     (let [max-host-string-length (when-not (empty? copy-progress)
-                                   (apply max (map (fn [[h _]] (count h)) copy-progress)))]
+                                   (apply max (map (fn [[h _]] (count h)) copy-progress)))
+          max-filename-length (when-not (empty? copy-progress)
+                                   (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
+          ]
       (doseq [[host-string progress] copy-progress]
-        (println (utils/progress-bar-from-stats host-string max-host-string-length progress))))
+        (println (utils/progress-bar-from-stats host-string max-host-string-length max-filename-length progress))))
     )
   )
 
@@ -165,7 +168,10 @@
                                    }
                                   ))))))))
 
-(defn print-progress [host-string progress-args]
+(defn print-progress [host-string progress-args file-sizes]
+  ;; (println progress-args)
+  ;; (println file-sizes)
+  ;; (println)
   (let [{:keys [progress context]} (apply utils/progress-stats progress-args)]
     (swap! state
            (fn [s]

@@ -32,6 +32,9 @@
 (defn colour [& [colour-name]]
   (escape-code (colour-map colour-name)))
 
+(defn reverse-text [& [state]]
+  (escape-code (when state 7)))
+
 (def kilobyte 1024)
 (def megabyte (* 1024 kilobyte))
 (def gigabyte (* 1024 megabyte))
@@ -85,7 +88,7 @@
         percent (int (* 100 frac))
         num-chars (int (* width frac))
         num-spaces (- width num-chars)
-        bar (apply str (take num-chars (repeat "=")))
+        bar (str (reverse-text true) (apply str (take num-chars (repeat " "))) (reverse-text false))
         spaces (apply str (take num-spaces (repeat " ")))
 
         line-str (str "\r|" bar spaces "| " percent "% "
@@ -102,16 +105,19 @@
     {:start-time (or start-time now)
      :start-bytes (or start-bytes bytes)}))
 
-(defn progress-stats [bytes total frac {:keys [start-time start-bytes]}]
+(defn progress-stats [file bytes total frac {:keys [start-time start-bytes fileset-file-start fileset-total max-filename-length]}]
   (let [
         columns (SpireUtils/get_terminal_width)
         now (time/now)
         first? (not start-time)
+        fileset-file-start (or fileset-file-start 0)
+        fileset-total (or fileset-total total)
+        fileset-copied-so-far (+ fileset-file-start bytes)
 
         duration (when-not first? (/ (float (time/in-millis (time/interval start-time now))) 1000))
-        bytes-since-start (when-not first? (- bytes start-bytes))
+        bytes-since-start (when-not first? (- (+ bytes fileset-file-start) start-bytes))
         bytes-per-second (when (some-> duration pos?) (int (/ bytes-since-start duration)))
-        bytes-remaining (- total bytes)
+        bytes-remaining (- fileset-total fileset-copied-so-far)
         eta (when (and bytes-remaining bytes-per-second)
               (int (/ bytes-remaining bytes-per-second)))
 
@@ -132,24 +138,32 @@
         eraser (apply str (take (- columns line-len 1) (repeat " ")))
 
         ]
-    {:progress {:bytes bytes
-                :total total
-                :frac frac
+    {:progress {:file file
+                :max-filename-length max-filename-length
+                :bytes fileset-copied-so-far ;;bytes
+                :total fileset-total ;;total
+                :frac (/ fileset-copied-so-far fileset-total) ;; frac
                 :bytes-per-second bytes-per-second
                 :eta eta}
      :context {:start-time (or start-time now)
-               :start-bytes (or start-bytes bytes)}}))
+               :start-bytes (or start-bytes bytes)
+               :fileset-file-start fileset-file-start
+               :fileset-total fileset-total
+               :max-filename-length max-filename-length}}))
 
-(defn progress-bar-from-stats [host-string max-len {:keys [bytes total frac bytes-per-second eta]}]
+(defn progress-bar-from-stats [host-string max-host-string-len max-filename-len
+                               {:keys [file bytes total frac bytes-per-second eta]}]
   (let [
         columns (SpireUtils/get_terminal_width)
         right-side-buffer 32
-        width (- columns right-side-buffer max-len)
-        host-string-padding (apply str (map (fn [_] " ") (range (- max-len (count host-string)))))
+        width (- columns right-side-buffer max-host-string-len max-filename-len 1)
+        host-string-padding (apply str (map (fn [_] " ") (range (- max-host-string-len (count host-string)))))
+        filename-padding (apply str (map (fn [_] " ") (range (- max-filename-len (count (str file))))))
         percent (int (* 100 frac))
         num-chars (int (* width frac))
         num-spaces (- width num-chars)
-        bar (apply str (take num-chars (repeat "=")))
+        ;;bar (str (reverse-text true) (apply str (take num-chars (repeat " "))) (reverse-text false))
+        bar (str (apply str (take num-chars (repeat "="))))
         spaces (apply str (take num-spaces (repeat " ")))
 
         line-str (str "|" bar spaces "| " percent "% "
@@ -158,8 +172,8 @@
                       (when eta
                         (str " eta:" (eta-string eta))))
         line-len (count line-str)
-        eraser (apply str (take (- columns line-len max-len 1) (repeat " ")))]
-    (str host-string host-string-padding line-str eraser)))
+        eraser (apply str (take (- columns line-len max-host-string-len max-filename-len 1) (repeat " ")))]
+    (str host-string  host-string-padding " " file filename-padding line-str eraser)))
 
 (defn strip-colour-codes [s]
   (string/replace s #"\033\[\d+m" "")

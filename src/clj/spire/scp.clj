@@ -9,8 +9,11 @@
 
 ;; https://web.archive.org/web/20170215184048/https://blogs.oracle.com/janp/entry/how_the_scp_protocol_works
 
-;;(def debug println)
-;;(def debugf (comp println format))
+(comment
+  (def debug println)
+  (def debugf (comp println format)))
+
+(comment)
 (defmacro debug [& args])
 (defmacro debugf [& args])
 
@@ -39,8 +42,9 @@
   "Send acknowledgement to the specified output stream"
   [^OutputStream send ^InputStream recv ^File file
    {:keys [mode buffer-size preserve progress-fn]
-    :or {mode 0644 buffer-size (* 32 1024) preserve false}}]
-
+    :or {mode 0644 buffer-size (* 32 1024) preserve false}}
+   & [progress-context]]
+  (debug "scp-copy-file:" progress-context)
   (when preserve
     (scp-send-command
      send recv
@@ -49,34 +53,40 @@
    send recv
    (format "C%04o %d %s" mode (.length file) (.getName file)))
   (debugf "Sending %s" (.getAbsolutePath file))
-  (if progress-fn
-    (let [size (.length file)
-          input-stream (io/input-stream file)
-          chunk-size buffer-size
-          chunk (byte-array chunk-size)]
-      (loop [offset 0 context nil]
-        (let [bytes-read (.read input-stream chunk)
-              new-offset (+ bytes-read offset)]
-          (debugf "bytes read: %d" bytes-read)
-          (if (= bytes-read chunk-size)
-            ;; full chunk
-            (do
-              (debug "full")
-              (io/copy chunk send)
-              (.flush send)
-              (recur new-offset (progress-fn new-offset size (float (/ new-offset size)) context)))
+  (let [final-progress-context
+        (if progress-fn
+          (let [size (.length file)
+                input-stream (io/input-stream file)
+                chunk-size buffer-size
+                chunk (byte-array chunk-size)]
+            (loop [offset 0 context progress-context]
+              (debug "PC:" progress-context)
+              (Thread/sleep 1000)
+              (let [bytes-read (.read input-stream chunk)
+                    new-offset (+ bytes-read offset)]
+                (debugf "bytes read: %d" bytes-read)
+                (if (= bytes-read chunk-size)
+                  ;; full chunk
+                  (do
+                    (debug "full")
+                    (io/copy chunk send)
+                    (.flush send)
+                    (recur new-offset (progress-fn file new-offset size (float (/ new-offset size)) context)))
 
-            ;; last partial chunk
-            (do
-              (debug "partial")
-              (io/copy (byte-array (take bytes-read chunk)) send)
-              (.flush send)
-              (progress-fn new-offset size (float (/ new-offset size)) context))))))
-    ;; no progress callback
-    (io/copy file send :buffer-size buffer-size))
-  (scp-send-ack send)
-  (debug "Receiving ACK after send")
-  (scp-receive-ack recv))
+                  ;; last partial chunk
+                  (do
+                    (debug "partial")
+                    (io/copy (byte-array (take bytes-read chunk)) send)
+                    (.flush send)
+                    (progress-fn file new-offset size (float (/ new-offset size)) context))))))
+          ;; no progress callback
+          (io/copy file send :buffer-size buffer-size))]
+    (scp-send-ack send)
+    (debug "Receiving ACK after send")
+    (scp-receive-ack recv)
+    (debug "final:" final-progress-context)
+    final-progress-context
+    ))
 
 (defn- scp-copy-data
   "Send acknowledgement to the specified output stream"
@@ -102,14 +112,14 @@
                 (debug "full")
                 (io/copy chunk send)
                 (.flush send)
-                (recur new-offset (progress-fn new-offset size (float (/ new-offset size)) context)))
+                (recur new-offset (progress-fn data new-offset size (float (/ new-offset size)) context)))
 
               ;; last partial chunk
               (do
                 (debug "partial")
                 (io/copy (byte-array (take bytes-read chunk)) send)
                 (.flush send)
-                (progress-fn new-offset size (float (/ new-offset size)) context))))))
+                (progress-fn data new-offset size (float (/ new-offset size)) context))))))
       ;; no progress callback
       (io/copy (io/input-stream data) send :buffer-size buffer-size))
     (scp-send-ack send)
@@ -118,20 +128,29 @@
 
 (defn- scp-copy-dir
   "Send acknowledgement to the specified output stream"
-  [send recv ^File dir {:keys [dir-mode skip-files] :or {dir-mode 0755} :as options}]
+  [send recv ^File dir {:keys [dir-mode skip-files] :or {dir-mode 0755} :as options} & [progress-context]]
+  (debug "scp-copy-dir progress-context:" progress-context)
   (debugf "Sending directory %s" (.getAbsolutePath dir))
   (scp-send-command
    send recv
    (format "D%04o 0 %s" dir-mode (.getName dir)))
-  (doseq [^File file (.listFiles dir)]
-    #_ (println "file:" file "skip?" (skip-files (.getPath file)))
-    (cond
-      (and (.isFile file) (not (skip-files (.getPath file))))
-      (scp-copy-file send recv file options)
+  (let [final-progress-context
+        (loop [[file & remain] (.listFiles dir)
+               progress-context progress-context]
+          (if file
+            #_ (println "file:" file "skip?" (skip-files (.getPath file)))
+            (cond
+              (and (.isFile file) (not (skip-files (.getPath file))))
+              (recur remain
+                     (update (scp-copy-file send recv file options progress-context)
+                             :fileset-file-start + (.length file)))
 
-      (.isDirectory file)
-      (scp-copy-dir send recv file options)))
-  (scp-send-command send recv "E"))
+              (.isDirectory file)
+              (recur remain (scp-copy-dir send recv file options progress-context)))
+
+            progress-context))]
+    (scp-send-command send recv "E")
+    final-progress-context))
 
 (defn- scp-files
   [paths recurse]
@@ -227,7 +246,7 @@
 
 (defn scp-to
   "Copy local path(s) to remote path via scp"
-  [session local-paths remote-path & {:keys [recurse] :as opts}]
+  [session local-paths remote-path & {:keys [recurse fileset-total max-filename-length] :as opts}]
   (let [local-paths (if (sequential? local-paths) local-paths [local-paths])
         ;;files (scp-files local-paths recurse)
         ]
@@ -245,7 +264,10 @@
         (debugf "scp-to: from %s name: %s" (.getPath file-or-data) (.getName file-or-data))
         (cond
           (utils/content-recursive? file-or-data)
-          (scp-copy-dir send recv file-or-data opts)
+          (scp-copy-dir send recv file-or-data opts
+                        {:fileset-total fileset-total
+                         :fileset-file-start 0
+                         :max-filename-length max-filename-length})
 
           (utils/content-file? file-or-data)
           (scp-copy-file send recv file-or-data opts)
