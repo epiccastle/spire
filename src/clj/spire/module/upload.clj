@@ -104,11 +104,17 @@
                       (do
                         (run (format "rm -f \"%s\"" dest))
                         (scp/scp-to session src dest
-                                    :progress-fn (fn [& args] (output/print-progress host-string args))
+                                    :progress-fn (fn [& args] (output/print-progress host-string args (gather-file-sizes src (keys local-md5-files) [])))
                                     :preserve preserve
                                     :dir-mode (or dir-mode 0755)
                                     :mode (or mode 644)
-                                    :recurse true))
+                                    :recurse true
+
+                                    :fileset-total (apply + (vals (gather-file-sizes src (keys local-md5-files) [])))
+                                    :max-filename-length (->> (keys local-md5-files)
+                                                              (map #(count (str (io/file src %))))
+                                                              (apply max))
+                                    ))
 
                       (not remote-is-file?)
                       (let [identical-files (->> (same-files local-md5-files remote-md5-files)
@@ -134,10 +140,16 @@
                                            first)]
                     (when (not= local-md5 remote-md5)
                       (scp/scp-to session src dest
-                                  :progress-fn (fn [& args] (output/print-progress host-string args))
+                                  :progress-fn
+                                  (fn [& args]
+                                    (output/print-progress
+                                     host-string args
+                                     {src (.length (io/file src))}))
                                   :preserve preserve
                                   :dir-mode (or dir-mode 0755)
                                   :mode (or mode 0644)
+                                  :fileset-total (.length (io/file src))
+                                  :max-filename-length (count (str src))
                                   ))))
 
               passed-attrs? (or owner group mode attrs)]
