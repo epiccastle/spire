@@ -61,7 +61,6 @@
                 chunk (byte-array chunk-size)]
             (loop [offset 0 context progress-context]
               (debug "PC:" progress-context)
-              (Thread/sleep 1000)
               (let [bytes-read (.read input-stream chunk)
                     new-offset (+ bytes-read offset)]
                 (debugf "bytes read: %d" bytes-read)
