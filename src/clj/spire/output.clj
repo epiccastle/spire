@@ -171,16 +171,12 @@
                                    }
                                   ))))))))
 
-(defn print-progress [host-string progress-args file-sizes]
-  ;; (println progress-args)
-  ;; (println file-sizes)
-  ;; (println)
-  (let [{:keys [progress context]} (apply utils/progress-stats progress-args)]
-    (swap! state
-           (fn [s]
-             (update
-              s
-              (find-first-form-missing-hoststring-index s state/*form* host-string)
-              (fn [{:keys [width results] :as data}]
-                (assoc-in data [:copy-progress host-string] progress)))))
-    context))
+(defn print-progress [host-string {:keys [progress context]}]
+  (swap! state
+         (fn [s]
+           (update
+            s
+            (find-first-form-missing-hoststring-index s state/*form* host-string)
+            (fn [{:keys [width results] :as data}]
+              (assoc-in data [:copy-progress host-string] progress)))))
+  context)

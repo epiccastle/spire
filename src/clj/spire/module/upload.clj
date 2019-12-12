@@ -163,7 +163,8 @@
                       (scp/scp-to session src dest
                                   :progress-fn (fn [& args]
                                                  (output/print-progress
-                                                  host-string args local-to-remote-filesizes))
+                                                  host-string
+                                                  (apply utils/progress-stats args)))
                                   :preserve preserve
                                   :dir-mode (or dir-mode 0755)
                                   :mode (or mode 644)
@@ -179,7 +180,9 @@
                         (scp/scp-to session src dest
                                     :progress-fn (fn [& args]
                                                    (output/print-progress
-                                                    host-string args local-to-remote-filesizes))
+                                                    host-string
+                                                    (apply utils/progress-stats args)
+                                                    ))
                                     :preserve preserve
                                     :dir-mode (or dir-mode 0755)
                                     :mode (or mode 0644)
