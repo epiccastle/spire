@@ -4,14 +4,16 @@
             [clojure.java.io :as io])
   )
 
-(defn make-script [{:keys [path owner group mode attrs]}]
+(defn make-script [{:keys [path owner group mode dir-mode attrs recurse]}]
   (utils/make-script
    "attrs.sh"
    {:FILE (some->> path utils/path-escape)
     :OWNER owner
     :GROUP group
     :MODE (if (number? mode) (format "%o" mode)  mode)
-    :ATTRS attrs}))
+    :DIR_MODE (if (number? dir-mode) (format "%o" dir-mode)  dir-mode)
+    :ATTRS attrs
+    :RECURSE (if recurse "1" nil)}))
 
 (defn set-attrs [session opts]
   (ssh/ssh-exec session (make-script opts) "" "UTF-8" {}))
