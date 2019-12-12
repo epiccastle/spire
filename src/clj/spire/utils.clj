@@ -70,6 +70,31 @@
 (defn executing-bin-path []
   (.getCanonicalPath (io/as-file "/proc/self/exe")))
 
+(defmulti content-size type)
+(defmethod content-size java.io.File [f] (.length f))
+(defmethod content-size java.lang.String [f] (count f))
+(defmethod content-size (Class/forName "[B") [f] (count f))
+
+(defmulti content-display-name type)
+(defmethod content-display-name java.io.File [f] (.getName f))
+(defmethod content-display-name java.lang.String [f] "String Data")
+(defmethod content-display-name (Class/forName "[B") [f] "Byte Array Data")
+
+(defmulti content-recursive? type)
+(defmethod content-recursive? java.io.File [f] (.isDirectory f))
+(defmethod content-recursive? java.lang.String [f] false)
+(defmethod content-recursive? (Class/forName "[B") [f] false)
+
+(defmulti content-file? type)
+(defmethod content-file? java.io.File [f] (.isFile f))
+(defmethod content-file? java.lang.String [f] false)
+(defmethod content-file? (Class/forName "[B") [f] false)
+
+(defmulti content-stream type)
+(defmethod content-stream java.io.File [f] (io/input-stream f))
+(defmethod content-stream java.lang.String [f] (io/input-stream (.getBytes f)))
+(defmethod content-stream (Class/forName "[B") [f] (io/input-stream f))
+
 (defn progress-bar [bytes total frac {:keys [start-time start-bytes]}]
   (let [
         columns (SpireUtils/get_terminal_width)
@@ -161,7 +186,7 @@
         right-side-buffer 32
         width (- columns right-side-buffer max-host-string-len max-filename-len 1)
         host-string-padding (apply str (map (fn [_] " ") (range (- max-host-string-len (count host-string)))))
-        filename-padding (apply str (map (fn [_] " ") (range (- max-filename-len (count (str file))))))
+        filename-padding (apply str (map (fn [_] " ") (range (- max-filename-len (count (str (content-display-name file)))))))
         percent (int (* 100 frac))
         num-chars (int (* width frac))
         num-spaces (- width num-chars)
@@ -176,7 +201,7 @@
                         (str " eta:" (eta-string eta))))
         line-len (count line-str)
         eraser (apply str (take (- columns line-len max-host-string-len max-filename-len 1) (repeat " ")))]
-    (str host-string  host-string-padding " " file filename-padding line-str eraser)))
+    (str host-string  host-string-padding " " (content-display-name file) filename-padding line-str eraser)))
 
 (defn strip-colour-codes [s]
   (string/replace s #"\033\[\d+m" "")
@@ -272,26 +297,6 @@
          (spire.transport/pipelines
           (fn ~pipeline-args
             ~@body))))))
-
-(defmulti content-size type)
-(defmethod content-size java.io.File [f] (.length f))
-(defmethod content-size java.lang.String [f] (count f))
-(defmethod content-size (Class/forName "[B") [f] (count f))
-
-(defmulti content-recursive? type)
-(defmethod content-recursive? java.io.File [f] (.isDirectory f))
-(defmethod content-recursive? java.lang.String [f] false)
-(defmethod content-recursive? (Class/forName "[B") [f] false)
-
-(defmulti content-file? type)
-(defmethod content-file? java.io.File [f] (.isFile f))
-(defmethod content-file? java.lang.String [f] false)
-(defmethod content-file? (Class/forName "[B") [f] false)
-
-(defmulti content-stream type)
-(defmethod content-stream java.io.File [f] (io/input-stream f))
-(defmethod content-stream java.lang.String [f] (io/input-stream (.getBytes f)))
-(defmethod content-stream (Class/forName "[B") [f] (io/input-stream f))
 
 
 #_ (content-size (byte-array [1 2]))

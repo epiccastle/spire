@@ -196,23 +196,25 @@
                                     :skip-files identical-files
                                     ))))
 
-                  ;; straight copy
+                  ;; straight single copy
                   (let [local-md5 (digest/md5 src)
                         remote-md5 (some-> (run (format "%s -b \"%s\"" "md5sum" dest))
                                            (string/split #"\s+")
                                            first)]
                     (when (not= local-md5 remote-md5)
                       (scp/scp-to session src dest
-                                  :progress-fn
-                                  (fn [& args]
-                                    (output/print-progress
-                                     host-string args
-                                     {src (.length (io/file src))}))
+                                  :progress-fn (fn [file bytes total frac context]
+                                                   (output/print-progress
+                                                    host-string
+                                                    (utils/progress-stats
+                                                     file bytes total frac
+                                                     (utils/content-size src)
+                                                     (count (utils/content-display-name src))
+                                                     context)
+                                                    ))
                                   :preserve preserve
                                   :dir-mode (or dir-mode 0755)
                                   :mode (or mode 0644)
-                                  :fileset-total (.length (io/file src))
-                                  :max-filename-length (count (str src))
                                   ))))
 
               passed-attrs? (or owner group mode attrs)]
