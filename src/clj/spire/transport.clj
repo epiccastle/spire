@@ -36,7 +36,8 @@
 (defmacro ssh [host-string & body]
   `(try
      (connect ~host-string)
-     (binding [state/*sessions* ~[host-string]]
+     (binding [state/*sessions* ~[host-string]
+               state/*connections* ~[host-string]]
        ~@body)
      (finally
        (disconnect ~host-string))))
