@@ -27,7 +27,8 @@
   "Check for an acknowledgement byte from the given input stream"
   [^InputStream in]
   (let [code (.read in)]
-    (assert (zero? code) "scp protocol error")))
+    (when-not (zero? code)
+      (throw (ex-info "scp protocol error" {:code code})))))
 
 (defn- scp-send-command
   "Send command to the specified output stream"
