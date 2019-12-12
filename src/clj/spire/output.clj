@@ -96,7 +96,10 @@
                                    (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
           ]
       (doseq [[host-string progress] copy-progress]
-        (println (utils/progress-bar-from-stats host-string max-host-string-length max-filename-length progress))))
+        (println (utils/progress-bar-from-stats host-string max-host-string-length max-filename-length progress))
+        ;; (println)
+        ;; (println)
+        ))
     )
   )
 
