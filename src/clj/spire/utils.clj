@@ -105,7 +105,9 @@
     {:start-time (or start-time now)
      :start-bytes (or start-bytes bytes)}))
 
-(defn progress-stats [file bytes total frac {:keys [start-time start-bytes fileset-file-start fileset-total max-filename-length]}]
+(defn progress-stats [file bytes total frac
+                      fileset-total max-filename-length
+                      {:keys [start-time start-bytes fileset-file-start]}]
   (let [
         columns (SpireUtils/get_terminal_width)
         now (time/now)
@@ -138,18 +140,19 @@
         eraser (apply str (take (- columns line-len 1) (repeat " ")))
 
         ]
-    {:progress {:file file
+    {
+     ;; what gets passed to the progress bar output renderer
+     :progress {:file file
                 :max-filename-length max-filename-length
                 :bytes fileset-copied-so-far ;;bytes
                 :total fileset-total ;;total
                 :frac (/ fileset-copied-so-far fileset-total) ;; frac
                 :bytes-per-second bytes-per-second
                 :eta eta}
+     ;; what gets passed back in to the next progress-stats call
      :context {:start-time (or start-time now)
                :start-bytes (or start-bytes bytes)
-               :fileset-file-start fileset-file-start
-               :fileset-total fileset-total
-               :max-filename-length max-filename-length}}))
+               :fileset-file-start fileset-file-start}}))
 
 (defn progress-bar-from-stats [host-string max-host-string-len max-filename-len
                                {:keys [file bytes total frac bytes-per-second eta]}]

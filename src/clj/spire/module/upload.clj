@@ -161,35 +161,39 @@
                     (do
                       (run (format "rm -f \"%s\"" dest))
                       (scp/scp-to session src dest
-                                  :progress-fn (fn [& args]
-                                                 (output/print-progress
-                                                  host-string
-                                                  (apply utils/progress-stats args)))
+                                  :progress-fn (fn [file bytes total frac context]
+                                                   (output/print-progress
+                                                    host-string
+                                                    (utils/progress-stats
+                                                     file bytes total frac
+                                                     local-to-remote-total-size
+                                                     local-to-remote-max-filename-length
+                                                     context)
+                                                    ))
                                   :preserve preserve
                                   :dir-mode (or dir-mode 0755)
                                   :mode (or mode 644)
                                   :recurse true
-
-                                  :fileset-total local-to-remote-total-size
-                                  :max-filename-length local-to-remote-max-filename-length
                                   ))
 
                     (not remote-file?)
                     (let [identical-files identical]
                       (when (not= (count identical-files) (count local-md5))
                         (scp/scp-to session src dest
-                                    :progress-fn (fn [& args]
+                                    :progress-fn (fn [file bytes total frac context]
                                                    (output/print-progress
                                                     host-string
-                                                    (apply utils/progress-stats args)
+                                                    (utils/progress-stats
+                                                     file bytes total frac
+                                                     local-to-remote-total-size
+                                                     local-to-remote-max-filename-length
+                                                     context)
                                                     ))
                                     :preserve preserve
                                     :dir-mode (or dir-mode 0755)
                                     :mode (or mode 0644)
                                     :recurse true
                                     :skip-files identical-files
-                                    :fileset-total local-to-remote-total-size
-                                    :max-filename-length local-to-remote-max-filename-length
                                     ))))
 
                   ;; straight copy

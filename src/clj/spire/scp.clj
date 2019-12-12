@@ -245,7 +245,7 @@
 
 (defn scp-to
   "Copy local path(s) to remote path via scp"
-  [session local-paths remote-path & {:keys [recurse fileset-total max-filename-length] :as opts}]
+  [session local-paths remote-path & {:keys [recurse] :as opts}]
   (let [local-paths (if (sequential? local-paths) local-paths [local-paths])
         ;;files (scp-files local-paths recurse)
         ]
@@ -264,9 +264,7 @@
         (cond
           (utils/content-recursive? file-or-data)
           (scp-copy-dir send recv file-or-data opts
-                        {:fileset-total fileset-total
-                         :fileset-file-start 0
-                         :max-filename-length max-filename-length})
+                        {:fileset-file-start 0})
 
           (utils/content-file? file-or-data)
           (scp-copy-file send recv file-or-data opts)
