@@ -274,17 +274,17 @@
    :examples
    [
     {:description "Replace localhost entry with a custom line"
-     :form '(line-in-file :present
-                          {:path "/etc/hosts"
-                           :regexp #"^127\.0\.0\.1"
-                           :line "127.0.0.1 localhost local myhostname"
-                           })}
+     :form "
+(line-in-file :present
+              {:path \"/etc/hosts\"
+               :regexp #\"^127\\.0\\.0\\.1\"
+               :line \"127.0.0.1 localhost local myhostname\"})"}
 
     {:description "Add a comment to the web port definition in /etc/services"
-     :form '(line-in-file :present
-                          {:path "/etc/services"
-                           :regexp #"^# http service port"
-                           :line "# http service port"
-                           })}
+     :form "
+(line-in-file :present
+              {:path \"/etc/services\"
+               :regexp #\"^# http service port\"
+               :line \"# http service port\"})"}
     ]}
   )
