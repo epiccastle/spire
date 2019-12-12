@@ -77,8 +77,8 @@
 
 (defmulti content-display-name type)
 (defmethod content-display-name java.io.File [f] (.getName f))
-(defmethod content-display-name java.lang.String [f] "String Data")
-(defmethod content-display-name (Class/forName "[B") [f] "Byte Array Data")
+(defmethod content-display-name java.lang.String [f] "[String Data]")
+(defmethod content-display-name (Class/forName "[B") [f] "[Byte Array]")
 
 (defmulti content-recursive? type)
 (defmethod content-recursive? java.io.File [f] (.isDirectory f))
