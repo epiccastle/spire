@@ -22,7 +22,9 @@
 
 (defn initialise []
   (config/init!)
-  (System/loadLibrary "spire"))
+
+  ;;(System/loadLibrary "spire")
+  (clojure.lang.RT/loadLibrary "spire"))
 
 (defn usage [options-summary]
   (->> ["Pragmatic Provisioning"

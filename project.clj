@@ -24,7 +24,11 @@
   :plugins [[cider/cider-nrepl "0.21.1"]]
   :source-paths ["src/clj"]
   :java-source-paths ["src/c"]
+
   :jvm-opts ["-Djava.library.path=./"]
+  ;;:native-path "./"
+  ;;:native-dependencies [[SpireUtils "libspire.so"]]
+
   :main ^:skip-aot spire.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
