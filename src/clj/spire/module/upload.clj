@@ -289,8 +289,9 @@
          passed-attrs? (or owner group dir-mode mode attrs)
 
          {:keys [exit err out]} (cond
-
-                                  passed-attrs?
+                                  ;; generally we assume that if a copy happened, all attributes
+                                  ;; and modes are correctly setup.
+                                  (and (= :ok (:result copied?)) passed-attrs?)
                                   (attrs/set-attrs
                                    session
                                    {:path dest
