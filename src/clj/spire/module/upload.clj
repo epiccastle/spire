@@ -43,12 +43,12 @@
     (and content (utils/content-recursive? content) (not recurse))
     (assoc failed-result
            :exit 3
-           :err ":rescrse must be true when :content specifies a directory.")
+           :err ":recurse must be true when :content specifies a directory.")
 
     (and src (utils/content-recursive? (io/file src)) (not recurse))
     (assoc failed-result
            :exit 3
-           :err ":rescrse must be true when :src specifies a directory.")))
+           :err ":recurse must be true when :src specifies a directory.")))
 
 (defn process-result [opts copy-result attr-result]
   (let [result {:result :failed
@@ -307,6 +307,9 @@
 
         (= 255 exit)
         {:result :changed}
+
+        (nil? exit)
+        {:result :ok}
 
         :else
         {:result :failed})
