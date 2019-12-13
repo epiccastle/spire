@@ -61,9 +61,16 @@
 
 #_ (create-temp-file "project.clj")
 
+(defn delete-recursive [f]
+  (let [f (io/file f)]
+    (when (.isDirectory f)
+      (doseq [path (.listFiles f)]
+        (delete-recursive path)))
+    (.delete f)))
+
 (defn remove-file [tmp]
   (assert (string/starts-with? tmp tmp-dir))
-  (.delete (io/file tmp)))
+  (delete-recursive tmp))
 
 #_ (remove-file (create-temp-file "project.clj"))
 
