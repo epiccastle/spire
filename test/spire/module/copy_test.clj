@@ -6,7 +6,7 @@
             [clojure.java.io :as io]
             [spire.test-utils :as test-utils]))
 
-(deftest copy-test
+#_ (deftest copy-test
   (testing "copy test"
     (with-redefs [spire.transport/pipelines test-utils/test-pipelines
                   spire.ssh/ssh-exec test-utils/test-ssh-exec
