@@ -5,7 +5,11 @@
             [clojure.string :as string])
   (:import [java.io InputStream OutputStream File
             PipedInputStream PipedOutputStream]
-           [com.jcraft.jsch ChannelExec]))
+           [com.jcraft.jsch ChannelExec]
+
+           [java.nio.file Paths Files LinkOption Path]
+           [java.nio.file.attribute FileAttribute BasicFileAttributes PosixFilePermission]
+           ))
 
 ;; https://web.archive.org/web/20170215184048/https://blogs.oracle.com/janp/entry/how_the_scp_protocol_works
 
@@ -39,6 +43,45 @@
   (scp-receive-ack in)
   (debug "Received ACK"))
 
+(def empty-file-attribute-array
+  (make-array FileAttribute 0))
+
+(def empty-link-options
+  (make-array LinkOption 0))
+
+(def no-follow-links
+  (into-array LinkOption [LinkOption/NOFOLLOW_LINKS]))
+
+(defn last-access-time [file]
+  (let [p (.toPath (io/file file))]
+    (.toMillis (.lastAccessTime (Files/readAttributes p  java.nio.file.attribute.BasicFileAttributes empty-link-options)))))
+
+#_ (last-access-time ".")
+
+(def permission->mode
+  {PosixFilePermission/OWNER_READ     0400
+   PosixFilePermission/OWNER_WRITE    0200
+   PosixFilePermission/OWNER_EXECUTE  0100
+   PosixFilePermission/GROUP_READ     0040
+   PosixFilePermission/GROUP_WRITE    0020
+   PosixFilePermission/GROUP_EXECUTE  0010
+   PosixFilePermission/OTHERS_READ    0004
+   PosixFilePermission/OTHERS_WRITE   0002
+   PosixFilePermission/OTHERS_EXECUTE 0001})
+
+(defn file-mode [file]
+  (let [p (.toPath (io/file file))
+        perm-hash-set (.permissions (Files/readAttributes p  java.nio.file.attribute.PosixFileAttributes empty-link-options))]
+    (reduce (fn [acc [perm-mode perm-val]]
+              (if (.contains perm-hash-set perm-mode)
+                (bit-or acc perm-val)
+                acc))
+            0 permission->mode)
+    ))
+
+#_ (format "%o" (file-mode "."))
+
+
 (defn- scp-copy-file
   "Send acknowledgement to the specified output stream"
   [^OutputStream send ^InputStream recv ^File file
@@ -47,12 +90,19 @@
    & [progress-context]]
   (debug "scp-copy-file:" progress-context)
   (when preserve
+    #_(let [pfile (PATH)])
     (scp-send-command
      send recv
-     (format "P%d 0 %d 0" (.lastModified file) (.lastModified file))))
+     (format "T%d 0 %d 0"
+             (/ (.lastModified file) 1000)
+             (/ (last-access-time file) 1000))))
   (scp-send-command
    send recv
-   (format "C%04o %d %s" mode (.length file) (.getName file)))
+   (format "C%04o %d %s"
+           (if preserve
+             (file-mode file)
+             mode)
+           (.length file) (.getName file)))
   (debugf "Sending %s" (.getAbsolutePath file))
   (let [final-progress-context
         (if progress-fn
@@ -128,12 +178,23 @@
 
 (defn- scp-copy-dir
   "Send acknowledgement to the specified output stream"
-  [send recv ^File dir {:keys [dir-mode skip-files] :or {dir-mode 0755} :as options} & [progress-context]]
+  [send recv ^File dir {:keys [dir-mode skip-files preserve] :or {dir-mode 0755} :as options} & [progress-context]]
   (debug "scp-copy-dir progress-context:" progress-context)
   (debugf "Sending directory %s" (.getAbsolutePath dir))
+  (when preserve
+    #_(let [pfile (PATH)])
+    (scp-send-command
+     send recv
+     (format "T%d 0 %d 0"
+             (/ (.lastModified dir) 1000)
+             (/ (last-access-time dir) 1000))))
   (scp-send-command
    send recv
-   (format "D%04o 0 %s" dir-mode (.getName dir)))
+   (format "D%04o 0 %s"
+           (if preserve
+             (file-mode dir)
+             dir-mode)
+           (.getName dir)))
   (let [final-progress-context
         (loop [[file & remain] (.listFiles dir)
                progress-context progress-context]
