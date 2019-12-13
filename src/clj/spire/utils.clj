@@ -1,6 +1,7 @@
 (ns spire.utils
   (:require ;;[spire.scp :as scp]
             [clj-time.core :as time]
+            [clj-time.coerce :as coerce]
             [digest :as digest]
             [clojure.string :as string]
             [clojure.java.io :as io]
@@ -357,3 +358,18 @@
     ))
 
 #_ (format "%o" (file-mode "."))
+
+(defn timestamp->touch [ts]
+  (let [datetime (coerce/from-epoch ts)
+        year (time/year datetime)
+        month (time/month datetime)
+        day (time/day datetime)
+        hour (time/hour datetime)
+        minute (time/minute datetime)
+        second (time/second datetime)
+        ]
+    (format "%d-%02d-%02d %02d:%02d:%02d.000000000 +0000" year month day hour minute second)
+    )
+  )
+
+#_ (timestamp->touch 1514779200)
