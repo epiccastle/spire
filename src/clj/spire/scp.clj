@@ -195,7 +195,7 @@
         ]
     (let [[^PipedInputStream in
            ^PipedOutputStream send] (ssh/streams-for-in)
-          cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
+          cmd (format "umask 0000; scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
           _ (debugf "scp-to: %s" cmd)
           {:keys [^PipedInputStream out-stream]}
           (ssh/ssh-exec session cmd in :stream opts)
