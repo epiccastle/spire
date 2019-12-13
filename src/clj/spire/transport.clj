@@ -37,7 +37,10 @@
   `(try
      (connect ~host-string)
      (binding [state/*sessions* ~[host-string]
-               state/*connections* ~[host-string]]
+               state/*connections* ~[host-string]
+               state/*host-string* ~host-string
+               state/*connection* (get @state/ssh-connections ~host-string)
+               ]
        ~@body)
      (finally
        (disconnect ~host-string))))
@@ -75,9 +78,21 @@
 (defmacro on [host-strings & body]
   `(let [present-sessions# (into #{} (state/get-sessions))
          sessions# (into #{} ~host-strings)
-         subset# (into [] (clojure.set/intersection present-sessions# sessions#))]
-     (binding [state/*sessions* subset#]
-       ~@body)))
+         subset# (into [] (clojure.set/intersection present-sessions# sessions#))
+         futs# (->> subset#
+                    (map
+                     (fn [host-string#]
+                       [host-string#
+                        (binding [state/*host-string* host-string#
+                                  state/*sessions* [host-string#]
+                                  state/*connection* (get @state/ssh-connections host-string#)]
+                          (future
+                            ~@body))]))
+                    (into {}))]
+     (->> futs#
+          (map (fn [[host-string# fut#]]
+                 [host-string# @fut#]))
+          (into {}))))
 
 (defn psh [cmd in out & [opts]]
   (let [opts (or opts {})

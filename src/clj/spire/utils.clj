@@ -293,10 +293,12 @@
   `(defn ~name [& args#]
      (binding [spire.state/*form* (concat '(~name) args#)]
        (spire.output/print-form spire.state/*form*)
-       (let [~module-args args#]
-         (spire.transport/pipelines
-          (fn ~pipeline-args
-            ~@body))))))
+       (let [~module-args args#
+             ~pipeline-args [spire.state/*host-string* spire.state/*connection*]
+             result# (do ~@body)]
+         (output/print-result result# spire.state/*host-string*)
+         result#
+         ))))
 
 
 #_ (content-size (byte-array [1 2]))

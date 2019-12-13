@@ -24,5 +24,11 @@
 ;; used to print updates on progress to the output
 (def ^:dynamic *form* nil)
 
+(def ^:dynamic *host-string* nil)
+
+(def ^:dynamic *connection* nil)
+
+
 ;; some helper functions for use inside sci evaluated code
 (defn get-sessions [] *sessions*)
+(defn get-connections [] *connections*)
