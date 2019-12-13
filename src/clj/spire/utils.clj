@@ -5,7 +5,8 @@
             [clojure.string :as string]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell])
-  (:import [java.nio.file Paths]))
+  (:import [java.nio.file Paths Files LinkOption Path]
+           [java.nio.file.attribute FileAttribute BasicFileAttributes PosixFilePermission]))
 
 (defn to-camelcase [s]
   (-> s
@@ -316,3 +317,43 @@
         (.relativize target-path)
         .toFile
         .getPath)))
+
+
+
+(def empty-file-attribute-array
+  (make-array FileAttribute 0))
+
+(def empty-link-options
+  (make-array LinkOption 0))
+
+(def no-follow-links
+  (into-array LinkOption [LinkOption/NOFOLLOW_LINKS]))
+
+(defn last-access-time [file]
+  (let [p (.toPath (io/file file))]
+    (.toMillis (.lastAccessTime (Files/readAttributes p  java.nio.file.attribute.BasicFileAttributes empty-link-options)))))
+
+#_ (last-access-time ".")
+
+(def permission->mode
+  {PosixFilePermission/OWNER_READ     0400
+   PosixFilePermission/OWNER_WRITE    0200
+   PosixFilePermission/OWNER_EXECUTE  0100
+   PosixFilePermission/GROUP_READ     0040
+   PosixFilePermission/GROUP_WRITE    0020
+   PosixFilePermission/GROUP_EXECUTE  0010
+   PosixFilePermission/OTHERS_READ    0004
+   PosixFilePermission/OTHERS_WRITE   0002
+   PosixFilePermission/OTHERS_EXECUTE 0001})
+
+(defn file-mode [file]
+  (let [p (.toPath (io/file file))
+        perm-hash-set (.permissions (Files/readAttributes p  java.nio.file.attribute.PosixFileAttributes empty-link-options))]
+    (reduce (fn [acc [perm-mode perm-val]]
+              (if (.contains perm-hash-set perm-mode)
+                (bit-or acc perm-val)
+                acc))
+            0 permission->mode)
+    ))
+
+#_ (format "%o" (file-mode "."))
