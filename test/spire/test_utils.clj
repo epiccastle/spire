@@ -2,7 +2,9 @@
   (:require
    [clojure.java.shell :as shell]
    [clojure.java.io :as io]
-   [clojure.string :as string]))
+   [clojure.string :as string]
+   [spire.ssh :as ssh]
+   ))
 
 
 
@@ -76,7 +78,7 @@
               (finally (remove-file ~sym))))
       `(let [~sym (create-temp-file-name)]
          (try
-           (with-temp-files ~(subvec syms 1) ~@body)
+           (with-temp-file-names ~(subvec syms 1) ~@body)
            (finally (remove-file ~sym)))))))
 
 (defn is-root? []
@@ -109,3 +111,32 @@
      :gid gid}))
 
 #_ (last-group)
+
+(defn run [command]
+  (let [{:keys [exit err out]} (shell/sh "bash" "-c" command)]
+    (assert (zero? exit))
+    out))
+
+;;
+;; You can get the value directly using a stat output format, e.g. BSD/OS X:
+;; stat -f "%OLp" <file>
+;; or in Linux
+;; stat --format '%a' <file>
+;; and in busybox
+;;  stat -c '%a' <file>
+;;
+(defn mode [f]
+  (-> "stat -c '%%a' \"%s\""
+      (format f)
+      run
+      string/trim
+      ))
+
+#_ (mode "project.clj")
+
+
+(defn ssh-run [cmd]
+  (let [{:keys [out err exit]}
+        (ssh/ssh-exec spire.state/*connection* cmd "" "UTF-8" {})]
+    (assert (zero? exit) (str "remote command '" cmd "' failed. err:" err))
+    out))
