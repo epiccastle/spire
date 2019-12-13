@@ -288,7 +288,9 @@
 
          passed-attrs? (or owner group dir-mode mode attrs)
 
-         {:keys [exit err out]} (when passed-attrs?
+         {:keys [exit err out]} (cond
+
+                                  passed-attrs?
                                   (attrs/set-attrs
                                    session
                                    {:path dest
@@ -297,7 +299,13 @@
                                     :mode mode
                                     :dir-mode dir-mode
                                     :attrs attrs
-                                    :recurse recurse}))]
+                                    :recurse recurse})
+
+                                  preserve
+                                  (attrs/set-attrs-preserve
+                                   session
+                                   src
+                                   dest))]
      (process-result
       opts
       copied?
@@ -312,7 +320,10 @@
         {:result :ok}
 
         :else
-        {:result :failed})
+        {:result :failed
+         :exit exit
+         :err err
+         :out out})
       ))))
 
 (def documentation

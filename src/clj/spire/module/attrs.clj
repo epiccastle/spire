@@ -1,8 +1,9 @@
 (ns spire.module.attrs
   (:require [spire.utils :as utils]
             [spire.ssh :as ssh]
-            [clojure.java.io :as io])
-  )
+            [spire.state :as state]
+            [clojure.java.io :as io]
+            [clojure.string :as string]))
 
 (defn make-script [{:keys [path owner group mode dir-mode attrs recurse]}]
   (utils/make-script
@@ -22,3 +23,38 @@
 
 #_
 (make-script "p" "o" "g" "m" "a")
+
+(defn get-mode-and-times [origin file]
+  [(utils/file-mode file)
+   (/ (utils/last-access-time file) 1000)
+   (/ (.lastModified file) 1000)
+   (str "./" (utils/relativise origin file))])
+
+(defn create-attribute-list [file]
+  (let [file (io/file file)]
+    (assert (.isDirectory file) "attribute tree must be passed a directory")
+    (mapv #(get-mode-and-times file %) (file-seq file))))
+
+#_ (create-attribute-list "test/files")
+
+(defn make-preserve-script [perm-list dest]
+  (let [header (utils/embed-src "attrs_preserve.sh")
+        script (concat [(format "cd %s" (utils/path-quote dest))
+                        ]
+                       (for [[mode access modified filename] perm-list]
+                         (format
+                          "set_file %o %d %s %d %s %s"
+                          mode
+                          access (utils/double-quote (utils/timestamp->touch access))
+                          modified (utils/double-quote (utils/timestamp->touch modified))
+                          (utils/path-quote filename)))
+                       ["exit $EXIT"])
+        script-string (string/join "\n" script)]
+    (str header "\n" script-string)))
+
+(defn set-attrs-preserve [session src dest]
+  (ssh/ssh-exec
+   session
+   (make-preserve-script (create-attribute-list src) dest)
+   "" "UTF-8" {})
+  )
