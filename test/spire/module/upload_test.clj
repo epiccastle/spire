@@ -3,8 +3,10 @@
             [clojure.string :as string]
             [clojure.java.shell :as shell]
             [spire.module.upload :refer :all]
+            [spire.module.attrs :refer :all]
             [spire.transport :as transport]
             [spire.ssh :as ssh]
+            [spire.state :as state]
             [spire.config :as config]
             [clojure.java.io :as io]
             [spire.test-utils :as test-utils]))
@@ -59,17 +61,11 @@
               (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" tf))))
 
        ;; recopy dir but with :preserve
-       (is (= {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}} ;; TODO: not correct
-              (upload {:src "test/files" :dest tf :recurse true :force true :preserve true})))
-       (println)
-       (println
-        (test-utils/run "cd test/files && find . -exec stat -c \"%s %a %Y %X %F %n\" {} \\;"))
-       (println)
-       (println
-        (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf)))
-       (println)
-       #_ (is (= (test-utils/run "cd test/files && find . -exec stat -c \"%s %a %Y %X %F %n\" {} \\;")
-              (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf))))
+       (with-redefs [spire.scp/scp-to no-scp]
+         (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
+                (upload {:src "test/files" :dest tf :recurse true :force true :preserve true})))
+         (is (= (test-utils/run "cd test/files && find . -exec stat -c \"%s %a %Y %X %F %n\" {} \\;")
+                (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf)))))
 
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
               (upload {:src "test/files" :dest tf2 :recurse true :preserve true})))
