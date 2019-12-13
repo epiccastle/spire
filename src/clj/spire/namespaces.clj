@@ -25,7 +25,7 @@
   {'apt system/apt
    'hostname system/hostname
    'line-in-file line-in-file/line-in-file
-   'copy copy/copy
+   ;;'copy copy/copy
    'upload upload/upload
 
    ;;'ln system/ln

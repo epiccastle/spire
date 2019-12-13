@@ -37,7 +37,7 @@
     (assoc result
            :result :failed)))
 
-(utils/defmodule copy [{:keys [src dest owner group mode attrs] :as opts}]
+#_ (utils/defmodule copy [{:keys [src dest owner group mode attrs] :as opts}]
   [host-string session]
   (or
    (preflight opts)
