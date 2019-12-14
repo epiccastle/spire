@@ -21,6 +21,6 @@
     (transport/ssh
      "localhost"
      ;; copy
-     (is (= nil
+     (is (= true
             (download {:src ".xmonad" :dest "/tmp/bashrc" :recurse true})))
      )))
