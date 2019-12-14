@@ -225,3 +225,43 @@
 
       ;; files copied?
       true)))
+
+
+(defn scp-parse-times
+  [cmd]
+  (let [s (StringReader. cmd)]
+    (.skip s 1) ;; skip T
+    (let [scanner (java.util.Scanner. s)
+          mtime (.nextLong scanner)
+          zero (.nextInt scanner)
+          atime (.nextLong scanner)]
+      [mtime atime])))
+
+(defn scp-parse-copy
+  [cmd]
+  (let [s (StringReader. cmd)]
+    (.skip s 1) ;; skip C or D
+    (let [scanner (java.util.Scanner. s)
+          mode (.nextInt scanner 8)
+          length (.nextLong scanner)
+          filename (.next scanner)]
+      (debug "returning scp-parse-copy:" mode length filename)
+      [mode length filename])))
+
+(defn- scp-receive-command
+  "Receive command on the specified input stream"
+  [^OutputStream out ^InputStream in]
+  (let [buffer-size 1024
+        buffer (byte-array buffer-size)]
+    (let [cmd (loop [offset 0]
+                (let [n (.read in buffer offset (- buffer-size offset))]
+                  (debugf
+                   "scp-receive-command: %s"
+                   (String. buffer (int 0) (int (+ offset n))))
+                  (if (= \newline (char (aget buffer (+ offset n -1))))
+                    (String. buffer (int 0) (int (+ offset n)))
+                    (recur (+ offset n)))))]
+      (debugf "Received command %s" cmd)
+      (scp-send-ack out)
+      (debug "Sent ACK")
+      cmd)))
