@@ -7,7 +7,8 @@
             [clojure.java.io :as io]
             [clojure.java.shell :as shell])
   (:import [java.nio.file Paths Files LinkOption Path]
-           [java.nio.file.attribute FileAttribute BasicFileAttributes PosixFilePermission]))
+           [java.nio.file.attribute FileAttribute BasicFileAttributes BasicFileAttributeView
+            PosixFilePermission PosixFilePermissions FileTime]))
 
 (defn to-camelcase [s]
   (-> s
@@ -354,8 +355,7 @@
               (if (.contains perm-hash-set perm-mode)
                 (bit-or acc perm-val)
                 acc))
-            0 permission->mode)
-    ))
+            0 permission->mode)))
 
 #_ (format "%o" (file-mode "."))
 
