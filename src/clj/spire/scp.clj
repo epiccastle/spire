@@ -3,8 +3,8 @@
             [spire.utils :as utils]
             [clojure.java.io :as io]
             [clojure.string :as string])
-  (:import [java.io InputStream OutputStream File
-            PipedInputStream PipedOutputStream]
+  (:import [java.io InputStream OutputStream File FileOutputStream
+            PipedInputStream PipedOutputStream StringReader]
            [com.jcraft.jsch ChannelExec]
            ))
 
