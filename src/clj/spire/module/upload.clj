@@ -172,9 +172,10 @@
      :remote-to-local remote-to-local
      :local-to-remote-filesizes local-to-remote-filesizes
      :local-to-remote-total-size local-to-remote-total-size
-     :local-to-remote-max-filename-length (apply max
-                                                 (map #(count (str (io/file local-path %)))
-                                                      local-to-remote))
+     :local-to-remote-max-filename-length (let [fnames (->> local-to-remote
+                                                            (map #(count (str (io/file local-path %)))))]
+                                            (when (not (empty? fnames))
+                                              (apply max fnames)))
      }
     ))
 
