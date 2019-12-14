@@ -359,6 +359,28 @@
 
 #_ (format "%o" (file-mode "."))
 
+(defn mode->permissions [mode]
+  (reduce (fn [acc [perm flag]]
+            (if (pos? (bit-and mode flag))
+              (conj acc perm)
+              acc))
+          #{} permission->mode))
+
+#_ (mode->permissions 0700)
+
+(defn set-file-mode [file mode]
+  (let [p (.toPath (io/file file))]
+    (Files/setPosixFilePermissions p (mode->permissions mode))))
+
+#_ (set-file-mode "foo" 0644)
+
+(defn create-file [file mode]
+  (let [p (.toPath (io/file file))]
+    (Files/createFile p (into-array FileAttribute [(PosixFilePermissions/asFileAttribute
+                                                    (mode->permissions mode))]))))
+
+#_ (create-file "foo" 0755)
+
 (defn timestamp->touch [ts]
   (let [datetime (coerce/from-epoch ts)
         year (time/year datetime)
