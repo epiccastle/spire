@@ -284,3 +284,44 @@
     (scp-send-ack send)
     (debug "Sent ACK after sink of file")))
 
+(defn scp-sink
+  "Sink scp commands to file"
+  [^OutputStream send ^InputStream recv ^File file times {:as options}]
+  (loop [cmd (scp-receive-command send recv)
+         file file
+         times times
+         depth 0]
+    (debug "...." file ">" depth "[" times "]")
+    (case (first cmd)
+      \C (do
+           (debug "\\C")
+           (let [[mode length ^String filename] (scp-parse-copy cmd)
+                 nfile (if (and (.exists file) (.isDirectory file))
+                         (File. file filename)
+                         file)]
+             (when (.exists nfile)
+               (.delete nfile))
+             (utils/create-file nfile mode)
+             (scp-sink-file send recv nfile mode length options)
+             (when times
+               (utils/set-last-modified-and-access-time nfile (first times) (second times)))
+             (when (pos? depth)
+               (recur (scp-receive-command send recv) file nil depth))))
+      \T (do
+           (debug "\\T")
+           (recur (scp-receive-command send recv) file (scp-parse-times cmd) depth))
+      \D (do
+           (debug "\\D")
+           (let [[mode _ ^String filename] (scp-parse-copy cmd)
+                 dir (File. file filename)]
+             (when (and (.exists dir) (not (.isDirectory dir)))
+               (.delete dir))
+             (when (not (.exists dir))
+               (.mkdir dir))
+             (recur (scp-receive-command send recv) dir nil (inc depth))))
+      \E (do
+           (debug "\\E")
+           (let [new-depth (dec depth)]
+             (when (pos? new-depth)
+               (recur (scp-receive-command send recv) (io/file (.getParent file)) nil new-depth)))))))
+
