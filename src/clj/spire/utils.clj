@@ -395,3 +395,30 @@
   )
 
 #_ (timestamp->touch 1514779200)
+
+(defn set-last-modified-time [file ts]
+  (let [file-time (FileTime/fromMillis (* ts 1000))
+        p (.toPath (io/file file))]
+    (Files/setLastModifiedTime p file-time)))
+
+#_ (set-last-modified-time "foo" 0)
+
+(defn set-last-access-time [file ts]
+  (let [file-time (FileTime/fromMillis (* ts 1000))
+        p (.toPath (io/file file))]
+    (.setTimes (Files/getFileAttributeView p BasicFileAttributeView empty-link-options)
+               ;; modified access create
+               nil file-time nil
+               )))
+
+#_ (set-last-access-time "foo" 0)
+
+(defn set-last-modified-and-access-time [file modified access]
+  (let [modified-time (FileTime/fromMillis (* modified 1000))
+        access-time (FileTime/fromMillis (* access 1000))
+        p (.toPath (io/file file))]
+    (.setTimes (Files/getFileAttributeView p BasicFileAttributeView empty-link-options)
+               ;; modified access create
+               modified-time access-time nil)))
+
+#_ (set-last-modified-and-access-time "foo" 99999 99999)
