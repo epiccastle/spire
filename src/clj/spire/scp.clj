@@ -265,3 +265,22 @@
       (scp-send-ack out)
       (debug "Sent ACK")
       cmd)))
+
+(defn scp-sink-file
+  "Sink a file"
+  [^OutputStream send ^InputStream recv
+   ^File file mode length {:keys [buffer-size] :or {buffer-size 2048}}]
+  (debugf "Sinking %d bytes to file %s" length (.getPath file))
+  (let [buffer (byte-array buffer-size)]
+    (with-open [file-stream (FileOutputStream. file)]
+      (loop [length length]
+        (let [size (.read recv buffer 0 (min length buffer-size))]
+          (when (pos? size)
+            (.write file-stream buffer 0 size))
+          (when (and (pos? size) (< size length))
+            (recur (- length size))))))
+    (scp-receive-ack recv)
+    (debug "Received ACK after sink of file")
+    (scp-send-ack send)
+    (debug "Sent ACK after sink of file")))
+
