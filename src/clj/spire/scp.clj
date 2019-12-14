@@ -325,3 +325,39 @@
              (when (pos? new-depth)
                (recur (scp-receive-command send recv) (io/file (.getParent file)) nil new-depth)))))))
 
+
+(defn scp-from
+  "Copy remote path(s) to local path via scp."
+  [session remote-path ^String local-path
+   & {:keys [username password port mode dir-mode recurse preserve] :as opts}]
+  (let [file (File. local-path)
+        [^PipedInputStream in
+         ^PipedOutputStream send] (ssh/streams-for-in)
+        flags {:recurse "-r" :preserve "-p"}
+        cmd (format
+             "scp %s -f %s"
+             (:remote-flags
+              opts
+              (string/join
+               " "
+               (->>
+                (select-keys opts [:recurse :preserve])
+                (filter val)
+                (map (comp flags key)))))
+             remote-path
+             #_(string/join " " remote-paths))
+        _ (debugf "scp-from: %s" cmd)
+        {:keys [^ChannelExec channel
+                ^PipedInputStream out-stream]}
+        (ssh/ssh-exec session cmd in :stream opts)
+        exec channel
+        recv out-stream]
+    (debugf
+     "scp-from %s %s" remote-path local-path)
+    (scp-send-ack send)
+    (debug "Sent initial ACK")
+    (scp-sink send recv file nil opts)
+    (debug "Closing streams")
+    (.close send)
+    (.close recv)
+    true))
