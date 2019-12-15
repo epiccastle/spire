@@ -3,6 +3,7 @@
             [spire.ssh :as ssh]
             [spire.scp :as scp]
             [spire.utils :as utils]
+            [spire.compare :as compare]
             [spire.module.attrs :as attrs]
             [digest :as digest]
             [clojure.java.io :as io]
@@ -73,118 +74,6 @@
       (dissoc result :result)
       )))
 
-(defn md5-local-dir [src]
-  (->> (file-seq (io/file src))
-       (filter #(.isFile %))
-       (map (fn [f] [(utils/relativise src f) (digest/md5 f)]))
-       (into {})))
-
-
-#_ (md5-local-dir "test/")
-#_ (file-seq (io/file "test/"))
-
-(defn md5-remote-dir [run dest]
-  (let [find-result (run (format "find \"%s\" -type f -exec md5sum {} \\;" dest))]
-    (when (pos? (count find-result))
-      (some-> find-result
-              string/split-lines
-              (->> (map #(vec (reverse (string/split % #"\s+" 2))))
-                   (map (fn [[fname hash]] [(utils/relativise dest fname) hash]))
-                   ;;(map vec)
-                   ;;(mapv reverse)
-                   (into {})
-                   )))))
-
-
-
-(defn runner []
-  (fn [cmd] (->> cmd
-                 (clojure.java.shell/sh "bash" "-c")
-                 :out)))
-
-#_
-(md5-remote-dir (runner) "test")
-
-
-(defn md5-file [run dest]
-  (some-> (run (format "%s -b \"%s\"" "md5sum" dest))
-          (string/split #"\s+")
-          first))
-
-(defn same-files [local-md5s remote-md5s]
-  (->> (for [[f md5] local-md5s]
-         (when (= md5 (get remote-md5s f))
-           f))
-       (filterv identity)))
-
-#_ (same-files
-    (md5-local-dir "test")
-    (md5-remote-dir (runner) "/tmp/spire")
-    )
-
-(defn gather-file-sizes [src local-files identical-files]
-  (let [file-set (clojure.set/difference (into #{} local-files) (into #{} identical-files))]
-    (into {}
-          (for [f file-set]
-            [f (.length (io/file src f))]
-            ))
-    )
-  )
-
-#_
-(gather-file-sizes "test" (keys (md5-local-dir "test")) '("files/copy/test.txt"))
-
-(defn compare-local-and-remote [local-path remote-runner remote-path]
-  (let [local-md5-files (md5-local-dir local-path)
-        remote-md5-files (md5-remote-dir remote-runner remote-path)
-        local-file? (.isFile (io/file local-path))
-        remote-file? (and (= 1 (count remote-md5-files))
-                          (= '("") (keys remote-md5-files)))
-        identical-files (if (or local-file? remote-file?)
-                          #{}
-                          (->> (same-files local-md5-files remote-md5-files)
-                               (filter identity)
-                               (map #(.getPath (io/file local-path %)))
-                               (into #{})))
-        local-to-remote (->> local-md5-files
-                             (map first)
-                             (filter (complement identical-files))
-                             (into #{}))
-        remote-to-local (->> remote-md5-files
-                             (map first)
-                             (filter (complement identical-files))
-                             (into #{}))
-        local-to-remote-filesizes (->> local-to-remote
-                                       (map (fn [f] [f (.length (io/file local-path f))]))
-                                       (into {}))
-        local-to-remote-total-size (->> local-to-remote-filesizes
-                                        (map second)
-                                        (apply +))
-
-
-        ]
-    {:local-md5 local-md5-files
-     :remote-md5 remote-md5-files
-     :local-file? local-file?
-     :remote-file? remote-file?
-     :identical identical-files
-     :local-to-remote local-to-remote
-     :remote-to-local remote-to-local
-     :local-to-remote-filesizes local-to-remote-filesizes
-     :local-to-remote-total-size local-to-remote-total-size
-     :local-to-remote-max-filename-length (let [fnames (->> local-to-remote
-                                                            (map #(count (str (io/file local-path %)))))]
-                                            (when (not (empty? fnames))
-                                              (apply max fnames)))
-     }
-    ))
-
-#_
-(compare-local-and-remote "test" (runner) "/tmp/spire")
-
-#_
-(md5-remote-dir (runner) "/tmp/spire")
-
 (defmacro scp-result [& body]
   `(try
      (let [res# (do ~@body)]
@@ -209,11 +98,11 @@
                    (string/trim out))))
          content (or content (io/file src))
          copied?
-         (if ;;recurse
-             (utils/content-recursive? content)
+         (if recurse
+             ;;(utils/content-recursive? content)
            ;; recursive copy
              (let [
-                   transfers (compare-local-and-remote (str content) run dest)
+                   transfers (compare/compare-local-and-remote (str content) run dest)
 
                    {:keys [remote-file? identical local-md5 local-to-remote-max-filename-length
                            local-to-remote-filesizes local-to-remote-total-size local-to-remote]}
@@ -239,7 +128,7 @@
                                                 ))
                                 :preserve preserve
                                 :dir-mode (or dir-mode 0755)
-                                :mode (or mode 644)
+                                :mode (or mode 0644)
                                 :recurse true
                                 :skip-files #{}
                                 )))
