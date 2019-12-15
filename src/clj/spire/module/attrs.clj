@@ -26,8 +26,8 @@
 
 (defn get-mode-and-times [origin file]
   [(utils/file-mode file)
-   (/ (utils/last-access-time file) 1000)
-   (/ (.lastModified file) 1000)
+   (utils/last-access-time file)
+   (utils/last-modified-time file)
    (str "./" (utils/relativise origin file))])
 
 (defn create-attribute-list [file]

@@ -53,8 +53,8 @@
     (scp-send-command
      send recv
      (format "T%d 0 %d 0"
-             (/ (.lastModified file) 1000)
-             (/ (utils/last-access-time file) 1000))))
+             (utils/last-modified-time file)
+             (utils/last-access-time file))))
   (scp-send-command
    send recv
    (format "C%04o %d %s"
@@ -145,8 +145,8 @@
     (scp-send-command
      send recv
      (format "T%d 0 %d 0"
-             (/ (.lastModified dir) 1000)
-             (/ (utils/last-access-time dir) 1000))))
+             (utils/last-modified-time dir)
+             (utils/last-access-time dir))))
   (scp-send-command
    send recv
    (format "D%04o 0 %s"

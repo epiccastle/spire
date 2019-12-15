@@ -333,9 +333,17 @@
 
 (defn last-access-time [file]
   (let [p (.toPath (io/file file))]
-    (.toMillis (.lastAccessTime (Files/readAttributes p  java.nio.file.attribute.BasicFileAttributes empty-link-options)))))
+    (/ (.toMillis (.lastAccessTime (Files/readAttributes p  java.nio.file.attribute.BasicFileAttributes empty-link-options)))
+       1000)))
 
 #_ (last-access-time ".")
+
+(defn last-modified-time [file]
+  (let [p (.toPath (io/file file))]
+    (/ (.toMillis (.lastModifiedTime (Files/readAttributes p  java.nio.file.attribute.BasicFileAttributes empty-link-options)))
+       1000)))
+
+#_ (last-modified-time ".")
 
 (def permission->mode
   {PosixFilePermission/OWNER_READ     0400
