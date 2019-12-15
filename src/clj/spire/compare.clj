@@ -77,5 +77,44 @@
      }
     ))
 
+#_ (defn runner []
+  (fn [cmd] (->> cmd
+                 (clojure.java.shell/sh "bash" "-c")
+                 :out)))
+
 #_
 (compare-local-and-remote "test" (runner) "/tmp/spire")
+
+
+(defn same-file-content [local remote]
+  (->> (for [[f {:keys [md5sum]}] local]
+         (when (= md5sum (get-in remote [f :md5sum]))
+           f))
+       (filterv identity)))
+
+(defn compare-full-info [local-path remote-runner remote-path]
+  (let [local (local/path-full-info local-path)
+        remote (remote/path-full-info remote-runner remote-path)
+        local-file? (.isFile (io/file local-path))
+        remote-file? (and (= 1 (count remote))
+                          (= '("") (keys remote)))
+        identical-content (->> (same-file-content local remote)
+                               (filter identity)
+                               (map #(.getPath (io/file local-path %)))
+                               (into #{}))
+
+        ]
+    {:local local
+     :remote remote
+     :local-file? local-file?
+     :remote-file? remote-file?
+     :identical-content identical-content
+     }
+    )
+  )
+
+#_ ((juxt :local-file? :remote-file?) (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
+
+#_ (:remote (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
+
+#_ (:identical-content (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
