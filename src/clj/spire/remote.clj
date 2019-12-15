@@ -31,17 +31,18 @@
       (string/split #"\n")
       (->> (partition 2)
            (map (fn [[stats hashes]]
-                  (let [[mode last-access last-modified size] (string/split stats #" " 5)
-                        [md5sum filename] (string/split hashes #" " 2)]
-                    [filename {:filename filename
-                               :md5sum md5sum
-                               :mode-string mode
-                               :mode (Integer/parseInt mode 8)
-                               :last-access (Integer/parseInt last-access)
-                               :last-modified (Integer/parseInt last-modified)
-                               :size (Integer/parseInt size)
-                               }])))
+                  (let [[mode last-access last-modified size] (string/split stats #" " 4)
+                        [md5sum filename] (string/split hashes #"\s+" 2)
+                        fname (utils/relativise path filename)]
+                    [fname {:filename fname
+                            :md5sum md5sum
+                            :mode-string mode
+                            :mode (Integer/parseInt mode 8)
+                            :last-access (Integer/parseInt last-access)
+                            :last-modified (Integer/parseInt last-modified)
+                            :size (Integer/parseInt size)
+                            }])))
            (into {}))))
 
 #_
-(file-full-info (runner) "test")
+(path-full-info (runner) "test")
