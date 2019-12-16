@@ -100,8 +100,19 @@
                           (= '("") (keys remote)))
         identical-content (->> (same-file-content local remote)
                                (filter identity)
-                               (map #(.getPath (io/file local-path %)))
+                               ;;(map #(.getPath (io/file local-path %)))
                                (into #{}))
+        local-to-remote (->> local
+                             (map first)
+                             ;;(map #(.getPath (io/file local-path %)))
+                             (filter (complement identical-content))
+                             (into #{}))
+        remote-to-local (->> remote
+                             (map first)
+                             ;;(map #(.getPath (io/file local-path %)))
+                             (filter (complement identical-content))
+                             (into #{}))
+
 
         ]
     {:local local
@@ -109,6 +120,8 @@
      :local-file? local-file?
      :remote-file? remote-file?
      :identical-content identical-content
+     :local-to-remote local-to-remote
+     :remote-to-local remote-to-local
      }
     )
   )
@@ -118,3 +131,15 @@
 #_ (:remote (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
 
 #_ (:identical-content (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
+
+#_ (:local-to-remote (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
+
+#_ (:remote-to-local (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
+
+#_ (:local-to-remote (compare-full-info "test/files" (runner) "/home/crispin/dev/epiccastle/spire/test/spire"))
+
+#_ (:remote-to-local (compare-full-info "test/files" (runner) "/home/crispin/dev/epiccastle/spire/test/spire"))
+
+
+
+#_ (:remote (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
