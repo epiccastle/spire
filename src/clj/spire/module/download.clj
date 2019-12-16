@@ -29,7 +29,7 @@
          local-file? (local/is-file? dest)
          remote-file? (remote/is-file? run src)
 
-         _ (println 1 remote-file?)
+         ;;_ (println 1 remote-file?)
          {:keys [remote-to-local local-file? identical-content remote] :as comparison}
          (compare/compare-full-info
 
@@ -40,8 +40,8 @@
 
           run src)
 
-         _ (println "comparison")
-         _ (puget/cprint comparison)
+         ;;_ (println "comparison")
+         ;;_ (puget/cprint comparison)
 
          {:keys [sizes total]} (compare/remote-to-local comparison)
 
@@ -75,14 +75,14 @@
 
          (not local-file?)
          (do
-           (println "---")
-           (println identical-content)
-           (println remote)
+           ;;(println "---")
+           ;;(println identical-content)
+           ;;(println remote)
            (when (not= (count identical-content) (count remote))
-             (println "///")
+             ;;(println "///")
              (scp/scp-from session src dest
                            :progress-fn (fn [file bytes total frac context]
-                                          (output/print-progress
+                                          #_(output/print-progress
                                            host-string
                                            (utils/progress-stats
                                             file bytes total frac
