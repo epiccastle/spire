@@ -3,6 +3,7 @@
             [spire.module.upload :refer :all]
             [spire.module.attrs :refer :all]
             [spire.compare :as compare]
+            [spire.utils :as utils]
             [clojure.java.io :as io]
             [spire.test-utils :as test-utils]))
 
@@ -13,22 +14,22 @@
                                    :md5sum "26f1e459be7111918b0be22aa793b459",
                                    :mode 436,
                                    :mode-string "664",
-                                   :last-access 1576419042,
-                                   :last-modified 1575212985,
+                                   :last-access (utils/last-access-time "test/files/line-in-file/simple-file.txt"),
+                                   :last-modified (utils/last-modified-time "test/files/line-in-file/simple-file.txt"),
                                    :size 161},
    "line-in-file/regexp-file.txt" {:filename "line-in-file/regexp-file.txt",
                                    :md5sum "7556dd19966458ae01f51b92c4512ed4",
                                    :mode 436,
                                    :mode-string "664",
-                                   :last-access 1576419043,
-                                   :last-modified 1575210780,
+                                   :last-access (utils/last-access-time "test/files/line-in-file/regexp-file.txt"),
+                                   :last-modified (utils/last-modified-time "test/files/line-in-file/regexp-file.txt"),
                                    :size 601},
    "copy/test.txt" {:filename "copy/test.txt",
                     :md5sum "51ec9f91f697e5b321534c705ebbdcf5",
                     :mode 436,
                     :mode-string "664",
-                    :last-access 1576419043,
-                    :last-modified 1575780274,
+                    :last-access (utils/last-access-time "test/files/copy/test.txt"),
+                    :last-modified (utils/last-modified-time "test/files/copy/test.txt"),
                     :size 43}})
 
 (deftest compare-test
@@ -93,7 +94,8 @@
                     local-file? remote-file?
                     identical-content
                     local-to-remote
-                    remote-to-local]} (compare/compare-full-info "test/files" test-utils/run t1)
+                    remote-to-local] :as comparison}
+            (compare/compare-full-info "test/files" test-utils/run t1)
             same-files ["line-in-file/simple-file.txt" "line-in-file/regexp-file.txt"]
             different-file "copy/test.txt"
             ]
@@ -104,4 +106,10 @@
         (is (identical-content "line-in-file/simple-file.txt"))
         (is (identical-content "line-in-file/regexp-file.txt"))
         (is (= #{different-file} local-to-remote))
-        (is (= #{different-file} remote-to-local))))))
+        (is (= #{different-file} remote-to-local))
+
+        ;; extracting files to copy and their sizes
+        (is (= (compare/local-to-remote comparison)
+               {:sizes {"copy/test.txt" 43}, :total 43}))
+        (is (= (compare/remote-to-local comparison)
+               {:sizes {"copy/test.txt" 53}, :total 53}))))))
