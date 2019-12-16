@@ -73,7 +73,31 @@
                          :recurse true
                          :skip-files #{}))
 
+         (not local-file?)
+         (do
+           (println "---")
+           (println identical-content)
+           (println remote)
+           (when (not= (count identical-content) (count remote))
+             (println "///")
+             (scp/scp-from session src dest
+                           :progress-fn (fn [file bytes total frac context]
+                                          (output/print-progress
+                                           host-string
+                                           (utils/progress-stats
+                                            file bytes total frac
+                                            total
+                                            max-filename-length
+                                            context)))
+                           :preserve preserve
+                           :dir-mode (or dir-mode 0755)
+                           :mode (or mode 0644)
+                           :recurse true
+                           :skip-files identical-content
+                           )))
+         )
 
-         ))
+
+       )
      #_ (scp/scp-from session src dest :recurse recurse :preserve true
                       ))))
