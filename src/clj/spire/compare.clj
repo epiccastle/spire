@@ -95,9 +95,8 @@
 (defn compare [local-path remote-runner remote-path]
   (let [local (local/path-full-info local-path)
         remote (remote/path-full-info remote-runner remote-path)
-        local-file? (.isFile (io/file local-path))
-        remote-file? (and (= 1 (count remote))
-                          (= '("") (keys remote)))]
+        local-file? (local/is-file? local-path)
+        remote-file? (remote/is-file? remote-runner remote-path)]
     {:local local
      :remote remote
      :local-file? local-file?

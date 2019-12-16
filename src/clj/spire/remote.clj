@@ -8,6 +8,11 @@
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
+(defn is-file? [run path]
+  (->> (run (format "if [ -f \"%s\" ]; then echo file; else echo dir; fi" path))
+       string/trim
+       (= "file")))
+
 (defn path-md5sums [run path]
   (let [find-result (run (format "find \"%s\" -type f -exec md5sum {} \\;" path))]
     (when (pos? (count find-result))

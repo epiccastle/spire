@@ -8,6 +8,9 @@
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
+(defn is-file? [path]
+  (.isFile (io/file path)))
+
 (defn path-md5sums [path]
   (->> (file-seq (io/file path))
        (filter #(.isFile %))
@@ -35,4 +38,4 @@
                   }])))
        (into {})))
 
-#_ (path-full-info "test")
+#_ (path-full-info "/tmp/bashrc")

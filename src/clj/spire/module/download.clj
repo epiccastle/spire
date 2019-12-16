@@ -3,9 +3,12 @@
             [spire.ssh :as ssh]
             [spire.scp :as scp]
             [spire.utils :as utils]
+            [spire.local :as local]
+            [spire.remote :as remote]
             [spire.module.attrs :as attrs]
             [spire.compare :as compare]
             [digest :as digest]
+            [puget.printer :as puget]
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
@@ -22,8 +25,29 @@
                  (when (zero? exit)
                    (string/trim out))))
 
-         {:keys [remote-to-local local-file?] :as comparison}
-         (compare/compare-local-and-remote dest run src)
+         ;; analyse local and remote paths
+         local-file? (local/is-file? dest)
+         remote-file? (remote/is-file? run src)
+
+         _ (println 1 remote-file?)
+         {:keys [remote-to-local local-file? identical-content remote] :as comparison}
+         (compare/compare-full-info
+
+          ;; scp from a directory will create that directory on local
+          (if remote-file?
+            dest
+            (io/file dest (.getName (io/file src))))
+
+          run src)
+
+         _ (println "comparison")
+         _ (puget/cprint comparison)
+
+         {:keys [sizes total]} (compare/remote-to-local comparison)
+
+         max-filename-length (->> remote-to-local
+                                  (map count)
+                                  (apply max 0))
          ]
      (if recurse
        (cond
@@ -35,12 +59,12 @@
            (.delete (io/file dest))
            (scp/scp-from session src dest
                          :progress-fn (fn [file bytes total frac context]
-                                        #_ (output/print-progress
+                                        (output/print-progress
                                          host-string
                                          (utils/progress-stats
                                           file bytes total frac
-                                          local-to-remote-total-size
-                                          local-to-remote-max-filename-length
+                                          total
+                                          max-filename-length
                                           context)
                                          ))
                          :preserve preserve
