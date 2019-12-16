@@ -92,13 +92,19 @@
            f))
        (filterv identity)))
 
-(defn compare-full-info [local-path remote-runner remote-path]
+(defn compare [local-path remote-runner remote-path]
   (let [local (local/path-full-info local-path)
         remote (remote/path-full-info remote-runner remote-path)
         local-file? (.isFile (io/file local-path))
         remote-file? (and (= 1 (count remote))
-                          (= '("") (keys remote)))
-        identical-content (->> (same-file-content local remote)
+                          (= '("") (keys remote)))]
+    {:local local
+     :remote remote
+     :local-file? local-file?
+     :remote-file? remote-file?}))
+
+(defn add-transfer-set [{:keys [local remote local-file? remote-file?] :as comparison}]
+  (let [identical-content (->> (same-file-content local remote)
                                (filter identity)
                                ;;(map #(.getPath (io/file local-path %)))
                                (into #{}))
@@ -111,35 +117,30 @@
                              (map first)
                              ;;(map #(.getPath (io/file local-path %)))
                              (filter (complement identical-content))
-                             (into #{}))
+                             (into #{}))]
+    (assoc comparison
+           :identical-content identical-content
+           :local-to-remote local-to-remote
+           :remote-to-local remote-to-local)))
 
+(defn compare-full-info [local-path remote-runner remote-path]
+  (-> (compare local-path remote-runner remote-path)
+      (add-transfer-set)))
 
-        ]
-    {:local local
-     :remote remote
-     :local-file? local-file?
-     :remote-file? remote-file?
-     :identical-content identical-content
-     :local-to-remote local-to-remote
-     :remote-to-local remote-to-local
-     }
-    )
-  )
+(defn local-to-remote [{:keys [local-to-remote local]}]
+  (let [sizes (->> local-to-remote
+                   (select-keys local)
+                   (map (fn [[k {:keys [size]}]] [k size]))
+                   (into {}))
+        total (apply + (vals sizes))]
+    {:sizes sizes
+     :total total}))
 
-#_ ((juxt :local-file? :remote-file?) (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
-
-#_ (:remote (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
-
-#_ (:identical-content (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
-
-#_ (:local-to-remote (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
-
-#_ (:remote-to-local (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
-
-#_ (:local-to-remote (compare-full-info "test/files" (runner) "/home/crispin/dev/epiccastle/spire/test/spire"))
-
-#_ (:remote-to-local (compare-full-info "test/files" (runner) "/home/crispin/dev/epiccastle/spire/test/spire"))
-
-
-
-#_ (:remote (compare-full-info "project.clj" (runner) "/home/crispin/dev/epiccastle/spire/project.clj"))
+(defn remote-to-local [{:keys [remote-to-local remote]}]
+  (let [sizes (->> remote-to-local
+                   (select-keys remote)
+                   (map (fn [[k {:keys [size]}]] [k size]))
+                   (into {}))
+        total (apply + (vals sizes))]
+    {:sizes sizes
+     :total total}))
