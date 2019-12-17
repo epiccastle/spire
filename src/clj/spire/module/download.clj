@@ -29,8 +29,7 @@
          local-file? (local/is-file? dest)
          remote-file? (remote/is-file? run src)
 
-         ;;_ (println 1 remote-file?)
-         {:keys [remote-to-local local-file? identical-content remote] :as comparison}
+         {:keys [remote-to-local identical-content remote] :as comparison}
          (compare/compare-full-info
 
           ;; scp from a directory will create that directory on local
@@ -39,9 +38,6 @@
             (io/file dest (.getName (io/file src))))
 
           run src)
-
-         ;;_ (println "comparison")
-         ;;_ (puget/cprint comparison)
 
          {:keys [sizes total]} (compare/remote-to-local comparison)
 

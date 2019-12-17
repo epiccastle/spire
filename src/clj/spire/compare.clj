@@ -93,16 +93,10 @@
        (filterv identity)))
 
 (defn compare [local-path remote-runner remote-path]
-  (let [local (local/path-full-info local-path)
-        remote (remote/path-full-info remote-runner remote-path)
-        local-file? (local/is-file? local-path)
-        remote-file? (remote/is-file? remote-runner remote-path)]
-    {:local local
-     :remote remote
-     :local-file? local-file?
-     :remote-file? remote-file?}))
+  {:local (local/path-full-info local-path)
+   :remote (remote/path-full-info remote-runner remote-path)})
 
-(defn add-transfer-set [{:keys [local remote local-file? remote-file?] :as comparison}]
+(defn add-transfer-set [{:keys [local remote] :as comparison}]
   (let [identical-content (->> (same-file-content local remote)
                                (filter identity)
                                ;;(map #(.getPath (io/file local-path %)))

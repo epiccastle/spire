@@ -43,8 +43,6 @@
                     remote-to-local]} (compare/compare-full-info "test/files" test-utils/run t1)]
         (is (= (select-keys local (keys test-files-info)) test-files-info))
         (is (empty? remote))
-        (is (not local-file?))
-        (is (not remote-file?))
         (is (empty? identical-content))
         (is (local-to-remote "line-in-file/simple-file.txt"))
         (is (local-to-remote "copy/test.txt"))
@@ -60,8 +58,6 @@
                     remote-to-local]} (compare/compare-full-info "test/files" test-utils/run t1)]
         (is (= (select-keys local (keys test-files-info)) test-files-info))
         (is (= (select-keys remote (keys test-files-info)) test-files-info))
-        (is (not local-file?))
-        (is (not remote-file?))
         (is (identical-content "line-in-file/simple-file.txt"))
         (is (identical-content "line-in-file/regexp-file.txt"))
         (is (identical-content "copy/test.txt"))
@@ -78,8 +74,6 @@
                     remote-to-local]} (compare/compare-full-info empty-dir test-utils/run t1)]
         (is (empty? local))
         (is (= (select-keys remote (keys test-files-info)) test-files-info))
-        (is (not local-file?))
-        (is (not remote-file?))
         (is (empty? identical-content))
         (is (empty? local-to-remote))
         (is (remote-to-local "line-in-file/simple-file.txt"))
@@ -101,8 +95,6 @@
             ]
         (is (= (select-keys local same-files) (select-keys test-files-info same-files)))
         (is (= (select-keys remote same-files) (select-keys test-files-info same-files)))
-        (is (not local-file?))
-        (is (not remote-file?))
         (is (identical-content "line-in-file/simple-file.txt"))
         (is (identical-content "line-in-file/regexp-file.txt"))
         (is (= #{different-file} local-to-remote))
