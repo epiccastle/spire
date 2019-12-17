@@ -37,7 +37,6 @@
     (test-utils/with-temp-file-names [t1 empty-dir]
       (test-utils/makedirs t1)
       (let [{:keys [local remote
-                    local-file? remote-file?
                     identical-content
                     local-to-remote
                     remote-to-local]} (compare/compare-full-info "test/files" test-utils/run t1)]
@@ -52,7 +51,6 @@
       (test-utils/run (format "cp -av test/files/* %s" t1))
 
       (let [{:keys [local remote
-                    local-file? remote-file?
                     identical-content
                     local-to-remote
                     remote-to-local]} (compare/compare-full-info "test/files" test-utils/run t1)]
@@ -68,7 +66,6 @@
       (test-utils/run (format "cp -av test/files/* %s" t1))
 
       (let [{:keys [local remote
-                    local-file? remote-file?
                     identical-content
                     local-to-remote
                     remote-to-local]} (compare/compare-full-info empty-dir test-utils/run t1)]
@@ -85,7 +82,6 @@
       (spit (io/file t1 "copy/test.txt") "Extra Line" :append true)
 
       (let [{:keys [local remote
-                    local-file? remote-file?
                     identical-content
                     local-to-remote
                     remote-to-local] :as comparison}
