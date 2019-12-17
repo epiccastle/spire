@@ -73,6 +73,9 @@
                  '*form* #'state/*form*
                  'get-sessions #'state/get-sessions
 
+                 '*host-string* #'state/*host-string*
+                 '*connection* #'state/*connection*
+                 'ssh-connections state/ssh-connections
                  }
 
    'clojure.java.io {'file clojure.java.io/file
