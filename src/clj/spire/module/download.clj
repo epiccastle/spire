@@ -38,8 +38,36 @@
            :err ":recurse must be true when :src specifies a directory.")))
 
 (defn process-result [opts copy-result attr-result]
-  [copy-result attr-result]
-  )
+  (let [result {:result :failed
+                :attr-result attr-result
+                :copy-result copy-result}]
+    (cond
+      (= :failed (:result copy-result))
+      result
+
+      (= :failed (:result attr-result))
+      result
+
+      (or (= :changed (:result copy-result))
+          (= :changed (:result attr-result)))
+      (assoc result :result :changed)
+
+      (and (= :ok (:result copy-result))
+           (= :ok (:result attr-result)))
+      (assoc result :result :ok)
+
+      :else
+      (dissoc result :result)
+      )))
+
+(defmacro scp-result [& body]
+  `(try
+     (let [res# (do ~@body)]
+       (if res#
+         {:result :changed}
+         {:result :ok}))
+     (catch Exception e#
+       {:result :failed :exception e#})))
 
 (utils/defmodule download [{:keys [src dest recurse preserve flat
                                    dir-mode mode owner group attrs] :as opts}]
@@ -83,41 +111,43 @@
              (and local-file? force)
              (do
                (.delete (io/file dest))
-               (scp/scp-from session src dest
-                             :progress-fn (fn [file bytes total frac context]
-                                            (output/print-progress
-                                             host-string
-                                             (utils/progress-stats
-                                              file bytes total frac
-                                              all-files-total
-                                              max-filename-length
-                                              context)
-                                             ))
-                             :preserve preserve
-                             :dir-mode (or dir-mode 0755)
-                             :mode (or mode 0644)
-                             :recurse true
-                             :skip-files #{}))
+               (scp-result
+                (scp/scp-from session src dest
+                              :progress-fn (fn [file bytes total frac context]
+                                             (output/print-progress
+                                              host-string
+                                              (utils/progress-stats
+                                               file bytes total frac
+                                               all-files-total
+                                               max-filename-length
+                                               context)
+                                              ))
+                              :preserve preserve
+                              :dir-mode (or dir-mode 0755)
+                              :mode (or mode 0644)
+                              :recurse true
+                              :skip-files #{})))
 
              (not local-file?)
              (do
-               (when (not= (count identical-content) (count remote))
-                 (scp/scp-from session src dest
-                               :progress-fn (fn [file bytes total frac context]
-                                              #_ (println file bytes total frac context all-files-total)
-                                              (output/print-progress
-                                               host-string
-                                               (utils/progress-stats
-                                                file bytes total frac
-                                                all-files-total
-                                                max-filename-length
-                                                context)))
-                               :preserve preserve
-                               :dir-mode (or dir-mode 0755)
-                               :mode (or mode 0644)
-                               :recurse true
-                               :skip-files identical-content
-                               )))
+               (scp-result
+                (when (not= (count identical-content) (count remote))
+                  (scp/scp-from session src dest
+                                :progress-fn (fn [file bytes total frac context]
+                                               #_ (println file bytes total frac context all-files-total)
+                                               (output/print-progress
+                                                host-string
+                                                (utils/progress-stats
+                                                 file bytes total frac
+                                                 all-files-total
+                                                 max-filename-length
+                                                 context)))
+                                :preserve preserve
+                                :dir-mode (or dir-mode 0755)
+                                :mode (or mode 0644)
+                                :recurse true
+                                :skip-files identical-content
+                                ))))
              ))
 
          passed-attrs? (or owner group dir-mode mode attrs)
@@ -137,10 +167,10 @@
                                     :recurse recurse})
 
                                   #_preserve
-                                  #_(nio/set-attrs-preserve
-                                   session
-                                   src
-                                   dest))]
+                                  #_(local/set-attrs-preserve
+                                     session
+                                     src
+                                     dest))]
      (process-result
       opts
       copy-result
