@@ -131,6 +131,16 @@
 
 #_ (set-last-modified-and-access-time "foo" 99999 99999)
 
+(defn idem-set-last-access-time [f ts]
+  (when (not= (last-access-time f) ts)
+    (set-last-access-time f ts)
+    true))
+
+(defn idem-set-last-modified-time [f ts]
+  (when (not= (last-modified-time f) ts)
+    (set-last-modified-time f ts)
+    true))
+
 (defmulti set-owner (fn [path owner] (type owner)))
 
 (defmethod set-owner String [path owner]
@@ -223,3 +233,30 @@
         changed?))))
 
 #_ (set-attrs {:path "foo" :mode 0644})
+
+(defn set-attrs-preserve [remote-info dest]
+  ;;(println ">>" remote-info dest)
+  (let [path (io/file dest)]
+    (loop [[file & remain] (file-seq path)
+           changed? false]
+      (if file
+        (let [f (relativise dest file)
+              {:keys [mode last-access last-modified] :as stats} (remote-info f)
+              ]
+          ;;(println f "->" stats)
+
+          (if stats
+            (recur
+             remain
+             (or
+              (idem-set-mode file mode)
+              (idem-set-last-access-time file last-access)
+              (idem-set-last-modified-time file last-modified)))
+
+            ;; directory. TODO gather these in compare routines
+            (recur remain changed?)))
+
+        changed?)
+      )
+    )
+  )

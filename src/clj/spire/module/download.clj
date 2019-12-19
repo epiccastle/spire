@@ -152,44 +152,27 @@
 
          passed-attrs? (or owner group dir-mode mode attrs)
 
-         {:keys [exit err out]} (cond
-                                  ;; generally we assume that if a copy happened, all attributes
-                                  ;; and modes are correctly setup.
-                                  (and (= :ok (:result copy-result)) passed-attrs?)
-                                  (nio/set-attrs
-                                   session
-                                   {:path dest
-                                    :owner owner
-                                    :group group
-                                    :mode mode
-                                    :dir-mode dir-mode
-                                    :attrs attrs
-                                    :recurse recurse})
+         attrs? (cond
+                  ;; generally we assume that if a copy happened, all attributes
+                  ;; and modes are correctly setup.
+                  (and (= :ok (:result copy-result)) passed-attrs?)
+                  (nio/set-attrs
+                   session
+                   {:path dest
+                    :owner owner
+                    :group group
+                    :mode mode
+                    :dir-mode dir-mode
+                    :attrs attrs
+                    :recurse recurse})
 
-                                  #_preserve
-                                  #_(local/set-attrs-preserve
-                                     session
-                                     src
-                                     dest))]
+                  preserve
+                  (nio/set-attrs-preserve
+                   remote
+                   (if remote-file?
+                     dest
+                     (io/file dest (.getName (io/file src))))))]
      (process-result
       opts
       copy-result
-      (cond
-        (= 0 exit)
-        {:result :ok}
-
-        (= 255 exit)
-        {:result :changed}
-
-        (nil? exit)
-        {:result :ok}
-
-        :else
-        {:result :failed
-         :exit exit
-         :err err
-         :out out}))
-
-
-
-     )))
+      {:result (if attrs? :changed :ok)}))))

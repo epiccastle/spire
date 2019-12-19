@@ -34,4 +34,15 @@
          ;; copy
          (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (download {:src test-dir :dest tf :recurse true})))
+         (is (= (test-utils/run (format "cd \"%s/files\" && find . -exec stat -c \"%%s %%F %%n\" {} \\;" tf))
+                (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%F %%n\" {} \\;" test-dir))))
+         (is (= (test-utils/run (format "cd \"%s/files\" && find . -type f -exec md5sum {} \\;" tf))
+                (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" test-dir))))
+
+         (with-redefs [spire.scp/scp-from no-scp]
+           (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
+                  (download {:src test-dir :dest tf :recurse true :preserve true})))
+           (is (= (test-utils/run (format "cd \"%s/files\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf))
+                  (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" test-dir)))))
+
          )))))
