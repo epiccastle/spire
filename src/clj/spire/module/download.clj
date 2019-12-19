@@ -44,6 +44,8 @@
          max-filename-length (->> remote-to-local
                                   (map count)
                                   (apply max 0))
+
+         all-files-total total
          ]
      (if recurse
        (cond
@@ -59,7 +61,7 @@
                                          host-string
                                          (utils/progress-stats
                                           file bytes total frac
-                                          total
+                                          all-files-total
                                           max-filename-length
                                           context)
                                          ))
@@ -71,18 +73,15 @@
 
          (not local-file?)
          (do
-           ;;(println "---")
-           ;;(println identical-content)
-           ;;(println remote)
            (when (not= (count identical-content) (count remote))
-             ;;(println "///")
              (scp/scp-from session src dest
                            :progress-fn (fn [file bytes total frac context]
-                                          #_(output/print-progress
+                                          #_ (println file bytes total frac context all-files-total)
+                                          (output/print-progress
                                            host-string
                                            (utils/progress-stats
                                             file bytes total frac
-                                            total
+                                            all-files-total
                                             max-filename-length
                                             context)))
                            :preserve preserve
@@ -91,9 +90,9 @@
                            :recurse true
                            :skip-files identical-content
                            )))
-         )
+         ))
 
-
-       )
+     #_ (Thread/sleep 1000)
+     #_ (System/exit 0)
      #_ (scp/scp-from session src dest :recurse recurse :preserve true
                       ))))

@@ -71,23 +71,30 @@
                 chunk (byte-array chunk-size)]
             (loop [offset 0 context progress-context]
               (debug "PC:" progress-context)
-              (let [bytes-read (.read input-stream chunk)
-                    new-offset (+ bytes-read offset)]
-                (debugf "bytes read: %d" bytes-read)
-                (if (= bytes-read chunk-size)
-                  ;; full chunk
+              (let [bytes-read (.read input-stream chunk)]
+                (if (= -1 bytes-read)
+                  ;; we will get an immediate EOF when its a zero byte file
                   (do
-                    (debug "full")
-                    (io/copy chunk send)
-                    (.flush send)
-                    (recur new-offset (progress-fn file new-offset size (float (/ new-offset size)) context)))
+                    (debug "EOF")
+                    (progress-fn file offset size 1.0 context))
 
-                  ;; last partial chunk
-                  (do
-                    (debug "partial")
-                    (io/copy (byte-array (take bytes-read chunk)) send)
-                    (.flush send)
-                    (progress-fn file new-offset size (float (/ new-offset size)) context))))))
+                  ;; some btyes read
+                  (let [new-offset (+ bytes-read offset)]
+                    (debugf "bytes read: %d" bytes-read)
+                    (if (= bytes-read chunk-size)
+                      ;; full chunk
+                      (do
+                        (debug "full")
+                        (io/copy chunk send)
+                        (.flush send)
+                        (recur new-offset (progress-fn file new-offset size (float (/ new-offset size)) context)))
+
+                      ;; last partial chunk
+                      (do
+                        (debug "partial")
+                        (io/copy (byte-array (take bytes-read chunk)) send)
+                        (.flush send)
+                        (progress-fn file new-offset size (float (/ new-offset size)) context))))))))
           ;; no progress callback
           (io/copy file send :buffer-size buffer-size))]
     (scp-send-ack send)
@@ -157,16 +164,29 @@
   (let [final-progress-context
         (loop [[file & remain] (.listFiles dir)
                progress-context progress-context]
+          #_ (when file
+            (println "skip?" (.getPath file) "res:" (boolean (skip-files (.getPath file)))))
           (if file
-            #_ (println "file:" file "skip?" (skip-files (.getPath file)))
             (cond
               (and (.isFile file) (not (skip-files (.getPath file))))
-              (recur remain
-                     (update (scp-copy-file send recv file options progress-context)
-                             :fileset-file-start + (.length file)))
+              (do
+                (debug "copy remain:" remain)
+                (recur remain
+                       (update (scp-copy-file send recv file options progress-context)
+                               :fileset-file-start + (.length file))))
+
+              (.isFile file)
+              (do
+                (debug "skip remain:" remain)
+                (recur remain progress-context))
 
               (.isDirectory file)
-              (recur remain (scp-copy-dir send recv file options progress-context)))
+              (do
+                (debug "isdir remain" remain)
+                (recur remain (scp-copy-dir send recv file options progress-context)))
+
+              :else
+              (recur remain progress-context))
 
             progress-context))]
     (scp-send-command send recv "E")
@@ -269,29 +289,52 @@
 (defn scp-sink-file
   "Sink a file"
   [^OutputStream send ^InputStream recv
-   ^File file mode length {:keys [buffer-size] :or {buffer-size 2048}}]
+   ^File file mode length {:keys [buffer-size progress-fn] :or {buffer-size (* 32 1024)}} & [progress-context]]
   (debugf "Sinking %d bytes to file %s" length (.getPath file))
-  (let [buffer (byte-array buffer-size)]
-    (with-open [file-stream (FileOutputStream. file)]
-      (loop [length length]
-        (let [size (.read recv buffer 0 (min length buffer-size))]
-          (when (pos? size)
-            (.write file-stream buffer 0 size))
-          (when (and (pos? size) (< size length))
-            (recur (- length size))))))
+  (let [buffer (byte-array buffer-size)
+        final-progress-context
+        (with-open [file-stream (FileOutputStream. file)]
+          (loop [offset 0
+                 context progress-context]
+            (let [size (.read recv buffer 0 (min (- length offset) buffer-size))
+                  new-offset (if (pos? size) (+ offset size) offset)]
+              (debug 1)
+              (when (pos? size)
+                (.write file-stream buffer 0 size))
+              (debug 2 size new-offset length)
+              (if (and (pos? size) (< new-offset length))
+                (do
+                  (debug 3)
+                  (recur
+                   new-offset
+                   (progress-fn file new-offset length (float (/ new-offset length)) context)))
+
+                ;; last chunk written
+                (do
+                  (debug 4)
+                  (let [res (progress-fn file new-offset length (float (/ new-offset length)) context)]
+                    (debug 5)
+                    res))))))]
+    (debug 6)
     (scp-receive-ack recv)
     (debug "Received ACK after sink of file")
     (scp-send-ack send)
-    (debug "Sent ACK after sink of file")))
+    (debug "Sent ACK after sink of file")
+    (debug "final:" final-progress-context)
+    final-progress-context
+    ))
 
 (defn scp-sink
   "Sink scp commands to file"
-  [^OutputStream send ^InputStream recv ^File file times {:as options}]
+  [^OutputStream send ^InputStream recv ^File file times {:keys [progress-fn] :as options}
+   & [progress-context]]
   (loop [cmd (scp-receive-command send recv)
          file file
          times times
-         depth 0]
+         depth 0
+         context progress-context]
     (debug "...." file ">" depth "[" times "]")
+    ;;(Thread/sleep 1000)
     (case (first cmd)
       \C (do
            (debug "\\C")
@@ -302,14 +345,20 @@
              (when (.exists nfile)
                (.delete nfile))
              (utils/create-file nfile mode)
-             (scp-sink-file send recv nfile mode length options)
-             (when times
-               (utils/set-last-modified-and-access-time nfile (first times) (second times)))
-             (when (pos? depth)
-               (recur (scp-receive-command send recv) file nil depth))))
+             (let [new-context
+                   (update (scp-sink-file send recv nfile mode length options context)
+                           :fileset-file-start + length)]
+               (when times
+                 (utils/set-last-modified-and-access-time nfile (first times) (second times)))
+               (if (pos? depth)
+                 (recur (scp-receive-command send recv) file nil depth new-context)
+
+                 ;; no more files. return
+                 new-context
+                 ))))
       \T (do
            (debug "\\T")
-           (recur (scp-receive-command send recv) file (scp-parse-times cmd) depth))
+           (recur (scp-receive-command send recv) file (scp-parse-times cmd) depth context))
       \D (do
            (debug "\\D")
            (let [[mode _ ^String filename] (scp-parse-copy cmd)
@@ -318,12 +367,12 @@
                (.delete dir))
              (when (not (.exists dir))
                (.mkdir dir))
-             (recur (scp-receive-command send recv) dir nil (inc depth))))
+             (recur (scp-receive-command send recv) dir nil (inc depth) context)))
       \E (do
            (debug "\\E")
            (let [new-depth (dec depth)]
              (when (pos? new-depth)
-               (recur (scp-receive-command send recv) (io/file (.getParent file)) nil new-depth)))))))
+               (recur (scp-receive-command send recv) (io/file (.getParent file)) nil new-depth context)))))))
 
 
 (defn scp-from
@@ -356,7 +405,7 @@
      "scp-from %s %s" remote-path local-path)
     (scp-send-ack send)
     (debug "Sent initial ACK")
-    (scp-sink send recv file nil opts)
+    (scp-sink send recv file nil opts {:fileset-file-start 0})
     (debug "Closing streams")
     (.close send)
     (.close recv)
