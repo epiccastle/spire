@@ -313,7 +313,11 @@
                 ;; last chunk written
                 (do
                   (debug 4)
-                  (let [res (progress-fn file new-offset length (float (/ new-offset length)) context)]
+                  (let [res (progress-fn file new-offset length
+                                         (if (pos? length)
+                                           (float (/ new-offset length))
+                                           1.0)
+                                         context)]
                     (debug 5)
                     res))))))]
     (debug 6)
