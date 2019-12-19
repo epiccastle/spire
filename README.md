@@ -12,6 +12,12 @@ FIXME: explanation
 
     $ java -jar spire-0.1.0-standalone.jar [args]
 
+## Running with lein
+
+Use trampoline to run with leiningen so libspire.so can read the correct terminal settings:
+
+    $ lein trampoline run -- -h
+
 ## Options
 
 FIXME: listing of options this app accepts.
