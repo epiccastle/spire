@@ -205,7 +205,9 @@
 
 (defn set-attrs [{:keys [path owner group mode dir-mode attrs recurse]}]
   (let [file-path (io/file path)]
-    (loop [[file & remain] (file-seq file-path)
+    (loop [[file & remain] (if recurse
+                             (file-seq file-path)
+                             [file-path])
            changed? false]
       (if file
         (cond
@@ -220,4 +222,4 @@
 
         changed?))))
 
-#_ (set-attrs {:path "foo" :mode 0666})
+#_ (set-attrs {:path "foo" :mode 0644})
