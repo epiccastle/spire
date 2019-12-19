@@ -38,11 +38,6 @@
            :exit 3
            :err "when providing :preverse you cannot also specify :mode or :dir-mode")
 
-    (and preserve (or mode dir-mode))
-    (assoc failed-result
-           :exit 3
-           :err "when providing :preverse you cannot also specify :mode or :dir-mode")
-
     (and content (utils/content-recursive? content) (not recurse))
     (assoc failed-result
            :exit 3
@@ -105,19 +100,18 @@
          content (or content (io/file src))
 
          ;; analyse local and remote paths
-         local-file? (local/is-file? dest)
-         remote-file? (remote/is-file? run src)
+         local-file? (local/is-file? src)
+         remote-file? (remote/is-file? run dest)
 
          copied?
          (if recurse
-           ;;(utils/content-recursive? content)
-           ;; recursive copy
            (let [
                  transfers (compare/compare-full-info (str content) run
-                                                      (if local-file?
+                                                      dest
+                                                      #_(if local-file?
                                                         dest
                                                         (io/file dest (.getName (io/file (str content))))))
-                 {:keys [local local-to-remote identical-content]} transfers
+                 {:keys [local local-to-remote identical-content remote]} transfers
                  total-size (->> local-to-remote
                                  (map (comp :size local))
                                  (apply +))
@@ -127,14 +121,7 @@
 
                  identical-content (->> identical-content
                                         (map #(.getPath (io/file src %)))
-                                        (into #{}))
-                 ]
-
-             ;; (println "!" local)
-             ;; (println local-to-remote)
-             ;; (println identical-content)
-             ;;(System/exit 0)
-
+                                        (into #{}))]
              (cond
                (and remote-file? (not force))
                {:result :failed :err "Cannot copy `content` directory over `dest`: destination is a file. Use :force to delete destination file and replace."}
