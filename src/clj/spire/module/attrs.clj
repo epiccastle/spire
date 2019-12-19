@@ -1,5 +1,6 @@
 (ns spire.module.attrs
   (:require [spire.utils :as utils]
+            [spire.nio :as nio]
             [spire.ssh :as ssh]
             [spire.state :as state]
             [clojure.java.io :as io]
@@ -25,10 +26,10 @@
 (make-script "p" "o" "g" "m" "a")
 
 (defn get-mode-and-times [origin file]
-  [(utils/file-mode file)
-   (utils/last-access-time file)
-   (utils/last-modified-time file)
-   (str "./" (utils/relativise origin file))])
+  [(nio/file-mode file)
+   (nio/last-access-time file)
+   (nio/last-modified-time file)
+   (str "./" (nio/relativise origin file))])
 
 (defn create-attribute-list [file]
   (let [file (io/file file)]
@@ -45,8 +46,8 @@
                          (format
                           "set_file %o %d %s %d %s %s"
                           mode
-                          access (utils/double-quote (utils/timestamp->touch access))
-                          modified (utils/double-quote (utils/timestamp->touch modified))
+                          access (utils/double-quote (nio/timestamp->touch access))
+                          modified (utils/double-quote (nio/timestamp->touch modified))
                           (utils/path-quote filename)))
                        ["exit $EXIT"])
         script-string (string/join "\n" script)]

@@ -1,6 +1,7 @@
 (ns spire.scp
   (:require [spire.ssh :as ssh]
             [spire.utils :as utils]
+            [spire.nio :as nio]
             [clojure.java.io :as io]
             [clojure.string :as string])
   (:import [java.io InputStream OutputStream File FileOutputStream
@@ -53,13 +54,13 @@
     (scp-send-command
      send recv
      (format "T%d 0 %d 0"
-             (utils/last-modified-time file)
-             (utils/last-access-time file))))
+             (nio/last-modified-time file)
+             (nio/last-access-time file))))
   (scp-send-command
    send recv
    (format "C%04o %d %s"
            (if preserve
-             (utils/file-mode file)
+             (nio/file-mode file)
              mode)
            (.length file) (.getName file)))
   (debugf "Sending %s" (.getAbsolutePath file))
@@ -152,13 +153,13 @@
     (scp-send-command
      send recv
      (format "T%d 0 %d 0"
-             (utils/last-modified-time dir)
-             (utils/last-access-time dir))))
+             (nio/last-modified-time dir)
+             (nio/last-access-time dir))))
   (scp-send-command
    send recv
    (format "D%04o 0 %s"
            (if preserve
-             (utils/file-mode dir)
+             (nio/file-mode dir)
              dir-mode)
            (.getName dir)))
   (let [final-progress-context
@@ -344,12 +345,12 @@
                          file)]
              (when (.exists nfile)
                (.delete nfile))
-             (utils/create-file nfile mode)
+             (nio/create-file nfile mode)
              (let [new-context
                    (update (scp-sink-file send recv nfile mode length options context)
                            :fileset-file-start + length)]
                (when times
-                 (utils/set-last-modified-and-access-time nfile (first times) (second times)))
+                 (nio/set-last-modified-and-access-time nfile (first times) (second times)))
                (if (pos? depth)
                  (recur (scp-receive-command send recv) file nil depth new-context)
 

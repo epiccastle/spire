@@ -4,6 +4,7 @@
             [spire.module.attrs :refer :all]
             [spire.compare :as compare]
             [spire.utils :as utils]
+            [spire.nio :as nio]
             [clojure.java.io :as io]
             [spire.test-utils :as test-utils]))
 
@@ -14,22 +15,22 @@
                                    :md5sum "26f1e459be7111918b0be22aa793b459",
                                    :mode 436,
                                    :mode-string "664",
-                                   :last-access (utils/last-access-time "test/files/line-in-file/simple-file.txt"),
-                                   :last-modified (utils/last-modified-time "test/files/line-in-file/simple-file.txt"),
+                                   :last-access (nio/last-access-time "test/files/line-in-file/simple-file.txt"),
+                                   :last-modified (nio/last-modified-time "test/files/line-in-file/simple-file.txt"),
                                    :size 161},
    "line-in-file/regexp-file.txt" {:filename "line-in-file/regexp-file.txt",
                                    :md5sum "7556dd19966458ae01f51b92c4512ed4",
                                    :mode 436,
                                    :mode-string "664",
-                                   :last-access (utils/last-access-time "test/files/line-in-file/regexp-file.txt"),
-                                   :last-modified (utils/last-modified-time "test/files/line-in-file/regexp-file.txt"),
+                                   :last-access (nio/last-access-time "test/files/line-in-file/regexp-file.txt"),
+                                   :last-modified (nio/last-modified-time "test/files/line-in-file/regexp-file.txt"),
                                    :size 601},
    "copy/test.txt" {:filename "copy/test.txt",
                     :md5sum "51ec9f91f697e5b321534c705ebbdcf5",
                     :mode 436,
                     :mode-string "664",
-                    :last-access (utils/last-access-time "test/files/copy/test.txt"),
-                    :last-modified (utils/last-modified-time "test/files/copy/test.txt"),
+                    :last-access (nio/last-access-time "test/files/copy/test.txt"),
+                    :last-modified (nio/last-modified-time "test/files/copy/test.txt"),
                     :size 43}})
 
 (deftest compare-test

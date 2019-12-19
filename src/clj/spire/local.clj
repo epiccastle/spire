@@ -3,6 +3,7 @@
             [spire.ssh :as ssh]
             [spire.scp :as scp]
             [spire.utils :as utils]
+            [spire.nio :as nio]
             [spire.module.attrs :as attrs]
             [digest :as digest]
             [clojure.java.io :as io]
@@ -14,7 +15,7 @@
 (defn path-md5sums [path]
   (->> (file-seq (io/file path))
        (filter #(.isFile %))
-       (map (fn [f] [(utils/relativise path f) (digest/md5 f)]))
+       (map (fn [f] [(nio/relativise path f) (digest/md5 f)]))
        (into {})))
 
 #_ (md5-local-dir "test/")
@@ -24,16 +25,16 @@
   (->> (file-seq (io/file path))
        (filter #(.isFile %))
        (map (fn [f]
-              (let [filename (utils/relativise path f)
-                    mode (utils/file-mode f)]
+              (let [filename (nio/relativise path f)
+                    mode (nio/file-mode f)]
                 [filename
                  {
                   :filename filename
                   :md5sum (digest/md5 f)
                   :mode mode
                   :mode-string (format "%o" mode)
-                  :last-access (utils/last-access-time f)
-                  :last-modified (utils/last-modified-time f)
+                  :last-access (nio/last-access-time f)
+                  :last-modified (nio/last-modified-time f)
                   :size (.length f)
                   }])))
        (into {})))

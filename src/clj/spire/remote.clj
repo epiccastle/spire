@@ -3,6 +3,7 @@
             [spire.ssh :as ssh]
             [spire.scp :as scp]
             [spire.utils :as utils]
+            [spire.nio :as nio]
             [spire.module.attrs :as attrs]
             [digest :as digest]
             [clojure.java.io :as io]
@@ -19,7 +20,7 @@
       (some-> find-result
               string/split-lines
               (->> (map #(vec (reverse (string/split % #"\s+" 2))))
-                   (map (fn [[fname hash]] [(utils/relativise path fname) hash]))
+                   (map (fn [[fname hash]] [(nio/relativise path fname) hash]))
                    (into {}))))))
 
 #_ (defn runner []
@@ -38,7 +39,7 @@
            (map (fn [[stats hashes]]
                   (let [[mode last-access last-modified size] (string/split stats #" " 4)
                         [md5sum filename] (string/split hashes #"\s+" 2)
-                        fname (utils/relativise path filename)]
+                        fname (nio/relativise path filename)]
                     [fname {:filename fname
                             :md5sum md5sum
                             :mode-string mode
