@@ -8,7 +8,8 @@
             [clojure.java.shell :as shell])
   (:import [java.nio.file Paths Files LinkOption Path FileSystems]
            [java.nio.file.attribute FileAttribute BasicFileAttributes BasicFileAttributeView
-            PosixFilePermission PosixFilePermissions FileTime]))
+            PosixFilePermission PosixFilePermissions PosixFileAttributeView
+            FileTime]))
 
 (defn relativise
   "return the relative path that gets you from a working directory
@@ -137,66 +138,86 @@
         fs (FileSystems/getDefault)
         upls (.getUserPrincipalLookupService fs)
         new-owner (.lookupPrincipalByName upls owner)]
-    (Files/setOwner p new-owner)))
+    (Files/setOwner p new-owner)
+    true))
 
-(defmethod set-owner Integer [path owner]
+(defmethod set-owner Long [path owner]
   (let [{:keys [out err exit]} (shell/sh "chown" (str owner) path)]
     (assert (= 0 exit))
     true))
 
 #_ (set-owner "foo" "crispin")
+#_ (set-owner "foo" 1000)
 
-#_ (defn set-attr [file owner group mode]
-  (let [p (.toPath (io/file file))
-        ;;owner (Files/getOwner p empty-link-options)
-        uid (Files/getAttribute p "unix:uid" empty-link-options)
-        user (Files/getAttribute p "unix:owner" empty-link-options)
-        gid (Files/getAttribute p "unix:gid" empty-link-options)
-        group-name (Files/getAttribute p "unix:group" empty-link-options)
-        mode-val (file-mode file)
-        mode-string (format "%o" mode)
+(defn idem-set-owner [file owner]
+  (let [p (.toPath (io/file file))]
+    (if (number? owner)
+      (let [uid (Files/getAttribute p "unix:uid" empty-link-options)]
+        (when (not= owner uid) (set-owner file owner)))
+      (let [user (Files/getAttribute p "unix:owner" empty-link-options)]
+        (when (not= owner (str user)) (set-owner file owner))))))
 
-        uid-changed?
-        (cond
-          (and (int? owner) (not= owner uid)) (set-owner p owner)
-          (and (string? owner) (not= owner user) (set-owner p owner)))
+#_ (idem-set-owner "foo" "crispin")
 
-        gid-changed?
-        (cond
-          (and (int? group) (not= group gid)) (set-group p group)
-          (and (string? group) (not= group group-name) (set-group p group)))
+;;
+;; set file/directory groups
+;;
+(defmulti set-group (fn [path owner] (type owner)))
 
-        mode-changed?
-        (cond
-          (and (int? mode) (not= mode mode-val)) (set-mode p mode)
-          (and (string? mode) (not= mode mode-string)) (set-mode p mode-string))]
-    (or uid-changed? gid-changed? mode-changed?)))
+(defmethod set-group String [path group]
+  (let [p (.toPath (io/file path))
+        fs (FileSystems/getDefault)
+        upls (.getUserPrincipalLookupService fs)
+        new-group (.lookupPrincipalByGroupName upls group)]
+    (-> (Files/getFileAttributeView p PosixFileAttributeView empty-link-options)
+        (.setGroup new-group))
+    true))
 
-#_ (defn set-attrs [{:keys [path owner group mode dir-mode attrs recurse]}]
+(defmethod set-group Long [path group]
+  (let [{:keys [out err exit]} (shell/sh "chgrp" (str group) path)]
+    (assert (= 0 exit))
+    true))
+
+#_ (set-group "foo" 1000)
+
+(defn idem-set-group [file group]
+  (let [p (.toPath (io/file file))]
+    (if (number? group)
+      (let [gid (Files/getAttribute p "unix:gid" empty-link-options)]
+        (when (not= group gid) (set-group file group)))
+      (let [group-name (Files/getAttribute p "unix:group" empty-link-options)]
+        (when (not= group (str group-name)) (set-group file group-name))))))
+
+#_ (idem-set-group "foo" "crispin")
+
+(defn idem-set-mode [file mode]
+  (if (= mode (file-mode file))
+    false
+    (do
+      (set-file-mode file mode)
+      true)))
+
+(defn set-attr [file owner group mode]
+  (let [p (.toPath (io/file file))]
+    (or (when owner (idem-set-owner file owner))
+        (when group (idem-set-group file group))
+        (when mode (idem-set-mode file mode)))))
+
+(defn set-attrs [{:keys [path owner group mode dir-mode attrs recurse]}]
   (let [file-path (io/file path)]
     (loop [[file & remain] (file-seq file-path)
            changed? false]
-      (let [p (.toPath file)
-            ;;owner (Files/getOwner p empty-link-options)
-            uid (Files/getAttribute p "unix:uid" empty-link-options)
-            user (Files/getAttribute p "unix:owner" empty-link-options)
-            gid (Files/getAttribute p "unix:gid" empty-link-options)
-            group (Files/getAttribute p "unix:group" empty-link-options)
-            mode (file-mode file)
-            mode-string (format "%o" mode)]
-        (println p uid user gid group mode mode-string)
-
+      (if file
         (cond
           (.isDirectory file)
-          (or
-           (if (not=)))
-          )
+          (recur remain (set-attr file owner group dir-mode))
 
-        )
+          (.isFile file)
+          (recur remain (set-attr file owner group mode))
 
- #_     {:file file
-       :is-directory (.isDirectory file)
-       :is-file (.isFile file)
-       })))
+          :else
+          changed?)
 
-#_ (set-attrs {:path (io/file "test")})
+        changed?))))
+
+#_ (set-attrs {:path "foo" :mode 0666})
