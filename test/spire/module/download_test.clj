@@ -27,22 +27,35 @@
 (deftest download-test
   (testing "download test"
     (let [test-dir (str (io/file (pwd) "test/files"))]
-      (test-utils/with-temp-file-names [tf]
+      (test-utils/with-temp-file-names [tf tf2]
         (test-utils/makedirs tf)
         (transport/ssh
          "localhost"
-         ;; copy
+         ;; copy directory recursively
          (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (download {:src test-dir :dest tf :recurse true})))
-         (is (= (test-utils/run (format "cd \"%s/files\" && find . -exec stat -c \"%%s %%F %%n\" {} \\;" tf))
+         (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -exec stat -c \"%%s %%F %%n\" {} \\;" tf))
                 (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%F %%n\" {} \\;" test-dir))))
-         (is (= (test-utils/run (format "cd \"%s/files\" && find . -type f -exec md5sum {} \\;" tf))
+         (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type f -exec md5sum {} \\;" tf))
                 (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" test-dir))))
 
          (with-redefs [spire.scp/scp-from no-scp]
            (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
                   (download {:src test-dir :dest tf :recurse true :preserve true})))
-           (is (= (test-utils/run (format "cd \"%s/files\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf))
+           (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf))
                   (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" test-dir)))))
+
+         ;; copy with preserve to begin with
+         (test-utils/makedirs tf2)
+         (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+                (download {:src test-dir :dest tf2 :recurse true :preserve true})))
+         (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf2))
+                (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" test-dir))))
+         (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type f -exec md5sum {} \\;" tf2))
+                (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" test-dir))))
+
+
+
+
 
          )))))

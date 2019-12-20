@@ -84,14 +84,11 @@
          local-file? (local/is-file? dest)
          remote-file? (remote/is-file? run src)
 
+         destination (if flat (io/file dest) (io/file dest host-string))
+
          {:keys [remote-to-local identical-content remote] :as comparison}
          (compare/compare-full-info
-
-          ;; scp from a directory will create that directory on local
-          (if remote-file?
-            dest
-            (io/file dest (.getName (io/file src))))
-
+          (if remote-file? destination (io/file destination (.getName (io/file src))))
           run src)
 
          {:keys [sizes total]} (compare/remote-to-local comparison)
@@ -111,8 +108,9 @@
              (and local-file? force)
              (do
                (.delete (io/file dest))
+               (.mkdirs destination)
                (scp-result
-                (scp/scp-from session src dest
+                (scp/scp-from session src (str destination)
                               :progress-fn (fn [file bytes total frac context]
                                              (output/print-progress
                                               host-string
@@ -130,11 +128,12 @@
 
              (not local-file?)
              (do
+               (.mkdirs destination)
                (scp-result
                 (when (not=
                        (count identical-content)
                        (count (filter #(= :f (:type (second %))) remote)))
-                  (scp/scp-from session src dest
+                  (scp/scp-from session src (str destination)
                                 :progress-fn (fn [file bytes total frac context]
                                                #_ (println file bytes total frac context all-files-total)
                                                (output/print-progress
@@ -159,8 +158,7 @@
                   ;; and modes are correctly setup.
                   (and (= :ok (:result copy-result)) passed-attrs?)
                   (nio/set-attrs
-                   session
-                   {:path dest
+                   {:path destination
                     :owner owner
                     :group group
                     :mode mode
@@ -171,9 +169,7 @@
                   preserve
                   (nio/set-attrs-preserve
                    remote
-                   (if remote-file?
-                     dest
-                     (io/file dest (.getName (io/file src))))))]
+                   (if remote-file? destination (io/file destination (.getName (io/file src))))))]
      (process-result
       opts
       copy-result
