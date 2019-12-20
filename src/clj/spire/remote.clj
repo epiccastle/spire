@@ -33,23 +33,40 @@
 
 
 (defn path-full-info [run path]
-  (-> (run (format "find \"%s\" -type f -exec stat -c '%%a %%X %%Y %%s' {} \\; -exec md5sum {} \\;" path))
-      (string/split #"\n")
-      (->> (partition 2)
-           (map (fn [[stats hashes]]
-                  (let [[mode last-access last-modified size] (string/split stats #" " 4)
-                        [md5sum filename] (string/split hashes #"\s+" 2)
-                        fname (nio/relativise path filename)]
-                    [fname {:type :f
-                            :filename fname
-                            :md5sum md5sum
-                            :mode-string mode
-                            :mode (Integer/parseInt mode 8)
-                            :last-access (Integer/parseInt last-access)
-                            :last-modified (Integer/parseInt last-modified)
-                            :size (Integer/parseInt size)
-                            }])))
-           (into {}))))
+  (let [file-info
+        (-> (run (format "find \"%s\" -type f -exec stat -c '%%a %%X %%Y %%s' {} \\; -exec md5sum {} \\;" path))
+            (string/split #"\n")
+            (->> (partition 2)
+                 (map (fn [[stats hashes]]
+                        (let [[mode last-access last-modified size] (string/split stats #" " 4)
+                              [md5sum filename] (string/split hashes #"\s+" 2)
+                              fname (nio/relativise path filename)]
+                          [fname {:type :f
+                                  :filename fname
+                                  :md5sum md5sum
+                                  :mode-string mode
+                                  :mode (Integer/parseInt mode 8)
+                                  :last-access (Integer/parseInt last-access)
+                                  :last-modified (Integer/parseInt last-modified)
+                                  :size (Integer/parseInt size)
+                                  }])))
+                 (into {})))
+
+        dir-info
+        (-> (run (format "find \"%s\" -type d -exec stat -c '%%a %%X %%Y %%s %%n' {} \\;" path))
+            (string/split #"\n")
+            (->> (filter #(pos? (count %)))
+                 (map (fn [stats]
+                        (let [[mode last-access last-modified size filename] (string/split stats #" " 5)
+                              fname (nio/relativise path filename)]
+                          [fname {:type :d
+                                  :filename fname
+                                  :mode-string mode
+                                  :mode (Integer/parseInt mode 8)
+                                  :last-access (Integer/parseInt last-access)
+                                  :last-modified (Integer/parseInt last-modified)}])))
+                 (into {})))]
+    (into dir-info file-info)))
 
 #_
 (path-full-info (runner) "test")

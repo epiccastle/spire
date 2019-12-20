@@ -131,7 +131,9 @@
              (not local-file?)
              (do
                (scp-result
-                (when (not= (count identical-content) (count remote))
+                (when (not=
+                       (count identical-content)
+                       (count (filter #(= :f (:type (second %))) remote)))
                   (scp/scp-from session src dest
                                 :progress-fn (fn [file bytes total frac context]
                                                #_ (println file bytes total frac context all-files-total)

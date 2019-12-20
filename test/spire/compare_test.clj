@@ -45,7 +45,7 @@
                     local-to-remote
                     remote-to-local]} (compare/compare-full-info "test/files" test-utils/run t1)]
         (is (= (select-keys local (keys test-files-info)) test-files-info))
-        (is (empty? remote))
+        (is (and (= 1 (count remote)) (= (get-in remote ["" :type]) :d)))
         (is (empty? identical-content))
         (is (local-to-remote "line-in-file/simple-file.txt"))
         (is (local-to-remote "copy/test.txt"))
@@ -73,7 +73,7 @@
                     identical-content
                     local-to-remote
                     remote-to-local]} (compare/compare-full-info empty-dir test-utils/run t1)]
-        (is (empty? local))
+        (is (and (= 1 (count local)) (= (get-in remote ["" :type]) :d)))
         (is (= (select-keys remote (keys test-files-info)) test-files-info))
         (is (empty? identical-content))
         (is (empty? local-to-remote))

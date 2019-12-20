@@ -23,21 +23,35 @@
 
 (defn path-full-info [path]
   (->> (file-seq (io/file path))
-       (filter #(.isFile %))
        (map (fn [f]
-              (let [filename (nio/relativise path f)
-                    mode (nio/file-mode f)]
-                [filename
-                 {
-                  :type :f
-                  :filename filename
-                  :md5sum (digest/md5 f)
-                  :mode mode
-                  :mode-string (format "%o" mode)
-                  :last-access (nio/last-access-time f)
-                  :last-modified (nio/last-modified-time f)
-                  :size (.length f)
-                  }])))
+              (cond
+                (.isFile f)
+                (let [filename (nio/relativise path f)
+                      mode (nio/file-mode f)]
+                  [filename
+                   {
+                    :type :f
+                    :filename filename
+                    :md5sum (digest/md5 f)
+                    :mode mode
+                    :mode-string (format "%o" mode)
+                    :last-access (nio/last-access-time f)
+                    :last-modified (nio/last-modified-time f)
+                    :size (.length f)
+                    }])
+
+                (.isDirectory f)
+                (let [filename (nio/relativise path f)
+                      mode (nio/file-mode f)]
+                  [filename
+                   {
+                    :type :d
+                    :filename filename
+                    :mode mode
+                    :mode-string (format "%o" mode)
+                    :last-access (nio/last-access-time f)
+                    :last-modified (nio/last-modified-time f)
+                    }]))))
        (into {})))
 
 #_ (path-full-info "/tmp/bashrc")
