@@ -11,21 +11,24 @@
 (clojure.lang.RT/loadLibrary "spire")
 
 (def test-files-info
-  {"line-in-file/simple-file.txt" {:filename "line-in-file/simple-file.txt",
+  {"line-in-file/simple-file.txt" {:type :f
+                                   :filename "line-in-file/simple-file.txt",
                                    :md5sum "26f1e459be7111918b0be22aa793b459",
                                    :mode 436,
                                    :mode-string "664",
                                    :last-access (nio/last-access-time "test/files/line-in-file/simple-file.txt"),
                                    :last-modified (nio/last-modified-time "test/files/line-in-file/simple-file.txt"),
                                    :size 161},
-   "line-in-file/regexp-file.txt" {:filename "line-in-file/regexp-file.txt",
+   "line-in-file/regexp-file.txt" {:type :f
+                                   :filename "line-in-file/regexp-file.txt",
                                    :md5sum "7556dd19966458ae01f51b92c4512ed4",
                                    :mode 436,
                                    :mode-string "664",
                                    :last-access (nio/last-access-time "test/files/line-in-file/regexp-file.txt"),
                                    :last-modified (nio/last-modified-time "test/files/line-in-file/regexp-file.txt"),
                                    :size 601},
-   "copy/test.txt" {:filename "copy/test.txt",
+   "copy/test.txt" {:type :f
+                    :filename "copy/test.txt",
                     :md5sum "51ec9f91f697e5b321534c705ebbdcf5",
                     :mode 436,
                     :mode-string "664",

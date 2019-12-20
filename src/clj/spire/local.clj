@@ -29,6 +29,7 @@
                     mode (nio/file-mode f)]
                 [filename
                  {
+                  :type :f
                   :filename filename
                   :md5sum (digest/md5 f)
                   :mode mode
