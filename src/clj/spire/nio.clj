@@ -209,9 +209,10 @@
 
 (defn set-attr [file owner group mode]
   (let [p (.toPath (io/file file))]
-    (or (when owner (idem-set-owner file owner))
-        (when group (idem-set-group file group))
-        (when mode (idem-set-mode file mode)))))
+    (let [o (when owner (idem-set-owner file owner))
+          g (when group (idem-set-group file group))
+          m (when mode (idem-set-mode file mode))]
+      (or o g m))))
 
 (defn set-attrs [{:keys [path owner group mode dir-mode attrs recurse]}]
   (let [file-path (io/file path)]
@@ -248,10 +249,10 @@
           (if stats
             (recur
              remain
-             (or
-              (idem-set-mode file mode)
-              (idem-set-last-access-time file last-access)
-              (idem-set-last-modified-time file last-modified)))
+             (let [m (idem-set-mode file mode)
+                   la (idem-set-last-access-time file last-access)
+                   lm (idem-set-last-modified-time file last-modified)]
+               (or m la lm)))
 
             ;; directory. TODO gather these in compare routines
             (recur remain changed?)))
