@@ -10,7 +10,7 @@
 
 (clojure.lang.RT/loadLibrary "spire")
 
-(def test-files-info
+(defn make-test-files-info []
   {"line-in-file/simple-file.txt" {:type :f
                                    :filename "line-in-file/simple-file.txt",
                                    :md5sum "26f1e459be7111918b0be22aa793b459",
@@ -43,7 +43,8 @@
       (let [{:keys [local remote
                     identical-content
                     local-to-remote
-                    remote-to-local]} (compare/compare-full-info "test/files" test-utils/run t1)]
+                    remote-to-local]} (compare/compare-full-info "test/files" test-utils/run t1)
+            test-files-info (make-test-files-info)]
         (is (= (select-keys local (keys test-files-info)) test-files-info))
         (is (and (= 1 (count remote)) (= (get-in remote ["" :type]) :d)))
         (is (empty? identical-content))
@@ -57,7 +58,8 @@
       (let [{:keys [local remote
                     identical-content
                     local-to-remote
-                    remote-to-local]} (compare/compare-full-info "test/files" test-utils/run t1)]
+                    remote-to-local]} (compare/compare-full-info "test/files" test-utils/run t1)
+            test-files-info (make-test-files-info)]
         (is (= (select-keys local (keys test-files-info)) test-files-info))
         (is (= (select-keys remote (keys test-files-info)) test-files-info))
         (is (identical-content "line-in-file/simple-file.txt"))
@@ -72,7 +74,8 @@
       (let [{:keys [local remote
                     identical-content
                     local-to-remote
-                    remote-to-local]} (compare/compare-full-info empty-dir test-utils/run t1)]
+                    remote-to-local]} (compare/compare-full-info empty-dir test-utils/run t1)
+            test-files-info (make-test-files-info)]
         (is (and (= 1 (count local)) (= (get-in remote ["" :type]) :d)))
         (is (= (select-keys remote (keys test-files-info)) test-files-info))
         (is (empty? identical-content))
@@ -90,6 +93,7 @@
                     local-to-remote
                     remote-to-local] :as comparison}
             (compare/compare-full-info "test/files" test-utils/run t1)
+            test-files-info (make-test-files-info)
             same-files ["line-in-file/simple-file.txt" "line-in-file/regexp-file.txt"]
             different-file "copy/test.txt"
             ]
