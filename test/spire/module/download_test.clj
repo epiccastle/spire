@@ -40,6 +40,15 @@
                 (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" test-dir))))
 
          (with-redefs [spire.scp/scp-from no-scp]
+           ;; reset attrs with hard coded mode and dir-mode
+           (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
+                  (download {:src test-dir :dest tf :recurse true :dir-mode 0777 :mode 0666})))
+           (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type f -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf))
+                  (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec stat -c \"%%s 666 %%F %%n\" {} \\;" test-dir))))
+           (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type d -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf))
+                  (test-utils/ssh-run (format "cd \"%s\" && find . -type d -exec stat -c \"%%s 777 %%F %%n\" {} \\;" test-dir))))
+
+           ;; reset attrs with :preserve
            (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
                   (download {:src test-dir :dest tf :recurse true :preserve true})))
            (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf))
@@ -61,4 +70,13 @@
          (is (= (slurp (io/file test-dir "copy/test.txt"))
                 (slurp (io/file tf3 "localhost/test.txt"))))
 
-         )))))
+         (with-redefs [spire.scp/scp-from no-scp]
+           (is (= {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}
+                  (download {:src (io/file test-dir "copy/test.txt") :dest tf3})))
+           (is (= (slurp (io/file test-dir "copy/test.txt"))
+                  (slurp (io/file tf3 "localhost/test.txt"))))
+
+           (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
+                  (download {:src (io/file test-dir "copy/test.txt") :dest tf3 :mode 0666})))
+           (is (= (string/trim (test-utils/run (format "stat -c \"%%s %%a\" \"%s/localhost/test.txt\"" tf3)))
+                  "43 666"))))))))
