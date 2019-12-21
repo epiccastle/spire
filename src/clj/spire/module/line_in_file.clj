@@ -193,23 +193,14 @@
     (assoc result
            :result :failed)))
 
-(defn line-in-file*
-  [command & [{:keys [path regexp line after before]
-               :as opts}]]
-  (transport/pipelines
-   (fn [_ session]
-     (or
-      (preflight command opts)
-      (->>
-       (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
-       (process-result command opts))))))
-
-(defn line-in-file
-  "Make sure a line is present in, or absent from, a file"
-  [& args]
-  (binding [state/*form* (concat '(line-in-file) args)]
-    (output/print-form state/*form*)
-    (apply line-in-file* args)))
+(utils/defmodule line-in-file [command & [{:keys [path regexp line after before]
+                                           :as opts}]]
+  [host-string session]
+  (or
+   (preflight command opts)
+   (->>
+    (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
+    (process-result command opts))))
 
 (def documentation
   {
