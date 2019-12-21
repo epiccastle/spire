@@ -99,6 +99,16 @@
 
          all-files-total total
 
+         progress-fn (fn [file bytes total frac context]
+                       (output/print-progress
+                        host-string
+                        (utils/progress-stats
+                         file bytes total frac
+                         all-files-total
+                         max-filename-length
+                         context)
+                        ))
+
          copy-result
          (if recurse
            (cond
@@ -111,15 +121,7 @@
                (.mkdirs destination)
                (scp-result
                 (scp/scp-from session src (str destination)
-                              :progress-fn (fn [file bytes total frac context]
-                                             (output/print-progress
-                                              host-string
-                                              (utils/progress-stats
-                                               file bytes total frac
-                                               all-files-total
-                                               max-filename-length
-                                               context)
-                                              ))
+                              :progress-fn progress-fn
                               :preserve preserve
                               :dir-mode (or dir-mode 0755)
                               :mode (or mode 0644)
@@ -134,15 +136,7 @@
                        (count identical-content)
                        (count (filter #(= :file (:type (second %))) remote)))
                   (scp/scp-from session src (str destination)
-                                :progress-fn (fn [file bytes total frac context]
-                                               #_ (println file bytes total frac context all-files-total)
-                                               (output/print-progress
-                                                host-string
-                                                (utils/progress-stats
-                                                 file bytes total frac
-                                                 all-files-total
-                                                 max-filename-length
-                                                 context)))
+                                :progress-fn progress-fn
                                 :preserve preserve
                                 :dir-mode (or dir-mode 0755)
                                 :mode (or mode 0644)
