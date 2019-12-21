@@ -27,7 +27,7 @@
 (deftest download-test
   (testing "download test"
     (let [test-dir (str (io/file (pwd) "test/files"))]
-      (test-utils/with-temp-file-names [tf tf2]
+      (test-utils/with-temp-file-names [tf tf2 tf3]
         (test-utils/makedirs tf)
         (transport/ssh
          "localhost"
@@ -54,8 +54,11 @@
          (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type f -exec md5sum {} \\;" tf2))
                 (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" test-dir))))
 
-
-
-
+         ;; download single file into a directory
+         (test-utils/makedirs tf3)
+         (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+                (download {:src (io/file test-dir "copy/test.txt") :dest tf3})))
+         (is (= (slurp (io/file test-dir "copy/test.txt"))
+                (slurp (io/file tf3 "localhost/test.txt"))))
 
          )))))

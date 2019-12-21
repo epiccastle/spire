@@ -86,7 +86,7 @@
 
          destination (if flat (io/file dest) (io/file dest host-string))
 
-         {:keys [remote-to-local identical-content remote] :as comparison}
+         {:keys [remote-to-local identical-content local remote] :as comparison}
          (compare/compare-full-info
           (if remote-file? destination (io/file destination (.getName (io/file src))))
           run src)
@@ -148,8 +148,28 @@
                                 :mode (or mode 0644)
                                 :recurse true
                                 :skip-files identical-content
-                                ))))
-             ))
+                                )))))
+
+           ;; non recursive
+           (let [local-md5sum (get-in local ["" :md5sum])
+                 remote-md5sum (get-in remote ["" :md5sum])]
+             (.mkdirs destination)
+             (scp-result
+              (when (not= local-md5sum remote-md5sum)
+                (scp/scp-from session src (str destination)
+                            :progress-fn (fn [file bytes total frac context]
+                                           (output/print-progress
+                                            host-string
+                                            (utils/progress-stats
+                                             file bytes total frac
+                                             all-files-total
+                                             max-filename-length
+                                             context)
+                                            ))
+                            :preserve preserve
+                            :dir-mode (or dir-mode 0755)
+                            :mode (or mode 0644)
+                            )))))
 
          passed-attrs? (or owner group dir-mode mode attrs)
 
