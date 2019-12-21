@@ -30,7 +30,7 @@
                       mode (nio/file-mode f)]
                   [filename
                    {
-                    :type :f
+                    :type :file
                     :filename filename
                     :md5sum (digest/md5 f)
                     :mode mode
@@ -45,7 +45,7 @@
                       mode (nio/file-mode f)]
                   [filename
                    {
-                    :type :d
+                    :type :dir
                     :filename filename
                     :mode mode
                     :mode-string (format "%o" mode)

@@ -11,7 +11,7 @@
 (clojure.lang.RT/loadLibrary "spire")
 
 (defn make-test-files-info []
-  {"line-in-file/simple-file.txt" {:type :f
+  {"line-in-file/simple-file.txt" {:type :file
                                    :filename "line-in-file/simple-file.txt",
                                    :md5sum "26f1e459be7111918b0be22aa793b459",
                                    :mode 436,
@@ -19,7 +19,7 @@
                                    :last-access (nio/last-access-time "test/files/line-in-file/simple-file.txt"),
                                    :last-modified (nio/last-modified-time "test/files/line-in-file/simple-file.txt"),
                                    :size 161},
-   "line-in-file/regexp-file.txt" {:type :f
+   "line-in-file/regexp-file.txt" {:type :file
                                    :filename "line-in-file/regexp-file.txt",
                                    :md5sum "7556dd19966458ae01f51b92c4512ed4",
                                    :mode 436,
@@ -27,7 +27,7 @@
                                    :last-access (nio/last-access-time "test/files/line-in-file/regexp-file.txt"),
                                    :last-modified (nio/last-modified-time "test/files/line-in-file/regexp-file.txt"),
                                    :size 601},
-   "copy/test.txt" {:type :f
+   "copy/test.txt" {:type :file
                     :filename "copy/test.txt",
                     :md5sum "51ec9f91f697e5b321534c705ebbdcf5",
                     :mode 436,
@@ -46,7 +46,7 @@
                     remote-to-local]} (compare/compare-full-info "test/files" test-utils/run t1)
             test-files-info (make-test-files-info)]
         (is (= (select-keys local (keys test-files-info)) test-files-info))
-        (is (and (= 1 (count remote)) (= (get-in remote ["" :type]) :d)))
+        (is (and (= 1 (count remote)) (= (get-in remote ["" :type]) :dir)))
         (is (empty? identical-content))
         (is (local-to-remote "line-in-file/simple-file.txt"))
         (is (local-to-remote "copy/test.txt"))
@@ -76,7 +76,7 @@
                     local-to-remote
                     remote-to-local]} (compare/compare-full-info empty-dir test-utils/run t1)
             test-files-info (make-test-files-info)]
-        (is (and (= 1 (count local)) (= (get-in remote ["" :type]) :d)))
+        (is (and (= 1 (count local)) (= (get-in remote ["" :type]) :dir)))
         (is (= (select-keys remote (keys test-files-info)) test-files-info))
         (is (empty? identical-content))
         (is (empty? local-to-remote))

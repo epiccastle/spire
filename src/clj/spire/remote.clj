@@ -41,7 +41,7 @@
                         (let [[mode last-access last-modified size] (string/split stats #" " 4)
                               [md5sum filename] (string/split hashes #"\s+" 2)
                               fname (nio/relativise path filename)]
-                          [fname {:type :f
+                          [fname {:type :file
                                   :filename fname
                                   :md5sum md5sum
                                   :mode-string mode
@@ -59,7 +59,7 @@
                  (map (fn [stats]
                         (let [[mode last-access last-modified size filename] (string/split stats #" " 5)
                               fname (nio/relativise path filename)]
-                          [fname {:type :d
+                          [fname {:type :dir
                                   :filename fname
                                   :mode-string mode
                                   :mode (Integer/parseInt mode 8)

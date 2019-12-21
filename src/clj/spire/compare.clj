@@ -5,7 +5,7 @@
 
 
 (defn same-files [local-md5s remote-md5s]
-  (->> (for [[f md5] (filter #(= (:type %) :f) local-md5s)]
+  (->> (for [[f md5] (filter #(= (:type %) :file) local-md5s)]
          (when (= md5 (get remote-md5s f))
            f))
        (filterv identity)))
@@ -34,7 +34,7 @@
                  :out)))
 
 (defn same-file-content [local remote]
-  (->> (for [[f {:keys [md5sum]}] (filter #(= (:type (second %)) :f) local)]
+  (->> (for [[f {:keys [md5sum]}] (filter #(= (:type (second %)) :file) local)]
          (when (= md5sum (get-in remote [f :md5sum]))
            f))
        (filterv identity)))
@@ -49,13 +49,13 @@
                                ;;(map #(.getPath (io/file local-path %)))
                                (into #{}))
         local-to-remote (->> local
-                             (filter #(= (:type (second %)) :f))
+                             (filter #(= (:type (second %)) :file))
                              (map first)
                              ;;(map #(.getPath (io/file local-path %)))
                              (filter (complement identical-content))
                              (into #{}))
         remote-to-local (->> remote
-                             (filter #(= (:type (second %)) :f))
+                             (filter #(= (:type (second %)) :file))
                              (map first)
                              ;;(map #(.getPath (io/file local-path %)))
                              (filter (complement identical-content))

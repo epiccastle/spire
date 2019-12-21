@@ -151,7 +151,7 @@
                (scp-result
                 (when (not=
                        (count identical-content)
-                       (count (filter #(= :f (:type (second %))) local))
+                       (count (filter #(= :file (:type (second %))) local))
                        )
                   (scp/scp-to session content dest
                               :progress-fn (fn [file bytes total frac context]
