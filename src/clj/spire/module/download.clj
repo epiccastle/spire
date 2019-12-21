@@ -145,25 +145,19 @@
                                 )))))
 
            ;; non recursive
-           (let [local-md5sum (get-in local ["" :md5sum])
+           (let [local-md5sum (get-in local [(.getName (io/file src)) :md5sum])
                  remote-md5sum (get-in remote ["" :md5sum])]
              (.mkdirs destination)
              (scp-result
+              ;; (println "--" local remote)
+              ;; (println ">>" local-md5sum remote-md5sum)
               (when (not= local-md5sum remote-md5sum)
                 (scp/scp-from session src (str destination)
-                            :progress-fn (fn [file bytes total frac context]
-                                           (output/print-progress
-                                            host-string
-                                            (utils/progress-stats
-                                             file bytes total frac
-                                             all-files-total
-                                             max-filename-length
-                                             context)
-                                            ))
-                            :preserve preserve
-                            :dir-mode (or dir-mode 0755)
-                            :mode (or mode 0644)
-                            )))))
+                              :progress-fn progress-fn
+                              :preserve preserve
+                              :dir-mode (or dir-mode 0755)
+                              :mode (or mode 0644)
+                              )))))
 
          passed-attrs? (or owner group dir-mode mode attrs)
 
@@ -171,14 +165,17 @@
                   ;; generally we assume that if a copy happened, all attributes
                   ;; and modes are correctly setup.
                   (and (= :ok (:result copy-result)) passed-attrs?)
-                  (nio/set-attrs
-                   {:path destination
-                    :owner owner
-                    :group group
-                    :mode mode
-                    :dir-mode dir-mode
-                    :attrs attrs
-                    :recurse recurse})
+                  (do
+                    #_ (println ">>>" mode remote-file?
+                             (io/file destination (.getName (io/file src))))
+                    (nio/set-attrs
+                     {:path (io/file destination (.getName (io/file src)))
+                      :owner owner
+                      :group group
+                      :mode mode
+                      :dir-mode dir-mode
+                      :attrs attrs
+                      :recurse recurse}))
 
                   preserve
                   (nio/set-attrs-preserve
