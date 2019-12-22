@@ -11,27 +11,44 @@
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
-(defn preflight [command {:keys [user state key options path] :as opts}]
+(def failed-result {:exit 1 :out "" :err "" :result :failed})
+
+(defmulti make-script (fn [command opts] command))
+
+(defmulti preflight (fn [command opts] command))
+
+(defmulti process-result (fn [command opts result] command))
+
+(defmethod preflight :present [_ {:keys [user state key options path] :as opts}]
   nil
   )
 
-(utils/defmodule authorized-key [command {:keys [user key options path] :as opts}]
+(defmethod make-script :present [_ {:keys [user state key options path] :as opts}]
+  (utils/make-script
+   "authorized_keys.sh"
+   {:USER user}))
+
+(defmethod process-result :present
+  [_ {:keys [user state key options path] :as opts} {:keys [out err exit] :as result}]
+  (cond
+    (zero? exit)
+    (assoc result
+           :exit 0
+           :result :ok)
+
+    (= 255 exit)
+    (assoc result
+           :exit 0
+           :result :changed)
+
+    :else
+    (assoc result
+           :result :failed)))
+
+(utils/defmodule authorized-keys [command {:keys [user key options path] :as opts}]
   [host-string session]
   (or
-   (preflight opts)
-   (let [run (fn [command]
-               (let [{:keys [out exit err]}
-                     (ssh/ssh-exec session command "" "UTF-8" {})]
-                 (comment
-                   (println "exit:" exit)
-                   (println "out:" out)
-                   (println "err:" err))
-                 (if (zero? exit)
-                   (string/trim out)
-                   "")))
-
-
-         ])
-   )
-
-  )
+   (preflight command opts)
+   (->>
+    (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
+    (process-result command opts))))
