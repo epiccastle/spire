@@ -31,6 +31,8 @@
    'download download/download
    'authorized-keys authorized-keys/authorized-keys
 
+   'slurp slurp
+
    ;;'ln system/ln
    ;;'mkdir system/mkdir
 
