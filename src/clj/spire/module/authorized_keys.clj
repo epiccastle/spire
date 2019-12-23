@@ -26,24 +26,27 @@
 (defmethod make-script :present [_ {:keys [user state key options path] :as opts}]
   (utils/make-script
    "authorized_keys.sh"
-   {:USER user}))
+   {:USER user
+    :KEY (string/trim key)}))
 
 (defmethod process-result :present
   [_ {:keys [user state key options path] :as opts} {:keys [out err exit] :as result}]
-  (cond
-    (zero? exit)
-    (assoc result
-           :exit 0
-           :result :ok)
+  (let [result (assoc result
+                      :out-lines (string/split-lines out))]
+    (cond
+      (zero? exit)
+      (assoc result
+             :exit 0
+             :result :ok)
 
-    (= 255 exit)
-    (assoc result
-           :exit 0
-           :result :changed)
+      (= 255 exit)
+      (assoc result
+             :exit 0
+             :result :changed)
 
-    :else
-    (assoc result
-           :result :failed)))
+      :else
+      (assoc result
+             :result :failed))))
 
 (utils/defmodule authorized-keys [command {:keys [user key options path] :as opts}]
   [host-string session]
