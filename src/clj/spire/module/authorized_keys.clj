@@ -25,7 +25,7 @@
 
 (defmethod make-script :present [_ {:keys [user state key options path] :as opts}]
   (utils/make-script
-   "authorized_keys.sh"
+   "authorized_keys_present.sh"
    {:USER user
     :KEY (string/trim key)}))
 
