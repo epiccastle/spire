@@ -48,6 +48,37 @@
       (assoc result
              :result :failed))))
 
+(defmethod preflight :absent [_ {:keys [user state key options path] :as opts}]
+  nil
+  )
+
+(defmethod make-script :absent [_ {:keys [user state key options path] :as opts}]
+  (utils/make-script
+   "authorized_keys_absent.sh"
+   {:USER user
+    :KEY (string/trim key)}))
+
+(defmethod process-result :absent
+  [_ {:keys [user state key options path] :as opts} {:keys [out err exit] :as result}]
+  (let [result (assoc result
+                      :out-lines (string/split-lines out))]
+    (cond
+      (zero? exit)
+      (assoc result
+             :exit 0
+             :result :ok)
+
+      (= 255 exit)
+      (assoc result
+             :exit 0
+             :result :changed)
+
+      :else
+      (assoc result
+             :result :failed))))
+
+
+
 (utils/defmodule authorized-keys [command {:keys [user key options path] :as opts}]
   [host-string session]
   (or
