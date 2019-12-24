@@ -40,17 +40,17 @@ if [ "$KEY_FOUND" ]; then
   EXISTING=$(sed "${LINENUM}q;d" "$AUTHORIZED_KEYS_FILE")
 
   if [ "$KEY_LINE" == "$EXISTING" ]; then
-    exit 0
+    EXIT=0
   else
     sed -i "${LINENUM}c${KEY_LINE}" "$AUTHORIZED_KEYS_FILE"
-    exit -1
+    EXIT=-1
   fi
 
 else
   # not found
   echo "$KEY_LINE" >> "$AUTHORIZED_KEYS_FILE"
-  exit -1
+  EXIT=-1
 fi
 
-# should never get here
-exit 128
+cat "$AUTHORIZED_KEYS_FILE"
+exit $EXIT
