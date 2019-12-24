@@ -77,6 +77,34 @@
       (assoc result
              :result :failed))))
 
+(defmethod preflight :get [_ {:keys [user path] :as opts}]
+  nil
+  )
+
+(defmethod make-script :get [_ {:keys [user path] :as opts}]
+  (utils/make-script
+   "authorized_keys_get.sh"
+   {:USER user}))
+
+(defmethod process-result :get
+  [_ {:keys [user path] :as opts} {:keys [out err exit] :as result}]
+  (let [result (assoc result
+                      :out-lines (string/split-lines out))]
+    (cond
+      (zero? exit)
+      (assoc result
+             :exit 0
+             :result :ok)
+
+      (= 255 exit)
+      (assoc result
+             :exit 0
+             :result :changed)
+
+      :else
+      (assoc result
+             :result :failed))))
+
 
 
 (utils/defmodule authorized-keys [command {:keys [user key options path] :as opts}]
