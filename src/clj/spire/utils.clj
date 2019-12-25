@@ -292,6 +292,11 @@
 (defn path-quote [path]
   (double-quote (path-escape path)))
 
+(defn string-escape [s]
+  (-> s
+      (string/replace "\\\"" "\\\\\\\\\"")
+      path-escape))
+
 (defmacro defmodule [name module-args pipeline-args & body]
   `(defn ~name [& args#]
      (binding [spire.state/*form* (concat '(~name) args#)]
