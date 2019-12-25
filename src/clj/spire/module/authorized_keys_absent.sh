@@ -28,12 +28,6 @@ fi
 KEY_START=$(echo "$KEY" | cut -d " " -f 1-2)
 KEY_FOUND=$(grep -F -n "$KEY_START" "$AUTHORIZED_KEYS_FILE" || true)
 
-# if [ "$OPTIONS" ]; then
-#   KEY_LINE="$OPTIONS $KEY"
-# else
-#   KEY_LINE="$KEY"
-# fi
-
 if [ "$KEY_FOUND" ]; then
   # key already in file
   LINENUM=$(echo "$KEY_FOUND" | cut -d ":" -f 1)
