@@ -16,10 +16,19 @@
   nil
   )
 
-(defmethod make-script :present [_ {:keys [user] :as opts}]
+(defmethod make-script :present [_ {:keys [name comment uid home
+                                           group groups password shell
+                                           ] :as opts}]
   (utils/make-script
    "user_present.sh"
-   {:USER user}))
+   {:NAME name
+    :COMMENT comment
+    :USER_ID uid
+    :HOME home
+    :GROUP group
+    :GROUPSET groups
+    :PASSWORD password
+    :SHELL shell}))
 
 (defmethod process-result :present
   [_ {:keys [user] :as opts} {:keys [out err exit] :as result}]
