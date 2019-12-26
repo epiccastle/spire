@@ -7,6 +7,7 @@
             [spire.module.line-in-file :as line-in-file]
             [spire.module.download :as download]
             [spire.module.upload :as upload]
+            [spire.module.user :as user]
             [spire.module.authorized-keys :as authorized-keys]
             )
   )
@@ -28,6 +29,7 @@
    'line-in-file line-in-file/line-in-file
    ;;'copy copy/copy
    'upload upload/upload
+   'user user/user
    'download download/download
    'authorized-keys authorized-keys/authorized-keys
 
