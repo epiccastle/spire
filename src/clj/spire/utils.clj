@@ -286,6 +286,9 @@
 (defn path-escape [path]
   (string/replace path "\"" "\\\""))
 
+(defn var-escape [path]
+  (string/replace path "$" "\\$"))
+
 (defn double-quote [string]
   (str "\"" string "\""))
 

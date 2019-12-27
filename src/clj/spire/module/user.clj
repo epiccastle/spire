@@ -24,13 +24,42 @@
    {:NAME name
     :COMMENT comment
     :USER_ID uid
-    :HOME home
+    :HOME_DIR home
     :GROUP group
     :GROUPSET groups
-    :PASSWORD password
+    :PASSWORD (some->> password utils/var-escape)
     :SHELL shell}))
 
 (defmethod process-result :present
+  [_ {:keys [user] :as opts} {:keys [out err exit] :as result}]
+  (let [result (assoc result
+                      :out-lines (string/split-lines out))]
+    (cond
+      (zero? exit)
+      (assoc result
+             :exit 0
+             :result :ok)
+
+      (= 255 exit)
+      (assoc result
+             :exit 0
+             :result :changed)
+
+      :else
+      (assoc result
+             :result :failed))))
+
+
+(defmethod preflight :absent [_ {:keys [name] :as opts}]
+  nil
+  )
+
+(defmethod make-script :absent [_ {:keys [name] :as opts}]
+  (utils/make-script
+   "user_absent.sh"
+   {:NAME name}))
+
+(defmethod process-result :absent
   [_ {:keys [user] :as opts} {:keys [out err exit] :as result}]
   (let [result (assoc result
                       :out-lines (string/split-lines out))]
@@ -56,3 +85,6 @@
    (->>
     (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
     (process-result command opts))))
+
+(defn gecos [{:keys [fullname room office home info]}]
+  (str fullname "," room "," office "," home "," info))
