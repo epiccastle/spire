@@ -1,5 +1,9 @@
 (ns spire.facts
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [spire.ssh :as ssh]
+            [spire.transport :as transport]
+            [spire.utils :as utils]
+            [spire.state :as state]))
 
 (defn ip-entry-process [[headline link & lines]]
   (let [[f b] (string/split headline #">")
@@ -81,3 +85,14 @@
            (map ip-entry-process)
            (into {})))
   )
+
+
+(defn get-facts []
+  (let [host-string state/*host-string*
+        session state/*connection*
+        script (utils/embed-src "facts.sh")]
+    (ssh/ssh-exec session script "" "UTF-8" {})))
+
+#_
+(transport/ssh "localhost"
+         (get-facts))
