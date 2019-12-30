@@ -4,6 +4,7 @@
             [spire.transfer :as transfer]
             [spire.transport :as transport]
             [spire.state :as state]
+            [spire.facts :as facts]
             [spire.module.line-in-file :as line-in-file]
             [spire.module.download :as download]
             [spire.module.upload :as upload]
