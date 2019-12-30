@@ -34,6 +34,8 @@
    'user user/user
    'gecos user/gecos
 
+   'get-facts facts/get-facts
+
    'group group/group
 
    'download download/download
