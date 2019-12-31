@@ -98,7 +98,7 @@
    "wget" "git" "tar" "rsync" "bzip2"
    "bzcat" "bunzip2" "gzip" "gunzip" "zip"
    "unzip" "uname" "lsb_release" "md5sum" "sha1sum"
-   "sha256sum" "sha512sum" "apt" "dpkg" "yum"
+   "sha256sum" "sha512sum" "apt" "apt-get" "dpkg" "yum"
    "rpm" "pkg"
    ])
 
