@@ -214,11 +214,12 @@
   (let [facts (fetch-facts)]
     (swap! state update state/*host-string* merge facts)))
 
-(defn get-facts [& path]
+(defn get-fact [& [path default]]
   (if (@state state/*host-string*)
-    (get-in @state (concat [state/*host-string*] path))
-    (get-in (update-facts!) (concat [state/*host-string*] path)))
+    (get-in @state (concat [state/*host-string*] path default))
+    (get-in (update-facts!) (concat [state/*host-string*] path default)))
   )
+
 
 #_
 (transport/ssh "localhost"

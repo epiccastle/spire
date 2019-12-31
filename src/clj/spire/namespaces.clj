@@ -35,7 +35,7 @@
    'user user/user
    'gecos user/gecos
 
-   'get-facts facts/get-facts
+   'get-fact facts/get-fact
 
    'group group/group
 
@@ -54,7 +54,7 @@
 
    'ssh (with-meta @#'transport/ssh {:sci/macro true})
    'ssh-group (with-meta @#'transport/ssh-group {:sci/macro true})
-   'ssh-parallel (with-meta @#'transport/ssh-parallel {:sci/macro true})
+   ;;'ssh-parallel (with-meta @#'transport/ssh-parallel {:sci/macro true})
    'on (with-meta @#'transport/on {:sci/macro true})
 
    'binding (with-meta @#'clojure.core/binding {:sci/macro true})

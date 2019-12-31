@@ -54,23 +54,14 @@
        (connect host-string))
      (binding [state/*sessions* ~host-strings
                state/*connections* ~host-strings]
-       ~@body)
-     (finally
-       (doseq [host-string ~host-strings]
-         (disconnect host-string)))))
-
-(defmacro ssh-parallel [host-strings & body]
-  `(try
-     (doseq [host-string ~host-strings]
-       (connect host-string))
-     (binding [state/*sessions* ~host-strings
-               state/*connections* ~host-strings]
-       (let [futs (for [host-string# ~host-strings]
-                    (future
-                      (on [host-string#]
-                          ~@body)))]
-         (doall
-          (map deref futs))))
+       (let [threads#
+             (for [host-string# ~host-strings]
+               (future
+                 (binding [state/*host-string* host-string#
+                           state/*connection* (get @state/ssh-connections host-string#)]
+                   (let [result# (do ~@body)]
+                     [host-string# result#]))))]
+         (into {} (map deref threads#))))
      (finally
        (doseq [host-string ~host-strings]
          (disconnect host-string)))))
