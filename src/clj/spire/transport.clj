@@ -48,6 +48,12 @@
 (defn flush-out []
   (.flush *out*))
 
+(defn safe-deref [[host-string fut]]
+  (try
+    [host-string (deref fut)]
+    (catch java.util.concurrent.ExecutionException e
+      [host-string (ex-data (.getCause e))])))
+
 (defmacro ssh-group [host-strings & body]
   `(try
      (doseq [host-string ~host-strings]
@@ -56,12 +62,12 @@
                state/*connections* ~host-strings]
        (let [threads#
              (for [host-string# ~host-strings]
-               (future
-                 (binding [state/*host-string* host-string#
-                           state/*connection* (get @state/ssh-connections host-string#)]
-                   (let [result# (do ~@body)]
-                     [host-string# result#]))))]
-         (into {} (map deref threads#))))
+               [host-string# (future
+                               (binding [state/*host-string* host-string#
+                                         state/*connection* (get @state/ssh-connections host-string#)]
+                                 (let [result# (do ~@body)]
+                                   result#)))])]
+         (into {} (map safe-deref threads#))))
      (finally
        (doseq [host-string ~host-strings]
          (disconnect host-string)))))

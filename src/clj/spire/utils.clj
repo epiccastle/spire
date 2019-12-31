@@ -306,10 +306,12 @@
        (spire.output/print-form spire.state/*form*)
        (let [~module-args args#
              ~pipeline-args [spire.state/*host-string* spire.state/*connection*]
-             result# (do ~@body)]
-         (output/print-result (:result result#) spire.state/*host-string*)
-         result#
-         ))))
+             result# (do ~@body)
+             result-code# (:result result#)]
+         (output/print-result result-code# spire.state/*host-string*)
+         (if (#{:ok :changed} result-code#)
+           result#
+           (throw (ex-info "module failed" result#)))))))
 
 
 #_ (content-size (byte-array [1 2]))

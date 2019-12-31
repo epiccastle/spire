@@ -81,6 +81,7 @@
    'spire.transport {'connect transport/connect
                      'disconnect transport/disconnect
                      'flush-out transport/flush-out
+                     'safe-deref transport/safe-deref
                      ;;'on (with-meta @#'transport/on {:sci/macro true})
                      }
    'spire.utils {'colour utils/colour}
