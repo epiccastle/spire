@@ -93,17 +93,27 @@
    "bash" "ksh" "zsh" "csh" "tcsh"
    "dash" "sh" "stat" "ls" "id"
    "file" "touch" "chacl" "chown" "chgrp"
-   "chmod" "cp" "cat" "echo" "printf"
+   "chmod" "cp" "cat" "printf"
    "date" "sed" "grep" "awk" "curl"
    "wget" "git" "tar" "rsync" "bzip2"
    "bzcat" "bunzip2" "gzip" "gunzip" "zip"
-   "unzip" "uname" "lsb_release" "md5sum" "sha1sum"
-   "sha256sum" "sha512sum" "apt" "apt-get" "dpkg" "yum"
-   "rpm" "pkg"
+   "unzip" "uname" "lsb_release"
+   "md5sum" "md5"
+   "sha1sum" "sha1"
+   "sha224sum" "sha224"
+   "sha256sum" "sha256"
+   "sha384sum" "sha384"
+   "sha512sum" "sha512"
+   "apt" "apt-get" "dpkg" "yum" "rpm" "pkg"
    ])
 
-(defn make-which []
-  (apply str (map #(format "echo %s: `which %s`\n" % %) bins)))
+(defn make-which [shell]
+  (case shell
+    :csh
+    (apply str (map #(format "echo %s: `where %s`\n" % %) bins))
+
+    (apply str (map #(format "echo %s: `which %s`\n" % %) bins))
+    ))
 
 (def char-choice "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
@@ -131,8 +141,8 @@
 
 (defn make-fact-script [slug]
   (str
-   (start-block slug "paths")
-   (make-which)
+   #_ (start-block slug "paths")
+   #_ (make-which)
    (start-block slug "shell")
    (utils/embed-src "facts_shell.sh")
    (start-block slug "shell-id")
@@ -184,31 +194,60 @@
      :info info
      :detect (first shell-id)}))
 
+(defn process-system [uname-data shell-data]
+  (let [detect (:detect shell-data)
+        sh (case (:command shell-data)
+            "bash" :bash
+            "zsh"  :zsh
+            "csh"  :csh
+            "ksh"  :ksh
+            "sh"   (if (string/starts-with? detect "ash")
+                     :ash
+                     :sh))]
+    {:os (-> uname-data :os string/lower-case keyword)
+     :platform (-> uname-data :platform keyword)
+     :shell sh
+     }))
+
 (defn process-facts [{:keys [paths shell shell-id] :as data}]
-  (let [path-data
+  (let [uname-data (process-shell-uname shell shell-id)
+        shell-data (process-shell-info shell shell-id)]
+    {
+     :system (process-system uname-data shell-data)
+     :uname uname-data
+     :shell shell-data
+     }))
+
+(defn process-paths [{:keys [paths]}]
+  (let [
+        path-data
         (for [line paths]
-          (let [[k v] (string/split line #":\s*")]
-            (when v [(keyword k) v])))
+          (let [[k v] (string/split line #":\s*")
+                [p _] (some-> v (string/split #"\s+"))
+                ]
+            (when p [(keyword k) p])))
         new-paths (->> path-data
                        (filter identity)
-                       (into {}))
-        uname-data (process-shell-uname shell shell-id)
-        shell-data (process-shell-info shell shell-id)
-        ]
-    {:paths new-paths
-     :uname uname-data
-     :shell shell-data})
-  )
+                       (into {}))]
+    new-paths))
 
 (defn fetch-facts []
   (let [host-string state/*host-string*
         session state/*connection*
         slug (make-separator-slug)
         script (make-fact-script slug)]
-    (->> (ssh/ssh-exec session script "" "UTF-8" {})
-         (extract-blocks slug)
-         process-facts
-)))
+    (let [facts (->> (ssh/ssh-exec session script "" "UTF-8" {})
+                     (extract-blocks slug)
+                     process-facts)
+          shell (get-in facts [:system :shell])
+          path-script (str
+                         (start-block slug "paths")
+                         (make-which shell))
+          path-results (->> (ssh/ssh-exec session path-script "" "UTF-8" {})
+                            (extract-blocks slug)
+                            process-paths)
+          ]
+      (assoc facts :paths path-results))))
 
 (defn update-facts! []
   (let [facts (fetch-facts)]
