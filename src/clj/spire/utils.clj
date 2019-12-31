@@ -307,7 +307,7 @@
        (let [~module-args args#
              ~pipeline-args [spire.state/*host-string* spire.state/*connection*]
              result# (do ~@body)]
-         (output/print-result result# spire.state/*host-string*)
+         (output/print-result (:result result#) spire.state/*host-string*)
          result#
          ))))
 
