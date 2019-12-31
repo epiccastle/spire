@@ -28,7 +28,7 @@
       (assoc result :size size)
       result)))
 
-(defn apt-get [& args]
+#_ (defn apt-get [& args]
   (transport/pipelines
    (fn [_ session]
      (let [{:keys [exit out err] :as result}
@@ -56,7 +56,7 @@
 
 (defmulti apt* (fn [state & args] state))
 
-(defmethod apt* :update [_]
+#_(defmethod apt* :update [_]
   (transport/pipelines
    (fn [_ session]
      (let [{:keys [exit out err] :as result}
@@ -80,7 +80,7 @@
                 :err-lines (string/split err #"\n")
                 ))))))
 
-(defmethod apt* :upgrade [_]
+#_ (defmethod apt* :upgrade [_]
   (transport/pipelines
    (fn [_ session]
      (let [{:keys [exit out] :as result}
@@ -92,16 +92,16 @@
                 )
          (assoc result :result :failed))))))
 
-(defmethod apt* :dist-upgrade [_]
+#_ (defmethod apt* :dist-upgrade [_]
   (apt-get "dist-upgrade" "-y"))
 
-(defmethod apt* :autoremove [_]
+#_ (defmethod apt* :autoremove [_]
   (apt-get "autoremove" "-y"))
 
-(defmethod apt* :clean [_]
+#_ (defmethod apt* :clean [_]
   (apt-get "clean" "-y"))
 
-(defmethod apt* :install [_ package-or-packages]
+#_ (defmethod apt* :install [_ package-or-packages]
   (let [package-string (if (string? package-or-packages)
                          package-or-packages
                          (string/join " " package-or-packages))]
@@ -131,7 +131,7 @@
                                :removed removed}))
            (assoc result :result :failed)))))))
 
-(defmethod apt* :remove [_ package-or-packages]
+#_ (defmethod apt* :remove [_ package-or-packages]
   (let [package-string (if (string? package-or-packages)
                          package-or-packages
                          (string/join " " package-or-packages))]
@@ -160,17 +160,17 @@
                                :removed removed}))
            (assoc result :result :failed)))))))
 
-(defmethod apt* :purge [_ package-or-packages]
+#_ (defmethod apt* :purge [_ package-or-packages]
   (if (string? package-or-packages)
     (apt-get "purge" "-y" package-or-packages)
     (apt-get "purge" "-y" (string/join " " package-or-packages))))
 
-(defmethod apt* :download [_ package-or-packages]
+#_ (defmethod apt* :download [_ package-or-packages]
   (if (string? package-or-packages)
     (apt-get "download" "-y" package-or-packages)
     (apt-get "download" "-y" (string/join " " package-or-packages))))
 
-(defn apt [& args]
+#_ (defn apt [& args]
   (binding [state/*form* (concat '(apt) args)]
     (output/print-form state/*form*)
     (apply apt* args)))
@@ -178,6 +178,6 @@
 #_ (apt* :download ["iputils-ping" "traceroute"])
 #_ (apt* :autoremove)
 
-(defn hostname [hostname]
+#_ (defn hostname [hostname]
   (spit "/etc/hostname" hostname)
   (shell/sh "hostname" hostname))

@@ -66,7 +66,7 @@
        (doseq [host-string ~host-strings]
          (disconnect host-string)))))
 
-(defmacro on [host-strings & body]
+#_ (defmacro on [host-strings & body]
   `(let [present-sessions# (into #{} (state/get-sessions))
          sessions# (into #{} ~host-strings)
          subset# (into [] (clojure.set/intersection present-sessions# sessions#))
@@ -85,7 +85,7 @@
                  [host-string# @fut#]))
           (into {}))))
 
-(defn psh [cmd in out & [opts]]
+#_ (defn psh [cmd in out & [opts]]
   (let [opts (or opts {})
         channel-futs
         (->> state/*sessions*
@@ -98,7 +98,7 @@
              (into {}))]
     channel-futs))
 
-(defn pipelines [func]
+#_ (defn pipelines [func]
   (let [channel-futs
         (->> state/*sessions*
              (map

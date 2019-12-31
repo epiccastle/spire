@@ -26,8 +26,8 @@
            (pop-thread-bindings))))))
 
 (def bindings
-  {'apt system/apt
-   'hostname system/hostname
+  {;;'apt system/apt
+   ;;'hostname system/hostname
    'line-in-file line-in-file/line-in-file
    ;;'copy copy/copy
    'upload upload/upload
@@ -55,7 +55,7 @@
    'ssh (with-meta @#'transport/ssh {:sci/macro true})
    'ssh-group (with-meta @#'transport/ssh-group {:sci/macro true})
    ;;'ssh-parallel (with-meta @#'transport/ssh-parallel {:sci/macro true})
-   'on (with-meta @#'transport/on {:sci/macro true})
+   ;; 'on (with-meta @#'transport/on {:sci/macro true})
 
    'binding (with-meta @#'clojure.core/binding {:sci/macro true})
    })
@@ -80,7 +80,7 @@
    'spire.transport {'connect transport/connect
                      'disconnect transport/disconnect
                      'flush-out transport/flush-out
-                     'on (with-meta @#'transport/on {:sci/macro true})
+                     ;;'on (with-meta @#'transport/on {:sci/macro true})
                      }
    'spire.utils {'colour utils/colour}
    'spire.state {
