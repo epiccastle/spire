@@ -123,7 +123,7 @@ type -F >/dev/null 2>&1 &&
   ;; 10011*)  myex 'ash (NetBSD 3.1/4.0 ff)'
   ;; 00101*)  myex 'ash (dash 0.5.5.1 ff)'
   ;; 00100*)  myex 'ash (dash 0.5.3-0.5.5)'
-  ;;      *)  myex 'unknown ash'
+  ;;      *)  myex 'ash (unknown)'
   ;;esac
 }
 
@@ -162,4 +162,4 @@ _XPG=1;test "`typeset -Z2 x=0; echo $x`" = '00' && {
   myex 'ksh88 Version (..-)11/16/88i'
 }
 
-echo 'oh dear, unknown shell. mascheck@in-ulm.de would like to know this'
+echo 'unknown shell'
