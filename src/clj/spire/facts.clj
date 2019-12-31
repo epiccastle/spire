@@ -5,6 +5,8 @@
             [spire.utils :as utils]
             [spire.state :as state]))
 
+(defonce state (atom {}))
+
 (defn ip-entry-process [[headline link & lines]]
   (let [[f b] (string/split headline #">")
         [num device flags] (string/split f #":\s+")
@@ -151,14 +153,72 @@
                  (vec lines)]))
          (into {}))))
 
-(defn get-facts []
+(defn process-uname [uname]
+  (let [[kernel-name node-name kernel-release kernel-version machine processor platform os]
+        (string/split uname #"\s+")]
+    {:kernel {:name kernel-name
+              :release kernel-release
+              :version kernel-version}
+     :machine machine
+     :processor processor
+     :platform platform
+     :os os
+     :node node-name
+     :string uname
+     }
+    )
+  )
+
+(defn process-shell-uname [[command file uname platform node-name os kernel-release kernel-version] shell-id]
+  {:string uname
+   :platform platform
+   :node node-name
+   :os os
+   :kernel {:release kernel-release
+            :version kernel-version}})
+
+(defn process-shell-info [[command file uname platform node-name os kernel-release kernel-version] shell-id]
+  (let [[path info] (string/split file #":\s*" 2)]
+    {:command command
+     :path path
+     :info info
+     :detect (first shell-id)}))
+
+(defn process-facts [{:keys [paths shell shell-id] :as data}]
+  (let [path-data
+        (for [line paths]
+          (let [[k v] (string/split line #":\s*")]
+            (when v [(keyword k) v])))
+        new-paths (->> path-data
+                       (filter identity)
+                       (into {}))
+        uname-data (process-shell-uname shell shell-id)
+        shell-data (process-shell-info shell shell-id)
+        ]
+    {:paths new-paths
+     :uname uname-data
+     :shell shell-data})
+  )
+
+(defn fetch-facts []
   (let [host-string state/*host-string*
         session state/*connection*
         slug (make-separator-slug)
         script (make-fact-script slug)]
     (->> (ssh/ssh-exec session script "" "UTF-8" {})
          (extract-blocks slug)
+         process-facts
 )))
+
+(defn update-facts! []
+  (let [facts (fetch-facts)]
+    (swap! state update state/*host-string* merge facts)))
+
+(defn get-facts [& path]
+  (if (@state state/*host-string*)
+    (get-in @state (concat [state/*host-string*] path))
+    (get-in (update-facts!) (concat [state/*host-string*] path)))
+  )
 
 #_
 (transport/ssh "localhost"
