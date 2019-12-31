@@ -9,6 +9,7 @@
             [spire.module.download :as download]
             [spire.module.upload :as upload]
             [spire.module.user :as user]
+            [spire.module.apt :as apt]
             [spire.module.group :as group]
             [spire.module.authorized-keys :as authorized-keys]
             )
@@ -26,7 +27,7 @@
            (pop-thread-bindings))))))
 
 (def bindings
-  {;;'apt system/apt
+  {'apt apt/apt
    ;;'hostname system/hostname
    'line-in-file line-in-file/line-in-file
    ;;'copy copy/copy
