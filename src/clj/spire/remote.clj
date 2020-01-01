@@ -4,6 +4,8 @@
             [spire.scp :as scp]
             [spire.utils :as utils]
             [spire.nio :as nio]
+            [spire.transport :as transport]
+            [spire.facts :as facts]
             [spire.module.attrs :as attrs]
             [digest :as digest]
             [clojure.java.io :as io]
@@ -14,14 +16,42 @@
        string/trim
        (= "file")))
 
+(defn process-md5-out [os line]
+  (cond
+    (#{:freebsd} os)
+    (let [[_ filename hash] (re-matches #"MD5\s+\((.+)\)\s*=\s*([0-9a-fA-F]+)" line)]
+      [filename hash])
+
+    :else
+    (vec (reverse (string/split line #"\s+" 2)))))
+
 (defn path-md5sums [run path]
-  (let [find-result (run (format "find \"%s\" -type f -exec md5sum {} \\;" path))]
-    (when (pos? (count find-result))
-      (some-> find-result
-              string/split-lines
-              (->> (map #(vec (reverse (string/split % #"\s+" 2))))
-                   (map (fn [[fname hash]] [(nio/relativise path fname) hash]))
-                   (into {}))))))
+  (let [os (facts/get-fact [:system :os])
+        md5 (facts/get-fact [:paths :md5])
+        md5sum (facts/get-fact [:paths :md5sum])
+        md5path (or md5sum md5)]
+    (let [find-result (run (format "find \"%s\" -type f -exec \"%s\" {} \\;" path md5path))]
+      (when (pos? (count find-result))
+        (some-> find-result
+                string/split-lines
+                (->> (map #(process-md5-out os %))
+                     (map (fn [[fname hash]] [(nio/relativise path fname) hash]))
+                     (into {})))))))
+
+#_(transport/ssh
+ ;;"root@192.168.92.237"
+ "root@localhost"
+ (let [run (fn [command]
+             (let [{:keys [out exit err]}
+                   (ssh/ssh-exec spire.state/*connection* command "" "UTF-8" {})]
+               (comment
+                 (println "exit:" exit)
+                 (println "out:" out)
+                 (println "err:" err))
+               (if (zero? exit)
+                 (string/trim out)
+                 "")))]
+   (path-md5sums run "/root")))
 
 #_ (defn runner []
   (fn [cmd] (->> cmd
