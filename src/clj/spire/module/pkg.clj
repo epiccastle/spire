@@ -38,6 +38,16 @@
 (defmethod process-result :install
   [_ _ {:keys [out err exit] :as result}]
   (cond
+    (and (zero? exit) (re-find #"INSTALLED" out))
+    (assoc result
+           :exit 0
+           :result :changed)
+
+    (and (zero? exit) (not (re-find #"INSTALLED" out)))
+    (assoc result
+           :exit 0
+           :result :ok)
+
     (zero? exit)
     (assoc result
            :exit 0
@@ -68,15 +78,22 @@
 (defmethod process-result :remove
   [_ _ {:keys [out err exit] :as result}]
   (cond
-    (zero? exit)
+    (and (zero? exit) (re-find #"REMOVED" out))
+    (assoc result
+           :exit 0
+           :result :changed)
+
+    (and (zero? exit) (not (re-find #"REMOVED" out)))
     (assoc result
            :exit 0
            :result :ok)
 
-    (= 255 exit)
+
+
+    (= 65 exit)
     (assoc result
            :exit 0
-           :result :changed)
+           :result :ok)
 
     :else
     (assoc result
