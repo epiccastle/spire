@@ -73,13 +73,12 @@
       )))
 
 (defmacro scp-result [& body]
-  `(try
-     (let [res# (do ~@body)]
-       (if res#
-         {:result :changed}
-         {:result :ok}))
-     (catch Exception e#
-       {:result :failed :exception e#})))
+  `(let [res# (do ~@body)]
+    (if res#
+      {:result :changed}
+      {:result :ok}))
+  #_ (catch Exception e#
+    {:result :failed :exception e#}))
 
 (defn process-md5-out
   ([line]

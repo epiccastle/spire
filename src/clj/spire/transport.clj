@@ -52,7 +52,12 @@
   (try
     [host-string (deref fut)]
     (catch java.util.concurrent.ExecutionException e
-      [host-string (ex-data (.getCause e))])))
+      [host-string {:result :failed
+                    :exception e
+                    ;;:exc-data (ex-data e)
+                    ;; :cause (.getCause e)
+                    ;;:cause-data (some->> e .getCause ex-data)
+                    }])))
 
 (defmacro ssh-group [host-strings & body]
   `(try
