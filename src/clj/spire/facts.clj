@@ -263,3 +263,11 @@
 #_
 (transport/ssh "localhost"
          (get-facts))
+
+(defn os []
+  (get-fact [:system :os]))
+
+(defn md5 []
+  (or
+   (get-fact [:paths :md5sum])
+   (get-fact [:paths :md5])))

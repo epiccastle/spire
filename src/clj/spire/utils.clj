@@ -1,5 +1,6 @@
 (ns spire.utils
   (:require ;;[spire.scp :as scp]
+   [spire.facts :as facts]
             [clj-time.core :as time]
             [clj-time.coerce :as coerce]
             [digest :as digest]
@@ -317,3 +318,14 @@
 #_ (content-size (byte-array [1 2]))
 
 #_ (content-file? (io/file "./spire"))
+
+(defmacro on-os [ & pairs]
+  (let [os (gensym)]
+    `(let [~os (facts/get-fact [:system :os])]
+       (cond
+         ~@(apply concat
+                  (for [[pred form] (partition 2 pairs)]
+                    [`(~pred ~os) form]))))))
+
+
+#_ (macroexpand-1 '(on-os #{:freebsd} (do 1 2) #{:linux} (do 3 4)))

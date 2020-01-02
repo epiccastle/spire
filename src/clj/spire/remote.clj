@@ -16,27 +16,28 @@
        string/trim
        (= "file")))
 
-(defn process-md5-out [os line]
-  (cond
-    (#{:freebsd} os)
-    (let [[_ filename hash] (re-matches #"MD5\s+\((.+)\)\s*=\s*([0-9a-fA-F]+)" line)]
-      [hash filename])
+(defn process-md5-out
+  ([line]
+   (process-md5-out (facts/get-fact [:system :os]) line))
+  ([os line]
+   (cond
+     (#{:freebsd} os)
+     (let [[_ filename hash] (re-matches #"MD5\s+\((.+)\)\s*=\s*([0-9a-fA-F]+)" line)]
+       [hash filename])
 
-    :else
-    (vec (reverse (string/split line #"\s+" 2)))))
+     :else
+     (vec (reverse (string/split line #"\s+" 2))))))
 
-(defn path-md5sums [run path]
-  (let [os (facts/get-fact [:system :os])
-        md5 (facts/get-fact [:paths :md5])
-        md5sum (facts/get-fact [:paths :md5sum])
-        md5path (or md5sum md5)]
-    (let [find-result (run (format "find \"%s\" -type f -exec \"%s\" {} \\;" path md5path))]
-      (when (pos? (count find-result))
-        (some-> find-result
-                string/split-lines
-                (->> (map #(process-md5-out os %))
-                     (map (fn [[fname hash]] [(nio/relativise path fname) hash]))
-                     (into {})))))))
+
+(defn path-md5sums
+  [run path]
+  (let [find-result (run (format "find \"%s\" -type f -exec \"%s\" {} \\;" path (facts/md5)))]
+    (when (pos? (count find-result))
+      (some-> find-result
+              string/split-lines
+              (->> (map process-md5-out)
+                   (map (fn [[fname hash]] [(nio/relativise path fname) hash]))
+                   (into {}))))))
 
 #_(transport/ssh
  ;;"root@192.168.92.237"
@@ -61,36 +62,29 @@
 #_
 (file-md5sums (runner) "test")
 
-(defn process-stat-mode-out [os mode-string]
-  (cond
-    (#{:freebsd} os)
-    (subs mode-string (- (count mode-string) 3))
+(defn process-stat-mode-out
+  ([mode-string]
+   (process-stat-mode-out (facts/os) mode-string))
+  ([os mode-string]
+   (cond
+     (#{:freebsd} os)
+     (subs mode-string (- (count mode-string) 3))
 
-    :else
-    mode-string))
+     :else
+     mode-string)))
 
 (defn path-full-info [run path]
-  (let [os (facts/get-fact [:system :os])
-        md5 (facts/get-fact [:paths :md5])
-        md5sum (facts/get-fact [:paths :md5sum])
-        md5path (or md5sum md5)
-
-        file-info
-        (->
-         (cond
-           (#{:freebsd} os)
-           (run (format "find \"%s\" -type f -exec stat -f '%%p %%a %%m %%z' {} \\; -exec md5 {} \\;" path))
-
-           :else
-           (run (format "find \"%s\" -type f -exec stat -c '%%a %%X %%Y %%s' {} \\; -exec md5sum {} \\;" path))
-           )
+  (let [file-info
+        (-> (utils/on-os
+             #{:freebsd} (run (format "find \"%s\" -type f -exec stat -f '%%p %%a %%m %%z' {} \\; -exec md5 {} \\;" path))
+             (fn [_] true) (run (format "find \"%s\" -type f -exec stat -c '%%a %%X %%Y %%s' {} \\; -exec md5sum {} \\;" path)))
             (string/split #"\n")
             (->> (partition 2)
                  (map (fn [[stats hashes]]
                         (let [[mode last-access last-modified size] (string/split stats #" " 4)
-                              [md5sum filename] (process-md5-out os hashes)
+                              [md5sum filename] (process-md5-out hashes)
                               fname (nio/relativise path filename)
-                              mode (process-stat-mode-out os mode)]
+                              mode (process-stat-mode-out mode)]
                           [fname {:type :file
                                   :filename fname
                                   :md5sum md5sum
@@ -103,19 +97,17 @@
                  (into {})))
 
         dir-info
-        (-> (cond
-              (#{:freebsd} os)
-              (run (format "find \"%s\" -type d -exec stat -f '%%p %%a %%m %%z %%N' {} \\;" path))
+        (-> (utils/on-os
+             #{:freebsd} (run (format "find \"%s\" -type d -exec stat -f '%%p %%a %%m %%z %%N' {} \\;" path))
 
-              :else
-              (run (format "find \"%s\" -type d -exec stat -c '%%a %%X %%Y %%s %%n' {} \\;" path))
-              )
+             (fn [_] true) (run (format "find \"%s\" -type d -exec stat -c '%%a %%X %%Y %%s %%n' {} \\;" path))
+             )
             (string/split #"\n")
             (->> (filter #(pos? (count %)))
                  (map (fn [stats]
                         (let [[mode last-access last-modified size filename] (string/split stats #" " 5)
                               fname (nio/relativise path filename)
-                              mode (process-stat-mode-out os mode)]
+                              mode (process-stat-mode-out mode)]
                           [fname {:type :dir
                                   :filename fname
                                   :mode-string mode
