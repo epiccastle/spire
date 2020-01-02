@@ -90,7 +90,7 @@
        [hash filename])
 
      :else
-     (vec (reverse (string/split line #"\s+" 2))))))
+     (vec (string/split line #"\s+" 2)))))
 
 (utils/defmodule upload [{:keys [src content dest
                                  owner group mode attrs
@@ -188,7 +188,7 @@
            (let [local-md5 (digest/md5 content)
                  remote-md5 (some-> (facts/on-shell
                                      :csh (run (format "%s \"%s\"" (facts/md5) dest))
-                                     :else (run (format "%s -b \"%s\"" (facts/md5) dest)))
+                                     :else (run (format "%s \"%s\"" (facts/md5) dest)))
                                     process-md5-out
                                     first)
                  ]
