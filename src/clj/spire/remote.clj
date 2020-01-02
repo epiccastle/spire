@@ -12,7 +12,9 @@
             [clojure.string :as string]))
 
 (defn is-file? [run path]
-  (->> (run (format "if [ -f \"%s\" ]; then echo file; else echo dir; fi" path))
+  (->> (facts/on-os
+        :freebsd (run (format "if ( -f \"%s\" ) then\necho file\nelse\necho dir\nendif\n" path))
+        :else (run (format "if [ -f \"%s\" ]; then echo file; else echo dir; fi" path)))
        string/trim
        (= "file")))
 
@@ -75,9 +77,9 @@
 
 (defn path-full-info [run path]
   (let [file-info
-        (-> (utils/on-os
-             #{:freebsd} (run (format "find \"%s\" -type f -exec stat -f '%%p %%a %%m %%z' {} \\; -exec md5 {} \\;" path))
-             (fn [_] true) (run (format "find \"%s\" -type f -exec stat -c '%%a %%X %%Y %%s' {} \\; -exec md5sum {} \\;" path)))
+        (-> (facts/on-os
+             :freebsd (run (format "find \"%s\" -type f -exec stat -f '%%p %%a %%m %%z' {} \\; -exec md5 {} \\;" path))
+             :else (run (format "find \"%s\" -type f -exec stat -c '%%a %%X %%Y %%s' {} \\; -exec md5sum {} \\;" path)))
             (string/split #"\n")
             (->> (partition 2)
                  (map (fn [[stats hashes]]
@@ -97,11 +99,9 @@
                  (into {})))
 
         dir-info
-        (-> (utils/on-os
-             #{:freebsd} (run (format "find \"%s\" -type d -exec stat -f '%%p %%a %%m %%z %%N' {} \\;" path))
-
-             (fn [_] true) (run (format "find \"%s\" -type d -exec stat -c '%%a %%X %%Y %%s %%n' {} \\;" path))
-             )
+        (-> (facts/on-os
+             :freebsd (run (format "find \"%s\" -type d -exec stat -f '%%p %%a %%m %%z %%N' {} \\;" path))
+             :else (run (format "find \"%s\" -type d -exec stat -c '%%a %%X %%Y %%s %%n' {} \\;" path)))
             (string/split #"\n")
             (->> (filter #(pos? (count %)))
                  (map (fn [stats]

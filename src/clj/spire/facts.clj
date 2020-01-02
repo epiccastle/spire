@@ -271,3 +271,42 @@
   (or
    (get-fact [:paths :md5sum])
    (get-fact [:paths :md5])))
+
+
+(defmacro on-os [ & pairs]
+  (let [os (gensym)]
+    `(let [~os (get-fact [:system :os])]
+       (cond
+         ~@(apply concat
+                  (for [[pred form] (partition 2 pairs)]
+                    [
+                     (cond
+                       (and (keyword? pred) (= pred :else))
+                       `:else
+
+                       (keyword? pred)
+                       `(= ~pred ~os)
+
+                       :else
+                       `(~pred ~os))
+
+                     form]))))))
+
+(defmacro on-shell [ & pairs]
+  (let [shell (gensym)]
+    `(let [~shell (get-fact [:system :shell])]
+       (cond
+         ~@(apply concat
+                  (for [[pred form] (partition 2 pairs)]
+                    [
+                     (cond
+                       (and (keyword? pred) (= pred :else))
+                       `:else
+
+                       (keyword? pred)
+                       `(= ~pred ~shell)
+
+                       :else
+                       `(~pred ~shell))
+
+                     form]))))))

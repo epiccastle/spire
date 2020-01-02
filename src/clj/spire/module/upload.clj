@@ -1,6 +1,7 @@
 (ns spire.module.upload
   (:require [spire.output :as output]
             [spire.ssh :as ssh]
+            [spire.facts :as facts]
             [spire.scp :as scp]
             [spire.utils :as utils]
             [spire.local :as local]
@@ -80,6 +81,18 @@
      (catch Exception e#
        {:result :failed :exception e#})))
 
+(defn process-md5-out
+  ([line]
+   (process-md5-out (facts/get-fact [:system :os]) line))
+  ([os line]
+   (cond
+     (#{:freebsd} os)
+     (let [[_ filename hash] (re-matches #"MD5\s+\((.+)\)\s*=\s*([0-9a-fA-F]+)" line)]
+       [hash filename])
+
+     :else
+     (vec (reverse (string/split line #"\s+" 2))))))
+
 (utils/defmodule upload [{:keys [src content dest
                                  owner group mode attrs
                                  dir-mode preserve recurse force]
@@ -91,17 +104,19 @@
                (let [{:keys [out exit err]}
                      (ssh/ssh-exec session command "" "UTF-8" {})]
                  (comment
+                   (println "command:" command)
                    (println "exit:" exit)
                    (println "out:" out)
                    (println "err:" err))
                  (if (zero? exit)
                    (string/trim out)
                    "")))
-         content (or content (io/file src))
 
          ;; analyse local and remote paths
-         local-file? (local/is-file? src)
+         local-file? (when-not content (local/is-file? src))
          remote-file? (remote/is-file? run dest)
+
+         content (or content (io/file src))
 
          copied?
          (if recurse
@@ -172,9 +187,12 @@
 
            ;; straight single copy
            (let [local-md5 (digest/md5 content)
-                 remote-md5 (some-> (run (format "%s -b \"%s\"" "md5sum" dest))
-                                    (string/split #"\s+")
-                                    first)]
+                 remote-md5 (some-> (facts/on-shell
+                                     :csh (run (format "%s \"%s\"" (facts/md5) dest))
+                                     :else (run (format "%s -b \"%s\"" (facts/md5) dest)))
+                                    process-md5-out
+                                    first)
+                 ]
              (scp-result
               (when (not= local-md5 remote-md5)
                 (scp/scp-to session content dest

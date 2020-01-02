@@ -59,7 +59,8 @@
    'ssh (with-meta @#'transport/ssh {:sci/macro true})
    'ssh-group (with-meta @#'transport/ssh-group {:sci/macro true})
    ;;'ssh-parallel (with-meta @#'transport/ssh-parallel {:sci/macro true})
-   ;; 'on (with-meta @#'transport/on {:sci/macro true})
+
+   'on-os (with-meta @#'facts/on-os {:sci/macro true})
 
    'binding (with-meta @#'clojure.core/binding {:sci/macro true})
    })
@@ -88,6 +89,7 @@
                      ;;'on (with-meta @#'transport/on {:sci/macro true})
                      }
    'spire.utils {'colour utils/colour}
+   'spire.facts {'get-fact facts/get-fact}
    'spire.state {
                  '*sessions* #'state/*sessions*
                  '*connections* #'state/*connections*
