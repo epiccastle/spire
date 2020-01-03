@@ -16,9 +16,7 @@
 (def cli-options
   [
    ["-h" "--help" "Print the command line help"]
-   ["-v" "--version" "Print the version string and exit"]
-   ["-e" "--evaluate CODE" "Evaluate the code passed in on the command line" ]
-   [nil "--server" "Run in server mode on the other end of the connection"]])
+   ["-v" "--version" "Print the version string and exit"]])
 
 (defn initialise []
   (config/init!)
@@ -37,13 +35,12 @@
        (string/join \newline)))
 
 
-(defn evaluate [script]
+(defn evaluate [args script]
   (sci/eval-string script {:namespaces namespaces/namespaces
-                           :bindings namespaces/bindings
-
-                           ;; doesn't work... yet...
-                           ;;:imports {'System java.lang.System}
-
+                           :bindings (assoc namespaces/bindings
+                                            'argv args
+                                            'get-argv (fn [] args))
+                           :imports {'System 'java.lang.System}
                            :classes {'java.lang.System System}}))
 
 (defn -main
@@ -68,10 +65,10 @@
 
 
       (:evaluate options)
-      (->> options :evaluate evaluate puget/cprint)
+      (->> options :evaluate (evaluate args) puget/cprint)
 
       (pos? (count arguments))
-      (-> arguments first slurp evaluate puget/cprint)
+      (-> arguments first slurp (->> (evaluate args)) puget/cprint)
 
       :else
       ;; repl
