@@ -18,7 +18,10 @@
     :RECURSE (if recurse "1" nil)}))
 
 (defn set-attrs [session opts]
-  (ssh/ssh-exec session (make-script opts) "" "UTF-8" {}))
+  (let [bash-script (make-script opts)]
+    (facts/on-shell
+     :bash (ssh/ssh-exec session bash-script "" "UTF-8" {})
+     :else (ssh/ssh-exec session "bash" bash-script "UTF-8" {}))))
 
 
 
