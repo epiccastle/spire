@@ -2,20 +2,31 @@
   (:require [spire.utils :as utils]
             [spire.nio :as nio]
             [spire.ssh :as ssh]
+            [spire.facts :as facts]
             [spire.state :as state]
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
 (defn make-script [{:keys [path owner group mode dir-mode attrs recurse]}]
-  (utils/make-script
-   "attrs.sh"
-   {:FILE (some->> path utils/path-escape)
-    :OWNER owner
-    :GROUP group
-    :MODE (if (number? mode) (format "%o" mode)  mode)
-    :DIR_MODE (if (number? dir-mode) (format "%o" dir-mode)  dir-mode)
-    :ATTRS attrs
-    :RECURSE (if recurse "1" nil)}))
+  (facts/on-os
+   :linux (utils/make-script
+           "attrs.sh"
+           {:FILE (some->> path utils/path-escape)
+            :OWNER owner
+            :GROUP group
+            :MODE (if (number? mode) (format "%o" mode)  mode)
+            :DIR_MODE (if (number? dir-mode) (format "%o" dir-mode)  dir-mode)
+            :ATTRS attrs
+            :RECURSE (if recurse "1" nil)})
+   :else (utils/make-script
+           "attrs_bsd.sh"
+           {:FILE (some->> path utils/path-escape)
+            :OWNER owner
+            :GROUP group
+            :MODE (if (number? mode) (format "%o" mode)  mode)
+            :DIR_MODE (if (number? dir-mode) (format "%o" dir-mode)  dir-mode)
+            :ATTRS attrs
+            :RECURSE (if recurse "1" nil)})))
 
 (defn set-attrs [session opts]
   (let [bash-script (make-script opts)]
