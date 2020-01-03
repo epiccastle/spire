@@ -13,6 +13,7 @@
             [spire.module.pkg :as pkg]
             [spire.module.group :as group]
             [spire.module.authorized-keys :as authorized-keys]
+            [clojure.tools.cli]
             )
   )
 
@@ -104,6 +105,12 @@
    'clojure.java.io {'file clojure.java.io/file
                      }
 
-
-
+   'clojure.tools.cli {
+                       'cli clojure.tools.cli/cli
+                       'make-summary-part clojure.tools.cli/make-summary-part
+                       'format-lines clojure.tools.cli/format-lines
+                       'summarize clojure.tools.cli/summarize
+                       'get-default-options clojure.tools.cli/get-default-options
+                       'parse-opts clojure.tools.cli/parse-opts
+                       }
    })
