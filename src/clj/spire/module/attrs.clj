@@ -53,7 +53,9 @@
 #_ (create-attribute-list "test/files")
 
 (defn make-preserve-script [perm-list dest]
-  (let [header (utils/embed-src "attrs_preserve.sh")
+  (let [header (facts/on-os
+                :linux (utils/embed-src "attrs_preserve.sh")
+                :else (utils/embed-src "attrs_preserve_bsd.sh"))
         script (concat [(format "cd %s" (utils/path-quote dest))
                         ]
                        (for [[mode access modified filename] perm-list]
