@@ -39,7 +39,12 @@
 
 (defn evaluate [script]
   (sci/eval-string script {:namespaces namespaces/namespaces
-                           :bindings namespaces/bindings}))
+                           :bindings namespaces/bindings
+
+                           ;; doesn't work... yet...
+                           ;;:imports {'System java.lang.System}
+
+                           :classes {'java.lang.System System}}))
 
 (defn -main
   [& args]
