@@ -9,9 +9,21 @@
 
 
 (defn connect [host-string]
-  (let [[username hostname] (ssh/split-host-string host-string)
+  (let [
+        {:keys [username hostname port]} (ssh/parse-host-string host-string)
+
+        agent-forward (if-not (string? host-string) (:agent-forward host-string) false)
+        key-contents (if-not (string? host-string) (:key host-string) nil)
+        key-file (if-not (string? host-string) (:key-file host-string) nil)
+        key-passphrase  (if-not (string? host-string) (:key-passphrase host-string) nil)
+        password (if-not (string? host-string) (:password host-string) nil)
+        strict-host-key-checking (if-not (string? host-string) (:strict-host-key-checking host-string) :ask)
+
         agent (JSch.)
-        session (ssh/make-session agent hostname {:username username})
+        session (ssh/make-session agent hostname {:username username
+                                                  :password password
+                                                  :port 22
+                                                  })
         irepo (ssh-agent/make-identity-repository)
         user-info (ssh/make-user-info)
         ]

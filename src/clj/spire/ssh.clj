@@ -174,3 +174,33 @@ keys.  All other option key pairs will be passed as SSH config options."
   (if (.contains ^String host-string "@")
     (string/split host-string #"@")
     [(System/getProperty "user.name") host-string]))
+
+(def default-port 22)
+
+(defn parse-host-string [host-string]
+  (let [[_ username hostname port] (re-matches #"(.+)@(.+):(\d+)" host-string)]
+    (if username
+      {:username username
+       :hostname hostname
+       :port port}
+      (let [[_ username hostname] (re-matches #"(.+)@(.+)" host-string)]
+        (if username
+          {:username username
+           :hostname hostname
+           :port default-port}
+          (let [[_ hostname port] (re-matches #"(.+):(\d+)" host-string)]
+            (if hostname
+              {:username (System/getProperty "user.name")
+               :hostname hostname
+               :port (Integer/parseInt port)}
+              {:username (System/getProperty "user.name")
+               :hostname host-string
+               :port default-port}))))))
+  #_ (assoc
+        :auth-forwarding false
+        :key nil
+        :key-file nil
+        :host-key :ask))
+
+
+#_ (parse-host-string "localhost:2200")
