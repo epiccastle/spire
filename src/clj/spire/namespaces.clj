@@ -12,6 +12,7 @@
             [spire.module.apt :as apt]
             [spire.module.pkg :as pkg]
             [spire.module.group :as group]
+            [spire.module.shell :as shell]
             [spire.module.authorized-keys :as authorized-keys]
             [clojure.tools.cli]
             )
@@ -48,6 +49,8 @@
    'authorized-keys authorized-keys/authorized-keys
 
    'slurp slurp
+
+   'shell shell/shell
 
    ;;'ln system/ln
    ;;'mkdir system/mkdir
