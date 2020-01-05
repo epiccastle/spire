@@ -40,9 +40,9 @@
 (defn disconnect [host-string]
   (swap! state/ssh-connections
          (fn [s]
-           (-> s
-               (get host-string)
-               .disconnect)
+           (some-> s
+                   (get host-string)
+                   .disconnect)
            (dissoc s host-string))))
 
 (defmacro ssh [host-string & body]
