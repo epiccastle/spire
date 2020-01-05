@@ -22,8 +22,9 @@
         agent (JSch.)
         session (ssh/make-session agent hostname {:username username
                                                   :password password
-                                                  :port 22
+                                                  :port (or port 22)
                                                   })
+        _ (println "SESSION:" session)
         irepo (ssh-agent/make-identity-repository)
         user-info (ssh/make-user-info)
         ]
