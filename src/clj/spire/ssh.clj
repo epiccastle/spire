@@ -204,3 +204,19 @@ keys.  All other option key pairs will be passed as SSH config options."
 
 
 #_ (parse-host-string "localhost:2200")
+
+(defn host-config-to-string [{:keys [hostname username port]}]
+  (cond
+    (and hostname username port) (format "%s@%s:%d" username hostname port)
+    (and hostname port) (format "%s:%d" hostname port)
+    (and username hostname) (format "%s@%s" username hostname)
+    :else hostname))
+
+(defn host-config-to-connection-key [host-config]
+  (select-keys host-config [:username :password :port])
+  )
+
+(defn host-description-to-host-config [host-description]
+  (if-not (string? host-description)
+    host-description
+    (parse-host-string host-description)))

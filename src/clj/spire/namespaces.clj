@@ -1,5 +1,5 @@
 (ns spire.namespaces
-  (:require [spire.system :as system]
+  (:require [spire.ssh :as ssh]
             [spire.utils :as utils]
             [spire.transfer :as transfer]
             [spire.transport :as transport]
@@ -92,6 +92,10 @@
                      'safe-deref transport/safe-deref
                      ;;'on (with-meta @#'transport/on {:sci/macro true})
                      }
+   'spire.ssh {'host-config-to-string ssh/host-config-to-string
+               'host-config-to-connection-key ssh/host-config-to-connection-key
+               'host-description-to-host-config ssh/host-description-to-host-config
+               }
    'spire.utils {'colour utils/colour}
    'spire.facts {'get-fact facts/get-fact}
    'spire.state {
