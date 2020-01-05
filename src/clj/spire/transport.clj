@@ -10,7 +10,7 @@
 
 (defn connect [host-string]
   (let [
-        {:keys [username hostname port]} (ssh/parse-host-string host-string)
+        {:keys [username hostname port]} (if (string? host-string) (ssh/parse-host-string host-string) host-string)
 
         agent-forward (if-not (string? host-string) (:agent-forward host-string) false)
         key-contents (if-not (string? host-string) (:key host-string) nil)
