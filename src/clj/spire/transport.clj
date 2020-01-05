@@ -7,24 +7,11 @@
             [clojure.set :as set])
   (:import [com.jcraft.jsch JSch]))
 
-
-(defn connect [host-string]
+(defn connect [host-description]
   (let [
-        {:keys [username hostname port]} (if (string? host-string) (ssh/parse-host-string host-string) host-string)
-
-        agent-forward (if-not (string? host-string) (:agent-forward host-string) false)
-        key-contents (if-not (string? host-string) (:key host-string) nil)
-        key-file (if-not (string? host-string) (:key-file host-string) nil)
-        key-passphrase  (if-not (string? host-string) (:key-passphrase host-string) nil)
-        password (if-not (string? host-string) (:password host-string) nil)
-        strict-host-key-checking (if-not (string? host-string) (:strict-host-key-checking host-string) :ask)
-
+        host-config (ssh/host-description-to-host-config host-description)
         agent (JSch.)
-        session (ssh/make-session agent hostname {:username username
-                                                  :password password
-                                                  :port (or port 22)
-                                                  })
-        _ (println "SESSION:" session)
+        session (ssh/make-session agent (:hostname host-config) host-config)
         irepo (ssh-agent/make-identity-repository)
         user-info (ssh/make-user-info)
         ]
@@ -35,16 +22,20 @@
       (.setUserInfo user-info)
       (.connect))
 
-    (swap! state/ssh-connections assoc host-string session)
+    (swap! state/ssh-connections assoc
+           (ssh/host-config-to-connection-key host-config) session)
     session))
 
-(defn disconnect [host-string]
-  (swap! state/ssh-connections
-         (fn [s]
-           (some-> s
-                   (get host-string)
-                   .disconnect)
-           (dissoc s host-string))))
+(defn disconnect [host-description]
+  (let [host-config (ssh/host-description-to-host-config host-description)
+        connection-key (ssh/host-config-to-connection-key host-config)
+        ]
+    (swap! state/ssh-connections
+           (fn [s]
+             (some-> s
+                     (get connection-key)
+                     .disconnect)
+             (dissoc s connection-key)))))
 
 (defmacro ssh [host-string & body]
   `(try
@@ -86,11 +77,16 @@
                state/*connections* ~host-strings]
        (let [threads#
              (for [host-string# ~host-strings]
-               [host-string# (future
-                               (binding [state/*host-string* host-string#
-                                         state/*connection* (get @state/ssh-connections host-string#)]
-                                 (let [result# (do ~@body)]
-                                   result#)))])]
+               [(ssh/host-config-to-string
+                 (ssh/host-description-to-host-config host-string#))
+                (future
+                  (binding [state/*host-string* (ssh/host-config-to-string
+                                                 (ssh/host-description-to-host-config host-string#))
+                            state/*connection* (get @state/ssh-connections
+                                                    (ssh/host-config-to-connection-key
+                                                     (ssh/host-description-to-host-config host-string#)))]
+                    (let [result# (do ~@body)]
+                      result#)))])]
          (into {} (map safe-deref threads#))))
      (finally
        (doseq [host-string ~host-strings]

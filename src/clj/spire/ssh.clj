@@ -57,19 +57,36 @@
 (defn- to-camel-case [^String a]
   (apply str (map string/capitalize (.split (name a) "-"))))
 
+(defn- string-to-byte-array [^String s]
+  (byte-array (map int s)))
+
 (defn ^Session make-session
   "Start a SSH session.
 Requires hostname.  You can also pass values for :username, :password and :port
 keys.  All other option key pairs will be passed as SSH config options."
   [^JSch agent hostname
-   {:keys [port username password identity] :or {port 22} :as options}]
+   {:keys [port username password identity passphrase private-key public-key] :or {port 22} :as options}]
   (let [username (or username (System/getProperty "user.name"))
-        session-options (dissoc options :username :port :password :agent)
+        session-options (dissoc options :password :port :passphrase :identity :private-key :public-key)
         session (.getSession agent username hostname port)]
     (when password (.setPassword session password))
     ;; jsch.addIdentity(chooser.getSelectedFile().getAbsolutePath())
-    (when identity (.addIdentity session identity))
-    (doseq [[k v] options]
+    (when identity
+      (if passphrase
+        (.addIdentity agent identity passphrase)
+        (.addIdentity agent identity)))
+
+    (when private-key
+      (.addIdentity agent
+                    (if (:username options)
+                      (format "inline key for %s@%s" username hostname)
+                      (format "inline key for %s" hostname)
+                      )
+                    (string-to-byte-array private-key)
+                    (string-to-byte-array (or public-key ""))
+                    (string-to-byte-array (or passphrase "")))
+      )
+    (doseq [[k v] session-options]
       (.setConfig session (to-camel-case k) (name v)))
     session))
 
@@ -190,20 +207,10 @@ keys.  All other option key pairs will be passed as SSH config options."
            :port default-port}
           (let [[_ hostname port] (re-matches #"(.+):(\d+)" host-string)]
             (if hostname
-              {:username (System/getProperty "user.name")
-               :hostname hostname
+              {:hostname hostname
                :port (Integer/parseInt port)}
-              {:username (System/getProperty "user.name")
-               :hostname host-string
-               :port default-port}))))))
-  #_ (assoc
-        :auth-forwarding false
-        :key nil
-        :key-file nil
-        :host-key :ask))
-
-
-#_ (parse-host-string "localhost:2200")
+              {:hostname host-string
+               :port default-port})))))))
 
 (defn host-config-to-string [{:keys [hostname username port]}]
   (cond
