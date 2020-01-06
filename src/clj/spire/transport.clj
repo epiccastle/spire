@@ -42,8 +42,11 @@
      (connect ~host-string)
      (binding [state/*sessions* ~[host-string]
                state/*connections* ~[host-string]
-               state/*host-string* ~host-string
-               state/*connection* (get @state/ssh-connections ~host-string)
+               state/*host-string* (ssh/host-config-to-string
+                                    (ssh/host-description-to-host-config ~host-string))
+               state/*connection* (get @state/ssh-connections
+                                       (ssh/host-config-to-connection-key
+                                        (ssh/host-description-to-host-config ~host-string)))
                ]
        ~@body)
      (finally
