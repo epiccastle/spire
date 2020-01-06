@@ -74,8 +74,8 @@
 
 (defmacro ssh-group [host-strings & body]
   `(try
-     (doseq [host-string ~host-strings]
-       (connect host-string))
+     (doseq [host-string# ~host-strings]
+       (connect host-string#))
      (binding [state/*sessions* ~host-strings
                state/*connections* ~host-strings]
        (let [threads#
