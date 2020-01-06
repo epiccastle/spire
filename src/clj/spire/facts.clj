@@ -231,11 +231,24 @@
                        (into {}))]
     new-paths))
 
+(defn process-lsb-release [lsb-out]
+  (let [res (->> lsb-out
+                 :out
+                 string/split-lines
+                 (map #(string/split % #":\t"))
+                 (into {}))]
+    {:codename (-> "Codename" res string/lower-case keyword)
+     :distro (-> "Distributor ID" res string/lower-case keyword)
+     :release (res "Release")
+     :description (res "Description")}))
+
 (defn fetch-facts []
   (let [host-string state/*host-string*
         session state/*connection*
         slug (make-separator-slug)
         script (make-fact-script slug)]
+    (comment (println "fetch-facts:" script)
+             (println "session:" session))
     (let [facts (->> (ssh/ssh-exec session script "" "UTF-8" {})
                      (extract-blocks slug)
                      process-facts)
@@ -246,8 +259,20 @@
           path-results (->> (ssh/ssh-exec session path-script "" "UTF-8" {})
                             (extract-blocks slug)
                             process-paths)
+          extra-system (ssh/ssh-exec
+                        session
+                        (cond
+                          (= :linux (get-in facts [:system :os]))
+                          "lsb_release -a"
+
+                          :else
+                          "echo unknown")
+                        "" "UTF-8" {})
+          release-info (process-lsb-release extra-system)
           ]
-      (assoc facts :paths path-results))))
+      (-> facts
+          (assoc :paths path-results)
+          (update :system into release-info)))))
 
 (defn update-facts! []
   (let [facts (fetch-facts)]

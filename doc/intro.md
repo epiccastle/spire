@@ -51,4 +51,10 @@ Run the blueprint with `spire` to connect and then report the type of system it 
     The authenticity of host 'X.X.X.X' can't be established.
     RSA key fingerprint is 43:d6:ed:1e:86:26:f2:5a:8a:ed:06:35:99:a3:6f:8b.
     Are you sure you want to continue connecting? yes
-    {:os :linux, :platform :x86_64, :shell :bash}
+    {:codename :bionic,
+     :description "Ubuntu 18.04.3 LTS",
+     :distro :ubuntu,
+     :os :linux,
+     :platform :x86_64,
+     :release "18.04",
+     :shell :bash}
