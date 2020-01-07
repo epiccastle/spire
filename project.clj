@@ -13,6 +13,12 @@
                  [clj-time "0.15.2"]
                  [selmer "1.12.18"]
 
+                 ;; https://github.com/owainlewis/yaml/issues/35
+                 [io.forward/yaml "1.0.9"
+                  :exclusions [[org.yaml/snakeyaml]]]
+                 [org.yaml/snakeyaml "1.25"]
+
+
                  ;; dev
                  [nrepl "0.6.0"]
 
