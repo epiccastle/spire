@@ -10,6 +10,7 @@
             [spire.module.upload :as upload]
             [spire.module.user :as user]
             [spire.module.apt :as apt]
+            [spire.module.apt-repo :as apt-repo]
             [spire.module.pkg :as pkg]
             [spire.module.group :as group]
             [spire.module.shell :as shell]
@@ -31,6 +32,7 @@
 
 (def bindings
   {'apt apt/apt
+   'apt-repo apt-repo/apt-repo
    'pkg pkg/pkg
    ;;'hostname system/hostname
    'line-in-file line-in-file/line-in-file

@@ -105,6 +105,7 @@
    "sha384sum" "sha384"
    "sha512sum" "sha512"
    "apt" "apt-get" "dpkg" "yum" "rpm" "pkg"
+   "apt-key"
    ])
 
 (defn make-which [shell]
