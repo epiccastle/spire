@@ -58,3 +58,31 @@ Run the blueprint with `spire` to connect and then report the type of system it 
      :platform :x86_64,
      :release "18.04",
      :shell :bash}
+
+Now we know we can connect, lets provision the machine.
+
+The installation instructions for wireguard [https://www.wireguard.com/install/] tell us we need to install a `wireguard` package from a ppa. Let's do that now. Change the `wireguard.clj` to read:
+
+```clojure
+(ssh "root@X.X.X.X"
+    (ppa :present "ppa:wireguard/wireguard")
+    (apt :update)
+    (apt :install "wireguard"))
+```
+
+Let's run this to install wireguard...
+
+    $ spire wireguard.clj
+
+Lets generate a key. We will run this on the server for now. `wireguard.clj` becomes:
+
+```clojure
+(ssh "root@X.X.X.X"
+    (ppa :present "ppa:wireguard/wireguard")
+    (apt :update)
+    (apt :install "wireguard")
+
+    (shell {:cmd "umask 077 && wg genkey | tee privatekey | wg pubkey > publickey"
+            :creates ["privatekey" "publickey"]})
+    )
+```
