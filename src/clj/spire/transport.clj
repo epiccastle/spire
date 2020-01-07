@@ -37,6 +37,26 @@
                      .disconnect)
              (dissoc s connection-key)))))
 
+(defn flush-out []
+  (.flush *out*))
+
+(defn safe-deref [fut]
+  (try
+    (deref fut)
+    (catch java.util.concurrent.ExecutionException e
+      (let [cause (.getCause e)
+            cause-data (some->> e .getCause ex-data)]
+        (if cause-data
+          cause-data
+          {:result :failed
+           :exception e
+
+           ;;:exc-data (ex-data e)
+           ;; :cause (.getCause e)
+           ;;:cause-data (some->> e .getCause ex-data)
+           })))))
+
+
 (defmacro ssh [host-string & body]
   `(try
      (connect ~host-string)
@@ -48,29 +68,10 @@
                                        (ssh/host-config-to-connection-key
                                         (ssh/host-description-to-host-config ~host-string)))
                ]
-       ~@body)
+       (safe-deref (future ~@body)))
      (finally
        (disconnect ~host-string))))
 
-(defn flush-out []
-  (.flush *out*))
-
-(defn safe-deref [[host-string fut]]
-  (try
-    [host-string (deref fut)]
-    (catch java.util.concurrent.ExecutionException e
-      (let [cause (.getCause e)
-            cause-data (some->> e .getCause ex-data)]
-        [host-string
-         (if cause-data
-           cause-data
-           {:result :failed
-            :exception e
-
-            ;;:exc-data (ex-data e)
-            ;; :cause (.getCause e)
-            ;;:cause-data (some->> e .getCause ex-data)
-            })]))))
 
 (defmacro ssh-group [host-strings & body]
   `(try
@@ -90,7 +91,7 @@
                                                      (ssh/host-description-to-host-config host-string#)))]
                     (let [result# (do ~@body)]
                       result#)))])]
-         (into {} (map safe-deref threads#))))
+         (into {} (map (fn [[host-name# fut#]] [host-name# (safe-deref fut#)]) threads#))))
      (finally
        (doseq [host-string ~host-strings]
          (disconnect host-string)))))
