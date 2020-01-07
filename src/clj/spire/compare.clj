@@ -39,7 +39,7 @@
            f))
        (filterv identity)))
 
-(defn compare [local-path remote-runner remote-path]
+(defn compare-paths [local-path remote-runner remote-path]
   {:local (local/path-full-info local-path)
    :remote (remote/path-full-info remote-runner remote-path)})
 
@@ -66,7 +66,7 @@
            :remote-to-local remote-to-local)))
 
 (defn compare-full-info [local-path remote-runner remote-path]
-  (-> (compare local-path remote-runner remote-path)
+  (-> (compare-paths local-path remote-runner remote-path)
       (add-transfer-set)))
 
 (defn local-to-remote [{:keys [local-to-remote local]}]
