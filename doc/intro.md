@@ -65,7 +65,7 @@ The installation instructions for wireguard [https://www.wireguard.com/install/]
 
 ```clojure
 (ssh "root@X.X.X.X"
-    (ppa :present "ppa:wireguard/wireguard")
+    (apt-repo :present "ppa:wireguard/wireguard")
     (apt :update)
     (apt :install "wireguard"))
 ```
@@ -78,7 +78,7 @@ Lets generate a key. We will run this on the server for now. `wireguard.clj` bec
 
 ```clojure
 (ssh "root@X.X.X.X"
-    (ppa :present "ppa:wireguard/wireguard")
+    (apt-repo :present "ppa:wireguard/wireguard")
     (apt :update)
     (apt :install "wireguard")
 
