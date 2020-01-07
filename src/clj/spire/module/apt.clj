@@ -20,7 +20,7 @@
 (defmulti process-result (fn [command opts result] command))
 
 ;;
-;; (line-in-file :present ...)
+;; (apt :install ...)
 ;;
 (defmethod preflight :install [_ _]
   (when-not (facts/get-fact [:paths :apt-get])
@@ -55,21 +55,61 @@
              :packages {:upgraded upgraded
                         :installed installed
                         :removed removed}))
-    (assoc result :result :failed))
-  #_(cond
-    (zero? exit)
-    (assoc result
-           :exit 0
-           :result :ok)
+    (assoc result :result :failed)))
 
-    (= 255 exit)
-    (assoc result
-           :exit 0
-           :result :changed)
 
-    :else
+;;
+;; (apt :update)
+;;
+(defmethod preflight :update [_ _]
+  (when-not (facts/get-fact [:paths :apt-get])
+    {:exit 1
+     :out ""
+     :err "apt module requires apt-get installed and present in the path."
+     :result :failed}))
+
+(defmethod make-script :update [_ _]
+  (str "DEBIAN_FRONTEND=noninteractive apt-get update -y"))
+
+(defn process-values [result func]
+  (->> result
+       (map (fn [[k v]] [k (func v)]))
+       (into {})))
+
+(defn process-apt-update-line [line]
+  (let [[method remain] (string/split line #":" 2)
+        method (-> method string/lower-case keyword)
+        [url dist component size] (-> remain (string/split #"\s+" 5) rest (->> (into [])))
+        size (some->> size (re-find #"\[(.+)\]") second)
+        result {:method method
+                :url url
+                :dist dist
+                :component component}]
+    (if size
+      (assoc result :size size)
+      result)))
+
+(defmethod process-result :update
+  [_ _ {:keys [out err exit] :as result}]
+  (if (zero? exit)
+    (let [data (-> out
+                   (string/split #"\n")
+                   (->>
+                    (filter #(re-find #"^\w+:\d+\s+" %))
+                    (mapv process-apt-update-line))
+                   )
+          changed? (some #(= % :get) (map :method data))]
+      (assoc result
+             :result (if changed? :changed :ok)
+             :out-lines (string/split out #"\n")
+             :err-lines (string/split err #"\n")
+             :update data))
     (assoc result
-           :result :failed)))
+           :result :failed
+           :out-lines (string/split out #"\n")
+           :err-lines (string/split err #"\n")
+           )))
+
 
 (utils/defmodule apt [command opts]
   [host-string session]
