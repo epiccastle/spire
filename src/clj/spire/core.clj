@@ -34,14 +34,20 @@
         options-summary]
        (string/join \newline)))
 
+(defn remove-shebang [script]
+  (if (string/starts-with? script "#!")
+    (second (string/split script #"\n" 2))
+    script))
 
 (defn evaluate [args script]
-  (sci/eval-string script {:namespaces namespaces/namespaces
-                           :bindings (assoc namespaces/bindings
-                                            'argv args
-                                            'get-argv (fn [] args))
-                           :imports {'System 'java.lang.System}
-                           :classes {'java.lang.System System}}))
+  (sci/eval-string
+   (remove-shebang script)
+   {:namespaces namespaces/namespaces
+    :bindings (assoc namespaces/bindings
+                     'argv args
+                     'get-argv (fn [] args))
+    :imports {'System 'java.lang.System}
+    :classes {'java.lang.System System}}))
 
 (defn -main
   [& args]
