@@ -17,6 +17,7 @@
             [spire.module.group :as group]
             [spire.module.shell :as shell]
             [spire.module.sysctl :as sysctl]
+            [spire.module.service :as service]
             [spire.module.authorized-keys :as authorized-keys]
             [clojure.tools.cli]
             )
@@ -51,6 +52,7 @@
    'get-file get-file/get-file
 
    'sysctl sysctl/sysctl
+   'service service/service
 
    'group group/group
 
