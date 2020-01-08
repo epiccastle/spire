@@ -5,7 +5,9 @@
             [spire.transport :as transport]
             [spire.state :as state]
             [spire.facts :as facts]
+            [spire.selmer :as selmer]
             [spire.module.line-in-file :as line-in-file]
+            [spire.module.get-file :as get-file]
             [spire.module.download :as download]
             [spire.module.upload :as upload]
             [spire.module.user :as user]
@@ -45,7 +47,11 @@
    'get-fact facts/get-fact
    'fetch-facts facts/fetch-facts
 
+   'get-file get-file/get-file
+
    'group group/group
+
+   'selmer selmer/selmer
 
    'download download/download
    'authorized-keys authorized-keys/authorized-keys
@@ -69,6 +75,8 @@
    'on-os (with-meta @#'facts/on-os {:sci/macro true})
 
    'binding (with-meta @#'clojure.core/binding {:sci/macro true})
+
+   'changed? utils/changed?
    })
 
 (def namespaces
@@ -122,4 +130,8 @@
                        'get-default-options clojure.tools.cli/get-default-options
                        'parse-opts clojure.tools.cli/parse-opts
                        }
+
+   'clojure.string {
+                    'trim clojure.string/trim
+                    }
    })
