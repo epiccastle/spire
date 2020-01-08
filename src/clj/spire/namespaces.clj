@@ -16,6 +16,7 @@
             [spire.module.pkg :as pkg]
             [spire.module.group :as group]
             [spire.module.shell :as shell]
+            [spire.module.sysctl :as sysctl]
             [spire.module.authorized-keys :as authorized-keys]
             [clojure.tools.cli]
             )
@@ -48,6 +49,8 @@
    'fetch-facts facts/fetch-facts
 
    'get-file get-file/get-file
+
+   'sysctl sysctl/sysctl
 
    'group group/group
 
