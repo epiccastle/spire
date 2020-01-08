@@ -4,7 +4,9 @@
             [spire.state :as state]
             [spire.ssh-agent :as ssh-agent]
             [spire.known-hosts :as known-hosts]
-            [clojure.set :as set])
+            [clojure.set :as set]
+            [clojure.string :as string]
+            [clojure.stacktrace])
   (:import [com.jcraft.jsch JSch]))
 
 (defn connect [host-description]
@@ -50,10 +52,11 @@
           cause-data
           {:result :failed
            :exception e
-
+           :traceback (string/split-lines (with-out-str (clojure.stacktrace/print-stack-trace e)))
            ;;:exc-data (ex-data e)
-           ;; :cause (.getCause e)
-           ;;:cause-data (some->> e .getCause ex-data)
+           :cause (.getCause e)
+           :cause-traceback (string/split-lines (with-out-str (clojure.stacktrace/print-stack-trace (.getCause e))))
+           :cause-data (some->> e .getCause ex-data)
            })))))
 
 
