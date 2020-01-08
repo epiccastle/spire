@@ -20,27 +20,32 @@
 (defmethod preflight :present [_ {:keys [name value reload file] :as opts}]
   nil)
 
-(defmethod make-script :present [_ {:keys [name value reload file] :as opts}]
+(defmethod make-script :present [_ {:keys [value reload file] :as opts}]
   (utils/make-script
    "sysctl_present.sh"
-   {}))
+   {:FILE (or file "/etc/sysctl.conf")
+    :REGEX (format "^%s\\s*=" (:name opts))
+    :NAME (:name opts)
+    :VALUE (name value)
+    :RELOAD (str reload)}))
 
 (defmethod process-result :present
   [_ {:keys [name value reload file] :as opts} {:keys [out err exit] :as result}]
-  (cond
-    (zero? exit)
-    (assoc result
-           :exit 0
-           :result :ok)
+  (let [result (assoc result :out-lines (string/split out #"\n"))]
+    (cond
+      (zero? exit)
+      (assoc result
+             :exit 0
+             :result :ok)
 
-    (= 255 exit)
-    (assoc result
-           :exit 0
-           :result :changed)
+      (= 255 exit)
+      (assoc result
+             :exit 0
+             :result :changed)
 
-    :else
-    (assoc result
-           :result :failed)))
+      :else
+      (assoc result
+             :result :failed))))
 
 
 (utils/defmodule sysctl [command {:keys [name value reload file] :as opts}]
