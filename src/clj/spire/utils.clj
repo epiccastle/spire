@@ -316,12 +316,9 @@
            result#
            (throw (ex-info "module failed" result#)))))))
 
-
 #_ (content-size (byte-array [1 2]))
-
 #_ (content-file? (io/file "./spire"))
-
-
-
-
 #_ (macroexpand-1 '(on-os :freebsd (do 1 2) #{:linux} (do 3 4)))
+
+(defn changed? [{:keys [result]}]
+  (= :changed result))
