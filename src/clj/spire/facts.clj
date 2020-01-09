@@ -210,9 +210,13 @@
      :shell sh
      }))
 
+(defn process-host-string [host-config facts]
+  (assoc facts :ssh-config host-config))
+
 (defn process-facts [{:keys [paths shell shell-id] :as data}]
   (let [uname-data (process-shell-uname shell shell-id)
         shell-data (process-shell-info shell shell-id)]
+    ;; initial facts
     {
      :system (process-system uname-data shell-data)
      :uname uname-data
@@ -245,6 +249,7 @@
 
 (defn fetch-facts []
   (let [host-string state/*host-string*
+        host-config state/*host-config*
         session state/*connection*
         slug (make-separator-slug)
         script (make-fact-script slug)]
@@ -252,7 +257,8 @@
              (println "session:" session))
     (let [facts (->> (ssh/ssh-exec session script "" "UTF-8" {})
                      (extract-blocks slug)
-                     process-facts)
+                     process-facts
+                     (process-host-string host-config))
           shell (get-in facts [:system :shell])
           path-script (str
                          (start-block slug "paths")

@@ -26,6 +26,8 @@
 
 (def ^:dynamic *host-string* nil)
 
+(def ^:dynamic *host-config* nil)
+
 (def ^:dynamic *connection* nil)
 
 
