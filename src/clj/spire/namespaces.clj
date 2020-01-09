@@ -78,6 +78,8 @@
    ;;'ssh-parallel (with-meta @#'transport/ssh-parallel {:sci/macro true})
 
    'on-os (with-meta @#'facts/on-os {:sci/macro true})
+   'on-shell (with-meta @#'facts/on-shell {:sci/macro true})
+   'on-distro (with-meta @#'facts/on-distro {:sci/macro true})
 
    'binding (with-meta @#'clojure.core/binding {:sci/macro true})
 

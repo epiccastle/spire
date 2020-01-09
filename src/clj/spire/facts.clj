@@ -342,3 +342,22 @@
                        `(~pred ~shell))
 
                      form]))))))
+
+(defmacro on-distro [ & pairs]
+  (let [shell (gensym)]
+    `(let [~shell (get-fact [:system :distro])]
+       (cond
+         ~@(apply concat
+                  (for [[pred form] (partition 2 pairs)]
+                    [
+                     (cond
+                       (and (keyword? pred) (= pred :else))
+                       `:else
+
+                       (keyword? pred)
+                       `(= ~pred ~shell)
+
+                       :else
+                       `(~pred ~shell))
+
+                     form]))))))
