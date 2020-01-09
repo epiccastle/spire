@@ -59,6 +59,8 @@ Run the blueprint with `spire` to connect and then report the type of system it 
      :release "18.04",
      :shell :bash}
 
+#### Install wireguard on the server
+
 Now we know we can connect, lets provision the machine.
 
 The installation instructions for wireguard [https://www.wireguard.com/install/] tell us we need to install a `wireguard` package from a ppa. Let's do that now. Change the `wireguard.clj` to read:
@@ -72,7 +74,14 @@ The installation instructions for wireguard [https://www.wireguard.com/install/]
 
 Let's run this to install wireguard...
 
-    $ spire wireguard.clj
+```
+$ spire wireguard.clj
+(apt-repo :present "ppa:wireguard/wireguard") root@X.X.X.X:22
+(apt :update) root@X.X.X.X:22
+(apt :install "wireguard") root@X.X.X.X:22
+```
+
+#### Generate server keypair
 
 Lets generate a key pair for the server and return it. We will run this on the server for now. `wireguard.clj` becomes:
 
@@ -92,7 +101,6 @@ Lets generate a key pair for the server and return it. We will run this on the s
 ```
 $ spire wireguard.clj
 (apt-repo :present "ppa:wireguard/wireguard") root@X.X.X.X:22
-(apt :update) root@X.X.X.X:22
 (apt :install "wireguard") root@X.X.X.X:22
 (shell {:creates ["privatekey" "publickey"], :cmd "umask 077 && wg genkey | tee privatekey | wg pubkey > publickey"}) root@X.X.X.X:22
 (get-file "privatekey") root@X.X.X.X:22
@@ -101,7 +109,11 @@ $ spire wireguard.clj
  :public-key "90uBkuU1tAMgR/qYwXrz+nZYFUx5qJbIVnv3AxE2DAo="}
 ```
 
-We will need to use these keys in setting up our local client. Lets connect to localhost and generate some client keys. We can break out some of our wireguard installer into some functions now to avoid repeating ourselves. Change `wireguard.clj` to:
+We will need to use these keys in setting up our local client.
+
+#### Generate client keypair
+
+Lets connect to localhost and generate some client keys. We can break out some of our wireguard installer into some functions now to avoid repeating ourselves. Change `wireguard.clj` to:
 
 ```clojure
 (require '[clojure.string :as string])
@@ -143,7 +155,9 @@ $ spire wireguard.clj
           :public-key "90uBkuU1tAMgR/qYwXrz+nZYFUx5qJbIVnv3AxE2DAo="}}
 ```
 
-Now we have all the information we need to setup both the client and server configurations. Lets set up the server first.
+#### Complete the setup of the client and server
+
+Now we have all the information we need to setup both the client and server configurations.
 
 Change `wireguard.clj` to read:
 
