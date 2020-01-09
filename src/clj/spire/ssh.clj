@@ -220,7 +220,7 @@ keys.  All other option key pairs will be passed as SSH config options."
     :else hostname))
 
 (defn host-config-to-connection-key [host-config]
-  (select-keys host-config [:username :password :port])
+  (select-keys host-config [:username :hostname :port])
   )
 
 (defn host-description-to-host-config [host-description]
