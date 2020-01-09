@@ -127,7 +127,7 @@ We will need to use these keys in setting up our local client. Lets connect to l
    :client client-keys})
 ```
 
-Now running:
+Now running this gives:
 
 ```
 $ spire wireguard.clj
@@ -142,3 +142,122 @@ $ spire wireguard.clj
  :server {:private-key "sMMp11XSZcPqAs4F62mNr5u1j8eXDe7aG5KHrt37Gmg=",
           :public-key "90uBkuU1tAMgR/qYwXrz+nZYFUx5qJbIVnv3AxE2DAo="}}
 ```
+
+Now we have all the information we need to setup both the client and server configurations. Lets set up the server first.
+
+Change `wireguard.clj` to read:
+
+```clojure
+(require '[clojure.string :as string])
+
+(defn install []
+  (apt-repo :present "ppa:wireguard/wireguard")
+  (apt :update)
+  (apt :install "wireguard"))
+
+(defn generate-keypair []
+  (shell {:cmd "umask 077 && wg genkey | tee privatekey | wg pubkey > publickey"
+          :creates ["privatekey" "publickey"]})
+  {:private (string/trim (:out (get-file "privatekey")))
+   :public (string/trim (:out (get-file "publickey")))})
+
+(let [server-keys (ssh "root@139.59.92.63"
+                       (install)
+                       (generate-keypair))
+      client-keys (ssh "root@localhost"
+                       (install)
+                       (generate-keypair))]
+  (ssh "root@139.59.92.63"
+       (upload {:content (selmer "wireguard-server.conf"
+                                 {:wan-ip "139.59.92.63"
+                                  :private (:private server-keys)
+                                  :peers [{:name "my desktop"
+                                           :public (:public client-keys)
+                                           :allowed-ips "10.20.30.40/32"
+                                           :keepalive "120"}]})
+                :dest "/etc/wireguard/wg0.conf"
+                :mode 0600})
+       (sysctl :present {:name "net.ipv4.ip_forward" :value "1"})
+       (service :restarted {:name "wg-quick@wg0"}))
+  (ssh "root@localhost"
+       (upload {:content (selmer "wireguard-client.conf"
+                                 {:wan-ip "10.20.30.40/24"
+                                  :private (:private client-keys)
+                                  :peer {:public (:public server-keys)
+                                         :endpoint "139.59.92.63"}})
+                :dest "/etc/wireguard/vpn-tunnel.conf"
+                :mode 0600})))
+```
+
+You will need to write the server config templates.
+
+In the same directory, put the following in `wireguard-server.conf`:
+
+```ini
+[Interface]
+Address = {{ wan-ip }}
+PrivateKey = {{ private }}
+ListenPort = 51820
+
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+
+{% for peer in peers %}
+# {{ peer.name }}
+[Peer]
+PublicKey = {{ peer.public }}
+{% if peer.endpoint %}
+Endpoint = {{ peer.endpoint }}
+{% endif %}
+{% if peer.allowed-ips %}
+AllowedIPs = {{ peer.allowed-ips }}
+{% endif %}
+{% if peer.keepalive %}
+PersistentKeepalive = {{ peer.keepalive }}
+{% endif %}
+{% endfor %}
+```
+
+Also put the following client config in `wireguard-client.conf`:
+
+```ini
+[Interface]
+Address = {{ wan-ip }}
+ListenPort = 51820
+PrivateKey = {{ private }}
+
+[Peer]
+PublicKey = {{ peer.public }}
+AllowedIPs = 0.0.0.0/0
+Endpoint = {{ peer.endpoint }}:51820
+PersistentKeepalive = 30
+```
+
+Now build the blueprint to finish the setup:
+
+```
+$ spire wireguard.clj
+(apt-repo :present "ppa:wireguard/wireguard") root@139.59.92.63:22 root@localhost:22
+(apt :update) root@139.59.92.63:22 root@localhost:22
+(apt :install "wireguard") root@139.59.92.63:22 root@localhost:22
+(shell {:creates ["privatekey" "publickey"], :cmd "umask 077 && wg genkey | tee privatekey | wg pubkey > publickey"}) root@139.59.92.63:22 root@localhost:22
+(get-file "privatekey") root@139.59.92.63:22 root@localhost:22
+(get-file "publickey") root@139.59.92.63:22 root@localhost:22
+(upload {:content "[Interface]\nAddress = 139.59.92.63\nPrivateKey = sMMp11XSZcPqAs4F62mNr5u1j8eXDe7aG5KHrt37Gmg=\nListenPort = 51820\n\nPostUp = iptables -A FORWARD -i %i
+(sysctl :present {:name "net.ipv4.ip_forward", :value "1"}) root@139.59.92.63:22
+(service :restarted {:name "wg-quick@wg0"}) root@139.59.92.63:22
+(upload {:content "[Interface]\nAddress = 10.20.30.40/24\nListenPort = 51820\nPrivateKey = YJaxgsPuQsWijT0lbcMCjDzBuC7OkDk7RK5DTUunpl0=\n\n[Peer]\nPublicKey = \nAllowedIPs
+{:attr-result {:result :ok}, :copy-result {:result :changed}, :result :changed}
+```
+
+Your setup is now complete. Try and start up the tunnel with
+
+```
+$ sudo service wg-quick@vpn-tunnel start
+```
+
+Now check that your vpn tunnel is working by opening a browser and going to [https://whatismypublicip.com/]
+
+You should see your web browser is being seen by the internet with an IP of X.X.X.X in the remote country you started the server in!
+
+Congratulations! You have built your own personal vpn service!
