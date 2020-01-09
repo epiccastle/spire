@@ -45,12 +45,12 @@ Create the following blueprint. Create a file `wireguard.clj` with the following
 
 Replace `X.X.X.X` with the IP number of your new cloud machine.
 
-Run the blueprint with `spire` to connect and then report the type of system it is. When it asks "Are you sure you want to continue connecting?" answer by typing `yes` and hitting enter.
+Run the blueprint with `spire` to connect and then report the type of system it is. When it asks "Are you sure you want to continue connecting?" answer by typing `y` and hitting enter.
 
     $ spire wireguard.clj
     The authenticity of host 'X.X.X.X' can't be established.
     RSA key fingerprint is 43:d6:ed:1e:86:26:f2:5a:8a:ed:06:35:99:a3:6f:8b.
-    Are you sure you want to continue connecting? yes
+    Are you sure you want to continue connecting? y
     {:codename :bionic,
      :description "Ubuntu 18.04.3 LTS",
      :distro :ubuntu,
@@ -74,15 +74,71 @@ Let's run this to install wireguard...
 
     $ spire wireguard.clj
 
-Lets generate a key. We will run this on the server for now. `wireguard.clj` becomes:
+Lets generate a key pair for the server and return it. We will run this on the server for now. `wireguard.clj` becomes:
 
 ```clojure
+(require '[clojure.string :as string])
+
 (ssh "root@X.X.X.X"
     (apt-repo :present "ppa:wireguard/wireguard")
     (apt :update)
     (apt :install "wireguard")
-
     (shell {:cmd "umask 077 && wg genkey | tee privatekey | wg pubkey > publickey"
             :creates ["privatekey" "publickey"]})
-    )
+    {:private-key (string/trim (:out (get-file "privatekey")))
+     :public-key (string/trim (:out (get-file "publickey")))})
+```
+
+```
+$ spire wireguard.clj
+(apt-repo :present "ppa:wireguard/wireguard") root@X.X.X.X:22
+(apt :update) root@X.X.X.X:22
+(apt :install "wireguard") root@X.X.X.X:22
+(shell {:creates ["privatekey" "publickey"], :cmd "umask 077 && wg genkey | tee privatekey | wg pubkey > publickey"}) root@X.X.X.X:22
+(get-file "privatekey") root@X.X.X.X:22
+(get-file "publickey") root@X.X.X.X:22
+{:private-key "sMMp11XSZcPqAs4F62mNr5u1j8eXDe7aG5KHrt37Gmg=",
+ :public-key "90uBkuU1tAMgR/qYwXrz+nZYFUx5qJbIVnv3AxE2DAo="}
+```
+
+We will need to use these keys in setting up our local client. Lets connect to localhost and generate some client keys. We can break out some of our wireguard installer into some functions now to avoid repeating ourselves. Change `wireguard.clj` to:
+
+```clojure
+(require '[clojure.string :as string])
+
+(defn install []
+  (apt-repo :present "ppa:wireguard/wireguard")
+  (apt :update)
+  (apt :install "wireguard"))
+
+(defn generate-keypair []
+  (shell {:cmd "umask 077 && wg genkey | tee privatekey | wg pubkey > publickey"
+          :creates ["privatekey" "publickey"]})
+  {:private-key (string/trim (:out (get-file "privatekey")))
+   :public-key (string/trim (:out (get-file "publickey")))})
+
+(let [server-keys (ssh "root@X.X.X.X"
+                       (install)
+                       (generate-keypair))
+      client-keys (ssh "root@localhost"
+                       (install)
+                       (generate-keypair))]
+  {:server server-keys
+   :client client-keys})
+```
+
+Now running:
+
+```
+$ spire wireguard.clj
+(apt-repo :present "ppa:wireguard/wireguard") root@X.X.X.X:22 root@localhost:22
+(apt :update) root@X.X.X.X:22 root@localhost:22
+(apt :install "wireguard") root@X.X.X.X:22 root@localhost:22
+(shell {:creates ["privatekey" "publickey"], :cmd "umask 077 && wg genkey | tee privatekey | wg pubkey > publickey"}) root@X.X.X.X:22 root@localhost:22
+(get-file "privatekey") root@X.X.X.X:22 root@localhost:22
+(get-file "publickey") root@X.X.X.X:22 root@localhost:22
+{:client {:private-key "YJaxgsPuQsWijT0lbcMCjDzBuC7OkDk7RK5DTUunpl0=",
+          :public-key "NcOb0sNKGf4uXwH4W90geHVd7/eGyW8zYESfx9KZSR8="},
+ :server {:private-key "sMMp11XSZcPqAs4F62mNr5u1j8eXDe7aG5KHrt37Gmg=",
+          :public-key "90uBkuU1tAMgR/qYwXrz+nZYFUx5qJbIVnv3AxE2DAo="}}
 ```
