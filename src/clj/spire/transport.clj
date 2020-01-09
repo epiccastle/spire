@@ -66,6 +66,7 @@
      (connect ~host-string)
      (binding [state/*sessions* ~[host-string]
                state/*connections* ~[host-string]
+               state/*host-config* (ssh/host-description-to-host-config ~host-string)
                state/*host-string* (ssh/host-config-to-string
                                     (ssh/host-description-to-host-config ~host-string))
                state/*connection* (get @state/ssh-connections
@@ -84,17 +85,20 @@
      (binding [state/*sessions* ~host-strings
                state/*connections* ~host-strings]
        (let [threads#
-             (for [host-string# ~host-strings]
-               [(ssh/host-config-to-string
-                 (ssh/host-description-to-host-config host-string#))
-                (future
-                  (binding [state/*host-string* (ssh/host-config-to-string
-                                                 (ssh/host-description-to-host-config host-string#))
-                            state/*connection* (get @state/ssh-connections
-                                                    (ssh/host-config-to-connection-key
-                                                     (ssh/host-description-to-host-config host-string#)))]
-                    (let [result# (do ~@body)]
-                      result#)))])]
+             (doall
+              (for [host-string# ~host-strings]
+                [(:key
+                  #_ssh/host-config-to-string
+                  (ssh/host-description-to-host-config host-string#))
+                 (future
+                   (binding [state/*host-config* (ssh/host-description-to-host-config host-string#)
+                             state/*host-string* (ssh/host-config-to-string
+                                                  (ssh/host-description-to-host-config host-string#))
+                             state/*connection* (get @state/ssh-connections
+                                                     (ssh/host-config-to-connection-key
+                                                      (ssh/host-description-to-host-config host-string#)))]
+                     (let [result# (do ~@body)]
+                       result#)))]))]
          (into {} (map (fn [[host-name# fut#]] [host-name# (safe-deref fut#)]) threads#))))
      (finally
        (doseq [host-string ~host-strings]
