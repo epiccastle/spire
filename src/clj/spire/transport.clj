@@ -55,7 +55,8 @@
            :traceback (string/split-lines (with-out-str (clojure.stacktrace/print-stack-trace e)))
            ;;:exc-data (ex-data e)
            :cause (.getCause e)
-           :cause-traceback (string/split-lines (with-out-str (clojure.stacktrace/print-stack-trace (.getCause e))))
+           :cause-traceback (when (.getCause e)
+                              (string/split-lines (with-out-str (clojure.stacktrace/print-stack-trace (.getCause e)))))
            :cause-data (some->> e .getCause ex-data)
            })))))
 
