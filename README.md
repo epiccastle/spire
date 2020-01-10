@@ -68,9 +68,11 @@ Download from http://example.com/FIXME.
 
 ## Usage
 
-FIXME: explanation
+    $ spire FILE
 
-    $ java -jar spire-0.1.0-standalone.jar [args]
+## Running as a jar
+
+    $ java -jar spire-0.1.0-standalone.jar FILE
 
 ## Running with lein
 
@@ -78,21 +80,15 @@ Use trampoline to run with leiningen so libspire.so can read the correct termina
 
     $ lein trampoline run -- -h
 
-## Options
+## Running tests
 
-FIXME: listing of options this app accepts.
+The test suite consists of some unit tests and some module tests that issue a full ssh connection to `localhost`. These tests will test both the ssh functionality and module functionality just on the running OS. By running this test suite on different architectures, compatability of the modules can be ascertained. The lack of external connections in the test makes setting up test environments easier.
 
-## Examples
-
-...
+    $ lein test
 
 ### Bugs
 
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
+There will be an enormous number of bugs. Especially on different target machines. Open tickets for any issues you find.
 
 ## License
 
