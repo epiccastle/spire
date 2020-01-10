@@ -50,6 +50,11 @@ Or specify a path to the graal directory to build with a different graal:
 
 After a long wait it should write a binary executable `spire`. Test it.
 
+    $ ./spire -h
+
+Install it.
+
+    $ mv spire ~/bin/
     $ spire -h
 
 ## Installation
