@@ -90,3 +90,10 @@ copy-libs-to-resource:
 	-cp $(GRAALVM)/jre/bin/sunec.dll resources
 	-cp $(GRAALVM)/jre/lib/libsunec.dylib resources
 	-cp $(GRAALVM)/jre/lib/amd64/libsunec.so resources
+
+linux-package:
+	-rm -rf build/linux-package
+	-mkdir -p build/linux-package
+	cp spire build/linux-package
+	cd build/linux-package && GZIP=-9 tar cvzf ../spire-$(VERSION)-linux-amd64.tgz spire
+	du -sh spire build/spire-$(VERSION)-linux-amd64.tgz
