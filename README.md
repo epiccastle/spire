@@ -64,7 +64,7 @@ Install it.
 
 ## Installation
 
-Download from http://example.com/FIXME.
+    $ bash <(curl -s https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install)
 
 ## Usage
 
