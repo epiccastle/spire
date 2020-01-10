@@ -16,6 +16,7 @@
 (def cli-options
   [
    ["-h" "--help" "Print the command line help"]
+   ["-e" "--evaluate CODE" "Evaluate a snipped of code instead of loading code from file"]
    ["-v" "--version" "Print the version string and exit"]])
 
 (defn initialise []
@@ -28,7 +29,7 @@
 (defn usage [options-summary]
   (->> ["Pragmatic Provisioning"
         ""
-        "Usage: spire [options] username@hostname"
+        "Usage: spire [options] FILE"
         ""
         "Options:"
         options-summary]
