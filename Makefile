@@ -38,6 +38,9 @@ DYLIB_FILE=$(JNI_DIR)/spire.dylib
 JAVA_FILE=src/c/SpireUtils.java
 C_FILE=src/c/SpireUtils.c
 C_HEADER=$(JNI_DIR)/SpireUtils.h
+ifndef JAVA_HOME
+	JAVA_HOME=$(GRAALVM)
+endif
 INCLUDE_DIRS=$(shell find $(GRAALVM)/include -type d)
 INCLUDE_ARGS=$(INCLUDE_DIRS:%=-I%) -I$(JNI_DIR)
 
