@@ -6,19 +6,19 @@ A Clojure domain specific language tailored to idempotently orchestrate machines
 
 ## Overview
 
-This is a *work in progress*. Consider everything liable to change at any time.
+This is a **work in progress**. Consider everything liable to change at any time.
 
 Spire is a single executable binary you can use to provision and configure remote Unix systems. It runs a Clojure _domain specific language_ that:
 
- * *Idempotent* Consists of a suite of idempotent operations that are easy to reason about.
- * *Just SSH* Machines don't need anything on them other than to have ssh running and have the standard Unix tools.
- * *Fast* Fast startup. Fast provisioning. For both low bandwidth and low latency connections.
- * *Simple* Separate, uncomplected parts that you can roll together in many different ways.
- * *Pragmatic* Operations performed in order. No graph building or ideological purity. Just do this. Then this. Then this.
- * *Easy Installation* Distributed as a single executable binary.
- * *Multiple Platforms* Can be used to provision any UNIX like system, from a Rasberry Pi to an Ubuntu VPS. *[WIP]*
- * *Clojure Power* Access to all the Clojure tools and data processing.
- * *Open Source* Access to the source code for ultimate peace of mind.
+ * **Idempotent** Consists of a suite of idempotent operations that are easy to reason about.
+ * **Just SSH** Machines don't need anything on them other than to have ssh running and have the standard Unix tools.
+ * **Fast** Fast startup. Fast provisioning. For both low bandwidth and low latency connections.
+ * **Simple** Separate, uncomplected parts that you can roll together in many different ways.
+ * **Pragmatic** Operations performed in order. No graph building or ideological purity. Just do this. Then this. Then this.
+ * **Easy Installation** Distributed as a single executable binary.
+ * **Multiple Platforms** Can be used to provision any UNIX like system, from a Rasberry Pi to an Ubuntu VPS. **[WIP]**
+ * **Clojure Power** Access to all the Clojure tools and data processing.
+ * **Open Source** Access to the source code for ultimate peace of mind.
 
 ## Build
 
