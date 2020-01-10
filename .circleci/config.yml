@@ -33,6 +33,7 @@ jobs:
       - run:
           name: Run JVM tests
           command: |
+            apt-get -y install openssh-server
             make lib
             lein test
       - save_cache:
