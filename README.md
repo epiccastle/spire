@@ -24,15 +24,15 @@ Spire is a single executable binary you can use to provision and configure remot
 
 ### Native Client
 
- [X] Linux 64 bit
- [ ] MacOS 64 bit
- [ ] Windows 64 bit
+ * [X] Linux 64 bit
+ * [ ] MacOS 64 bit
+ * [ ] Windows 64 bit
 
 ### Server
 
- [X] Ubuntu Linux
- [ ] FreeBSD
- [ ] MacOS
+ * [X] Ubuntu Linux
+ * [ ] FreeBSD
+ * [ ] MacOS
 
 ## Build
 
