@@ -33,7 +33,7 @@ jobs:
       - run:
           name: Run JVM tests
           command: |
-            make lib JAVA_HOME="$JAVA_HOME"
+            make lib
             lein test
       - save_cache:
           paths:

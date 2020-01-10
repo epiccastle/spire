@@ -41,7 +41,7 @@ C_HEADER=$(JNI_DIR)/SpireUtils.h
 ifndef JAVA_HOME
 	JAVA_HOME=$(GRAALVM)
 endif
-INCLUDE_DIRS=$(shell find $(GRAALVM)/include -type d)
+INCLUDE_DIRS=$(shell find $(JAVA_HOME)/include -type d)
 INCLUDE_ARGS=$(INCLUDE_DIRS:%=-I%) -I$(JNI_DIR)
 
 ifeq ($(UNAME),Linux)
