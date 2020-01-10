@@ -5,7 +5,7 @@
             [spire.transport :as transport]
             [clojure.java.io :as io]))
 
-(deftest line-in-file-get-test
+#_ (deftest line-in-file-get-test
 
   ;;
   ;; :get {:line-num ...}
@@ -152,7 +152,7 @@
             :matches {19 "This is line #19 and it contains a [ character"}})))))
 
 
-(deftest line-in-file-present-test
+#_ (deftest line-in-file-present-test
   (testing "line-in-file :present by line-num"
     (transport/ssh
      "localhost"
@@ -591,7 +591,7 @@ new line
       )))
 
 
-(deftest line-in-file-absent-test
+#_ (deftest line-in-file-absent-test
   (testing "line-in-file :absent by line-num"
     (transport/ssh
      "localhost"
