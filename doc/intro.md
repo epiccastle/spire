@@ -6,7 +6,7 @@ TODO: write [great documentation](http://jacobian.org/writing/what-to-write/)
 
 Install spire to your path
 
-    $ bash <(curl -s https://raw.githubusercontent.com/epiccastle/spire/master/install)
+    $ bash <(curl -s https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install)
 
 ### Create A Cloud Server
 

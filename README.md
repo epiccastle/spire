@@ -20,6 +20,11 @@ Spire is a single executable binary you can use to provision and configure remot
  * **Clojure Power** Access to all the Clojure tools and data processing.
  * **Open Source** Access to the source code for ultimate peace of mind.
 
+## Quickstart
+
+    $ bash <(curl -s https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install)
+    $ spire -e '(ssh "localhost" (get-fact))'
+
 ## Platforms
 
 ### Native Client
