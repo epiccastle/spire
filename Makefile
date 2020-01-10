@@ -38,7 +38,7 @@ DYLIB_FILE=$(JNI_DIR)/spire.dylib
 JAVA_FILE=src/c/SpireUtils.java
 C_FILE=src/c/SpireUtils.c
 C_HEADER=$(JNI_DIR)/SpireUtils.h
-INCLUDE_DIRS=$(shell find $(JAVA_HOME)/include -type d)
+INCLUDE_DIRS=$(shell find $(GRAALVM)/include -type d)
 INCLUDE_ARGS=$(INCLUDE_DIRS:%=-I%) -I$(JNI_DIR)
 
 ifeq ($(UNAME),Linux)
@@ -72,13 +72,13 @@ lib: $(LIB_FILE)
 $(SOLIB_FILE): $(C_FILE) $(C_HEADER)
 	$(CC) $(INCLUDE_ARGS) -shared $(C_FILE) -o $(SOLIB_FILE) -fPIC
 	cp $(SOLIB_FILE) ./
-	-mkdir resources
+	mkdir -p resources
 	cp $(SOLIB_FILE) ./resources/
 
 $(DYLIB_FILE):  $(C_FILE) $(C_HEADER)
 	$(CC) $(INCLUDE_ARGS) -dynamiclib -undefined suppress -flat_namespace $(C_FILE) -o $(DYLIB_FILE) -fPIC
 	cp $(DYLIB_FILE) ./
-	-mkdir resources
+	mkdir -p resources
 	cp $(DYLIB_FILE) ./resources/
 
 clean:
