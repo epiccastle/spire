@@ -17,31 +17,62 @@ if [ "$OPTS" ]; then
     INSTALL_DIR="$OPTS"
 fi
 
-echo "fetching release information..."
-VERSION_RELEASED="$(curl -sL https://raw.githubusercontent.com/epiccastle.io/spire/master/.meta/VERSION_RELEASED)"
-
+echo -n "fetching release information... "
+VERSION_RELEASED="$(curl -sL https://raw.githubusercontent.com/epiccastle/spire/master/.meta/VERSION_RELEASED)"
 echo $VERSION_RELEASED
 
-exit 0
+echo -n "detecting os... "
+set +e
+UNAME=$(uname -s)
+if [ "$?" -eq 0 ]; then
+  case "$UNAME" in
+    Linux*)   PLATFORM=linux COMPRESSION=tgz;;
+    FreeBSD*) PLATFORM=freebsd COMPRESSION=tgz;;
+    Darwin*)  PLATFORM=macos COMPRESSION=zip;;
+    *)        PLATFORM=unknown COMPRESSION=zip;;
+  esac
+else
+  PLATFORM=windows COMPRESSION=zip
+fi
+set -e
+echo $PLATFORM
 
-case "$(uname -s)" in
-    Linux*)     platform=linux;;
-    Darwin*)    platform=macos;;
+case "$PLATFORM" in
+  freebsd) echo "freebsd install not supported from installer script"; exit 1;;
+  macos) echo "macos install not supported from installer script"; exit 1;;
+  windows) echo "spire does not support windows clients (yet)"; exit 1;;
 esac
 
-download_url="https://github.com/borkdude/babashka/releases/download/v$latest_release/babashka-$latest_release-$platform-amd64.zip"
+DOWNLOAD_FILE="spire-${VERSION_RELEASED}-${PLATFORM}-amd64.${COMPRESSION}"
+DOWNLOAD_URL="https://github.com/epiccastle/spire/releases/download/v${VERSION_RELEASED}/${DOWNLOAD_FILE}"
 
-cd "$download_dir"
-echo -e "Downloading $download_url."
-curl -o "babashka-$latest_release-$platform-amd64.zip" -sL "https://github.com/borkdude/babashka/releases/download/v$latest_release/babashka-$latest_release-$platform-amd64.zip"
-unzip -qqo "babashka-$latest_release-$platform-amd64.zip"
-rm "babashka-$latest_release-$platform-amd64.zip"
+echo -n "downloading binary from $DOWNLOAD_URL... "
 
-cd "$install_dir"
-if [ -f babashka ]; then
-    echo "Moving $install_dir/bb to $install_dir/bb.old"
+cd "$DOWNLOAD_DIR"
+set +e
+curl -o "$DOWNLOAD_FILE" --show-error -sfL "$DOWNLOAD_URL"
+RESULT=$?
+set -e
+if [ "$RESULT" -ne 0 ]; then
+  echo "failed!"
+  exit 1
+fi
+echo "done"
+
+echo -n "extracting binary... "
+case "$COMPRESSION" in
+  zip) unzip -qqo "$DOWNLOAD_FILE"; rm "$DOWNLOAD_FILE";;
+  tgz) tar xvf "$DOWNLOAD_FILE"; rm "$DOWNLOAD_FILE";;
+esac
+echo "done"
+
+cd "$INSTALL_DIR"
+if [ -f spire ]; then
+  echo -n "Moving $INSTALL_DIR/spire to $INSTALL_DIR/spire.old ... "
+  mv -f "$INSTALL_DIR/spire" "$INSTALL_DIR/spire.old"
+  echo "done"
 fi
 
-mv -f "$download_dir/bb" "$PWD/bb"
-
-echo "Successfully installed bb in $install_dir."
+echo -n "Installing spire to $INSTALL_DIR ... "
+mv -f "$DOWNLOAD_DIR/spire" "$INSTALL_DIR/spire"
+echo "done"
