@@ -43,6 +43,16 @@ This is the operating systems you will be provisioning, that the spire modules a
  * [ ] FreeBSD
  * [ ] MacOS
 
+## Installation
+
+For Linux:
+
+    $ bash <(curl -s https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install)
+
+## Usage
+
+    $ spire FILE
+
 ## Build
 
 Install graalvm-ce-19.2.1 in your home directory. Add the native image bundle to it. Then:
@@ -62,16 +72,9 @@ Install it.
     $ mv spire ~/bin/
     $ spire -h
 
-## Installation
-
-    $ bash <(curl -s https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install)
-
-## Usage
-
-    $ spire FILE
-
 ## Running as a jar
 
+    $ make jar
     $ java -jar spire-0.1.0-standalone.jar FILE
 
 ## Running with lein
