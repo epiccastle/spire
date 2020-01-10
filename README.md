@@ -24,11 +24,15 @@ Spire is a single executable binary you can use to provision and configure remot
 
 ### Native Client
 
+This is the binary spire program you run on y our local machine.
+
  * [X] Linux 64 bit
  * [ ] MacOS 64 bit
  * [ ] Windows 64 bit
 
-### Server
+### Target Systems
+
+This is the operating systems you will be provisioning, that the spire modules and operations will work against.
 
  * [X] Ubuntu Linux
  * [ ] FreeBSD
