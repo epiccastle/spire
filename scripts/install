@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -e
+
+print_help() {
+    echo "Install latest version of spire. Installation directory defaults to /usr/local/bin."
+    echo -e
+    echo "Usage:"
+    echo "$0 [INSTALL_DIR]"
+    exit 1
+}
+
+DOWNLOAD_DIR="/tmp"
+INSTALL_DIR="/usr/local/bin"
+OPTS=${1:-}
+if [ "$OPTS" ]; then
+    INSTALL_DIR="$OPTS"
+fi
+
+echo "fetching release information..."
+VERSION_RELEASED="$(curl -sL https://raw.githubusercontent.com/epiccastle.io/spire/master/.meta/VERSION_RELEASED)"
+
+echo $VERSION_RELEASED
+
+exit 0
+
+case "$(uname -s)" in
+    Linux*)     platform=linux;;
+    Darwin*)    platform=macos;;
+esac
+
+download_url="https://github.com/borkdude/babashka/releases/download/v$latest_release/babashka-$latest_release-$platform-amd64.zip"
+
+cd "$download_dir"
+echo -e "Downloading $download_url."
+curl -o "babashka-$latest_release-$platform-amd64.zip" -sL "https://github.com/borkdude/babashka/releases/download/v$latest_release/babashka-$latest_release-$platform-amd64.zip"
+unzip -qqo "babashka-$latest_release-$platform-amd64.zip"
+rm "babashka-$latest_release-$platform-amd64.zip"
+
+cd "$install_dir"
+if [ -f babashka ]; then
+    echo "Moving $install_dir/bb to $install_dir/bb.old"
+fi
+
+mv -f "$download_dir/bb" "$PWD/bb"
+
+echo "Successfully installed bb in $install_dir."
