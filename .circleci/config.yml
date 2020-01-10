@@ -25,6 +25,14 @@ jobs:
             sudo apt-get update
             sudo apt-get -y install gcc zlib1g-dev make
       - run:
+          name: Download GraalVM
+          command: |
+            cd ~
+            if ! [ -d graalvm-ce-java8-19.3.0 ]; then
+              curl -O -sL https://github.com/oracle/graal/releases/download/vm-19.3.0/graalvm-ce-java8-linux-amd64-19.3.0.tar.gz
+              tar xzf graalvm-ce-java8-linux-amd64-19.3.0.tar.gz
+            fi
+      - run:
           name: Install Clojure
           command: |
             wget -nc https://download.clojure.org/install/linux-install-1.10.1.447.sh
