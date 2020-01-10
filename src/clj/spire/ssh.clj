@@ -214,8 +214,8 @@ keys.  All other option key pairs will be passed as SSH config options."
 
 (defn host-config-to-string [{:keys [hostname username port]}]
   (cond
-    (and hostname username port) (format "%s@%s:%d" username hostname port)
-    (and hostname port) (format "%s:%d" hostname port)
+    (and hostname username port (not= 22 port)) (format "%s@%s:%d" username hostname port)
+    (and hostname port (not= 22 port)) (format "%s:%d" hostname port)
     (and username hostname) (format "%s@%s" username hostname)
     :else hostname))
 
