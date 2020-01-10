@@ -12,9 +12,14 @@ print_help() {
 
 DOWNLOAD_DIR="/tmp"
 INSTALL_DIR="/usr/local/bin"
+
 OPTS=${1:-}
 if [ "$OPTS" ]; then
+  if [ "$OPTS" == "-h" ] || [ "$OPTS" == "--help" ]; then
+    print_help
+  else
     INSTALL_DIR="$OPTS"
+  fi
 fi
 
 echo -n "fetching release information... "
@@ -46,7 +51,7 @@ esac
 DOWNLOAD_FILE="spire-${VERSION_RELEASED}-${PLATFORM}-amd64.${COMPRESSION}"
 DOWNLOAD_URL="https://github.com/epiccastle/spire/releases/download/v${VERSION_RELEASED}/${DOWNLOAD_FILE}"
 
-echo -n "downloading binary from $DOWNLOAD_URL... "
+echo -n "downloading archive from $DOWNLOAD_URL... "
 
 cd "$DOWNLOAD_DIR"
 set +e
@@ -65,6 +70,19 @@ case "$COMPRESSION" in
   tgz) tar xvf "$DOWNLOAD_FILE"; rm "$DOWNLOAD_FILE";;
 esac
 echo "done"
+
+while [ ! -w "$INSTALL_DIR" ]; do
+  echo "Cannot write to $INSTALL_DIR. Insufficient privileges."
+
+  echo -n "Enter new install path, or press return to su to root and install in $INSTALL_DIR: "
+  read INSTALL_DIR
+  if [ "$INSTALL_DIR" == "" ]; then
+    echo "Enter root password to install"
+    su -c 'mv -f "$INSTALL_DIR/spire" "$INSTALL_DIR/spire.old"; mv -f "$DOWNLOAD_DIR/spire" "$INSTALL_DIR/spire"'
+    echo "done"
+    exit 0
+  fi
+done
 
 cd "$INSTALL_DIR"
 if [ -f spire ]; then
