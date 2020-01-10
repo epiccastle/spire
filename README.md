@@ -20,6 +20,20 @@ Spire is a single executable binary you can use to provision and configure remot
  * **Clojure Power** Access to all the Clojure tools and data processing.
  * **Open Source** Access to the source code for ultimate peace of mind.
 
+## Platforms
+
+### Native Client
+
+ [X] Linux 64 bit
+ [ ] MacOS 64 bit
+ [ ] Windows 64 bit
+
+### Server
+
+ [X] Ubuntu Linux
+ [ ] FreeBSD
+ [ ] MacOS
+
 ## Build
 
 Install graalvm-ce-19.2.1 in your home directory. Add the native image bundle to it. Then:
