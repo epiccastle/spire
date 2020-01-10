@@ -13,7 +13,8 @@
        (into #{})))
 
 (defn parse-line [filename line-num line]
-  (when-not (string/starts-with? line "#")
+  (when-not (or (string/starts-with? (string/trim line) "#")
+                (zero? (count (string/trim line))))
     (let [parts (string/split line #"\s+" -1)
           revoked? (= "@revoked" (first parts))
           cert-authority? (= "@cert-authority" (first parts))
