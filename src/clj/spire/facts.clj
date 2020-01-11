@@ -272,7 +272,8 @@
           _ (prn "facts pre:" facts)
           extra-system (ssh/ssh-exec
                         session
-                        (cond
+                        "lsb_release -a"
+                        #_(cond
                           (= :linux (get-in facts [:system :os]))
                           "lsb_release -a"
 
