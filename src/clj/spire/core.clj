@@ -22,6 +22,8 @@
 (defn initialise []
   (config/init!)
 
+  (prn "java.library.path:" (System/getProperty "java.library.path"))
+
   ;;(System/loadLibrary "spire")
   (clojure.lang.RT/loadLibrary "spire")
   )
