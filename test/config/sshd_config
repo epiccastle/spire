@@ -7,5 +7,4 @@ Subsystem	sftp	/usr/lib/openssh/sftp-server
 Port 2200
 Protocol 2
 PermitRootLogin prohibit-password
-RSAAuthentication yes
 PubkeyAuthentication yes
