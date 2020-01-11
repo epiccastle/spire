@@ -111,5 +111,6 @@ ssh_test_key_rsa:
 	grep -qxF "$(cat ssh_test_key_rsa.pub)" ~/.ssh/authorized_keys || cat ssh_test_key_rsa.pub >> ~/.ssh/authorized_keys
 
 circle-setup: ssh_test_key_rsa
+	-lsb-release -a
 	sudo /usr/sbin/sshd -f test/config/sshd_config -D & echo "$$!" > sshd.pid
 	eval `ssh-agent` && ssh-add ssh_test_key_rsa && lein trampoline test; EXIT=$$?; sudo kill `cat sshd.pid`; exit $$EXIT
