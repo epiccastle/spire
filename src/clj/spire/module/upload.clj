@@ -96,7 +96,7 @@
                                  owner group mode attrs
                                  dir-mode preserve recurse force]
                           :as opts}]
-  [host-string session]
+  [host-config session]
   (or
    (preflight opts)
    (let [run (fn [command]
@@ -147,7 +147,7 @@
                   (scp/scp-to session content dest
                               :progress-fn (fn [file bytes total frac context]
                                              (output/print-progress
-                                              host-string
+                                              host-config
                                               (utils/progress-stats
                                                file bytes total frac
                                                total-size
@@ -170,7 +170,7 @@
                   (scp/scp-to session content dest
                               :progress-fn (fn [file bytes total frac context]
                                              (output/print-progress
-                                              host-string
+                                              host-config
                                               (utils/progress-stats
                                                file bytes total frac
                                                total-size
@@ -197,7 +197,7 @@
                 (scp/scp-to session content dest
                             :progress-fn (fn [file bytes total frac context]
                                            (output/print-progress
-                                            host-string
+                                            host-config
                                             (utils/progress-stats
                                              file bytes total frac
                                              (utils/content-size content)
