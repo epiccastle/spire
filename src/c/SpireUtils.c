@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <bsd/string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
@@ -106,30 +105,30 @@ JNIEXPORT void JNICALL Java_SpireUtils_leave_1raw_1mode(JNIEnv *env, jclass this
  * chars will be copied.  Always NUL terminates (unless dsize == 0).
  * Returns strlen(src); if retval >= dsize, truncation occurred.
  */
-/* size_t */
-/* strlcpy(char * __restrict dst, const char * __restrict src, size_t dsize) */
-/* { */
-/*         const char *osrc = src; */
-/*         size_t nleft = dsize; */
+size_t
+spire_strlcpy(char * __restrict dst, const char * __restrict src, size_t dsize)
+{
+        const char *osrc = src;
+        size_t nleft = dsize;
 
-/*         /\* Copy as many bytes as will fit. *\/ */
-/*         if (nleft != 0) { */
-/*                 while (--nleft != 0) { */
-/*                         if ((*dst++ = *src++) == '\0') */
-/*                                 break; */
-/*                 } */
-/*         } */
+        /* Copy as many bytes as will fit. */
+        if (nleft != 0) {
+                while (--nleft != 0) {
+                        if ((*dst++ = *src++) == '\0')
+                                break;
+                }
+        }
 
-/*         /\* Not enough room in dst, add NUL and traverse rest of src. *\/ */
-/*         if (nleft == 0) { */
-/*                 if (dsize != 0) */
-/*                         *dst = '\0';		/\* NUL-terminate dst *\/ */
-/*                 while (*src++) */
-/*                         ; */
-/*         } */
+        /* Not enough room in dst, add NUL and traverse rest of src. */
+        if (nleft == 0) {
+                if (dsize != 0)
+                        *dst = '\0';		/* NUL-terminate dst */
+                while (*src++)
+                        ;
+        }
 
-/*         return(src - osrc - 1);	/\* count does not include NUL *\/ */
-/* } */
+        return(src - osrc - 1);	/* count does not include NUL */
+}
 
 /* same error as openbsd ssh code uses */
 #define SSH_ERR_SYSTEM_ERROR			-24
@@ -145,7 +144,7 @@ JNIEXPORT jint JNICALL Java_SpireUtils_ssh_1open_1auth_1socket (JNIEnv *env, jcl
   struct sockaddr_un sunaddr;
   memset(&sunaddr, 0, sizeof(sunaddr));
   sunaddr.sun_family = AF_UNIX;
-  strlcpy(sunaddr.sun_path, cpath, sizeof(sunaddr.sun_path));
+  spire_strlcpy(sunaddr.sun_path, cpath, sizeof(sunaddr.sun_path));
 
   (*env)->ReleaseStringUTFChars(env, path, cpath);
 
