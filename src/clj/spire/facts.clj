@@ -259,7 +259,9 @@
         script (make-fact-script slug)]
     (comment (println "fetch-facts:" script)
              (println "session:" session))
-    (let [facts (->> (ssh/ssh-exec session script "" "UTF-8" {})
+    (let [result (ssh/ssh-exec session script "" "UTF-8" {})
+          _ (prn 'result result)
+          facts (->> result
                      (extract-blocks slug)
                      process-facts
                      (process-host-string host-config))
