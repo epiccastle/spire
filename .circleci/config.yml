@@ -35,6 +35,7 @@ jobs:
           command: |
             sudo apt-get -y install openssh-server
             sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
+            sudo mkdir /run/sshd
             sudo make circle-setup &
             make lib
             lein test
