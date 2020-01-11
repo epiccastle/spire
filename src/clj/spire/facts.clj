@@ -269,6 +269,7 @@
           path-results (->> (ssh/ssh-exec session path-script "" "UTF-8" {})
                             (extract-blocks slug)
                             process-paths)
+          _ (prn "facts pre:" facts)
           extra-system (ssh/ssh-exec
                         session
                         (cond
