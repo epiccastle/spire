@@ -46,9 +46,10 @@ jobs:
           name: Create uberjar
           command: |
             mkdir -p /tmp/release
-            lein do clean, uberjar
-            VERSION=$(cat .meta/VERSION)
-            cp target/uberjar/bootleg-$VERSION-standalone.jar /tmp/release
+            make jar
+            # lein do clean, uberjar
+            # VERSION=$(cat .meta/VERSION)
+            # cp target/uberjar/bootleg-$VERSION-standalone.jar /tmp/release
       - store_artifacts:
           path: /tmp/release
           destination: release
