@@ -20,7 +20,10 @@
   (testing "upload test"
     (test-utils/with-temp-file-names [tf tf2 tf3 tf4]
       (transport/ssh
-       "localhost"
+       {:hostname "localhost"
+        :port 2200
+        :strict-host-key-checking "no"
+        :key :localhost}
        ;; copy file
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
               (upload {:src "test/files/copy/test.txt" :dest tf})))
@@ -99,12 +102,13 @@
                 (upload {:src "test/files" :dest tf4 :recurse true :mode 0 :dir-mode 0})))
          ;; will need root just to check this directory
          (transport/ssh
-          "root@localhost"
+          {:host-string "root@localhost:2200"
+           :strict-host-key-checking "no"}
+
           (is (= (test-utils/run "cd test/files && find . -exec stat -c \"%s 0 %F %n\" {} \\;")
                  (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf4))))
           ;; the with-temp-file-names macro wont be able to delete this, so lets do it now while we are root
           ;; TODO: when implementing testing on another target system, the with-temp-file-names could
           ;; be made to do remote deletion
-          (test-utils/ssh-run (format "rm -rf \"%s\"" tf4))
-          )))))
+          (test-utils/ssh-run (format "rm -rf \"%s\"" tf4)))))))
   )
