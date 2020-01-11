@@ -221,7 +221,6 @@
      :system (process-system uname-data shell-data)
      :uname uname-data
      :shell shell-data
-     :raw-data data
      }))
 
 (defn process-paths [{:keys [paths]}]
@@ -260,7 +259,6 @@
     (comment (println "fetch-facts:" script)
              (println "session:" session))
     (let [result (ssh/ssh-exec session script "" "UTF-8" {})
-          _ (prn 'result result)
           facts (->> result
                      (extract-blocks slug)
                      process-facts
@@ -272,11 +270,9 @@
           path-results (->> (ssh/ssh-exec session path-script "" "UTF-8" {})
                             (extract-blocks slug)
                             process-paths)
-          _ (prn "facts pre:" facts)
           extra-system (ssh/ssh-exec
                         session
-                        "lsb_release -a"
-                        #_(cond
+                        (cond
                           (= :linux (get-in facts [:system :os]))
                           "lsb_release -a"
 
