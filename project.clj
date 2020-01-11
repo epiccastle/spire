@@ -35,7 +35,7 @@
   :java-source-paths ["src/c"]
 
   :jvm-opts ["-Djava.library.path=./"]
-  ;;:native-path "./"
+  :native-path "./"
   ;;:native-dependencies [[SpireUtils "libspire.so"]]
 
   :main ^:skip-aot spire.core
