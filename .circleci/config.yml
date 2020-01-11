@@ -36,7 +36,7 @@ jobs:
             sudo apt-get -y install openssh-server
             sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
             sudo mkdir /run/sshd
-            make lib
+            make clean lib
             make circle-setup
       - save_cache:
           paths:
@@ -132,10 +132,15 @@ jobs:
             fi
             $GRAALVM_HOME/bin/gu install native-image
       - run:
-          name: Build binary
+          name: Run JVM tests
           command: |
-            make clean all package-macos GRAALVM=$GRAALVM_HOME
-          no_output_timeout: 40m
+            make clean lib
+            make circle-setup
+      # - run:
+      #     name: Build binary
+      #     command: |
+      #       make clean all package-macos GRAALVM=$GRAALVM_HOME
+      #     no_output_timeout: 40m
       - save_cache:
           paths:
             - ~/.m2
