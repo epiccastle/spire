@@ -237,9 +237,6 @@
     new-paths))
 
 (defn process-lsb-release [lsb-out]
-  (prn "lsb:" (->> lsb-out
-                 :out
-                 string/split-lines))
   (let [res (->> lsb-out
                  :out
                  string/split-lines
