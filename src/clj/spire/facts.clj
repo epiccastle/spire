@@ -221,6 +221,7 @@
      :system (process-system uname-data shell-data)
      :uname uname-data
      :shell shell-data
+     :raw-data data
      }))
 
 (defn process-paths [{:keys [paths]}]
