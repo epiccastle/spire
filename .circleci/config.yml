@@ -138,7 +138,7 @@ jobs:
             ls -alF
 
             make jar
-            java -Djava.library.path="." –jar target/uberjar/spire-0.1.0-SNAPSHOT-standalone.jar -h
+            java -Djava.library.path="." -jar target/uberjar/spire-0.1.0-SNAPSHOT-standalone.jar -h
             #make circle-setup
       # - run:
       #     name: Build binary
