@@ -102,3 +102,10 @@ linux-package:
 	cp spire build/linux-package
 	cd build/linux-package && GZIP=-9 tar cvzf ../spire-$(VERSION)-linux-amd64.tgz spire
 	du -sh spire build/spire-$(VERSION)-linux-amd64.tgz
+
+#
+# CircleCI
+#
+circle-setup:
+	grep -v ^# /etc/ssh/sshd_config|grep -v ^$$ |sed -e '/Port/cPort 2200'|sed -e '/PermitRootLogin/cPermitRootLogin prohibit-password' > sshd_config
+	sudo /usr/sbin/sshd -f sshd_config -ddd -D
