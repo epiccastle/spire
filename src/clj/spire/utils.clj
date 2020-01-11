@@ -304,7 +304,7 @@
      (binding [spire.state/*form* (concat '(~name) args#)]
        (spire.output/print-form spire.state/*form*)
        (let [~module-args args#
-             ~pipeline-args [spire.state/*host-string* spire.state/*connection*]
+             ~pipeline-args [spire.state/*host-config* spire.state/*connection*]
              result#
 
              (do ~@body)
@@ -314,7 +314,7 @@
                    {:result :failed
                     :body-exception e#}))
              result-code# (:result result#)]
-         (output/print-result result-code# spire.state/*host-string*)
+         (output/print-result result-code# spire.state/*host-config*)
          (if (#{:ok :changed} result-code#)
            result#
            (throw (ex-info "module failed" result#)))))))
