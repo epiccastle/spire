@@ -9,9 +9,8 @@
             [clojure.stacktrace])
   (:import [com.jcraft.jsch JSch]))
 
-(defn connect [host-description]
+(defn connect [host-config]
   (let [
-        host-config (ssh/host-description-to-host-config host-description)
         agent (JSch.)
         session (ssh/make-session agent (:hostname host-config) host-config)
         irepo (ssh-agent/make-identity-repository)
@@ -28,10 +27,8 @@
            (ssh/host-config-to-connection-key host-config) session)
     session))
 
-(defn disconnect [host-description]
-  (let [host-config (ssh/host-description-to-host-config host-description)
-        connection-key (ssh/host-config-to-connection-key host-config)
-        ]
+(defn disconnect [host-config]
+  (let [connection-key (ssh/host-config-to-connection-key host-config)]
     (swap! state/ssh-connections
            (fn [s]
              (some-> s
