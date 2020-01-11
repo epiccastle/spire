@@ -132,7 +132,8 @@
      )))
 
 (defn print-form [form]
-  (swap! state
+  (prn 'print-form form)
+  #_(swap! state
          (fn [s]
            (if
              (->> state/*sessions*
@@ -153,7 +154,8 @@
                         :results []}))))))
 
 (defn print-result [result host-string]
-  (swap! state
+  (prn 'print-result result host-string)
+  #_(swap! state
          (fn [s]
            (update
             s
@@ -171,8 +173,9 @@
                                    }
                                   ))))))))
 
-(defn print-progress [host-string {:keys [progress context]}]
-  (swap! state
+(defn print-progress [host-string {:keys [progress context] :as data}]
+  (prn 'print-progress host-string data)
+  #_(swap! state
          (fn [s]
            (update
             s
