@@ -107,4 +107,6 @@ linux-package:
 # CircleCI
 #
 circle-setup:
+	ssh-keygen -t rsa -f ssh_test_key_rsa
+	eval `ssh-agent` && ssh-add ssh_test_key_rsa
 	sudo /usr/sbin/sshd -f test/config/sshd_config -d -D
