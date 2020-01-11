@@ -225,5 +225,22 @@ keys.  All other option key pairs will be passed as SSH config options."
 
 (defn host-description-to-host-config [host-description]
   (if-not (string? host-description)
-    host-description
-    (parse-host-string host-description)))
+    (do
+      (assert (not (and (:host-string host-description)
+                        (:hostname host-description)))
+              "cant have both host-string and hostname set in description.")
+      (if (:host-string host-description)
+        (let [{:keys [username hostname port]} (parse-host-string (:host-string host-description))]
+          (-> host-description
+              (update :key #(or % (host-config-to-string host-description)))
+              (assoc :username username ;; would be nil if none specified
+                     :hostname hostname
+                     :port port)))
+
+        (-> host-description
+            (update :key #(or % (host-config-to-string host-description)))
+            (assoc :host-string (host-config-to-string host-description)))))
+
+    ;; todo: feels warty to recurse here. breakout key annotation and default filling to a seperate func
+    (host-description-to-host-config
+     (parse-host-string host-description))))
