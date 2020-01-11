@@ -135,6 +135,7 @@ jobs:
           name: Run JVM tests
           command: |
             make clean lib JAVA_HOME=$GRAALVM_HOME
+            ls -alF
             make circle-setup
       # - run:
       #     name: Build binary
