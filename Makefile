@@ -108,4 +108,4 @@ linux-package:
 #
 circle-setup:
 	grep -v ^# /etc/ssh/sshd_config|grep -v ^$$ |sed -e '/Port/cPort 2200'|sed -e '/PermitRootLogin/cPermitRootLogin prohibit-password' > sshd_config
-	sudo /usr/sbin/sshd -f sshd_config -ddd -D
+	sudo /usr/sbin/sshd -f sshd_config -D
