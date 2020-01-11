@@ -106,7 +106,10 @@ linux-package:
 #
 # CircleCI
 #
-circle-setup:
+ssh_test_key_rsa:
 	ssh-keygen -t rsa -f ssh_test_key_rsa -b 2048 -q -N ""
-	eval `ssh-agent` && ssh-add ssh_test_key_rsa
-	sudo /usr/sbin/sshd -f test/config/sshd_config -d -D
+	grep -qxF "$(cat ssh_test_key_rsa.pub)" ~/.ssh/authorized_keys || cat ssh_test_key_rsa.pub >> ~/.ssh/authorized_keys
+
+circle-setup: ssh_test_key_rsa
+	sudo /usr/sbin/sshd -f test/config/sshd_config -D & echo "$$!" > sshd.pid
+	eval `ssh-agent` && ssh-add ssh_test_key_rsa && lein trampoline test; sudo kill `cat sshd.pid`
