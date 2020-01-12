@@ -1,7 +1,7 @@
 {
   "resources": [
-      {"pattern": "libspire.so$"}
-      {"pattern": "libspire.dylib$"}
+      {"pattern": "libspire.so$"},
+      {"pattern": "libspire.dylib$"},
       {"pattern": "spire.dll$"}
   ]
 }
