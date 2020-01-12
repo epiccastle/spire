@@ -18,6 +18,7 @@ build/spire: target/uberjar/spire-$(VERSION)-standalone.jar
 		-J-Dclojure.compiler.direct-linking=true \
 		-H:ConfigurationFileDirectories=graal-configs/ \
 		--initialize-at-build-time \
+		--initialize-at-run-time=com.jcraft.jsch.PortWatcher \
 		-H:Log=registerResource: \
 		-H:EnableURLProtocols=http,https \
 		--verbose \
