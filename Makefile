@@ -103,6 +103,13 @@ linux-package:
 	cd build/linux-package && GZIP=-9 tar cvzf ../spire-$(VERSION)-linux-amd64.tgz spire
 	du -sh spire build/spire-$(VERSION)-linux-amd64.tgz
 
+macos-package:
+	-rm -rf build/macos-package
+	-mkdir -p build/macos-package
+	cp spire build/macos-package
+	cd build/macos-package && zip spire-$(VERSION)-macos-amd64.zip spire
+	du -sh spire build/spire-$(VERSION)-macos-amd64.zip
+
 #
 # CircleCI
 #

@@ -43,13 +43,14 @@ jobs:
             - ~/.m2
           key: v1-dependencies-{{ checksum "project.clj" }}
       - run:
-          name: Create uberjar
+          name: Create uberjar and native image
           command: |
             mkdir -p /tmp/release
             make jar
             # lein do clean, uberjar
             # VERSION=$(cat .meta/VERSION)
             # cp target/uberjar/bootleg-$VERSION-standalone.jar /tmp/release
+
       - store_artifacts:
           path: /tmp/release
           destination: release
@@ -140,19 +141,20 @@ jobs:
             make jar
             java -Djava.library.path="." -jar target/uberjar/spire-0.1.0-SNAPSHOT-standalone.jar -h
             #make circle-setup
-      # - run:
-      #     name: Build binary
-      #     command: |
-      #       make clean all package-macos GRAALVM=$GRAALVM_HOME
-      #     no_output_timeout: 40m
+      - run:
+          name: Build binary
+          command: |
+            #make clean
+            make all package-macos GRAALVM=$GRAALVM_HOME
+          no_output_timeout: 60m
       - save_cache:
           paths:
             - ~/.m2
             - ~/graalvm-ce-java8-19.3.0
           key: mac-{{ checksum "project.clj" }}-{{ checksum ".circleci/config.yml" }}
       - store_artifacts:
-          path: /tmp/release
-          destination: release
+          path: build
+          destination: build
 
 workflows:
   version: 2
