@@ -302,7 +302,7 @@
 (defmacro defmodule [name module-args pipeline-args & body]
   `(defn ~name [& args#]
      (binding [spire.state/*form* (concat '(~name) args#)]
-       (spire.output/print-form spire.state/*form*)
+       (spire.output/print-form spire.state/*form* ~*file* ~(meta &form))
        (let [~module-args args#
              ~pipeline-args [spire.state/*host-config* spire.state/*connection*]
              result#

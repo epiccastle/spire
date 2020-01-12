@@ -131,9 +131,9 @@
        (put! state-change-chan [o n]))
      )))
 
-(defn print-form [form]
-  (prn 'print-form form)
-  #_(swap! state
+(defn print-form [form file meta]
+  (prn 'print-form form file meta)
+  #_ (swap! state
          (fn [s]
            (if
              (->> state/*sessions*
