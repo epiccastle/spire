@@ -109,7 +109,7 @@ macos-package:
 	-rm -rf build/macos-package
 	-mkdir -p build/macos-package
 	cp spire build/macos-package
-	cd build/macos-package && zip spire-$(VERSION)-macos-amd64.zip spire
+	cd build/macos-package && zip ../spire-$(VERSION)-macos-amd64.zip spire
 	du -sh spire build/spire-$(VERSION)-macos-amd64.zip
 
 #
