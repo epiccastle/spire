@@ -1,4 +1,5 @@
-GRAALVM = $(HOME)/graalvm-ce-java8-19.3.0
+GRAALVM = $(HOME)/graalvm-ce-19.2.1
+#GRAALVM = $(HOME)/graalvm-ce-java8-19.3.0.2
 VERSION = 0.1.0-SNAPSHOT
 UNAME = $(shell uname)
 
