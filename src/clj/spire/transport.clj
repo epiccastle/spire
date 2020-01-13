@@ -120,35 +120,3 @@
           (map (fn [[host-string# fut#]]
                  [host-string# @fut#]))
           (into {}))))
-
-#_ (defn psh [cmd in out & [opts]]
-  (let [opts (or opts {})
-        channel-futs
-        (->> state/*sessions*
-             (map
-              (fn [host-string]
-                (let [session (get @state/ssh-connections host-string)]
-                  [host-string
-                   {:session session
-                    :fut (future (ssh/ssh-exec session cmd in out opts))}])))
-             (into {}))]
-    channel-futs))
-
-#_ (defn pipelines [func]
-  (let [channel-futs
-        (->> state/*sessions*
-             (map
-              (fn [host-string]
-                (let [session (get @state/ssh-connections host-string)]
-                  [host-string
-                   {:session session
-                    :fut (future
-                           (let [{:keys [result] :as data}
-                                 (func host-string session)]
-                             (output/print-result result host-string)
-                             data))}])))
-             (into {}))]
-    (->> channel-futs
-         (map (fn [[host-string {:keys [fut]}]]
-                [host-string @fut]))
-         (into {}))))

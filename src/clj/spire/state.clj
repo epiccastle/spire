@@ -34,3 +34,5 @@
 ;; some helper functions for use inside sci evaluated code
 (defn get-sessions [] *sessions*)
 (defn get-connections [] *connections*)
+
+(defn get-host-config [] *host-config*)
