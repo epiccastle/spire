@@ -302,22 +302,22 @@
 (defmacro defmodule [name module-args pipeline-args & body]
   `(defn ~name [& args#]
      (binding [spire.state/*form* (concat '(~name) args#)]
-       (spire.output/print-form spire.state/*form* ~*file* ~(meta &form))
-       (let [~module-args args#
-             ~pipeline-args [spire.state/*host-config* spire.state/*connection*]
-             result#
+        ;;(spire.output/print-form spire.state/*form* ~*file* ~(meta &form))
+        (let [~module-args args#
+              ~pipeline-args [spire.state/*host-config* spire.state/*connection*]
+              result#
 
-             (do ~@body)
-             #_(try
-                 (do ~@body)
-                 (catch Exception e#
-                   {:result :failed
-                    :body-exception e#}))
-             result-code# (:result result#)]
-         (output/print-result result-code# spire.state/*host-config*)
-         (if (#{:ok :changed} result-code#)
-           result#
-           (throw (ex-info "module failed" result#)))))))
+              (do ~@body)
+              #_(try
+                  (do ~@body)
+                  (catch Exception e#
+                    {:result :failed
+                     :body-exception e#}))
+              result-code# (:result result#)]
+          ;;(output/print-result result-code# spire.state/*host-config*)
+          (if (#{:ok :changed} result-code#)
+            result#
+            (throw (ex-info "module failed" result#)))))))
 
 #_ (content-size (byte-array [1 2]))
 #_ (content-file? (io/file "./spire"))
