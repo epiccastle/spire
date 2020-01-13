@@ -77,15 +77,16 @@
 
 (defn print-state [s]
   (doseq [{:keys [form results copy-progress]} s]
-    (let [completed (for [{:keys [host-string result]} results]
+    ;;(prn 'doseq form results copy-progress)
+    (let [completed (for [{:keys [host-config result]} results]
                       (str " "
                            (utils/colour
-                            (case result
+                            (case (:result result)
                               :ok :green
                               :changed :yellow
                               :failed :red
                               :blue))
-                           host-string
+                           (str (:key host-config))
                            (utils/colour)))
           line (str (pr-str form) (apply str completed))
           ]
@@ -106,11 +107,13 @@
 (defn state-change [[o n]]
   (let [[_ old-total-height] (calculate-heights o)
         [_ new-total-height] (calculate-heights n)
-        completed-head (take-while state-line-complete? o)
+        completed-head [] #_ (take-while state-line-complete? o)
         completed-count (count completed-head)
         ]
     (up (- old-total-height completed-count))
-    (print-state (drop completed-count n))
+    #_ (println 1)
+    (print-state n #_(drop completed-count n))
+    #_ (println 2)
     (let [lines-lost (- old-total-height new-total-height )]
       (when (pos? lines-lost)
         (dotimes [n lines-lost]
@@ -131,51 +134,55 @@
        (put! state-change-chan [o n]))
      )))
 
-(defn print-form [form file meta]
-  (prn 'print-form form file meta)
-  #_ (swap! state
-         (fn [s]
-           (if
-             (->> state/*sessions*
-                  (map #(find-first-form-missing-hoststring-index s form %))
-                  (every? nil?)
-                  not)
-             s
-             (let [cumulative-widths (concat [0] (reductions + (map (comp inc count) (butlast state/*connections*))))
-                   form-width (count (pr-str form))
-                   offsets (map #(+ % form-width) cumulative-widths)
-                   host-positions (->> (map vector state/*connections* offsets)
-                                       (into {}))]
-               (conj s {:form form
-                        :line (count s)
-                        :width (count (pr-str form))
-                        :positions host-positions
-                        :connections state/*connections*
-                        :results []}))))))
+(defn find-forms-matching-index [forms-vec search]
+  (let [search-keys (keys search)]
+    (->> forms-vec
+         (map-indexed vector)
+         (map (fn [[i data]]
+                [i data]
+                (when (= search (select-keys data search-keys))
+                  i)))
+         (filter identity))))
 
-(defn print-result [result host-string]
-  (prn 'print-result result host-string)
-  #_(swap! state
+(defn print-form [form file meta host-config]
+  ;;(prn 'print-form form file meta)
+  (swap! state
+         (fn [s]
+           (let [cumulative-widths (concat [0] (reductions + (map (comp inc count) (butlast state/*connections*))))
+                 form-width (count (pr-str form))
+                 offsets (map #(+ % form-width) cumulative-widths)]
+             (conj s {:form form
+                      :file file
+                      :meta meta
+                      :line (count s)
+                      :width (count (pr-str form))
+                      :results []}))
+           ))
+  )
+
+(defn print-result [form file meta host-config result]
+  ;; (prn 'print-result result host-config)
+  ;; (prn (find-forms-matching-index @state {:form form :file file :meta meta}))
+  (swap! state
          (fn [s]
            (update
             s
-            (find-first-form-missing-hoststring-index s state/*form* host-string)
-            (fn [{:keys [width positions results] :as data}]
+            (first (find-forms-matching-index s {:form form :file file :meta meta}))
+            (fn [{:keys [width results] :as data}]
               (-> data
-                  (update :copy-progress dissoc host-string)
+                  (update :copy-progress dissoc (:host-string host-config))
                   (assoc
-                   :width (+ width (count host-string) 1)
+                   :width (+ width (count (:host-string host-config)) 1)
                    :results (conj results
                                   {:result result
-                                   :host-string host-string
+                                   :host-config host-config
                                    :pos width
-                                   ;;:pos (positions host-string)
                                    }
                                   ))))))))
 
 (defn print-progress [host-string {:keys [progress context] :as data}]
   (prn 'print-progress host-string data)
-  #_(swap! state
+  #_ (swap! state
          (fn [s]
            (update
             s
