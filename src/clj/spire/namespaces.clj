@@ -115,7 +115,11 @@
                'host-config-to-connection-key ssh/host-config-to-connection-key
                'host-description-to-host-config ssh/host-description-to-host-config
                }
-   'spire.utils {'colour utils/colour}
+   'spire.utils {'colour utils/colour
+                 'defmodule (with-meta @#'utils/defmodule {:sci/macro true})
+                 'wrap-report (with-meta @#'utils/wrap-report {:sci/macro true})
+
+                 }
    'spire.facts {'get-fact facts/get-fact}
    'spire.state {
                  '*sessions* #'state/*sessions*
@@ -150,4 +154,6 @@
    'clojure.string {
                     'trim clojure.string/trim
                     }
+   'spire.module.apt {'apt* apt/apt*
+                      'apt (with-meta @#'apt/apt {:sci/macro true})}
    })
