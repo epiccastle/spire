@@ -83,8 +83,8 @@ jobs:
           command: |
             cd ~
             if ! [ -d graalvm-ce-19.2.1 ]; then
-              curl -O -sL https://github.com/oracle/graal/releases/download/vm-19.3.0/graalvm-ce-java8-linux-amd64-19.3.0.tar.gz
-              tar xzf graalvm-ce-java8-linux-amd64-19.3.0.tar.gz
+              curl -O -sL https://github.com/oracle/graal/releases/download/vm-19.2.1/graalvm-ce-linux-amd64-19.2.1.tar.gz
+              tar xzf graalvm-ce-linux-amd64-19.2.1.tar.gz
             fi
             graalvm-ce-19.2.1/bin/gu install native-image
       - run:
@@ -128,8 +128,8 @@ jobs:
             cd ~
             ls -la
             if ! [ -d graalvm-ce-19.2.1 ]; then
-              curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.0/graalvm-ce-java8-darwin-amd64-19.3.0.tar.gz
-              tar xzf graalvm-ce-java8-darwin-amd64-19.3.0.tar.gz
+              curl -O -sL https://github.com/oracle/graal/releases/download/vm-19.2.1/graalvm-ce-darwin-amd64-19.2.1.tar.gz
+              tar xzf graalvm-ce-darwin-amd64-19.2.1.tar.gz
             fi
             $GRAALVM_HOME/bin/gu install native-image
       - run:
