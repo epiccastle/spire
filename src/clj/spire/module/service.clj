@@ -99,7 +99,7 @@
 
 
 
-(utils/defmodule service [command {:keys [name value reload file] :as opts}]
+(utils/defmodule service* [command {:keys [name value reload file] :as opts}]
   [host-string session]
   (or
    (preflight command opts)
@@ -108,3 +108,6 @@
     (process-result command opts)))
 
   )
+
+(defmacro service [& args]
+  `(utils/wrap-report ~*file* ~&form (service* ~@args)))

@@ -78,10 +78,13 @@
            :out-lines (string/split out #"\n")
            :err-lines (string/split err #"\n"))))
 
-(utils/defmodule apt-repo [command opts]
-  [host-string session]
+(utils/defmodule apt-repo* [command opts]
+  [host-config session]
   (or
    (preflight command opts)
    (->>
       (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
       (process-result command opts))))
+
+(defmacro apt-repo [& args]
+  `(utils/wrap-report ~*file* ~&form (apt-repo* ~@args)))

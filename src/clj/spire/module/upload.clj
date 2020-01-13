@@ -92,7 +92,7 @@
      :else
      (vec (string/split line #"\s+" 2)))))
 
-(utils/defmodule upload [{:keys [src content dest
+(utils/defmodule upload* [{:keys [src content dest
                                  owner group mode attrs
                                  dir-mode preserve recurse force]
                           :as opts}]
@@ -258,6 +258,9 @@
          :err err
          :out out}))
      )))
+
+(defmacro upload [& args]
+  `(utils/wrap-report ~*file* ~&form (upload* ~@args)))
 
 (def documentation
   {

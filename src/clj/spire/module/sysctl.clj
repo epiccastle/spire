@@ -48,7 +48,7 @@
              :result :failed))))
 
 
-(utils/defmodule sysctl [command {:keys [name value reload file] :as opts}]
+(utils/defmodule sysctl* [command {:keys [name value reload file] :as opts}]
   [host-string session]
   (or
    (preflight command opts)
@@ -57,3 +57,6 @@
     (process-result command opts)))
 
   )
+
+(defmacro sysctl [& args]
+  `(utils/wrap-report ~*file* ~&form (sysctl* ~@args)))

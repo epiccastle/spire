@@ -117,10 +117,13 @@
       (assoc result
              :result :failed))))
 
-(utils/defmodule authorized-keys [command {:keys [user key options file] :as opts}]
-  [host-string session]
+(utils/defmodule authorized-keys* [command {:keys [user key options file] :as opts}]
+  [host-config session]
   (or
    (preflight command opts)
    (->>
     (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
     (process-result command opts))))
+
+(defmacro authorized-keys [& args]
+  `(utils/wrap-report ~*file* ~&form (authorized-keys* ~@args)))

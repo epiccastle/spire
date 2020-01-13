@@ -26,7 +26,7 @@
 
 #_ (make-exists-string ["privatekey" "public\"key"])
 
-(utils/defmodule shell [{:keys [env dir shell out opts cmd creates]
+(utils/defmodule shell* [{:keys [env dir shell out opts cmd creates]
                          :or {env {}
                               dir "."
                               shell "bash"}
@@ -50,3 +50,6 @@
                  (zero? exit) :ok
                  (= 255 exit) :changed
                  :else :failed)))))
+
+(defmacro shell [& args]
+  `(utils/wrap-report ~*file* ~&form (shell* ~@args)))

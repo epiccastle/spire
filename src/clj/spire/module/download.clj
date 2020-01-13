@@ -69,7 +69,7 @@
      (catch Exception e#
        {:result :failed :exception e#})))
 
-(utils/defmodule download [{:keys [src dest recurse preserve flat
+(utils/defmodule download* [{:keys [src dest recurse preserve flat
                                    dir-mode mode owner group attrs] :as opts}]
   [host-string session]
   (or
@@ -185,3 +185,6 @@
       opts
       copy-result
       {:result (if attrs? :changed :ok)}))))
+
+(defmacro download [& args]
+  `(utils/wrap-report ~*file* ~&form (download* ~@args)))

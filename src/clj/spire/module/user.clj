@@ -78,13 +78,16 @@
       (assoc result
              :result :failed))))
 
-(utils/defmodule user [command {:keys [user] :as opts}]
+(utils/defmodule user* [command {:keys [user] :as opts}]
   [host-string session]
   (or
    (preflight command opts)
    (->>
     (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
     (process-result command opts))))
+
+(defmacro user [& args]
+  `(utils/wrap-report ~*file* ~&form (user* ~@args)))
 
 (defn gecos [{:keys [fullname room office home info]}]
   (str fullname "," room "," office "," home "," info))

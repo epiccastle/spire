@@ -193,7 +193,7 @@
     (assoc result
            :result :failed)))
 
-(utils/defmodule line-in-file [command & [{:keys [path regexp line after before]
+(utils/defmodule line-in-file* [command & [{:keys [path regexp line after before]
                                            :as opts}]]
   [host-string session]
   (or
@@ -201,6 +201,10 @@
    (->>
     (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
     (process-result command opts))))
+
+(defmacro line-in-file [& args]
+  `(utils/wrap-report ~*file* ~&form (line-in-file* ~@args)))
+
 
 (def documentation
   {

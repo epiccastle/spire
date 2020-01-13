@@ -38,36 +38,48 @@
 (def bindings
   {'apt* apt/apt*
    'apt (with-meta @#'apt/apt {:sci/macro true})
-   'apt-repo apt-repo/apt-repo
-   'pkg pkg/pkg
+   'apt-repo* apt-repo/apt-repo*
+   'apt-repo (with-meta @#'apt-repo/apt-repo {:sci/macro true})
+   'pkg* pkg/pkg*
+   'pkg (with-meta @#'pkg/pkg {:sci/macro true})
    ;;'hostname system/hostname
-   'line-in-file line-in-file/line-in-file
+   'line-in-file* line-in-file/line-in-file*
+   'line-in-file (with-meta @#'line-in-file/line-in-file {:sci/macro true})
    ;;'copy copy/copy
-   'upload upload/upload
+   'upload* upload/upload*
+   'upload (with-meta @#'upload/upload {:sci/macro true})
 
-   'user user/user
+   'user* user/user*
+   'user (with-meta @#'user/user {:sci/macro true})
    'gecos user/gecos
 
    'get-fact facts/get-fact
    'fetch-facts facts/fetch-facts
 
-   'get-file get-file/get-file
+   'get-file* get-file/get-file*
+   'get-file (with-meta @#'get-file/get-file {:sci/macro true})
 
-   'sysctl sysctl/sysctl
-   'service service/service
+   'sysctl* sysctl/sysctl*
+   'sysctl (with-meta @#'sysctl/sysctl {:sci/macro true})
+   'service* service/service*
+   'service (with-meta @#'service/service {:sci/macro true})
 
-   'group group/group
+   'group* group/group*
+   'group (with-meta @#'group/group {:sci/macro true})
 
    'selmer selmer/selmer
 
-   'download download/download
-   'authorized-keys authorized-keys/authorized-keys
+   'download* download/download*
+   'download (with-meta @#'download/download {:sci/macro true})
+   'authorized-keys* authorized-keys/authorized-keys*
+   'authorized-keys (with-meta @#'authorized-keys/authorized-keys {:sci/macro true})
 
    'slurp slurp
 
-   'shell shell/shell
+   'shell* shell/shell*
+   'shell (with-meta @#'shell/shell {:sci/macro true})
 
-   ;;'ln system/ln
+   ;;'ln (system/ln
    ;;'mkdir system/mkdir
 
    ;;'git vcs/git
@@ -154,6 +166,32 @@
    'clojure.string {
                     'trim clojure.string/trim
                     }
+
+   ;; modules
    'spire.module.apt {'apt* apt/apt*
                       'apt (with-meta @#'apt/apt {:sci/macro true})}
+   'spire.module.authorized-keys {'authorized-keys* authorized-keys/authorized-keys*
+                                  'authorized-keys (with-meta @#'authorized-keys/authorized-keys {:sci/macro true})}
+   'spire.module.apt-repo {'apt-repo* apt-repo/apt-repo*
+                           'apt-repo (with-meta @#'apt-repo/apt-repo {:sci/macro true})}
+   'spire.module.group {'group* group/group*
+                        'group (with-meta @#'group/group {:sci/macro true})}
+   'spire.module.get-file {'get-file* get-file/get-file*
+                           'get-file (with-meta @#'get-file/get-file {:sci/macro true})}
+   'spire.module.line-in-file {'line-in-file* line-in-file/line-in-file*
+                               'line-in-file (with-meta @#'line-in-file/line-in-file {:sci/macro true})}
+   'spire.module.pkg {'pkg* pkg/pkg*
+                      'pkg (with-meta @#'pkg/pkg {:sci/macro true})}
+   'spire.module.service {'service* service/service*
+                          'service (with-meta @#'service/service {:sci/macro true})}
+   'spire.module.shell {'shell* shell/shell*
+                        'shell (with-meta @#'shell/shell {:sci/macro true})}
+   'spire.module.sysctl {'sysctl* sysctl/sysctl*
+                         'sysctl (with-meta @#'sysctl/sysctl {:sci/macro true})}
+   'spire.module.upload {'upload* upload/upload*
+                         'upload (with-meta @#'upload/upload {:sci/macro true})}
+   'spire.module.user {'user* user/user*
+                       'user (with-meta @#'user/user {:sci/macro true})}
+
+
    })

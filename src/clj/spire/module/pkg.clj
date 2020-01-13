@@ -101,10 +101,13 @@
 
 
 
-(utils/defmodule pkg [command opts]
+(utils/defmodule pkg* [command opts]
   [host-string session]
   (or
    (preflight command opts)
    (->>
     (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
     (process-result command opts))))
+
+(defmacro pkg [& args]
+  `(utils/wrap-report ~*file* ~&form (pkg* ~@args)))

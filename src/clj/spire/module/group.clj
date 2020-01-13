@@ -71,10 +71,13 @@
       (assoc result
              :result :failed))))
 
-(utils/defmodule group [command opts]
+(utils/defmodule group* [command opts]
   [host-string session]
   (or
    (preflight command opts)
    (->>
     (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
     (process-result command opts))))
+
+(defmacro group [& args]
+  `(utils/wrap-report ~*file* ~&form (group* ~@args)))
