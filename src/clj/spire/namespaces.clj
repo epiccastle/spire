@@ -4,6 +4,7 @@
             [spire.transfer :as transfer]
             [spire.transport :as transport]
             [spire.state :as state]
+            [spire.output :as output]
             [spire.facts :as facts]
             [spire.selmer :as selmer]
             [spire.module.line-in-file :as line-in-file]
@@ -35,7 +36,8 @@
            (pop-thread-bindings))))))
 
 (def bindings
-  {'apt apt/apt
+  {'apt* apt/apt*
+   'apt (with-meta @#'apt/apt {:sci/macro true})
    'apt-repo apt-repo/apt-repo
    'pkg pkg/pkg
    ;;'hostname system/hostname
@@ -125,7 +127,13 @@
                  '*host-string* #'state/*host-string*
                  '*connection* #'state/*connection*
                  'ssh-connections state/ssh-connections
+
+                 'get-host-config state/get-host-config
                  }
+   'spire.output {
+                  'print-form output/print-form
+                  'print-result output/print-result
+                  }
 
    'clojure.java.io {'file clojure.java.io/file
                      }

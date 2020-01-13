@@ -111,10 +111,18 @@
            )))
 
 
-(utils/defmodule apt [command opts]
+(utils/defmodule apt* [command]
   [host-string session]
-  (or
-   (preflight command opts)
-   (->>
-    (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
-    (process-result command opts))))
+  (let [opts {}]
+    (or
+     (preflight command opts)
+     (->>
+      (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
+      (process-result command opts)))))
+
+(defmacro apt [command]
+  `(do
+     (spire.output/print-form (quote ~&form) ~*file* ~(meta &form) (state/get-host-config))
+     (let [result# (~'apt* ~command)]
+       (spire.output/print-result (quote ~&form) ~*file* ~(meta &form) (state/get-host-config) result#)
+       result#)))
