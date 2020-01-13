@@ -76,7 +76,7 @@
   (= (count results) (count connections)))
 
 (defn print-state [s]
-  (doseq [{:keys [form results copy-progress]} s]
+  (doseq [{:keys [form file meta results copy-progress]} s]
     ;;(prn 'doseq form results copy-progress)
     (let [completed (for [{:keys [host-config result]} results]
                       (str " "
@@ -88,7 +88,9 @@
                               :blue))
                            (str (:key host-config))
                            (utils/colour)))
-          line (str (pr-str form) (apply str completed))
+          line (str (format "%s:%d " file (:row meta))
+                (pr-str form)
+                (apply str completed))
           ]
       (println (utils/append-erasure-to-line line)))
     (let [max-host-string-length (when-not (empty? copy-progress)

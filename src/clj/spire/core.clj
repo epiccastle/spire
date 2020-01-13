@@ -77,7 +77,8 @@
       (->> options :evaluate (evaluate args) puget/cprint)
 
       (pos? (count arguments))
-      (-> arguments first slurp (->> (evaluate args)) puget/cprint)
+      (binding [*file* (first arguments)]
+        (-> arguments first slurp (->> (evaluate args)) puget/cprint))
 
       :else
       ;; repl
