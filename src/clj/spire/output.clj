@@ -75,6 +75,17 @@
 (defn state-line-complete? [{:keys [results connections]}]
   (= (count results) (count connections)))
 
+(defn cut-trailing-blank-line [s]
+  (let [l (count s)]
+    (if (zero? l)
+      s
+      (let [c (subs s (dec l))]
+        (if (= "\n" c)
+          (subs s 0 (dec l))
+          s)))))
+
+#_ (cut-trailing-blank-line "foo bar bard\n")
+
 (defn print-state [s]
   (doseq [{:keys [form file meta results copy-progress]} s]
     ;;(prn 'doseq form results copy-progress)
@@ -89,20 +100,50 @@
                            (str (:key host-config))
                            (utils/colour)))
           line (str (format "%s:%d " file (:row meta))
-                (pr-str form)
-                (apply str completed))
+                    (pr-str form)
+                    (apply str completed))
           ]
       (println (utils/append-erasure-to-line line)))
+
+    ;; progress bars for this module
     (let [max-host-string-length (when-not (empty? copy-progress)
                                    (apply max (map (fn [[h _]] (count h)) copy-progress)))
           max-filename-length (when-not (empty? copy-progress)
-                                   (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
+                                (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
           ]
       (doseq [[host-string progress] copy-progress]
         (println (utils/progress-bar-from-stats host-string max-host-string-length max-filename-length progress))
         ;; (println)
         ;; (println)
         ))
+
+    ;; failure reports for this module
+    (let [failed (->> results
+                      (filter #(= :failed (:result (:result %)))))]
+      (doseq [{:keys [result host-config]} failed]
+        (println
+         (str
+          (utils/colour :yellow)
+          (utils/escape-codes 40 0 31 7)
+          (format "%s failed!%s exit:%d username:%s hostname:%s port:%d"
+                  (str (:key host-config))
+                  (utils/reset)
+                  (:exit result) (:username host-config) (:hostname host-config) (:port host-config))
+          #_ (utils/reset)
+          #_ (utils/escape-codes 40 0 31 1)
+          #_ (utils/escape-codes 31 42)))
+        (println (str (utils/escape-codes 40 0 31 1) "==========STDOUT==========" (utils/reset)))
+        (let [trimmed (cut-trailing-blank-line (:out result))]
+          (when-not (empty? trimmed)
+            (println trimmed)))
+        (println (str (utils/escape-codes 40 0 31 1) "==========STDERR==========" (utils/reset)))
+        (let [trimmed (cut-trailing-blank-line (:err result))]
+          (when-not (empty? trimmed)
+            (println trimmed)))
+        (println (str (utils/escape-codes 40 0 31 1) "==========================" (utils/reset)))
+        ))
+
+
     )
   )
 
