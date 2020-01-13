@@ -22,8 +22,11 @@
            (map (fn [[k v]] [(-> k to-camelcase keyword) v]))
            (into {}))))
 
-(defn- escape-code [n]
+(defn escape-code [n]
   (str "\033[" (or n 0) "m"))
+
+(defn escape-codes [& ns]
+  (str "\033[" (string/join ";" ns) "m"))
 
 (def colour-map
   {:red 31
@@ -36,6 +39,13 @@
 
 (defn reverse-text [& [state]]
   (escape-code (when state 7)))
+
+(defn bold [& [state]]
+  (escape-code (if state 1 2)))
+
+(defn reset []
+  (escape-code 0))
+
 
 (def kilobyte 1024)
 (def megabyte (* 1024 kilobyte))
