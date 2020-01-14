@@ -143,6 +143,17 @@ Pass in the known signature as the value of `:host-key-accept`:
   ...commands...)
 ```
 
+## Activate authentication agent forwarding to the remote machine
+
+Set `:auth-forward` to `true` in the host config
+
+```clojure
+(ssh {:username "root"
+      :hostname "remote-host"
+      :auth-forward true}
+  (shell {:cmd "ssh -T git@github.com"}))
+```
+
 ## Accessing the present host config definition when running in parallel
 
 The function `(get-host-config)` will return the present executing host config hash-map:
@@ -226,4 +237,75 @@ Use the `on-os` macro:
   (on-os
     :linux (apt :update)
     :freebsd (pkg :update)))
+```
+
+## Run some modules on only a specificy linux distribution
+
+Use the `on-distro` macro:
+
+
+```clojure
+(ssh-group all-hosts
+  (on-distro
+    :ubuntu (apt :update)
+    :centos (yum :update)))
+```
+
+## Create a standalone script
+
+Use a shebang line on your file
+
+```clojure
+#!/usr/bin/env spire
+
+;; clojure code here
+```
+
+Set the executable bit and launch it.
+
+```shell
+$ chmod a+x my-file.clj
+$ ./my-file.clj
+```
+
+## Read the launch arguments
+
+Use the `get-argv` function.
+
+```clojure
+(let [target (first (get-argv))]
+  (ssh target
+    (get-fact)))
+```
+
+```shell
+$ spire my-file.clj root@localhost
+```
+
+## Read a local environment variable
+
+The `System` namespace is available. Use its `getenv` function:
+
+```clojure
+(when (= "dev" (System/getenv "SPIRE_ENV"))
+  ;; some speical rules for dev
+  )
+```
+
+## Run a shell command on the remote machines
+
+The `shell` module provides all you need
+
+```clojure
+(ssh "root@localhost"
+  (shell {:cmd "ps aux"}))
+```
+
+## Debug a blueprint by printing a result and then continuing
+
+Use `debug` to probe the return values of a module and print them on the output.
+
+```clojure
+(ssh "root@localhost"
+  (debug (shell {:cmd "ps aux"})))
 ```
