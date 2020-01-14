@@ -2,6 +2,10 @@
   "resources": [
       {"pattern": "libspire.so$"},
       {"pattern": "libspire.dylib$"},
-      {"pattern": "spire.dll$"}
+      {"pattern": "spire.dll$"},
+      {"pattern": "libsunec.so$"},
+      {"pattern": "libsunec.dylib$"},
+      {"pattern": "sunec.dll$"},
+      {"pattern": "sunec.lib$"}
   ]
 }
