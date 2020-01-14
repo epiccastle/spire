@@ -89,7 +89,6 @@
 
    'ssh (with-meta @#'transport/ssh {:sci/macro true})
    'ssh-group (with-meta @#'transport/ssh-group {:sci/macro true})
-   ;;'ssh-parallel (with-meta @#'transport/ssh-parallel {:sci/macro true})
 
    'on-os (with-meta @#'facts/on-os {:sci/macro true})
    'on-shell (with-meta @#'facts/on-shell {:sci/macro true})
@@ -121,7 +120,6 @@
                      'disconnect transport/disconnect
                      'flush-out transport/flush-out
                      'safe-deref transport/safe-deref
-                     ;;'on (with-meta @#'transport/on {:sci/macro true})
                      }
    'spire.ssh {'host-config-to-string ssh/host-config-to-string
                'host-config-to-connection-key ssh/host-config-to-connection-key
