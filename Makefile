@@ -79,12 +79,14 @@ $(SOLIB_FILE): $(C_FILE) $(C_HEADER)
 	cp $(SOLIB_FILE) ./
 	mkdir -p resources
 	cp $(SOLIB_FILE) ./resources/
+	make copy-libs-to-resource
 
 $(DYLIB_FILE):  $(C_FILE) $(C_HEADER)
 	$(CC) $(INCLUDE_ARGS) -dynamiclib -undefined suppress -flat_namespace $(C_FILE) -o $(DYLIB_FILE) -fPIC
 	cp $(DYLIB_FILE) ./
 	mkdir -p resources
 	cp $(DYLIB_FILE) ./resources/
+	make copy-libs-to-resource
 
 clean:
 	-rm -rf build target

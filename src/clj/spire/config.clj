@@ -2,7 +2,8 @@
   (:require [clojure.java.io :as io])
   (:import [java.util Base64]))
 
-(def libs-set ["libspire.dylib" "libspire.so"])
+(def libs-set ["libspire.dylib" "libspire.so"
+               "sunec.lib" "sunec.dll" "libsunec.dylib" "libsunec.so"])
 
 (defn path-split
   "give a full path filename, return a tuple of
