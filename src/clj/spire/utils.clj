@@ -328,7 +328,7 @@
          (spire.output/print-result (quote ~form) ~file ~(meta form) (spire.state/get-host-config) result#)
          result#)
        (catch clojure.lang.ExceptionInfo e#
-         (spire.output/print-result (quote ~form) ~file ~(meta form) (spire.state/get-host-config) (ex-data e))
+         (spire.output/print-result (quote ~form) ~file ~(meta form) (spire.state/get-host-config) (ex-data e#))
          (throw e#)))))
 
 #_ (content-size (byte-array [1 2]))
