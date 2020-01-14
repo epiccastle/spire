@@ -79,28 +79,25 @@
 (defmacro ssh-group [host-strings & body]
   `(try
      (doseq [host-string# ~host-strings]
-       (connect host-string#))
-     (binding [state/*sessions* ~host-strings
-               state/*connections* ~host-strings]
-       (let [threads#
-             (doall
-              (for [host-string# ~host-strings]
-                [(:key
-                  #_ssh/host-config-to-string
-                  (ssh/host-description-to-host-config host-string#))
+       (let [host-config# (ssh/host-description-to-host-config host-string#)]
+         (connect host-config#)))
+     (let [threads#
+           (doall
+            (for [host-string# ~host-strings]
+              (let [host-config# (ssh/host-description-to-host-config host-string#)]
+                [(:key host-config#)
                  (future
-                   (binding [state/*host-config* (ssh/host-description-to-host-config host-string#)
-                             state/*host-string* (ssh/host-config-to-string
-                                                  (ssh/host-description-to-host-config host-string#))
+                   (binding [state/*host-config* host-config#
                              state/*connection* (get @state/ssh-connections
                                                      (ssh/host-config-to-connection-key
-                                                      (ssh/host-description-to-host-config host-string#)))]
+                                                      host-config#))]
                      (let [result# (do ~@body)]
-                       result#)))]))]
-         (into {} (map (fn [[host-name# fut#]] [host-name# (safe-deref fut#)]) threads#))))
+                       result#)))])))]
+       (into {} (map (fn [[host-name# fut#]] [host-name# (safe-deref fut#)]) threads#)))
      (finally
-       (doseq [host-string ~host-strings]
-         (disconnect host-string)))))
+       (doseq [host-string# ~host-strings]
+         (let [host-config# (ssh/host-description-to-host-config host-string#)]
+           (disconnect host-config#))))))
 
 #_ (defmacro on [host-strings & body]
   `(let [present-sessions# (into #{} (state/get-sessions))
