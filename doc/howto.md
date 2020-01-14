@@ -6,7 +6,7 @@ Pass a vector or sequence of host descriptors to `ssh-group`. Host descriptors c
 
 ```clojure
 (ssh-group ["root@host-1" "root@host-2"]
-  ...commands...
+  ;; commands here
   )
 ```
 
@@ -15,7 +15,7 @@ or
 ```clojure
 (ssh-group [{:username "root" :hostname "host-1"}
             {:username "root" :hostname "host-2"]]
-  ...commands...
+  ;; commands here
   )
 ```
 
@@ -24,13 +24,17 @@ or
 Use the `ssh` macro. This can take a host string, or a host config hashmap.
 
 ```clojure
-(ssh "root@localhost" ...commands...)
+(ssh "root@localhost"
+    ;; commands here
+    )
 ```
 
 or
 
 ```clojure
-(ssh {:username "root" :hostname "localhost"} ...commands...)
+(ssh {:username "root" :hostname "localhost"}
+    ;; commands here
+    )
 ```
 
 ## Connect to an SSH server on a non-standard port
@@ -38,13 +42,17 @@ or
 Append the port number to the host string:
 
 ```clojure
-(ssh "root@localhost:2200" ...commands...)
+(ssh "root@localhost:2200"
+    ;; commands here
+    )
 ```
 
 or specify the `:port` key in a host config hashmap
 
 ```clojure
-(ssh {:username "root" :hostname "localhost" :port 2200} ...commands...)
+(ssh {:username "root" :hostname "localhost" :port 2200}
+    ;; commands here
+    )
 ```
 
 ## Connect to an SSH server using a password stored in the program
@@ -62,7 +70,8 @@ To provide a password inside the program to be used, use the `:password` host co
 (ssh {:username "root"
       :hostname "localhost"
       :password "my-super-secret-password"}
-  ...commands...)
+  ;; commands here
+  )
 ```
 
 ## Connect to an SSH server with a specific key located in a local file
@@ -73,7 +82,8 @@ Pass the key's file location into the `:identity-file` of a host config:
 (ssh {:username "root"
       :hostname "localhost"
       :identity-file "/home/user/.ssh/id_rsa"}
-  ...commands...)
+  ;; commands here
+  )
 ```
 
 ## Connect to an SSH server with a specific key contained in a var
@@ -84,7 +94,8 @@ You can provide the key _content_ to be used to authenticate with `:identity`:
 (ssh {:username "root"
       :password "localhost"
       :identity (slurp "/home/user/.ssh/id_rsa")}
-  ...commands...)
+  ;; commands here
+  )
 ```
 
 ## Connect to an SSH server with an encrypted private key
@@ -103,7 +114,8 @@ You can manually pass in both the key and the key's `:passphrase`
       :hostname "localhost"
       :identity (slurp "/home/user/.ssh/id_rsa")
       :passphrase "this is my super secret key passphrase"}
-  ...commands...)
+  ;; commands here
+  )
 ```
 
 ## Dangerously connect to an SSH server without checking the host key
@@ -113,21 +125,25 @@ Pass in `:strict-host-key-check` with a value of `"no"` to the host configuratio
 ```clojure
 (ssh {:username "root"
       :hostname "localhost"
-      :strict-host-key-check "no"}
-  ...commands...)
+      :strict-host-key-checking "no"}
+  ;; commands here
+  )
 ```
 
 Note: This parameter will both allow you to connect to a new host with an unknown key, and connect to an existing host with a key that differs from the one stored locally in the host key storage.
 
+Note: Connecting to a machine with this set stores the key in the known_hosts file with this option.
+
 ## Automatically accept the provided host certificate and store it
 
-Pass in `:host-key-accept` with a value of `"yes"` and your blueprint will automatically answer yes for that host if it is asked whether to accept a new host-key:
+Pass in `:accept-host-key` with a value of `"yes"` and your blueprint will automatically answer yes for that host if it is asked whether to accept a new host-key:
 
 ```clojure
 (ssh {:username "root"
       :hostname "localhost"
-      :host-key-accept "no"}
-  ...commands...)
+      :accept-host-key "yes"}
+  ;; commands here
+  )
 ```
 
 Note: This will not allow you to connect to the host if the host key has *changed*. You will need to remove your old host key with `ssh -R "username@hostname"` so the new key can be accepted and stored.
@@ -139,8 +155,9 @@ Pass in the known signature as the value of `:host-key-accept`:
 ```clojure
 (ssh {:username "root"
       :hostname "localhost"
-      :host-key-accept "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"}
-  ...commands...)
+      :accept-host-key "e4:d6:ce:f8:c4:4f:b4:60:1a:47:fc:f0:27:c8:da:c7"}
+  ;; commands here
+  )
 ```
 
 ## Activate authentication agent forwarding to the remote machine
@@ -150,7 +167,7 @@ Set `:auth-forward` to `true` in the host config
 ```clojure
 (ssh {:username "root"
       :hostname "remote-host"
-      :auth-forward true}
+      :agent-forwarding true}
   (shell {:cmd "ssh -T git@github.com"}))
 ```
 
