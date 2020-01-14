@@ -8,7 +8,15 @@
             ByteArrayInputStream ByteArrayOutputStream
             ]))
 
-(defn make-user-info []
+(defn print-flush-ask-yes-no [s]
+  (print (str s " "))
+  (.flush *out*)
+  (let [response (read-line)
+        first-char (first response)]
+    (boolean (#{\y \Y} first-char))))
+
+(defn make-user-info [{:keys [strict-host-key-checking
+                              accept-host-key]}]
   (let [state (atom nil)]
     (proxy [UserInfo] []
 
@@ -22,11 +30,28 @@
           password))
 
       (promptYesNo [s]
-        (print (str s " "))
-        (.flush *out*)
-        (let [response (read-line)
-              first-char (first response)]
-          (boolean (#{\y \Y} first-char))))
+        (let [host-key-missing? (and (.contains s "authenticity of host")
+                                     (.contains s "can't be established"))]
+          (if host-key-missing?
+            (let [fingerprint (second (re-find #"fingerprint is ([0-9a-fA-F:]+)." s))]
+              (cond
+                (#{false "no" :no "n" :n} strict-host-key-checking)
+                true
+
+                (#{true "yes" :yes "y" :y "always" :always} accept-host-key)
+                true
+
+                (and (string? accept-host-key)
+                     (= (string/lower-case fingerprint)
+                        (string/lower-case accept-host-key)))
+                true
+
+                accept-host-key
+                false
+
+                :else
+                (print-flush-ask-yes-no s)))
+            (print-flush-ask-yes-no s))))
 
       (getPassphrase []
         (print (str "Enter " @state ": "))
@@ -86,6 +111,7 @@ keys.  All other option key pairs will be passed as SSH config options."
                     (string-to-byte-array (or public-key ""))
                     (string-to-byte-array (or passphrase "")))
       )
+    ;; :strict-host-key-checking
     (doseq [[k v] session-options]
       (.setConfig session (to-camel-case k) (name v)))
     session))
