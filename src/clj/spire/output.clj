@@ -7,6 +7,9 @@
 (defonce state
   (atom []))
 
+(defonce failed-set
+  (atom #{}))
+
 (defn up [n]
   (cond
     (pos? n) (do
@@ -86,6 +89,43 @@
 
 #_ (cut-trailing-blank-line "foo bar bard\n")
 
+(defn print-new-failures [results]
+  (let [failed (->> results
+                    (filter #(= :failed (:result (:result %)))))
+        old-failed @failed-set
+        new-failed (->> failed
+                        (filter #(not (old-failed %))))
+        ]
+    (swap! failed-set into new-failed)
+    (doseq [{:keys [result host-config]} new-failed]
+      (println
+       (str
+        (utils/colour :yellow)
+        (utils/escape-codes 40 0 31 1)
+        (format "%s failed!%s %s%s exit:%d%s"
+                (str (:key host-config))
+                (utils/reset)
+                (utils/escape-codes 40 0 31 5)
+                (:host-string host-config)
+                (:exit result)
+                (utils/reset))
+        #_ (utils/reset)
+        #_ (utils/escape-codes 40 0 31 1)
+        #_ (utils/escape-codes 31 42)))
+      ;;(println (str (utils/escape-codes 40 0 31 1) "==========STDOUT==========" (utils/reset)))
+      (println "--stdout--")
+      (let [trimmed (cut-trailing-blank-line (:out result))]
+        (when-not (empty? trimmed)
+          (println trimmed)))
+      ;;(println (str (utils/escape-codes 40 0 31 1) "==========STDERR==========" (utils/reset)))
+      (println "--stderr--")
+      (let [trimmed (cut-trailing-blank-line (:err result))]
+        (when-not (empty? trimmed)
+          (println trimmed)))
+      ;; (println (str (utils/escape-codes 40 0 31 1) "==========================" (utils/reset)))
+      (println "----------"))
+    new-failed))
+
 (defn print-state [s]
   (doseq [{:keys [form file meta results copy-progress]} s]
     ;;(prn 'doseq form results copy-progress)
@@ -117,35 +157,37 @@
         ;; (println)
         ))
 
-    ;; failure reports for this module
-    (let [failed (->> results
-                      (filter #(= :failed (:result (:result %)))))]
-      (doseq [{:keys [result host-config]} failed]
-        (println
-         (str
-          (utils/colour :yellow)
-          (utils/escape-codes 40 0 31 7)
-          (format "%s failed!%s exit:%d username:%s hostname:%s port:%d"
-                  (str (:key host-config))
-                  (utils/reset)
-                  (:exit result) (:username host-config) (:hostname host-config) (:port host-config))
-          #_ (utils/reset)
-          #_ (utils/escape-codes 40 0 31 1)
-          #_ (utils/escape-codes 31 42)))
-        (println (str (utils/escape-codes 40 0 31 1) "==========STDOUT==========" (utils/reset)))
-        (let [trimmed (cut-trailing-blank-line (:out result))]
-          (when-not (empty? trimmed)
-            (println trimmed)))
-        (println (str (utils/escape-codes 40 0 31 1) "==========STDERR==========" (utils/reset)))
-        (let [trimmed (cut-trailing-blank-line (:err result))]
-          (when-not (empty? trimmed)
-            (println trimmed)))
-        (println (str (utils/escape-codes 40 0 31 1) "==========================" (utils/reset)))
-        ))
+
 
 
     )
+  (let [just-printed
+        (->>
+         (for [{:keys [results] :as line} s]
+           ;; failure reports for this module
+           (print-new-failures results))
+         doall
+         (filter identity)
+         flatten)]
+    (when (not (empty? just-printed))
+      (print-state s)
+      )
+    )
+
+
+
   )
+
+    #_ (doall
+         (for [n (range 40 48)
+               m (range 0 10)
+               o (range 30 38)
+               p (range 0 10)]
+           (println (utils/escape-codes n m)
+                    (utils/escape-codes o p)
+                    (format "(utils/escape-codes %d %d %d %d)" n m o p)
+                    (utils/escape-code 0))
+           ))
 
 (defn state-change [[o n]]
   (let [[_ old-total-height] (calculate-heights o)
@@ -191,15 +233,18 @@
   ;;(prn 'print-form form file meta)
   (swap! state
          (fn [s]
-           (let [cumulative-widths (concat [0] (reductions + (map (comp inc count) (butlast state/*connections*))))
-                 form-width (count (pr-str form))
-                 offsets (map #(+ % form-width) cumulative-widths)]
-             (conj s {:form form
-                      :file file
-                      :meta meta
-                      :line (count s)
-                      :width (count (pr-str form))
-                      :results []}))
+           (if-let [match (first (find-forms-matching-index s {:form form :file file :meta meta}))]
+            s
+
+            (let [cumulative-widths (concat [0] (reductions + (map (comp inc count) (butlast state/*connections*))))
+                  form-width (count (pr-str form))
+                  offsets (map #(+ % form-width) cumulative-widths)]
+              (conj s {:form form
+                       :file file
+                       :meta meta
+                       :line (count s)
+                       :width (count (pr-str form))
+                       :results []})))
            ))
   )
 
