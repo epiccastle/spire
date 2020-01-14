@@ -14,7 +14,7 @@
         agent (JSch.)
         session (ssh/make-session agent (:hostname host-config) host-config)
         irepo (ssh-agent/make-identity-repository)
-        user-info (ssh/make-user-info)
+        user-info (ssh/make-user-info host-config)
         ]
     (when (System/getenv "SSH_AUTH_SOCK")
       (.setIdentityRepository session irepo))
