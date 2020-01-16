@@ -124,6 +124,9 @@
     (assert (zero? exit))
     out))
 
+(defn uname []
+  (run "uname"))
+
 ;;
 ;; You can get the value directly using a stat output format, e.g. BSD/OS X:
 ;; stat -f "%OLp" <file>
@@ -134,8 +137,9 @@
 ;;
 (defn mode [f]
   (->
-   ;;"stat -c '%%a' \"%s\""
-   "stat -f '%%OLp' \"%s\""
+   (if (= "Linux" (uname))
+     "stat -c '%%a' \"%s\""
+     "stat -f '%%OLp' \"%s\"")
    (format f)
    run
    string/trim
