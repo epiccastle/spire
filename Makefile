@@ -131,7 +131,7 @@ circle-setup: ssh_test_key_rsa
 	eval `ssh-agent` && \
 		ssh-add ssh_test_key_rsa && \
 		export SSH_TEST_PORT=2200 && \
-		umask 0002 && \
+		umask 0022 && \
 		lein trampoline test; \
 		EXIT=$$?; \
 		sudo kill `cat sshd.pid`; \

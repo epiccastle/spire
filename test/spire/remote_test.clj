@@ -39,8 +39,8 @@
                     {:type :file
                      :filename ""
                      :md5sum "0b26e313ed4a7ca6904b0e9369e5b957"
-                     :mode-string "664"
-                     :mode 436
+                     :mode-string "644"
+                     :mode 420
                      :size 19}))
 
              )
