@@ -136,13 +136,12 @@
                  identical-content (->> identical-content
                                         (map #(.getPath (io/file src %)))
                                         (into #{}))
-
-                 _ (comment
-                   _ (prn "identical:" identical-content)
-                   _ (prn "local:" (local "clj/spire/facts.clj"))
-                   _ (prn "remote:" (remote "src/clj/spire/facts.clj"))
-                   _ (prn "lkeys:" (keys local)))
                  ]
+             (prn "identical:" identical-content)
+             (prn "local:" local)
+             (prn "remote:" remote)
+             (prn "lkeys:" (keys local))
+
              (cond
                (and remote-file? (not force))
                {:result :failed :err "Cannot copy `content` directory over `dest`: destination is a file. Use :force to delete destination file and replace."}
