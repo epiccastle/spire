@@ -263,20 +263,22 @@
                      (process-host-string host-config))
           shell (get-in facts [:system :shell])
           path-script (str
-                         (start-block slug "paths")
-                         (make-which shell))
+                       (start-block slug "paths")
+                       (make-which shell))
           path-results (->> (ssh/ssh-exec session path-script "" "UTF-8" {})
                             (extract-blocks slug)
                             process-paths)
-          extra-system (ssh/ssh-exec
-                        session
-                        (cond
-                          (= :linux (get-in facts [:system :os]))
-                          "lsb_release -a"
+          extra-system-script (cond
+                                (= :linux (get-in facts [:system :os]))
+                                "lsb_release -a"
 
-                          :else
-                          nil)
-                        "" "UTF-8" {})
+                                :else
+                                nil)
+          extra-system (when extra-system-script
+                         (ssh/ssh-exec
+                          session
+                          extra-system-script
+                          "" "UTF-8" {}))
           release-info (process-lsb-release extra-system)
           ]
       (-> facts
