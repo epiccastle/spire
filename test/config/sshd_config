@@ -42,8 +42,8 @@ IgnoreRhosts yes
 IgnoreUserKnownHosts yes
 HostbasedAuthentication no
 RhostsRSAAuthentication no
-Ciphers aes256-gcm@openssh.com,aes256-ctr,chacha20-poly1305@openssh.com
-KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256
+#Ciphers aes256-gcm@openssh.com,aes256-ctr,chacha20-poly1305@openssh.com
+#KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256
 MACs hmac-sha2-256,hmac-sha2-512
 PermitUserEnvironment yes
 AcceptEnv LANG LC_*
