@@ -1,54 +1,55 @@
-# ChallengeResponseAuthentication no
-# UsePAM yes
-# X11Forwarding yes
-# PrintMotd no
-# AcceptEnv LANG LC_*
-# Subsystem	sftp	/usr/lib/openssh/sftp-server
-# Port 2200
-# Protocol 2
-# PermitRootLogin prohibit-password
-# PubkeyAuthentication yes
-
 ListenAddress 0.0.0.0
-#Port 22
-Protocol 2 # disable legacy support for security reasons
-StrictModes yes # make sure sshd checks file modes and ownership before accepting logins
-UsePrivilegeSeparation sandbox # Default for new installations.
-Compression no
-UseDNS no
-HostKey /Users/distiller/etc/ssh_host_key_rsa
-HostKey /Users/distiller/etc/ssh_host_key_dsa
-SyslogFacility AUTHPRIV
-TCPKeepAlive no
-ClientAliveInterval 300
-ClientAliveCountMax 3
-MaxSessions 1000
-MaxStartups 1000
-UsePAM no
-X11Forwarding no
-X11UseLocalhost yes
-AuthorizedKeysFile .ssh/authorized_keys
-
-# Same
-# PubkeyAuthentication yes
-
-# changed
-# PermitRootLogin no
-
-PasswordAuthentication no
-PermitEmptyPasswords no
 ChallengeResponseAuthentication no
-IgnoreRhosts yes
-IgnoreUserKnownHosts yes
-HostbasedAuthentication no
-RhostsRSAAuthentication no
-#Ciphers aes256-gcm@openssh.com,aes256-ctr,chacha20-poly1305@openssh.com
-#KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256
-MACs hmac-sha2-256,hmac-sha2-512
-PermitUserEnvironment yes
+UsePAM yes
+X11Forwarding yes
+PrintMotd no
 AcceptEnv LANG LC_*
-Subsystem	sftp	/usr/libexec/sftp-server
-
+Subsystem	sftp	/usr/lib/openssh/sftp-server
+Port 2200
+Protocol 2
 PermitRootLogin prohibit-password
 PubkeyAuthentication yes
-Port 2200
+
+# ListenAddress 0.0.0.0
+# #Port 22
+# Protocol 2 # disable legacy support for security reasons
+# StrictModes yes # make sure sshd checks file modes and ownership before accepting logins
+# UsePrivilegeSeparation sandbox # Default for new installations.
+# Compression no
+# UseDNS no
+# HostKey /Users/distiller/etc/ssh_host_key_rsa
+# HostKey /Users/distiller/etc/ssh_host_key_dsa
+# SyslogFacility AUTHPRIV
+# TCPKeepAlive no
+# ClientAliveInterval 300
+# ClientAliveCountMax 3
+# MaxSessions 1000
+# MaxStartups 1000
+# UsePAM no
+# X11Forwarding no
+# X11UseLocalhost yes
+# AuthorizedKeysFile .ssh/authorized_keys
+
+# # Same
+# # PubkeyAuthentication yes
+
+# # changed
+# # PermitRootLogin no
+
+# PasswordAuthentication no
+# PermitEmptyPasswords no
+# ChallengeResponseAuthentication no
+# IgnoreRhosts yes
+# IgnoreUserKnownHosts yes
+# HostbasedAuthentication no
+# RhostsRSAAuthentication no
+# #Ciphers aes256-gcm@openssh.com,aes256-ctr,chacha20-poly1305@openssh.com
+# #KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256
+# MACs hmac-sha2-256,hmac-sha2-512
+# PermitUserEnvironment yes
+# AcceptEnv LANG LC_*
+# Subsystem	sftp	/usr/libexec/sftp-server
+
+# PermitRootLogin prohibit-password
+# PubkeyAuthentication yes
+# Port 2200
