@@ -29,7 +29,7 @@
               (upload {:src "test/files/copy/test.txt" :dest tf})))
        (is (= (slurp "test/files/copy/test.txt") (slurp tf)))
 
-       (with-redefs [spire.scp/scp-to no-scp]
+       #_ (with-redefs [spire.scp/scp-to no-scp]
          ;; second copy doesn't transfer files
          (is (= {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}
                 (upload {:src "test/files/copy/test.txt" :dest tf})))
@@ -46,7 +46,7 @@
          (is (= "777" (test-utils/mode tf))))
 
        ;; try and copy directory without recurse
-       (try (upload {:src "test/files" :dest tf})
+       #_ (try (upload {:src "test/files" :dest tf})
             (catch clojure.lang.ExceptionInfo e
               (is (= (ex-data e)
                      {:exit 3, :out "", :err ":recurse must be true when :src specifies a directory.", :result :failed}))))
