@@ -122,7 +122,7 @@ ssh_test_key_rsa:
 	-cat ssh_test_key_rsa
 	-cat ssh_test_key_rsa.pub
 	-cat ~/.ssh/authorized_keys
-	grep -qxF "$(cat ssh_test_key_rsa.pub)" ~/.ssh/authorized_keys || cat ssh_test_key_rsa.pub >> ~/.ssh/authorized_keys
+	cat ssh_test_key_rsa.pub >> ~/.ssh/authorized_keys
 	-cat ~/.ssh/authorized_keys
 
 circle-setup: ssh_test_key_rsa
