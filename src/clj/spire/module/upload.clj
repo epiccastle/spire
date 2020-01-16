@@ -102,11 +102,11 @@
    (let [run (fn [command]
                (let [{:keys [out exit err]}
                      (ssh/ssh-exec session command "" "UTF-8" {})]
-                 (comment
-                   (println "command:" command)
-                   (println "exit:" exit)
-                   (println "out:" out)
-                   (println "err:" err))
+                 (comment)
+                 (println "command:" command)
+                 (println "exit:" exit)
+                 (println "out:" out)
+                 (println "err:" err)
                  (if (zero? exit)
                    (string/trim out)
                    "")))
