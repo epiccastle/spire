@@ -21,7 +21,7 @@
     (test-utils/with-temp-file-names [tf tf2 tf3 tf4]
       (transport/ssh
        {:hostname "localhost"
-        :port 2200
+        :port (-> (System/getenv "SSH_TEST_PORT") (or "22") Integer/parseInt)
         :strict-host-key-checking "no"
         :key :localhost}
        ;; copy file
