@@ -269,7 +269,7 @@
                                   ))))))))
 
 (defn print-progress [host-string {:keys [progress context] :as data}]
-  (prn 'print-progress host-string data)
+  #_ (prn 'print-progress host-string data)
   #_ (swap! state
          (fn [s]
            (update
