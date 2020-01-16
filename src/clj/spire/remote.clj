@@ -23,12 +23,13 @@
    (process-md5-out (facts/get-fact [:system :os]) line))
   ([os line]
    (cond
-     (#{:freebsd} os)
-     (let [[_ filename hash] (re-matches #"MD5\s+\((.+)\)\s*=\s*([0-9a-fA-F]+)" line)]
-       [hash filename])
+     (#{:linux} os)
+     (vec (reverse (string/split line #"\s+" 2)))
 
      :else
-     (vec (reverse (string/split line #"\s+" 2))))))
+     (let [[_ filename hash] (re-matches #"MD5\s+\((.+)\)\s*=\s*([0-9a-fA-F]+)" line)]
+       [hash filename])
+     )))
 
 
 (defn path-md5sums
@@ -78,8 +79,9 @@
 (defn path-full-info [run path]
   (let [file-info
         (-> (facts/on-os
-             :freebsd (run (format "find \"%s\" -type f -exec stat -f '%%p %%a %%m %%z' {} \\; -exec md5 {} \\;" path))
-             :else (run (format "find \"%s\" -type f -exec stat -c '%%a %%X %%Y %%s' {} \\; -exec md5sum {} \\;" path)))
+             :linux (run (format "find \"%s\" -type f -exec stat -c '%%a %%X %%Y %%s' {} \\; -exec md5sum {} \\;" path))
+             :else (run (format "find \"%s\" -type f -exec stat -f '%%p %%a %%m %%z' {} \\; -exec md5 {} \\;" path))
+             )
             (string/split #"\n")
             (->> (partition 2)
                  (map (fn [[stats hashes]]
@@ -100,8 +102,9 @@
 
         dir-info
         (-> (facts/on-os
-             :freebsd (run (format "find \"%s\" -type d -exec stat -f '%%p %%a %%m %%z %%N' {} \\;" path))
-             :else (run (format "find \"%s\" -type d -exec stat -c '%%a %%X %%Y %%s %%n' {} \\;" path)))
+             :linux (run (format "find \"%s\" -type d -exec stat -c '%%a %%X %%Y %%s %%n' {} \\;" path))
+             :else (run (format "find \"%s\" -type d -exec stat -f '%%p %%a %%m %%z %%N' {} \\;" path))
+             )
             (string/split #"\n")
             (->> (filter #(pos? (count %)))
                  (map (fn [stats]
