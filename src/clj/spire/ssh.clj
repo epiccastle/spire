@@ -187,7 +187,7 @@ keys.  All other option key pairs will be passed as SSH config options."
              be polled for connected status.
   "
   [^Session session ^String cmd in out opts]
-  (prn 'ssh-exec session cmd in out opts)
+  #_ (prn 'ssh-exec session cmd in out opts)
   (let [[^PipedOutputStream out-stream
          ^PipedInputStream out-inputstream] (streams-for-out out)
         [^PipedOutputStream err-stream
@@ -213,7 +213,7 @@ keys.  All other option key pairs will be passed as SSH config options."
                      :err (if (= :bytes out)
                             (.toByteArray ^ByteArrayOutputStream err-stream)
                             (.toString err-stream))}))]
-      (prn "result:" res)
+      #_ (prn "result:" res)
       res)))
 
 (defn split-host-string [host-string]
