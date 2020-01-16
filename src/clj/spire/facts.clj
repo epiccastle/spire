@@ -237,15 +237,16 @@
     new-paths))
 
 (defn process-lsb-release [lsb-out]
-  (when-let [res (some->> lsb-out
-                     :out
-                     string/split-lines
-                     (map #(string/split % #":\t"))
-                     (into {}))]
-    {:codename (-> "Codename" res string/lower-case keyword)
-     :distro (-> "Distributor ID" res string/lower-case keyword)
-     :release (res "Release")
-     :description (res "Description")}))
+  (when lsb-out
+    (let [res (some->> lsb-out
+                       :out
+                       string/split-lines
+                       (map #(string/split % #":\t"))
+                       (into {}))]
+      {:codename (-> "Codename" res string/lower-case keyword)
+       :distro (-> "Distributor ID" res string/lower-case keyword)
+       :release (res "Release")
+       :description (res "Description")})))
 
 (defn fetch-facts []
   (let [host-string state/*host-string*
@@ -274,7 +275,7 @@
                           "lsb_release -a"
 
                           :else
-                          "echo unknown")
+                          nil)
                         "" "UTF-8" {})
           release-info (process-lsb-release extra-system)
           ]
