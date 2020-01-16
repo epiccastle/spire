@@ -140,6 +140,10 @@ jobs:
 
             make jar
             java -Djava.library.path="." -jar target/uberjar/spire-0.1.0-SNAPSHOT-standalone.jar -h
+
+            sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
+            #sudo mkdir /run/sshd
+
             make circle-setup
             make clean
       - run:
