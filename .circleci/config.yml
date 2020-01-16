@@ -146,13 +146,13 @@ jobs:
             #sudo mkdir /run/sshd
 
             make circle-setup
-            make clean
-      - run:
-          name: Build binary
-          command: |
-            #make clean
-            make all macos-package GRAALVM=$GRAALVM_HOME
-          no_output_timeout: 60m
+      #       make clean
+      # - run:
+      #     name: Build binary
+      #     command: |
+      #       #make clean
+      #       make all macos-package GRAALVM=$GRAALVM_HOME
+      #     no_output_timeout: 60m
       - run:
           name: Test running binary
           command: |
