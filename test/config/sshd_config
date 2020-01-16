@@ -10,6 +10,9 @@ Protocol 2
 PermitRootLogin prohibit-password
 PubkeyAuthentication yes
 
+AuthorizedKeysFile .ssh/authorized_keys
+
+
 # ListenAddress 0.0.0.0
 # #Port 22
 # Protocol 2 # disable legacy support for security reasons
