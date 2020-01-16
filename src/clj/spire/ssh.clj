@@ -187,6 +187,7 @@ keys.  All other option key pairs will be passed as SSH config options."
              be polled for connected status.
   "
   [^Session session ^String cmd in out opts]
+  (prn 'ssh-exec session cmd in out opts)
   (let [[^PipedOutputStream out-stream
          ^PipedInputStream out-inputstream] (streams-for-out out)
         [^PipedOutputStream err-stream
@@ -199,19 +200,21 @@ keys.  All other option key pairs will be passed as SSH config options."
                 :err err-stream}
                opts))
         ^ChannelExec exec (:channel proc)]
-    (if out-inputstream
-      {:channel exec
-       :out-stream out-inputstream
-       :err-stream err-inputstream}
-      (do (while (.isConnected exec)
-            (Thread/sleep 100))
-          {:exit (.getExitStatus exec)
-           :out (if (= :bytes out)
-                  (.toByteArray ^ByteArrayOutputStream out-stream)
-                  (.toString out-stream))
-           :err (if (= :bytes out)
-                  (.toByteArray ^ByteArrayOutputStream err-stream)
-                  (.toString err-stream))}))))
+    (let [res (if out-inputstream
+                {:channel exec
+                 :out-stream out-inputstream
+                 :err-stream err-inputstream}
+                (do (while (.isConnected exec)
+                      (Thread/sleep 100))
+                    {:exit (.getExitStatus exec)
+                     :out (if (= :bytes out)
+                            (.toByteArray ^ByteArrayOutputStream out-stream)
+                            (.toString out-stream))
+                     :err (if (= :bytes out)
+                            (.toByteArray ^ByteArrayOutputStream err-stream)
+                            (.toString err-stream))}))]
+      (prn "result:" res)
+      res)))
 
 (defn split-host-string [host-string]
   (if (.contains ^String host-string "@")
