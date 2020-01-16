@@ -133,11 +133,13 @@
 ;;  stat -c '%a' <file>
 ;;
 (defn mode [f]
-  (-> "stat -c '%%a' \"%s\""
-      (format f)
-      run
-      string/trim
-      ))
+  (->
+   ;;"stat -c '%%a' \"%s\""
+   "stat -f '%%OLp' \"%s\""
+   (format f)
+   run
+   string/trim
+   ))
 
 #_ (mode "project.clj")
 
