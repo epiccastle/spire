@@ -93,20 +93,20 @@
      (vec (string/split line #"\s+" 2)))))
 
 (utils/defmodule upload* [{:keys [src content dest
-                                 owner group mode attrs
-                                 dir-mode preserve recurse force]
-                          :as opts}]
+                                  owner group mode attrs
+                                  dir-mode preserve recurse force]
+                           :as opts}]
   [host-config session]
   (or
    (preflight opts)
    (let [run (fn [command]
                (let [{:keys [out exit err]}
                      (ssh/ssh-exec session command "" "UTF-8" {})]
-                 (comment)
-                 (println "command:" command)
-                 (println "exit:" exit)
-                 (println "out:" out)
-                 (println "err:" err)
+                 (comment
+                   (println "command:" command)
+                   (println "exit:" exit)
+                   (println "out:" out)
+                   (println "err:" err))
                  (if (zero? exit)
                    (string/trim out)
                    "")))
@@ -123,8 +123,8 @@
                  transfers (compare/compare-full-info (str content) run
                                                       dest
                                                       #_(if local-file?
-                                                        dest
-                                                        (io/file dest (.getName (io/file (str content))))))
+                                                          dest
+                                                          (io/file dest (.getName (io/file (str content))))))
                  {:keys [local local-to-remote identical-content remote]} transfers
                  total-size (->> local-to-remote
                                  (map (comp :size local))
@@ -137,10 +137,11 @@
                                         (map #(.getPath (io/file src %)))
                                         (into #{}))
                  ]
-             (prn "identical:" identical-content)
-             (prn "local:" local)
-             (prn "remote:" remote)
-             (prn "lkeys:" (keys local))
+             (comment
+               (prn "identical:" identical-content)
+               (prn "local:" local)
+               (prn "remote:" remote)
+               (prn "lkeys:" (keys local)))
 
              (cond
                (and remote-file? (not force))
