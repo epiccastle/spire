@@ -237,11 +237,11 @@
     new-paths))
 
 (defn process-lsb-release [lsb-out]
-  (let [res (->> lsb-out
-                 :out
-                 string/split-lines
-                 (map #(string/split % #":\t"))
-                 (into {}))]
+  (when-let [res (some->> lsb-out
+                     :out
+                     string/split-lines
+                     (map #(string/split % #":\t"))
+                     (into {}))]
     {:codename (-> "Codename" res string/lower-case keyword)
      :distro (-> "Distributor ID" res string/lower-case keyword)
      :release (res "Release")
