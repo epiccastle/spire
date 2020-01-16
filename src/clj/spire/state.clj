@@ -36,3 +36,4 @@
 (defn get-connections [] *connections*)
 
 (defn get-host-config [] *host-config*)
+(defn get-connection [] *connection*)
