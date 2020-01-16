@@ -126,7 +126,7 @@
     out))
 
 (defn uname []
-  (run "uname"))
+  (string/trim (run "uname")))
 
 ;;
 ;; You can get the value directly using a stat output format, e.g. BSD/OS X:
