@@ -10,7 +10,7 @@
 # PubkeyAuthentication yes
 
 ListenAddress 0.0.0.0
-Port 22
+#Port 22
 Protocol 2 # disable legacy support for security reasons
 StrictModes yes # make sure sshd checks file modes and ownership before accepting logins
 UsePrivilegeSeparation sandbox # Default for new installations.
@@ -51,3 +51,4 @@ Subsystem	sftp	/usr/libexec/sftp-server
 
 PermitRootLogin prohibit-password
 PubkeyAuthentication yes
+Port 2200
