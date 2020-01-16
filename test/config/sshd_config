@@ -37,7 +37,7 @@ AuthorizedKeysFile .ssh/authorized_keys
 
 PasswordAuthentication no
 PermitEmptyPasswords no
-ChallengeResponseAuthentication no
+#ChallengeResponseAuthentication no
 IgnoreRhosts yes
 IgnoreUserKnownHosts yes
 HostbasedAuthentication no
@@ -52,3 +52,4 @@ Subsystem	sftp	/usr/libexec/sftp-server
 PermitRootLogin prohibit-password
 PubkeyAuthentication yes
 Port 2200
+ChallengeResponseAuthentication yes
