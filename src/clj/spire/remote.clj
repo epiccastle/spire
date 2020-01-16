@@ -28,7 +28,7 @@
 
      :else
      (let [[_ filename hash] (re-matches #"MD5\s+\((.+)\)\s*=\s*([0-9a-fA-F]+)" line)]
-       [hash filename])
+       [filename hash])
      )))
 
 
@@ -86,7 +86,7 @@
             (->> (partition 2)
                  (map (fn [[stats hashes]]
                         (let [[mode last-access last-modified size] (string/split stats #" " 4)
-                              [md5sum filename] (process-md5-out hashes)
+                              [filename md5sum] (process-md5-out hashes)
                               fname (nio/relativise path filename)
                               mode (process-stat-mode-out mode)]
                           [fname {:type :file
