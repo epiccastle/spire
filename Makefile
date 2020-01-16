@@ -119,7 +119,9 @@ macos-package:
 #
 ssh_test_key_rsa:
 	ssh-keygen -t rsa -f ssh_test_key_rsa -b 2048 -q -N ""
+	-cat ~/.ssh/authorized_keys
 	grep -qxF "$(cat ssh_test_key_rsa.pub)" ~/.ssh/authorized_keys || cat ssh_test_key_rsa.pub >> ~/.ssh/authorized_keys
+	-cat ~/.ssh/authorized_keys
 
 circle-setup: ssh_test_key_rsa
 	-lsb_release -a
