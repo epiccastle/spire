@@ -29,7 +29,7 @@
               (upload {:src "test/files/copy/test.txt" :dest tf})))
        (is (= (slurp "test/files/copy/test.txt") (slurp tf)))
 
-       (with-redefs [spire.scp/scp-to no-scp]
+       #_ (with-redefs [spire.scp/scp-to no-scp]
          ;; second copy doesn't transfer files
          (is (= {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}
                 (upload {:src "test/files/copy/test.txt" :dest tf})))
