@@ -70,11 +70,11 @@
    (process-stat-mode-out (facts/os) mode-string))
   ([os mode-string]
    (cond
-     (#{:freebsd} os)
-     (subs mode-string (- (count mode-string) 3))
+     (#{:linux} os)
+     mode-string
 
      :else
-     mode-string)))
+     (subs mode-string (- (count mode-string) 3)))))
 
 (defn path-full-info [run path]
   (let [file-info
