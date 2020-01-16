@@ -153,16 +153,16 @@ jobs:
       #       #make clean
       #       make all macos-package GRAALVM=$GRAALVM_HOME
       #     no_output_timeout: 60m
-      - run:
-          name: Test running binary
-          command: |
-            ./spire -h
-          no_output_timeout: 1m
-      - run:
-          name: Dump .spire directory
-          command: |
-            ls -alFR ~/.spire
-          no_output_timeout: 1m
+      # - run:
+      #     name: Test running binary
+      #     command: |
+      #       ./spire -h
+      #     no_output_timeout: 1m
+      # - run:
+      #     name: Dump .spire directory
+      #     command: |
+      #       ls -alFR ~/.spire
+      #     no_output_timeout: 1m
 
       - save_cache:
           paths:
