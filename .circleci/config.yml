@@ -88,14 +88,6 @@ jobs:
             fi
             graalvm-ce-19.2.1/bin/gu install native-image
       - run:
-          name: Run MacOS tests
-          command: |
-            sudo apt-get -y install openssh-server
-            sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
-            sudo mkdir /run/sshd
-            make clean lib
-            make circle-setup
-      - run:
           name: Build binary
           command: |
             make copy-libs-to-resource clean all package-linux GRAALVM=$GRAALVM_HOME
@@ -141,14 +133,14 @@ jobs:
             fi
             $GRAALVM_HOME/bin/gu install native-image
       - run:
-          name: Run JVM tests
+          name: Run MacOS tests
           command: |
             make clean lib JAVA_HOME=$GRAALVM_HOME
             ls -alF
 
             make jar
             java -Djava.library.path="." -jar target/uberjar/spire-0.1.0-SNAPSHOT-standalone.jar -h
-            #make circle-setup
+            make circle-setup
             make clean
       - run:
           name: Build binary
