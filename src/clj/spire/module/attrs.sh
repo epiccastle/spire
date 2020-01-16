@@ -7,7 +7,7 @@ if [ "$RECURSE" ]; then
   fi
 
   FILE_STAT=$(find "$FILE" -exec stat -c '%u %g %a %n' {} \;)
-  FILE_ATTRS=$(find "$FILE" -exec lsattr {} \;)
+  #FILE_ATTRS=$(find "$FILE" -exec lsattr {} \;)
 
   if [ "$OWNER" ]; then
     find "$FILE" -exec chown "$OWNER" {} \;
@@ -29,14 +29,15 @@ if [ "$RECURSE" ]; then
     find "$FILE" -type d -exec chmod "$DIR_MODE" {} \;
   fi
 
-  if [ "$ATTRS" ]; then
-    find "$FILE" -exec chattr "$ATTRS" {} \;
-  fi
+  # if [ "$ATTRS" ]; then
+  #   find "$FILE" -exec chattr "$ATTRS" {} \;
+  # fi
 
   NEW_FILE_STAT=$(find "$FILE" -exec stat -c '%u %g %a %n' {} \;)
-  NEW_FILE_ATTRS=$(find "$FILE" -exec lsattr {} \;)
+  #NEW_FILE_ATTRS=$(find "$FILE" -exec lsattr {} \;)
 
-  if [ "$FILE_STAT" != "$NEW_FILE_STAT" ] || [ "$FILE_ATTRS" != "$NEW_FILE_ATTRS" ]; then
+  #if [ "$FILE_STAT" != "$NEW_FILE_STAT" ] || [ "$FILE_ATTRS" != "$NEW_FILE_ATTRS" ]; then
+  if [ "$FILE_STAT" != "$NEW_FILE_STAT" ]; then
     exit -1
   fi
 else
@@ -46,7 +47,7 @@ else
   fi
 
   FILE_STAT=$(stat -c '%u %g %a' "$FILE")
-  FILE_ATTRS=$(lsattr "$FILE" | awk '{print $1}')
+  #FILE_ATTRS=$(lsattr "$FILE" | awk '{print $1}')
 
   if [ "$OWNER" ]; then
     chown "$OWNER" "$FILE"
@@ -60,14 +61,15 @@ else
     chmod "$MODE" "$FILE"
   fi
 
-  if [ "$ATTRS" ]; then
-    chattr "$ATTRS" "$FILE"
-  fi
+  # if [ "$ATTRS" ]; then
+  #   chattr "$ATTRS" "$FILE"
+  # fi
 
   NEW_FILE_STAT=$(stat -c '%u %g %a' "$FILE")
-  NEW_FILE_ATTRS=$(lsattr "$FILE" | awk '{print $1}')
+  # NEW_FILE_ATTRS=$(lsattr "$FILE" | awk '{print $1}')
 
-  if [ "$FILE_STAT" != "$NEW_FILE_STAT" ] || [ "$FILE_ATTRS" != "$NEW_FILE_ATTRS" ]; then
+  # if [ "$FILE_STAT" != "$NEW_FILE_STAT" ] || [ "$FILE_ATTRS" != "$NEW_FILE_ATTRS" ]; then
+  if [ "$FILE_STAT" != "$NEW_FILE_STAT" ]; then
     exit -1
   fi
 fi
