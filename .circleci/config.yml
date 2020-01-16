@@ -132,6 +132,7 @@ jobs:
               tar xzf graalvm-ce-darwin-amd64-19.2.1.tar.gz
             fi
             $GRAALVM_HOME/bin/gu install native-image
+          no_output_timeout: 30m
       - run:
           name: Run MacOS tests
           command: |
