@@ -45,7 +45,7 @@ else
     exit 1
   fi
 
-  FILE_STAT=$(stat -c '%u %g %p' "$FILE")
+  FILE_STAT=$(stat -f '%u %g %p' "$FILE")
   FILE_ATTRS=$(lsattr "$FILE" | awk '{print $1}')
 
   if [ "$OWNER" ]; then
