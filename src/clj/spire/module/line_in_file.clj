@@ -211,11 +211,11 @@
 (utils/defmodule line-in-file* [command & [{:keys [path regexp line after before]
                                            :as opts}]]
   [host-string session ]
-  (println "line-in-file*" (make-script command opts))
+  ;;(println "line-in-file*" (make-script command opts))
   (or
    (preflight command opts)
    (->>
-    (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
+    (ssh/ssh-exec session "bash" (make-script command opts) "UTF-8" {})
     (process-result command opts))))
 
 (defmacro line-in-file [& args]
