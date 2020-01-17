@@ -75,11 +75,13 @@
            (is (= (test-utils/run
                     (format "cd \"%s/localhost/files\" && find . -exec %s {} \\;"
                             tf
-                            (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"])))
+                            (test-utils/make-stat-command ["%s" "%a" ;;"%Y" "%X"
+                                                           "%F" "%n"])))
                   (test-utils/ssh-run
                    (format "cd \"%s\" && find . -exec %s {} \\;"
                            test-dir
-                           (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"]))))))
+                           (test-utils/make-stat-command ["%s" "%a" ;;"%Y" "%X"
+                                                          "%F" "%n"]))))))
 
          ;; copy with preserve to begin with
          (test-utils/makedirs tf2)
@@ -88,11 +90,13 @@
          (is (= (test-utils/run
                   (format "cd \"%s/localhost/files\" && find . -exec %s {} \\;"
                           tf2
-                          (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"])))
+                          (test-utils/make-stat-command ["%s" "%a" ;;"%Y" "%X"
+                                                         "%F" "%n"])))
                 (test-utils/ssh-run
                  (format "cd \"%s\" && find . -exec %s {} \\;"
                          test-dir
-                         (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"])))))
+                         (test-utils/make-stat-command ["%s" "%a" ;;"%Y" "%X"
+                                                        "%F" "%n"])))))
          (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type f -exec md5sum {} \\;" tf2))
                 (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" test-dir))))
 
