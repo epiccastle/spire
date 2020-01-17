@@ -102,6 +102,19 @@
     )
   )
 
+(defn timestamp->touch-bsd [ts]
+  (let [datetime (coerce/from-epoch ts)
+        year (time/year datetime)
+        month (time/month datetime)
+        day (time/day datetime)
+        hour (time/hour datetime)
+        minute (time/minute datetime)
+        second (time/second datetime)
+        ]
+    (format "%d%02d%02%02d%02d%02d" year month day hour minute second)
+    )
+  )
+
 #_ (timestamp->touch 1514779200)
 
 (defn set-last-modified-time [file ts]
