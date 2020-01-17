@@ -121,7 +121,6 @@
 
 (defn run [command]
   (let [{:keys [exit err out]} (shell/sh "bash" "-c" command)]
-    (prn 'run command exit err out)
     (assert (zero? exit) (format "%s failed: %d\nerr: %s\nout: %s\n" command exit err out))
     out))
 
