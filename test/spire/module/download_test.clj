@@ -82,10 +82,10 @@
                            (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"]))))))
 
          ;; copy with preserve to begin with
-         #_(test-utils/makedirs tf2)
-         #_(is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+         (test-utils/makedirs tf2)
+         (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (download {:src test-dir :dest tf2 :recurse true :preserve true})))
-         #_(is (= (test-utils/run
+         (is (= (test-utils/run
                   (format "cd \"%s/localhost/files\" && find . -exec %s {} \\;"
                           tf2
                           (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"])))
@@ -93,17 +93,17 @@
                  (format "cd \"%s\" && find . -exec %s {} \\;"
                          test-dir
                          (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"])))))
-         #_(is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type f -exec md5sum {} \\;" tf2))
+         (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type f -exec md5sum {} \\;" tf2))
                 (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" test-dir))))
 
          ;; download single file into a directory
-         #_(test-utils/makedirs tf3)
-         #_(is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+         (test-utils/makedirs tf3)
+         (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (download {:src (io/file test-dir "copy/test.txt") :dest tf3})))
-         #_(is (= (slurp (io/file test-dir "copy/test.txt"))
+         (is (= (slurp (io/file test-dir "copy/test.txt"))
                 (slurp (io/file tf3 "localhost/test.txt"))))
 
-         #_(with-redefs [spire.scp/scp-from no-scp]
+         (with-redefs [spire.scp/scp-from no-scp]
            (is (= {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}
                   (download {:src (io/file test-dir "copy/test.txt") :dest tf3})))
            (is (= (slurp (io/file test-dir "copy/test.txt"))
