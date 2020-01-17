@@ -74,8 +74,8 @@
 
        ;; recopy dir but with :preserve
        (with-redefs [spire.scp/scp-to no-scp]
-           (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
-                    (upload {:src "test/files" :dest tf :recurse true :force true :preserve true})))
+         (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
+                (upload {:src "test/files" :dest tf :recurse true :force true :preserve true})))
          (is (= (test-utils/run (format "cd test/files && find . -exec %s {} \\;" (test-utils/make-stat-command ["%s" "%a" #_ "%Y" ;; mac doesnt presently set last modified correctyl here! TODO: write attr/ tests
                                                                                                                  "%X" "%F" "%n"])))
                 (test-utils/ssh-run (format "cd \"%s\" && find . -exec %s {} \\;" tf (test-utils/make-stat-command ["%s" "%a" #_ "%Y"
@@ -83,42 +83,48 @@
 
        ;; preserve copy from scratch
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
-                (upload {:src "test/files" :dest tf2 :recurse true :preserve true})))
+              (upload {:src "test/files" :dest tf2 :recurse true :preserve true})))
        (is (= (test-utils/run (format "cd test/files && find . -exec %s {} \\;" (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"])))
-                (test-utils/ssh-run (format "cd \"%s\" && find . -exec %s {} \\;" tf2 (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"])))))
+              (test-utils/ssh-run (format "cd \"%s\" && find . -exec %s {} \\;" tf2 (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"])))))
 
        ;; mode and dir-mode from scratch
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
-                (upload {:src "test/files" :dest tf3 :recurse true :mode 0666 :dir-mode 0777})))
+              (upload {:src "test/files" :dest tf3 :recurse true :mode 0666 :dir-mode 0777})))
        (is (= (test-utils/run (format "cd test/files && find . -type f -exec %s {} \\;" (test-utils/make-stat-command ["%s" "666" "%F" "%n"])))
-                (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec %s {} \\;" tf3 (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))))
+              (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec %s {} \\;" tf3 (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))))
        (is (= (test-utils/run (format "cd test/files && find . -type d -exec %s {} \\;" (test-utils/make-stat-command ["%s" "777" "%F" "%n"])))
-                (test-utils/ssh-run (format "cd \"%s\" && find . -type d -exec %s {} \\;" tf3 (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))))
+              (test-utils/ssh-run (format "cd \"%s\" && find . -type d -exec %s {} \\;" tf3 (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))))
 
-       #_(with-redefs [spire.scp/scp-to no-scp]
-           ;; redo copy but change mode and dir-mode
-           #_(is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
-                    (upload {:src "test/files" :dest tf3 :recurse true :mode 0644 :dir-mode 0755})))
-           #_(is (= (test-utils/run "cd test/files && find . -type f -exec stat -c \"%s 644 %F %n\" {} \\;")
-                    (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf3))))
-           #_(is (= (test-utils/run "cd test/files && find . -type d -exec stat -c \"%s 755 %F %n\" {} \\;")
-                    (test-utils/ssh-run (format "cd \"%s\" && find . -type d -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf3))))
-           )
+       (with-redefs [spire.scp/scp-to no-scp]
+         ;; redo copy but change mode and dir-mode
+         (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
+                (upload {:src "test/files" :dest tf3 :recurse true :mode 0644 :dir-mode 0755})))
+         (is (= (test-utils/run (format "cd test/files && find . -type f -exec %s {} \\;"
+                                        (test-utils/make-stat-command ["%s" "644" "%F" "%n"])))
+                (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec %s {} \\;"
+                                            tf3
+                                            (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])
+                                            ))))
+         (is (= (test-utils/run (format "cd test/files && find . -type d -exec %s {} \\;"
+                                        (test-utils/make-stat-command ["%s" "755" "%F" "%n"])))
+                (test-utils/ssh-run (format "cd \"%s\" && find . -type d -exec %s {} \\;"
+                                            tf3
+                                            (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])
+                                            ))))
+         )
 
        ;; copy with unexecutable directory
-
-       #_(is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
-                (upload {:src "test/files" :dest tf4 :recurse true :mode 0 :dir-mode 0})))
+       (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+              (upload {:src "test/files" :dest tf4 :recurse true :mode 0 :dir-mode 0})))
        ;; will need root just to check this directory
+       #_ (transport/ssh
+        {:host-string "root@localhost:2200"
+         :strict-host-key-checking "no"}
 
-       #_(transport/ssh
-          {:host-string "root@localhost:2200"
-           :strict-host-key-checking "no"}
-
-          (is (= (test-utils/run "cd test/files && find . -exec stat -c \"%s 0 %F %n\" {} \\;")
-                 (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf4))))
-          ;; the with-temp-file-names macro wont be able to delete this, so lets do it now while we are root
-          ;; TODO: when implementing testing on another target system, the with-temp-file-names could
-          ;; be made to do remote deletion
-          (test-utils/ssh-run (format "rm -rf \"%s\"" tf4))))))
+        (is (= (test-utils/run "cd test/files && find . -exec stat -c \"%s 0 %F %n\" {} \\;")
+               (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf4))))
+        ;; the with-temp-file-names macro wont be able to delete this, so lets do it now while we are root
+        ;; TODO: when implementing testing on another target system, the with-temp-file-names could
+        ;; be made to do remote deletion
+        (test-utils/ssh-run (format "rm -rf \"%s\"" tf4))))))
   )
