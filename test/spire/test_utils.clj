@@ -169,4 +169,4 @@
 (defn make-stat-command [linux-args]
   (if (= "Linux" (uname))
     (format "stat -c '%s'" (string/join " " linux-args))
-    (format "stat -f '%s'" (string/join " " (map stat-linux->bsd linux-args)))))
+    (format "stat -f '%s'" (string/join " " (map #(stat-linux->bsd % %) linux-args)))))

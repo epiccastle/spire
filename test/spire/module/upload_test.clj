@@ -88,9 +88,9 @@
        ;; mode and dir-mode from scratch
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (upload {:src "test/files" :dest tf3 :recurse true :mode 0666 :dir-mode 0777})))
-       (is (= (test-utils/run (format "cd test/files && find . -type f -exec %s {} \\;" (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))
+       (is (= (test-utils/run (format "cd test/files && find . -type f -exec %s {} \\;" (test-utils/make-stat-command ["%s" "666" "%F" "%n"])))
                 (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec %s {} \\;" tf3 (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))))
-       (is (= (test-utils/run (format "cd test/files && find . -type d -exec %s {} \\;" (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))
+       (is (= (test-utils/run (format "cd test/files && find . -type d -exec %s {} \\;" (test-utils/make-stat-command ["%s" "777" "%F" "%n"])))
                 (test-utils/ssh-run (format "cd \"%s\" && find . -type d -exec %s {} \\;" tf3 (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))))
 
        #_(with-redefs [spire.scp/scp-to no-scp]
