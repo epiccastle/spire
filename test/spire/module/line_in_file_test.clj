@@ -608,13 +608,14 @@ new line
       )))
 
 
-#_ (deftest line-in-file-absent-test
+(deftest line-in-file-absent-test
   (testing "line-in-file :absent by line-num"
     (transport/ssh
      test-config/localhost
-     (is (=
-          (line-in-file :absent {:path "test/files/line-in-file/missing-file" :line-num 3})
-          {:exit 1 :out "" :err "File not found." :result :failed}))
+     (try
+       (line-in-file :absent {:path "test/files/line-in-file/missing-file" :line-num 3})
+       (catch clojure.lang.ExceptionInfo e
+         (is (= (ex-data e) {:exit 1 :out "" :err "File not found." :result :failed}))))
 
      (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
        (is (=
