@@ -155,3 +155,16 @@
 
 (defn makedirs [path]
   (.mkdirs (io/file path)))
+
+(def stat-linux->bsd
+  {
+   "%s" "%z"        ;; file size
+   "%F" "%OMp"      ;; File type
+   "%n" "%N"        ;; file name
+
+   })
+
+(defn make-stat-command [linux-args]
+  (if (= "Linux" (uname))
+    (format "stat -c '%s'" (string/join " " linux-args))
+    (format "stat -f '%s'" (string/join " " (map stat-linux->bsd linux-args)))))
