@@ -79,8 +79,8 @@
 
 (defn set-attrs-preserve [session src dest]
   (let [script (make-preserve-script (create-attribute-list src) dest)]
-    (prn 'set-attrs-preserve session src dest)
-    (println script)
+    ;;(prn 'set-attrs-preserve session src dest)
+    ;;(println script)
     (ssh/ssh-exec
      session
      script
