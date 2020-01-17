@@ -117,7 +117,7 @@
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
               (upload {:src "test/files" :dest tf4 :recurse true :mode 0 :dir-mode 0})))
        ;; will need root just to check this directory
-       #_ (transport/ssh
+       (transport/ssh
         {:host-string "root@localhost:2200"
          :strict-host-key-checking "no"}
 
