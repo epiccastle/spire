@@ -91,12 +91,12 @@
 
 (defn timestamp->touch [ts]
   (let [datetime (coerce/from-epoch (int ts))
-        year (time/year datetime)
-        month (time/month datetime)
-        day (time/day datetime)
-        hour (time/hour datetime)
-        minute (time/minute datetime)
-        second (time/second datetime)
+        year (int (time/year datetime))
+        month (int (time/month datetime))
+        day (int (time/day datetime))
+        hour (int (time/hour datetime))
+        minute (int (time/minute datetime))
+        second (int (time/second datetime))
         ]
     (format "%d-%02d-%02d %02d:%02d:%02d.000000000 +0000" year month day hour minute second)
     )
