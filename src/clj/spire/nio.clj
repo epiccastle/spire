@@ -111,7 +111,7 @@
         minute (time/minute datetime)
         second (time/second datetime)
         ]
-    (format "%d%02d%02%02d%02d%02d" year month day hour minute second)
+    (format "%d%02d%02%d02d%02d%02d" year month day hour minute second)
     )
   )
 
