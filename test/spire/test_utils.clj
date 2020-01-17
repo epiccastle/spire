@@ -170,3 +170,9 @@
   (if (= "Linux" (uname))
     (format "stat -c '%s'" (string/join " " linux-args))
     (format "stat -f '%s'" (string/join " " (map #(stat-linux->bsd % %) linux-args)))))
+
+(defn make-md5-command []
+  (if (= "Linux" (uname))
+    "md5sum"
+    "md5")
+  )

@@ -71,7 +71,7 @@
 
 (utils/defmodule download* [{:keys [src dest recurse preserve flat
                                    dir-mode mode owner group attrs] :as opts}]
-  [host-string session]
+  [host-config session]
   (or
    (preflight opts)
    (let [run (fn [command]
@@ -84,7 +84,7 @@
          local-file? (local/is-file? dest)
          remote-file? (remote/is-file? run src)
 
-         destination (if flat (io/file dest) (io/file dest host-string))
+         destination (if flat (io/file dest) (io/file dest (name (:key host-config))))
 
          {:keys [remote-to-local identical-content local remote] :as comparison}
          (compare/compare-full-info
@@ -101,7 +101,7 @@
 
          progress-fn (fn [file bytes total frac context]
                        (output/print-progress
-                        host-string
+                        host-config
                         (utils/progress-stats
                          file bytes total frac
                          all-files-total

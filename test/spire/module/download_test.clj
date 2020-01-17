@@ -10,7 +10,8 @@
             [spire.state :as state]
             [spire.config :as config]
             [clojure.java.io :as io]
-            [spire.test-utils :as test-utils]))
+            [spire.test-utils :as test-utils]
+            [spire.test-config :as test-config]))
 
 (clojure.lang.RT/loadLibrary "spire")
 
@@ -22,55 +23,87 @@
     (assert (zero? exit))
     (string/trim out)))
 
-#_ (pwd)
-
-#_(deftest download-test
+(deftest download-test
   (testing "download test"
     (let [test-dir (str (io/file (pwd) "test/files"))]
       (test-utils/with-temp-file-names [tf tf2 tf3]
         (test-utils/makedirs tf)
         (transport/ssh
-         "localhost"
+         test-config/localhost
          ;; copy directory recursively
          (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (download {:src test-dir :dest tf :recurse true})))
-         (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -exec stat -c \"%%s %%F %%n\" {} \\;" tf))
-                (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%F %%n\" {} \\;" test-dir))))
-         (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type f -exec md5sum {} \\;" tf))
-                (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" test-dir))))
+         (is (= (test-utils/run
+                  (format "cd \"%s/localhost/files\" && find . -exec %s {} \\;"
+                          tf (test-utils/make-stat-command ["%s" "%F" "%n"])))
+                (test-utils/ssh-run
+                 (format "cd \"%s\" && find . -exec %s {} \\;"
+                         test-dir (test-utils/make-stat-command ["%s" "%F" "%n"])))))
+         (is (= (test-utils/run
+                  (format "cd \"%s/localhost/files\" && find . -type f -exec %s {} \\;"
+                          tf
+                          (test-utils/make-md5-command)))
+                (test-utils/ssh-run
+                 (format "cd \"%s\" && find . -type f -exec %s {} \\;"
+                         test-dir
+                         (test-utils/make-md5-command)))))
 
-         (with-redefs [spire.scp/scp-from no-scp]
+         #_(with-redefs [spire.scp/scp-from no-scp]
            ;; reset attrs with hard coded mode and dir-mode
            (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
                   (download {:src test-dir :dest tf :recurse true :dir-mode 0777 :mode 0666})))
-           (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type f -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf))
-                  (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec stat -c \"%%s 666 %%F %%n\" {} \\;" test-dir))))
-           (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type d -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf))
-                  (test-utils/ssh-run (format "cd \"%s\" && find . -type d -exec stat -c \"%%s 777 %%F %%n\" {} \\;" test-dir))))
+           (is (= (test-utils/run
+                    (format "cd \"%s/localhost/files\" && find . -type f -exec %s {} \\;"
+                            tf
+                            (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))
+                  (test-utils/ssh-run
+                   (format "cd \"%s\" && find . -type f -exec %s {} \\;"
+                           test-dir
+                           (test-utils/make-stat-command ["%s" "666" "%F" "%n"])))))
+           (is (= (test-utils/run
+                    (format "cd \"%s/localhost/files\" && find . -type d -exec %s {} \\;"
+                            tf
+                            (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))
+                  (test-utils/ssh-run
+                   (format "cd \"%s\" && find . -type d -exec %s {} \\;"
+                           test-dir
+                           (test-utils/make-stat-command ["%s" "777" "%F" "%n"])))))
 
            ;; reset attrs with :preserve
            (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
                   (download {:src test-dir :dest tf :recurse true :preserve true})))
-           (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf))
-                  (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" test-dir)))))
+           (is (= (test-utils/run
+                    (format "cd \"%s/localhost/files\" && find . -exec %s {} \\;"
+                            tf
+                            (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"])))
+                  (test-utils/ssh-run
+                   (format "cd \"%s\" && find . -exec %s {} \\;"
+                           test-dir
+                           (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"]))))))
 
          ;; copy with preserve to begin with
-         (test-utils/makedirs tf2)
-         (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+         #_(test-utils/makedirs tf2)
+         #_(is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (download {:src test-dir :dest tf2 :recurse true :preserve true})))
-         (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf2))
-                (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" test-dir))))
-         (is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type f -exec md5sum {} \\;" tf2))
+         #_(is (= (test-utils/run
+                  (format "cd \"%s/localhost/files\" && find . -exec %s {} \\;"
+                          tf2
+                          (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"])))
+                (test-utils/ssh-run
+                 (format "cd \"%s\" && find . -exec %s {} \\;"
+                         test-dir
+                         (test-utils/make-stat-command ["%s" "%a" "%Y" "%X" "%F" "%n"])))))
+         #_(is (= (test-utils/run (format "cd \"%s/localhost/files\" && find . -type f -exec md5sum {} \\;" tf2))
                 (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" test-dir))))
 
          ;; download single file into a directory
-         (test-utils/makedirs tf3)
-         (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+         #_(test-utils/makedirs tf3)
+         #_(is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (download {:src (io/file test-dir "copy/test.txt") :dest tf3})))
-         (is (= (slurp (io/file test-dir "copy/test.txt"))
+         #_(is (= (slurp (io/file test-dir "copy/test.txt"))
                 (slurp (io/file tf3 "localhost/test.txt"))))
 
-         (with-redefs [spire.scp/scp-from no-scp]
+         #_(with-redefs [spire.scp/scp-from no-scp]
            (is (= {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}
                   (download {:src (io/file test-dir "copy/test.txt") :dest tf3})))
            (is (= (slurp (io/file test-dir "copy/test.txt"))
@@ -78,5 +111,7 @@
 
            (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
                   (download {:src (io/file test-dir "copy/test.txt") :dest tf3 :mode 0666})))
-           (is (= (string/trim (test-utils/run (format "stat -c \"%%s %%a\" \"%s/localhost/test.txt\"" tf3)))
+           (is (= (string/trim (test-utils/run (format "%s \"%s/localhost/test.txt\""
+                                                       (test-utils/make-stat-command ["%s" "%a"])
+                                                       tf3)))
                   "43 666"))))))))
