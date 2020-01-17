@@ -62,14 +62,16 @@
                          (format
                           "set_file %o %d %s %d %s %s"
                           mode
-                          access (utils/double-quote
-                                  (facts/on-os
-                                   :linux (nio/timestamp->touch access)
-                                   :else (nio/timestamp->touch-bsd access)))
-                          modified (utils/double-quote
-                                    (facts/on-os
-                                     :linux (nio/timestamp->touch modified)
-                                     :else (nio/timestamp->touch-bsd modified)))
+                          access
+                          (utils/double-quote
+                           (facts/on-os
+                            :linux (nio/timestamp->touch access)
+                            :else (nio/timestamp->touch-bsd access)))
+                          modified
+                          (utils/double-quote
+                           (facts/on-os
+                            :linux (nio/timestamp->touch modified)
+                            :else (nio/timestamp->touch-bsd modified)))
                           (utils/path-quote filename)))
                        ["exit $EXIT"])
         script-string (string/join "\n" script)]

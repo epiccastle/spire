@@ -33,15 +33,17 @@
 
 (defn last-access-time [file]
   (let [p (.toPath (io/file file))]
-    (/ (.toMillis (.lastAccessTime (Files/readAttributes p  java.nio.file.attribute.BasicFileAttributes empty-link-options)))
-       1000)))
+    (int
+     (/ (.toMillis (.lastAccessTime (Files/readAttributes p  java.nio.file.attribute.BasicFileAttributes empty-link-options)))
+        1000))))
 
 #_ (last-access-time ".")
 
 (defn last-modified-time [file]
   (let [p (.toPath (io/file file))]
-    (/ (.toMillis (.lastModifiedTime (Files/readAttributes p  java.nio.file.attribute.BasicFileAttributes empty-link-options)))
-       1000)))
+    (int
+     (/ (.toMillis (.lastModifiedTime (Files/readAttributes p  java.nio.file.attribute.BasicFileAttributes empty-link-options)))
+        1000))))
 
 #_ (last-modified-time ".")
 
@@ -91,12 +93,12 @@
 
 (defn timestamp->touch [ts]
   (let [datetime (coerce/from-epoch (int ts))
-        year (int (time/year datetime))
-        month (int (time/month datetime))
-        day (int (time/day datetime))
-        hour (int (time/hour datetime))
-        minute (int (time/minute datetime))
-        second (int (time/second datetime))
+        year (time/year datetime)
+        month (time/month datetime)
+        day (time/day datetime)
+        hour (time/hour datetime)
+        minute (time/minute datetime)
+        second (time/second datetime)
         ]
     (format "%d-%02d-%02d %02d:%02d:%02d.000000000 +0000" year month day hour minute second)
     )
