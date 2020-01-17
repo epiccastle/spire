@@ -85,7 +85,7 @@
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
               (upload {:src "test/files" :dest tf2 :recurse true :preserve true})))
        (is (= (test-utils/run (format "cd test/files && find . -exec %s {} \\;" (test-utils/make-stat-command ["%s" "%a" "%Y" #_"%X" "%F" "%n"])))
-              (test-utils/ssh-run (format "cd \"%s\" && find . -exec %s {} \\;" tf2 (test-utils/make-stat-command ["%s" "%a" #_"%Y" "%X" "%F" "%n"])))))
+              (test-utils/ssh-run (format "cd \"%s\" && find . -exec %s {} \\;" tf2 (test-utils/make-stat-command ["%s" "%a" "%Y" #_ "%X" "%F" "%n"])))))
 
        ;; mode and dir-mode from scratch
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
