@@ -48,7 +48,7 @@
                          test-dir
                          (test-utils/make-md5-command)))))
 
-         #_(with-redefs [spire.scp/scp-from no-scp]
+         (with-redefs [spire.scp/scp-from no-scp]
            ;; reset attrs with hard coded mode and dir-mode
            (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
                   (download {:src test-dir :dest tf :recurse true :dir-mode 0777 :mode 0666})))
