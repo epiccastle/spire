@@ -195,7 +195,8 @@
 
 (utils/defmodule line-in-file* [command & [{:keys [path regexp line after before]
                                            :as opts}]]
-  [host-string session]
+  [host-string session ]
+  (println "line-in-file*" (make-script command opts))
   (or
    (preflight command opts)
    (->>
