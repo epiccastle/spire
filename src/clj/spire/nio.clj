@@ -90,7 +90,7 @@
 #_ (create-file "foo" 0755)
 
 (defn timestamp->touch [ts]
-  (let [datetime (coerce/from-epoch ts)
+  (let [datetime (coerce/from-epoch (int ts))
         year (time/year datetime)
         month (time/month datetime)
         day (time/day datetime)
