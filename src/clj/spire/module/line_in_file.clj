@@ -108,11 +108,17 @@
            :err "must specify :regexp or :line-num")))
 
 (defmethod make-script :absent [_ {:keys [path regexp line-num]}]
-  (utils/make-script
-   "line_in_file_absent.sh"
-   {:REGEX (some->> regexp utils/re-pattern-to-sed)
-    :FILE (some->> path utils/path-escape)
-    :LINENUM line-num}))
+  (facts/on-os
+   :linux (utils/make-script
+         "line_in_file_absent.sh"
+         {:REGEX (some->> regexp utils/re-pattern-to-sed)
+          :FILE (some->> path utils/path-escape)
+          :LINENUM line-num})
+   :else (utils/make-script
+         "line_in_file_absent_bsd.sh"
+         {:REGEX (some->> regexp utils/re-pattern-to-sed)
+          :FILE (some->> path utils/path-escape)
+          :LINENUM line-num})))
 
 (defmethod process-result :absent
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
