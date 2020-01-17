@@ -161,7 +161,9 @@
    "%s" "%z"        ;; file size
    "%F" "%OMp"      ;; File type
    "%n" "%N"        ;; file name
-
+   "%a" "%OLp"      ;; access rights
+   "%X" "%a"        ;; last access seconds since epoch
+   "%Y" "%m"        ;; last modified seconds since epoch
    })
 
 (defn make-stat-command [linux-args]
