@@ -69,31 +69,28 @@
                (format "cd \"%s\" && find . -exec %s {} \\;"
                        tf
                        (test-utils/make-stat-command ["%s" "%F" "%n"])))))
-       #_(is (= (test-utils/run "cd test/files && find . -type f -exec md5sum {} \\;")
+       (is (= (test-utils/run "cd test/files && find . -type f -exec md5sum {} \\;")
               (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" tf))))
 
        ;; recopy dir but with :preserve
-
-       #_(with-redefs [spire.scp/scp-to no-scp]
-           #_(is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
+       (with-redefs [spire.scp/scp-to no-scp]
+           (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
                     (upload {:src "test/files" :dest tf :recurse true :force true :preserve true})))
-           #_(is (= (test-utils/run "cd test/files && find . -exec stat -c \"%s %a %Y %X %F %n\" {} \\;")
+           (is (= (test-utils/run "cd test/files && find . -exec stat -c \"%s %a %Y %X %F %n\" {} \\;")
                     (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf)))))
 
        ;; preserve copy from scratch
-
-       #_(is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+       (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (upload {:src "test/files" :dest tf2 :recurse true :preserve true})))
-       #_(is (= (test-utils/run "cd test/files && find . -exec stat -c \"%s %a %Y %X %F %n\" {} \\;")
+       (is (= (test-utils/run "cd test/files && find . -exec stat -c \"%s %a %Y %X %F %n\" {} \\;")
                 (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%Y %%X %%F %%n\" {} \\;" tf2))))
 
        ;; mode and dir-mode from scratch
-
-       #_(is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+       (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (upload {:src "test/files" :dest tf3 :recurse true :mode 0666 :dir-mode 0777})))
-       #_(is (= (test-utils/run "cd test/files && find . -type f -exec stat -c \"%s 666 %F %n\" {} \\;")
+       (is (= (test-utils/run "cd test/files && find . -type f -exec stat -c \"%s 666 %F %n\" {} \\;")
                 (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf3))))
-       #_(is (= (test-utils/run "cd test/files && find . -type d -exec stat -c \"%s 777 %F %n\" {} \\;")
+       (is (= (test-utils/run "cd test/files && find . -type d -exec stat -c \"%s 777 %F %n\" {} \\;")
                 (test-utils/ssh-run (format "cd \"%s\" && find . -type d -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf3))))
 
        #_(with-redefs [spire.scp/scp-to no-scp]
