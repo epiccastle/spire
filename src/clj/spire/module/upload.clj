@@ -102,11 +102,11 @@
    (let [run (fn [command]
                (let [{:keys [out exit err]}
                      (ssh/ssh-exec session command "" "UTF-8" {})]
-                 (comment
-                   (println "command:" command)
-                   (println "exit:" exit)
-                   (println "out:" out)
-                   (println "err:" err))
+                 (comment)
+                 (println "command:" command)
+                 (println "exit:" exit)
+                 (println "out:" out)
+                 (println "err:" err)
                  (if (zero? exit)
                    (string/trim out)
                    "")))
@@ -137,11 +137,11 @@
                                         (map #(.getPath (io/file src %)))
                                         (into #{}))
                  ]
-             (comment
-               (prn "identical:" identical-content)
-               (prn "local:" local)
-               (prn "remote:" remote)
-               (prn "lkeys:" (keys local)))
+             (comment)
+             (prn "identical:" identical-content)
+             (prn "local:" local)
+             (prn "remote:" remote)
+             (prn "lkeys:" (keys local))
 
              (cond
                (and remote-file? (not force))
@@ -201,6 +201,8 @@
                  ;; _ (println "l:" local-md5 "r:" remote-md5)
                  ;; _ (do (println "\n\n\n"))
                  ]
+             (prn "local-md5:" local-md5)
+             (prn "remote-md5:" remote-md5)
              (scp-result
               (when (not= local-md5 remote-md5)
                 (scp/scp-to session content dest
