@@ -63,11 +63,11 @@
                           "set_file %o %d %s %d %s %s"
                           mode
                           access (utils/double-quote
-                                  (fact/on-os
+                                  (facts/on-os
                                    :linux (nio/timestamp->touch access)
                                    :else (nio/timestamp->touch-bsd access)))
                           modified (utils/double-quote
-                                    (fact/on-os
+                                    (facts/on-os
                                      :linux (nio/timestamp->touch modified)
                                      :else (nio/timestamp->touch-bsd modified)))
                           (utils/path-quote filename)))
