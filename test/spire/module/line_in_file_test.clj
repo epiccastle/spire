@@ -106,7 +106,7 @@
            :line-nums []
            :lines []
            :matches {}}))
-     #_ (is (=
+     (is (=
           (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains" :match :all})
           {:exit 0
            :result :ok
@@ -133,34 +133,34 @@
                      18 "This is line #18 and it contains a | character"
                      19 "This is line #19 and it contains a [ character"}}))
      #_ (is (=
-          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains" :match :first})
-          {:exit 0
-           :result :ok
-           :line-num 2
-           :line "This is line #2 and it contains a \\ character"
-           :line-nums [2]
-           :lines ["This is line #2 and it contains a \\ character"]
-           :matches {2 "This is line #2 and it contains a \\ character"}}))
+             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains" :match :first})
+             {:exit 0
+              :result :ok
+              :line-num 2
+              :line "This is line #2 and it contains a \\ character"
+              :line-nums [2]
+              :lines ["This is line #2 and it contains a \\ character"]
+              :matches {2 "This is line #2 and it contains a \\ character"}}))
 
      ;; default for :match is :first
      #_ (is (=
-          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains"})
-          {:exit 0
-           :result :ok
-           :line-num 2
-           :line "This is line #2 and it contains a \\ character"
-           :line-nums [2]
-           :lines ["This is line #2 and it contains a \\ character"]
-           :matches {2 "This is line #2 and it contains a \\ character"}}))
+             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains"})
+             {:exit 0
+              :result :ok
+              :line-num 2
+              :line "This is line #2 and it contains a \\ character"
+              :line-nums [2]
+              :lines ["This is line #2 and it contains a \\ character"]
+              :matches {2 "This is line #2 and it contains a \\ character"}}))
      #_ (is (=
-          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains" :match :last})
-          {:exit 0
-           :result :ok
-           :line-num 19
-           :line "This is line #19 and it contains a [ character"
-           :line-nums [19]
-           :lines ["This is line #19 and it contains a [ character"]
-           :matches {19 "This is line #19 and it contains a [ character"}})))))
+             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains" :match :last})
+             {:exit 0
+              :result :ok
+              :line-num 19
+              :line "This is line #19 and it contains a [ character"
+              :line-nums [19]
+              :lines ["This is line #19 and it contains a [ character"]
+              :matches {19 "This is line #19 and it contains a [ character"}})))))
 
 
 #_ (deftest line-in-file-present-test
