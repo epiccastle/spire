@@ -85,12 +85,12 @@
    (process-md5-out (facts/get-fact [:system :os]) line))
   ([os line]
    (cond
-     (#{:freebsd} os)
-     (let [[_ filename hash] (re-matches #"MD5\s+\((.+)\)\s*=\s*([0-9a-fA-F]+)" line)]
-       [hash filename])
+     (#{:linux} os)
+     (vec (string/split line #"\s+" 2))
 
      :else
-     (vec (string/split line #"\s+" 2)))))
+     (let [[_ filename hash] (re-matches #"MD5\s+\((.+)\)\s*=\s*([0-9a-fA-F]+)" line)]
+       [hash filename])     )))
 
 (utils/defmodule upload* [{:keys [src content dest
                                   owner group mode attrs
