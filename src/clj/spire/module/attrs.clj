@@ -70,8 +70,11 @@
     (str header "\n" script-string)))
 
 (defn set-attrs-preserve [session src dest]
-  (ssh/ssh-exec
-   session
-   (make-preserve-script (create-attribute-list src) dest)
-   "" "UTF-8" {})
+  (let [script (make-preserve-script (create-attribute-list src) dest)]
+    (prn 'set-attrs-preserve session src dest)
+    (println script)
+    (ssh/ssh-exec
+     session
+     script
+     "" "UTF-8" {}))
   )
