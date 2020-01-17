@@ -3,6 +3,7 @@
             [spire.state :as state]
             [spire.transport :as transport]
             [spire.ssh :as ssh]
+            [spire.facts :as facts]
             [spire.utils :as utils]
             [clojure.string :as string]))
 
@@ -46,19 +47,33 @@
                         (prn-str #{:bof :eof})))))
 
 (defmethod make-script :present [_ {:keys [path regexp line-num line after before match insert-at]}]
-  (utils/make-script
-   "line_in_file_present.sh"
-   {:REGEX (some->> regexp utils/re-pattern-to-sed)
-    :FILE (some->> path utils/path-escape)
-    :LINENUM line-num
-    :LINE line
-    :AFTER (some->> after utils/re-pattern-to-sed)
-    :BEFORE (some->> before utils/re-pattern-to-sed)
-    :SELECTOR (case (or match options-match-default)
-                :first "head -1"
-                :last "tail -1"
-                :all "cat")
-    :INSERTAT (some->> insert-at name)}))
+  (facts/on-os
+   :linux (utils/make-script
+           "line_in_file_present.sh"
+           {:REGEX (some->> regexp utils/re-pattern-to-sed)
+            :FILE (some->> path utils/path-escape)
+            :LINENUM line-num
+            :LINE line
+            :AFTER (some->> after utils/re-pattern-to-sed)
+            :BEFORE (some->> before utils/re-pattern-to-sed)
+            :SELECTOR (case (or match options-match-default)
+                        :first "head -1"
+                        :last "tail -1"
+                        :all "cat")
+            :INSERTAT (some->> insert-at name)})
+   :else (utils/make-script
+           "line_in_file_present_bsd.sh"
+           {:REGEX (some->> regexp utils/re-pattern-to-sed)
+            :FILE (some->> path utils/path-escape)
+            :LINENUM line-num
+            :LINE line
+            :AFTER (some->> after utils/re-pattern-to-sed)
+            :BEFORE (some->> before utils/re-pattern-to-sed)
+            :SELECTOR (case (or match options-match-default)
+                        :first "head -1"
+                        :last "tail -1"
+                        :all "cat")
+            :INSERTAT (some->> insert-at name)})))
 
 (defmethod process-result :present
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
