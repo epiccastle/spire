@@ -8,6 +8,8 @@
             ByteArrayInputStream ByteArrayOutputStream
             ]))
 
+(def debug false)
+
 (defn print-flush-ask-yes-no [s]
   (print (str s " "))
   (.flush *out*)
@@ -77,6 +79,7 @@
         )
 
       (showMessage [s]
+        (println "showing...")
         (println s)))))
 
 (defn- to-camel-case [^String a]
@@ -187,7 +190,7 @@ keys.  All other option key pairs will be passed as SSH config options."
              be polled for connected status.
   "
   [^Session session ^String cmd in out opts]
-  #_ (prn 'ssh-exec session cmd in out opts)
+  (when debug (prn 'ssh-exec session cmd in out opts))
   (let [[^PipedOutputStream out-stream
          ^PipedInputStream out-inputstream] (streams-for-out out)
         [^PipedOutputStream err-stream
@@ -213,7 +216,7 @@ keys.  All other option key pairs will be passed as SSH config options."
                      :err (if (= :bytes out)
                             (.toByteArray ^ByteArrayOutputStream err-stream)
                             (.toString err-stream))}))]
-      #_ (prn "result:" res)
+      (when debug (prn "result:" res))
       res)))
 
 (defn split-host-string [host-string]

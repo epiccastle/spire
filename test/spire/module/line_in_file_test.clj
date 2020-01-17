@@ -83,84 +83,84 @@
      (try
        (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num 20})
        (catch clojure.lang.ExceptionInfo e
-               (is (= (ex-data e)
-                      {:exit 2 :out "" :err "No line number 20 in file." :result :failed}))))
+         (is (= (ex-data e)
+                {:exit 2 :out "" :err "No line number 20 in file." :result :failed}))))
      (try
        (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num -20})
        (catch clojure.lang.ExceptionInfo e
-               (is (= (ex-data e)
-                      {:exit 2 :out "" :err "No line number -20 in file." :result :failed}))))))
+         (is (= (ex-data e)
+                {:exit 2 :out "" :err "No line number -20 in file." :result :failed}))))))
 
   ;;
   ;; :get {:regexp ...}
   ;;
-  #_ (testing "line-in-file :get by regexp"
-       (transport/ssh
-        test-config/localhost
-        (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"no such line"})
-             {:exit 0
-              :result :ok
-              :line-num nil
-              :line nil
-              :line-nums []
-              :lines []
-              :matches {}}))
-        (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains" :match :all})
-             {:exit 0
-              :result :ok
-              :line-num 19
-              :line "This is line #19 and it contains a [ character"
-              :line-nums [2 4 5 9 12 13 15 18 19]
-              :lines ["This is line #2 and it contains a \\ character"
-                      "This is line #4 and it contains a ' character"
-                      "This is line #5 and it contains a \" character"
-                      "This is line #9 and it contains a / character"
-                      "This is line #12 and it contains a . character"
-                      "This is line #13 and it contains a * character"
-                      "This is line #15 and it contains a $ character"
-                      "This is line #18 and it contains a | character"
-                      "This is line #19 and it contains a [ character"
-                      ]
-              :matches {2 "This is line #2 and it contains a \\ character"
-                        4 "This is line #4 and it contains a ' character"
-                        5 "This is line #5 and it contains a \" character"
-                        9 "This is line #9 and it contains a / character"
-                        12 "This is line #12 and it contains a . character"
-                        13 "This is line #13 and it contains a * character"
-                        15 "This is line #15 and it contains a $ character"
-                        18 "This is line #18 and it contains a | character"
-                        19 "This is line #19 and it contains a [ character"}}))
-        (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains" :match :first})
-             {:exit 0
-              :result :ok
-              :line-num 2
-              :line "This is line #2 and it contains a \\ character"
-              :line-nums [2]
-              :lines ["This is line #2 and it contains a \\ character"]
-              :matches {2 "This is line #2 and it contains a \\ character"}}))
+  (testing "line-in-file :get by regexp"
+    (transport/ssh
+     test-config/localhost
+     (is (=
+          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"no such line"})
+          {:exit 0
+           :result :ok
+           :line-num nil
+           :line nil
+           :line-nums []
+           :lines []
+           :matches {}}))
+     #_ (is (=
+          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains" :match :all})
+          {:exit 0
+           :result :ok
+           :line-num 19
+           :line "This is line #19 and it contains a [ character"
+           :line-nums [2 4 5 9 12 13 15 18 19]
+           :lines ["This is line #2 and it contains a \\ character"
+                   "This is line #4 and it contains a ' character"
+                   "This is line #5 and it contains a \" character"
+                   "This is line #9 and it contains a / character"
+                   "This is line #12 and it contains a . character"
+                   "This is line #13 and it contains a * character"
+                   "This is line #15 and it contains a $ character"
+                   "This is line #18 and it contains a | character"
+                   "This is line #19 and it contains a [ character"
+                   ]
+           :matches {2 "This is line #2 and it contains a \\ character"
+                     4 "This is line #4 and it contains a ' character"
+                     5 "This is line #5 and it contains a \" character"
+                     9 "This is line #9 and it contains a / character"
+                     12 "This is line #12 and it contains a . character"
+                     13 "This is line #13 and it contains a * character"
+                     15 "This is line #15 and it contains a $ character"
+                     18 "This is line #18 and it contains a | character"
+                     19 "This is line #19 and it contains a [ character"}}))
+     #_ (is (=
+          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains" :match :first})
+          {:exit 0
+           :result :ok
+           :line-num 2
+           :line "This is line #2 and it contains a \\ character"
+           :line-nums [2]
+           :lines ["This is line #2 and it contains a \\ character"]
+           :matches {2 "This is line #2 and it contains a \\ character"}}))
 
-        ;; default for :match is :first
-        (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains"})
-             {:exit 0
-              :result :ok
-              :line-num 2
-              :line "This is line #2 and it contains a \\ character"
-              :line-nums [2]
-              :lines ["This is line #2 and it contains a \\ character"]
-              :matches {2 "This is line #2 and it contains a \\ character"}}))
-        (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains" :match :last})
-             {:exit 0
-              :result :ok
-              :line-num 19
-              :line "This is line #19 and it contains a [ character"
-              :line-nums [19]
-              :lines ["This is line #19 and it contains a [ character"]
-              :matches {19 "This is line #19 and it contains a [ character"}})))))
+     ;; default for :match is :first
+     #_ (is (=
+          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains"})
+          {:exit 0
+           :result :ok
+           :line-num 2
+           :line "This is line #2 and it contains a \\ character"
+           :line-nums [2]
+           :lines ["This is line #2 and it contains a \\ character"]
+           :matches {2 "This is line #2 and it contains a \\ character"}}))
+     #_ (is (=
+          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/regexp-file.txt")) :regexp #"and it contains" :match :last})
+          {:exit 0
+           :result :ok
+           :line-num 19
+           :line "This is line #19 and it contains a [ character"
+           :line-nums [19]
+           :lines ["This is line #19 and it contains a [ character"]
+           :matches {19 "This is line #19 and it contains a [ character"}})))))
 
 
 #_ (deftest line-in-file-present-test

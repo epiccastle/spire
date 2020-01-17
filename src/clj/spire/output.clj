@@ -249,24 +249,31 @@
   )
 
 (defn print-result [form file meta host-config result]
-  ;; (prn 'print-result result host-config)
-  ;; (prn (find-forms-matching-index @state {:form form :file file :meta meta}))
+  (comment
+    (prn 'print-result result host-config)
+    (prn (find-forms-matching-index @state {:form form :file file :meta meta})))
   (swap! state
          (fn [s]
-           (update
-            s
-            (first (find-forms-matching-index s {:form form :file file :meta meta}))
-            (fn [{:keys [width results] :as data}]
-              (-> data
-                  (update :copy-progress dissoc (:host-string host-config))
-                  (assoc
-                   :width (+ width (count (:host-string host-config)) 1)
-                   :results (conj results
-                                  {:result result
-                                   :host-config host-config
-                                   :pos width
-                                   }
-                                  ))))))))
+           (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta meta}))]
+             (update
+              s
+              matching-index
+              (fn [{:keys [width results] :as data}]
+                (-> data
+                    (update :copy-progress dissoc (:host-string host-config))
+                    (assoc
+                     :width (+ width (count (:host-string host-config)) 1)
+                     :results (conj results
+                                    {:result result
+                                     :host-config host-config
+                                     :pos width
+                                     }
+                                    )))))
+
+             ;; TODO: this check shouldnt be done here
+             ;; in test output handler no key will exist because nothing is stored
+             s
+             ))))
 
 (defn print-progress [host-string {:keys [progress context] :as data}]
   #_ (prn 'print-progress host-string data)
