@@ -85,8 +85,12 @@
 
          ;; copy with preserve to begin with
          (test-utils/makedirs tf2)
-         (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
-                (download {:src test-dir :dest tf2 :recurse true :preserve true})))
+         (is (or
+              (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+                 (download {:src test-dir :dest tf2 :recurse true :preserve true}))
+              ;; macos has both changed sometimes. othertimes not.
+              (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
+                 (download {:src test-dir :dest tf2 :recurse true :preserve true}))))
          (is (= (test-utils/run
                   (format "cd \"%s/localhost/files\" && find . -exec %s {} \\;"
                           tf2
