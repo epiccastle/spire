@@ -22,10 +22,12 @@ if [ "$LINENUM" ]; then
     LINENUM=$((LINECOUNT + LINENUM + 1))
   fi
 
+  echo 1
   LINECONTENT=$(sed -n "${LINENUM}p" "$FILE")
   if [ "$LINECONTENT" == "$LINE" ]; then
     exit 0
   else
+    echo 2
     sed -i "${LINENUM}c${LINE}" "$FILE"
     exit -1
   fi
@@ -40,8 +42,10 @@ if [ "$REGEX" ]; then
     for i in ${LINENUMS}; do REVERSE="${i} ${REVERSE}"; done
     EXIT=0
     for LINENUM in $REVERSE; do
+      echo 3
       LINECONTENT=$(sed -n "${LINENUM}p" "$FILE")
       if [ "$LINECONTENT" != "$LINE" ]; then
+        echo 4
         sed -i "${LINENUM}c${LINE}" "$FILE"
         EXIT=-1
       fi
