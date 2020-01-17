@@ -80,8 +80,14 @@
                                                                                                                     #_ "%X" "%F" "%n"]))))))
 
        ;; preserve copy from scratch
-       (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
-              (upload {:src "test/files" :dest tf2 :recurse true :preserve true})))
+       (let [result (upload {:src "test/files" :dest tf2 :recurse true :preserve true})]
+         (is
+          (or
+           (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+              result)
+           (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
+              result)
+           )))
        (is (= (test-utils/run (format "cd test/files && find . -exec %s {} \\;" (test-utils/make-stat-command ["%s" "%a" #_ "%Y" #_"%X" "%F" "%n"])))
               (test-utils/ssh-run (format "cd \"%s\" && find . -exec %s {} \\;" tf2 (test-utils/make-stat-command ["%s" "%a" #_ "%Y" #_ "%X" "%F" "%n"])))))
 
