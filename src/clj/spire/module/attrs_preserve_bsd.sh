@@ -24,12 +24,12 @@ function set_file
   fi
 
   if [ "$ACCESS" != "$FILE_ACCESS" ]; then
-    touch -a -d "$ACCESS_STAMP" "$FILE"
+    touch -a -t "$ACCESS_STAMP" "$FILE"
     EXIT=-1
   fi
 
   if [ "$MODIFIED" != "$FILE_MODIFIED" ]; then
-    touch -m -d "$MODIFIED_STAMP" "$FILE"
+    touch -m -t "$MODIFIED_STAMP" "$FILE"
     EXIT=-1
   fi
 }
