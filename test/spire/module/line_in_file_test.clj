@@ -18,72 +18,78 @@
        (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/missing-file")) :line-num 3})
 
        (catch clojure.lang.ExceptionInfo e
-         (is (= (ex-data e) {:exit 1 :out "" :err "File not found." :result :failed}))
-         )
-       )
-     #_ (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num 1})
-             {:exit 0
-              :result :ok
-              :line-num 1
-              :line "This is line #1"
-              :line-nums [1]
-              :lines ["This is line #1"]
-              :matches {1 "This is line #1"}}))
-     #_ (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num 5})
-             {:exit 0
-              :result :ok
-              :line-num 5
-              :line "This is line #5"
-              :line-nums [5]
-              :lines ["This is line #5"]
-              :matches {5 "This is line #5"}}))
-     #_ (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num -1})
-             {:exit 0
-              :result :ok
-              :line-num 10
-              :line "This is line #10"
-              :line-nums [10]
-              :lines ["This is line #10"]
-              :matches {10 "This is line #10"}}))
-     #_ (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num 10})
-             {:exit 0
-              :result :ok
-              :line-num 10
-              :line "This is line #10"
-              :line-nums [10]
-              :lines ["This is line #10"]
-              :matches {10 "This is line #10"}}))
-     #_ (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num -3})
-             {:exit 0
-              :result :ok
-              :line-num 8
-              :line "This is line #8"
-              :line-nums [8]
-              :lines ["This is line #8"]
-              :matches {8 "This is line #8"}}))
-     #_ (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num -10})
-             {:exit 0
-              :result :ok
-              :line-num 1
-              :line "This is line #1"
-              :line-nums [1]
-              :lines ["This is line #1"]
-              :matches {1 "This is line #1"}}))
-     #_ (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num 0})
-             {:exit 2 :out "" :err "No line number 0 in file. File line numbers are 1 offset." :result :failed}))
-     #_ (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num 20})
-             {:exit 2 :out "" :err "No line number 20 in file." :result :failed}))
-     #_ (is (=
-             (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num -20})
-             {:exit 2 :out "" :err "No line number -20 in file." :result :failed}))))
+         (is (= (ex-data e) {:exit 1 :out "" :err "File not found." :result :failed}))))
+
+     (is (=
+          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num 1})
+          {:exit 0
+           :result :ok
+           :line-num 1
+           :line "This is line #1"
+           :line-nums [1]
+           :lines ["This is line #1"]
+           :matches {1 "This is line #1"}}))
+
+     (is (=
+          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num 5})
+          {:exit 0
+           :result :ok
+           :line-num 5
+           :line "This is line #5"
+           :line-nums [5]
+           :lines ["This is line #5"]
+           :matches {5 "This is line #5"}}))
+     (is (=
+          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num -1})
+          {:exit 0
+           :result :ok
+           :line-num 10
+           :line "This is line #10"
+           :line-nums [10]
+           :lines ["This is line #10"]
+           :matches {10 "This is line #10"}}))
+     (is (=
+          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num 10})
+          {:exit 0
+           :result :ok
+           :line-num 10
+           :line "This is line #10"
+           :line-nums [10]
+           :lines ["This is line #10"]
+           :matches {10 "This is line #10"}}))
+     (is (=
+          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num -3})
+          {:exit 0
+           :result :ok
+           :line-num 8
+           :line "This is line #8"
+           :line-nums [8]
+           :lines ["This is line #8"]
+           :matches {8 "This is line #8"}}))
+     (is (=
+          (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num -10})
+          {:exit 0
+           :result :ok
+           :line-num 1
+           :line "This is line #1"
+           :line-nums [1]
+           :lines ["This is line #1"]
+           :matches {1 "This is line #1"}}))
+     (try
+       (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num 0})
+       (catch clojure.lang.ExceptionInfo e
+         (is (= (ex-data e)#_
+                {:exit 2 :out "" :err "No line number 0 in file. File line numbers are 1 offset." :result :failed}))))
+     (try
+       (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num 20})
+       (catch clojure.lang.ExceptionInfo e
+               (is (= (ex-data e)
+                      {:exit 2 :out "" :err "No line number 20 in file." :result :failed}))))
+     (try
+       (line-in-file :get {:path (.getAbsolutePath (io/file "test/files/line-in-file/simple-file.txt")) :line-num -20})
+       (catch clojure.lang.ExceptionInfo e
+               (is (= (ex-data e)
+                      {:exit 2 :out "" :err "No line number -20 in file." :result :failed}))))))
 
   ;;
   ;; :get {:regexp ...}
