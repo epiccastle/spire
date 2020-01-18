@@ -96,19 +96,9 @@
          ;; redo copy but change mode and dir-mode
          (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
                 (upload {:src "test/files" :dest tf3 :recurse true :mode 0644 :dir-mode 0755})))
-         (is (= (test-utils/run (format "cd test/files && find . -type f -exec %s {} \\;"
-                                        (test-utils/make-stat-command ["%s" "644" "%F" "%n"])))
-                (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec %s {} \\;"
-                                            tf3
-                                            (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])
-                                            ))))
-         (is (= (test-utils/run (format "cd test/files && find . -type d -exec %s {} \\;"
-                                        (test-utils/make-stat-command ["%s" "755" "%F" "%n"])))
-                (test-utils/ssh-run (format "cd \"%s\" && find . -type d -exec %s {} \\;"
-                                            tf3
-                                            (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])
-                                            ))))
-         )
+         (is (test-utils/recurse-file-size-type-name-match? "test/files" tf3))
+         (is (test-utils/find-local-files-mode-is? tf3 "644"))
+         (is (test-utils/find-local-dirs-mode-is? tf3 "755")))
 
        ;; copy with unexecutable directory
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
@@ -116,8 +106,10 @@
        ;; will need root just to check this directory
        (transport/ssh
         test-config/localhost-root
-        (is (= (test-utils/run "cd test/files && find . -exec stat -c \"%s 0 %F %n\" {} \\;")
-               (test-utils/ssh-run (format "cd \"%s\" && find . -exec stat -c \"%%s %%a %%F %%n\" {} \\;" tf4))))
+        (is (test-utils/recurse-file-size-type-name-match? "test/files" tf3))
+        (is (test-utils/find-local-files-mode-is? tf3 "0"))
+        (is (test-utils/find-local-dirs-mode-is? tf3 "0"))
+
         ;; the with-temp-file-names macro wont be able to delete this, so lets do it now while we are root
         ;; TODO: when implementing testing on another target system, the with-temp-file-names could
         ;; be made to do remote deletion
