@@ -29,7 +29,7 @@ if [ "$LINENUM" ]; then
     exit 0
   else
     sed -i "" "${LINENUM}c\\
-${LINE}\\
+${SEDLINE}\\
 " "$FILE"
     exit -1
   fi
@@ -47,7 +47,7 @@ if [ "$REGEX" ]; then
       LINECONTENT=$(sed -n "${LINENUM}p" "$FILE")
       if [ "$LINECONTENT" != "$LINE" ]; then
         sed -i "" "${LINENUM}c\\
-${LINE}\\
+${SEDLINE}\\
 " "$FILE"
         EXIT=-1
       fi
@@ -63,7 +63,7 @@ ${LINE}\\
         LINECONTENT=$(sed -n "$((LINENUM+1))p" "$FILE")
         if [ "$LINECONTENT" != "$LINE" ]; then
           sed -i "" "${LINENUM}a\\
-${LINE}\\
+${SEDLINE}\\
 " "$FILE"
           EXIT=-1
         fi
@@ -78,7 +78,7 @@ ${LINE}\\
         LINECONTENT=$(if [ $LINENUM -gt 1 ]; then sed -n "$((LINENUM-1))p" "$FILE"; fi)
         if [ "$LINECONTENT" != "$LINE" ]; then
           sed -i "" "${LINENUM}i\\
-${LINE}\\
+${SEDLINE}\\
 " "$FILE"
           EXIT=-1
         fi
@@ -86,7 +86,7 @@ ${LINE}\\
       exit $EXIT
     else
       sed -i "" "\$a\\
-${LINE}\\
+${SEDLINE}\\
 " "$FILE"
       exit -1
     fi
