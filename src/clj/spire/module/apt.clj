@@ -120,3 +120,44 @@
 
 (defmacro apt [& args]
   `(utils/wrap-report ~*file* ~&form (apt* ~@args)))
+
+(def documentation
+  {
+   :module "apt"
+   :blurb "Manage packages through the apt package system"
+   :description
+   [
+    "This module manages the apt package system."
+    "It can update the available package list."
+    "It can upgrade the entire package set"
+    "It can install and uninstall packages"]
+   :form "(apt command options)"
+   :args
+   [{:arg "command"
+     :desc "The overall command to execute. Should be one of `:update`, `:upgrade`, `:install` and `:uninstall`"
+     :values
+     [[:update "Download all the latest package indexes to the machine."]
+      [:upgrade "Upgrade any out of date packages to the latest versions."]
+      [:install "Install one or more packages."]
+      [:uninstall "Uninstall one or more packages."]]}
+    {:arg "options"
+     :desc "In `:install` and `:uninstall` this can be a single package name as a string, or a sequence or vector of many strings. In `:update` and `:upgrade` commands this is ignored."}]
+
+   :examples
+   [
+    {:description "Update the package list"
+     :form "
+(apt :update)"}
+    {:description "Upgrade the installed packages to the latest versions"
+     :form "
+(apt :upgrade)"}
+    {:description "Install the traceroute package"
+     :form "
+(apt :install \"traceroute\")"}
+    {:description "Install some network tools"
+     :form "
+(apt :install [\"traceroute\" \"netperf\" \"iptraf\" \"nmap\"])"}
+    {:description "Uninstall some network tools"
+     :form "
+(apt :remove [\"traceroute\" \"netperf\" \"iptraf\" \"nmap\"])"}]
+   })
