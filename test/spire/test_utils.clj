@@ -231,14 +231,18 @@
            #" ")]
       (prn local-md5 remote-md5)
       (= local-md5 remote-md5))
-    (let [local-md5
-          (run
+    (let [[_ local-md5]
+          (string/split
+           (run
+             (format "md5 \"%s\""
+                     local))
+           #"\s*=\s*")
+          [_ remote-md5]
+          (string/split
+           (ssh-run
             (format "md5 \"%s\""
-                    local))
-          remote-md5
-          (ssh-run
-           (format "md5 \"%s\""
-                   remote))]
+                    remote))
+           #"\s*=\s*")]
       (prn local-md5 remote-md5)
       (= local-md5 remote-md5))
     ))
