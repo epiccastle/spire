@@ -182,7 +182,7 @@
 ;; and attributes of other files. Following are some helper functions and
 ;; macros to assist test writing
 
-(defn directories-stat-match? [local-path remote-path stat-params]
+(defn recurse-stat-match? [local-path remote-path stat-params]
   (= (run
        (format "cd \"%s\" && find . -exec %s {} \\;"
                local-path (make-stat-command stat-params)))
@@ -190,17 +190,20 @@
       (format "cd \"%s\" && find . -exec %s {} \\;"
               remote-path (make-stat-command stat-params)))))
 
-(defn directories-file-size-type-name-match?
+(defn recurse-file-size-type-name-match?
   [local-path remote-path]
-  (directories-stat-match? local-path remote-path ["%s" "%F" "%n"])
+  (recurse-stat-match? local-path remote-path ["%s" "%F" "%n"])
   )
 
-(defn directories-file-size-type-name-match?
+(defn recurse-file-size-type-name-mode-match?
   [local-path remote-path]
-  (directories-stat-match? local-path remote-path ["%s" "%F" "%n"])
+  (recurse-stat-match? local-path remote-path ["%s" "%F" "%n" "%a"])
   )
 
-
+(defn recurse-access-modified-match?
+  [local-path remote-path]
+  (recurse-stat-match? local-path remote-path ["%X" "%Y"])
+  )
 
 (defn find-files-md5-match? [local remote]
   (= (run
@@ -211,6 +214,34 @@
       (format "cd \"%s\" && find . -type f -exec %s {} \\;"
               remote
               (make-md5-command)))))
+
+(defn files-md5-match? [local remote]
+  (if (= "Linux" (uname))
+    (let [[local-md5 local-path]
+          (string/split
+           (run
+             (format "md5sum \"%s\""
+                     local))
+           #" ")
+          [remote-md5 remote-path]
+          (string/split
+           (ssh-run
+            (format "md5sum \"%s\""
+                    remote))
+           #" ")]
+      (prn local-md5 remote-md5)
+      (= local-md5 remote-md5))
+    (let [local-md5
+          (run
+            (format "md5 \"%s\""
+                    local))
+          remote-md5
+          (ssh-run
+           (format "md5 \"%s\""
+                   remote))]
+      (prn local-md5 remote-md5)
+      (= local-md5 remote-md5))
+    ))
 
 (defn find-local-files-mode-is? [local mode-str]
   (let [modes (run
