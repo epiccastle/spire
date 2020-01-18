@@ -33,41 +33,16 @@
          ;; copy directory recursively
          (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (download {:src test-dir :dest tf :recurse true})))
-         (is (= (test-utils/run
-                  (format "cd \"%s/localhost/files\" && find . -exec %s {} \\;"
-                          tf (test-utils/make-stat-command ["%s" "%F" "%n"])))
-                (test-utils/ssh-run
-                 (format "cd \"%s\" && find . -exec %s {} \\;"
-                         test-dir (test-utils/make-stat-command ["%s" "%F" "%n"])))))
-         (is (= (test-utils/run
-                  (format "cd \"%s/localhost/files\" && find . -type f -exec %s {} \\;"
-                          tf
-                          (test-utils/make-md5-command)))
-                (test-utils/ssh-run
-                 (format "cd \"%s\" && find . -type f -exec %s {} \\;"
-                         test-dir
-                         (test-utils/make-md5-command)))))
+         (is (test-utils/directories-file-size-type-name-match? (str tf "/localhost/files") test-dir))
+         (is (test-utils/find-files-md5-match? (str tf "/localhost/files") test-dir))
 
          (with-redefs [spire.scp/scp-from no-scp]
            ;; reset attrs with hard coded mode and dir-mode
            (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
                   (download {:src test-dir :dest tf :recurse true :dir-mode 0777 :mode 0666})))
-           (is (= (test-utils/run
-                    (format "cd \"%s/localhost/files\" && find . -type f -exec %s {} \\;"
-                            tf
-                            (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))
-                  (test-utils/ssh-run
-                   (format "cd \"%s\" && find . -type f -exec %s {} \\;"
-                           test-dir
-                           (test-utils/make-stat-command ["%s" "666" "%F" "%n"])))))
-           (is (= (test-utils/run
-                    (format "cd \"%s/localhost/files\" && find . -type d -exec %s {} \\;"
-                            tf
-                            (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))
-                  (test-utils/ssh-run
-                   (format "cd \"%s\" && find . -type d -exec %s {} \\;"
-                           test-dir
-                           (test-utils/make-stat-command ["%s" "777" "%F" "%n"])))))
+           (is (test-utils/directories-file-size-type-name-match? (str tf "/localhost/files") test-dir))
+           (is (test-utils/find-local-files-mode-is? (str tf "/localhost/files") "666"))
+           (is (test-utils/find-local-dirs-mode-is? (str tf "/localhost/files") "777"))
 
            ;; reset attrs with :preserve
            (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}

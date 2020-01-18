@@ -176,3 +176,56 @@
     "md5sum"
     "md5")
   )
+
+;; often after an operation we want to check that files contain certain
+;; contents, have certain flags and attributes, or match the contents
+;; and attributes of other files. Following are some helper functions and
+;; macros to assist test writing
+
+(defn directories-stat-match? [local-path remote-path stat-params]
+  (= (run
+       (format "cd \"%s\" && find . -exec %s {} \\;"
+               local-path (make-stat-command stat-params)))
+     (ssh-run
+      (format "cd \"%s\" && find . -exec %s {} \\;"
+              remote-path (make-stat-command stat-params)))))
+
+(defn directories-file-size-type-name-match?
+  [local-path remote-path]
+  (directories-stat-match? local-path remote-path ["%s" "%F" "%n"])
+  )
+
+(defn directories-file-size-type-name-match?
+  [local-path remote-path]
+  (directories-stat-match? local-path remote-path ["%s" "%F" "%n"])
+  )
+
+
+
+(defn find-files-md5-match? [local remote]
+  (= (run
+       (format "cd \"%s\" && find . -type f -exec %s {} \\;"
+               local
+               (make-md5-command)))
+     (ssh-run
+      (format "cd \"%s\" && find . -type f -exec %s {} \\;"
+              remote
+              (make-md5-command)))))
+
+(defn find-local-files-mode-is? [local mode-str]
+  (let [modes (run
+                (format "cd \"%s\" && find . -type f -exec %s {} \\;"
+                        local
+                        (make-stat-command ["%a"])))
+        mode-lines (string/split-lines modes)
+        ]
+    (every? #(= mode-str %) mode-lines)))
+
+(defn find-local-dirs-mode-is? [local mode-str]
+  (let [modes (run
+                (format "cd \"%s\" && find . -type d -exec %s {} \\;"
+                        local
+                        (make-stat-command ["%a"])))
+        mode-lines (string/split-lines modes)
+        ]
+    (every? #(= mode-str %) mode-lines)))
