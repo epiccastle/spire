@@ -27,7 +27,7 @@ if [ "$LINENUM" ]; then
   if [ "$LINECONTENT" == "$LINE" ]; then
     exit 0
   else
-    sed -i "${LINENUM}c${LINE}" "$FILE"
+    sed -i "${LINENUM}c${SEDLINE}" "$FILE"
     exit -1
   fi
 fi
@@ -43,7 +43,7 @@ if [ "$REGEX" ]; then
     for LINENUM in $REVERSE; do
       LINECONTENT=$(sed -n "${LINENUM}p" "$FILE")
       if [ "$LINECONTENT" != "$LINE" ]; then
-        sed -i "${LINENUM}c${LINE}" "$FILE"
+        sed -i "${LINENUM}c${SEDLINE}" "$FILE"
         EXIT=-1
       fi
     done
@@ -57,7 +57,7 @@ if [ "$REGEX" ]; then
       for LINENUM in $REVERSE; do
         LINECONTENT=$(sed -n "$((LINENUM+1))p" "$FILE")
         if [ "$LINECONTENT" != "$LINE" ]; then
-          sed -i "${LINENUM}a${LINE}" "$FILE"
+          sed -i "${LINENUM}a${SEDLINE}" "$FILE"
           EXIT=-1
         fi
       done
@@ -70,13 +70,13 @@ if [ "$REGEX" ]; then
       for LINENUM in $REVERSE; do
         LINECONTENT=$(if [ $LINENUM -gt 1 ]; then sed -n "$((LINENUM-1))p" "$FILE"; fi)
         if [ "$LINECONTENT" != "$LINE" ]; then
-          sed -i "${LINENUM}i${LINE}" "$FILE"
+          sed -i "${LINENUM}i${SEDLINE}" "$FILE"
           EXIT=-1
         fi
       done
       exit $EXIT
     else
-      sed -i "\$a${LINE}" "$FILE"
+      sed -i "\$a${SEDLINE}" "$FILE"
       exit -1
     fi
   fi

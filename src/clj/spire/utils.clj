@@ -306,7 +306,8 @@
 
 (defn string-escape [s]
   (-> s
-      (string/replace "\\\"" "\\\\\\\\\"")
+      #_ (string/replace "\\\"" "\\\\\\\\\"")
+      (string/replace "\\" "\\\\")
       path-escape))
 
 (defmacro defmodule [name module-args pipeline-args & body]

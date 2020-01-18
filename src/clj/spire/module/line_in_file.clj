@@ -47,13 +47,17 @@
                         (prn-str #{:bof :eof})))))
 
 (defmethod make-script :present [_ {:keys [path regexp line-num line after before match insert-at]}]
+  ;;(prn 'make-script :present (some->> line utils/string-escape))
+  ;;(println (some->> line utils/string-escape))
+  ;;(println line)
   (facts/on-os
    :linux (utils/make-script
            "line_in_file_present.sh"
            {:REGEX (some->> regexp utils/re-pattern-to-sed)
             :FILE (some->> path utils/path-escape)
             :LINENUM line-num
-            :LINE line
+            :LINE (some->> line utils/string-escape)
+            :SEDLINE (some->> line utils/string-escape utils/string-escape)
             :AFTER (some->> after utils/re-pattern-to-sed)
             :BEFORE (some->> before utils/re-pattern-to-sed)
             :SELECTOR (case (or match options-match-default)
