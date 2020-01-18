@@ -229,7 +229,7 @@
             (format "md5sum \"%s\""
                     remote))
            #" ")]
-      (prn local-md5 remote-md5)
+      ;;(prn local-md5 remote-md5)
       (= local-md5 remote-md5))
     (let [[_ local-md5]
           (string/split
@@ -243,7 +243,7 @@
             (format "md5 \"%s\""
                     remote))
            #"\s*=\s*")]
-      (prn local-md5 remote-md5)
+      ;;(prn local-md5 remote-md5)
       (= local-md5 remote-md5))
     ))
 
@@ -264,3 +264,11 @@
         mode-lines (string/split-lines modes)
         ]
     (every? #(= mode-str %) mode-lines)))
+
+(defn stat-local [local stat-params]
+  (string/trim
+   (run
+     (format "%s \"%s\""
+             (make-stat-command stat-params)
+             local)))
+  )

@@ -69,18 +69,14 @@
          (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                 (download {:src (io/file test-dir "copy/test.txt") :dest tf3})))
          (is (test-utils/files-md5-match? (str tf3 "/localhost/test.txt") (str test-dir "/copy/test.txt")))
-         #_ (is (= (slurp (io/file test-dir "copy/test.txt"))
-                (slurp (io/file tf3 "localhost/test.txt"))))
 
          (with-redefs [spire.scp/scp-from no-scp]
            (is (= {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}
                   (download {:src (io/file test-dir "copy/test.txt") :dest tf3})))
-           (is (= (slurp (io/file test-dir "copy/test.txt"))
-                  (slurp (io/file tf3 "localhost/test.txt"))))
+           (is (test-utils/files-md5-match? (str tf3 "/localhost/test.txt") (str test-dir "/copy/test.txt")))
 
            (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
                   (download {:src (io/file test-dir "copy/test.txt") :dest tf3 :mode 0666})))
-           (is (= (string/trim (test-utils/run (format "%s \"%s/localhost/test.txt\""
-                                                       (test-utils/make-stat-command ["%s" "%a"])
-                                                       tf3)))
-                  "43 666"))))))))
+
+           (is (= "43 666"
+                  (test-utils/stat-local (str tf3 "/localhost/test.txt") ["%s" "%a"])))))))))
