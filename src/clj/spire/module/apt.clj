@@ -141,7 +141,7 @@
       [:install "Install one or more packages."]
       [:uninstall "Uninstall one or more packages."]]}
     {:arg "options"
-     :desc "In `:install` and `:uninstall` this can be a single package name as a string, or a sequence or vector of many strings. In `:update` and `:upgrade` commands this is ignored."}]
+     :desc "In `:install` and `:uninstall` this can be a single package name (specified as a string), or many package names (a sequence or vector of many strings). In `:update` and `:upgrade` commands this is ignored."}]
 
    :examples
    [
