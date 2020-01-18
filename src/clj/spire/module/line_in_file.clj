@@ -70,7 +70,8 @@
            {:REGEX (some->> regexp utils/re-pattern-to-sed)
             :FILE (some->> path utils/path-escape)
             :LINENUM line-num
-            :LINE line
+            :LINE (some->> line utils/string-escape)
+            :SEDLINE (some->> line utils/string-escape utils/string-escape)
             :AFTER (some->> after utils/re-pattern-to-sed)
             :BEFORE (some->> before utils/re-pattern-to-sed)
             :SELECTOR (case (or match options-match-default)
