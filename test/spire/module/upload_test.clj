@@ -61,24 +61,16 @@
        ;; force copy dir over file
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
               (upload {:src "test/files" :dest tf :recurse true :force true :mode 0777})))
-       (is (= (test-utils/run
-                (format "cd test/files && find . -exec %s {} \\;"
-                        (test-utils/make-stat-command ["%s" "%F" "%n"])))
-              (test-utils/ssh-run
-               (format "cd \"%s\" && find . -exec %s {} \\;"
-                       tf
-                       (test-utils/make-stat-command ["%s" "%F" "%n"])))))
-       (is (= (test-utils/run "cd test/files && find . -type f -exec md5sum {} \\;")
-              (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec md5sum {} \\;" tf))))
+       (is (test-utils/recurse-file-size-type-name-match? "test/files" tf))
+       (is (test-utils/find-files-md5-match? "test/files" tf))
 
        ;; recopy dir but with :preserve
        (with-redefs [spire.scp/scp-to no-scp]
          (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
                 (upload {:src "test/files" :dest tf :recurse true :force true :preserve true})))
-         (is (= (test-utils/run (format "cd test/files && find . -exec %s {} \\;" (test-utils/make-stat-command ["%s" "%a" #_ "%Y" ;; mac doesnt presently set last modified correctyl here! TODO: write attr/ tests
-                                                                                                                 #_ "%X" "%F" "%n"])))
-                (test-utils/ssh-run (format "cd \"%s\" && find . -exec %s {} \\;" tf (test-utils/make-stat-command ["%s" "%a" #_ "%Y"
-                                                                                                                    #_ "%X" "%F" "%n"]))))))
+         (is (test-utils/recurse-file-size-type-name-mode-match? "test/files" tf))
+         ;; (is (test-utils/recurse-access-modified-match? "test/files" tf))
+         )
 
        ;; preserve copy from scratch
        (let [result (upload {:src "test/files" :dest tf2 :recurse true :preserve true})]
@@ -89,16 +81,16 @@
            (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
               result)
            )))
-       (is (= (test-utils/run (format "cd test/files && find . -exec %s {} \\;" (test-utils/make-stat-command ["%s" "%a" #_ "%Y" #_"%X" "%F" "%n"])))
-              (test-utils/ssh-run (format "cd \"%s\" && find . -exec %s {} \\;" tf2 (test-utils/make-stat-command ["%s" "%a" #_ "%Y" #_ "%X" "%F" "%n"])))))
+
+       (is (test-utils/recurse-file-size-type-name-mode-match? "test/files" tf2))
+       ;; (is (test-utils/recurse-access-modified-match? "test/files" tf2))
 
        ;; mode and dir-mode from scratch
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
               (upload {:src "test/files" :dest tf3 :recurse true :mode 0666 :dir-mode 0777})))
-       (is (= (test-utils/run (format "cd test/files && find . -type f -exec %s {} \\;" (test-utils/make-stat-command ["%s" "666" "%F" "%n"])))
-              (test-utils/ssh-run (format "cd \"%s\" && find . -type f -exec %s {} \\;" tf3 (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))))
-       (is (= (test-utils/run (format "cd test/files && find . -type d -exec %s {} \\;" (test-utils/make-stat-command ["%s" "777" "%F" "%n"])))
-              (test-utils/ssh-run (format "cd \"%s\" && find . -type d -exec %s {} \\;" tf3 (test-utils/make-stat-command ["%s" "%a" "%F" "%n"])))))
+       (is (test-utils/recurse-file-size-type-name-match? "test/files" tf3))
+       (is (test-utils/find-local-files-mode-is? tf3 "666"))
+       (is (test-utils/find-local-dirs-mode-is? tf3 "777"))
 
        (with-redefs [spire.scp/scp-to no-scp]
          ;; redo copy but change mode and dir-mode
