@@ -106,9 +106,9 @@
        ;; will need root just to check this directory
        (transport/ssh
         test-config/localhost-root
-        (is (test-utils/recurse-file-size-type-name-match? "test/files" tf3))
-        (is (test-utils/find-local-files-mode-is? tf3 "0"))
-        (is (test-utils/find-local-dirs-mode-is? tf3 "0"))
+        (is (test-utils/recurse-file-size-type-name-match? "test/files" tf4))
+        (is (test-utils/find-remote-files-mode-is? tf4 "0"))
+        (is (test-utils/find-remote-dirs-mode-is? tf4 "0"))
 
         ;; the with-temp-file-names macro wont be able to delete this, so lets do it now while we are root
         ;; TODO: when implementing testing on another target system, the with-temp-file-names could

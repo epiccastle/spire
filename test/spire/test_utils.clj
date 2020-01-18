@@ -266,6 +266,24 @@
         ]
     (every? #(= mode-str %) mode-lines)))
 
+(defn find-remote-files-mode-is? [local mode-str]
+  (let [modes (ssh-run
+                (format "cd \"%s\" && find . -type f -exec %s {} \\;"
+                        local
+                        (make-stat-command ["%a"])))
+        mode-lines (string/split-lines modes)
+        ]
+    (every? #(= mode-str %) mode-lines)))
+
+(defn find-remote-dirs-mode-is? [local mode-str]
+  (let [modes (ssh-run
+                (format "cd \"%s\" && find . -type d -exec %s {} \\;"
+                        local
+                        (make-stat-command ["%a"])))
+        mode-lines (string/split-lines modes)
+        ]
+    (every? #(= mode-str %) mode-lines)))
+
 (defn stat-local [local stat-params]
   (string/trim
    (run
