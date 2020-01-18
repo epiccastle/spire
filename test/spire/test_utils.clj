@@ -1,5 +1,6 @@
 (ns spire.test-utils
   (:require
+   [clojure.test :refer :all]
    [clojure.java.shell :as shell]
    [clojure.java.io :as io]
    [clojure.string :as string]
@@ -272,3 +273,8 @@
              (make-stat-command stat-params)
              local)))
   )
+
+(defmacro should-ex-data [data & body]
+  `(try ~@body
+        (catch clojure.lang.ExceptionInfo e#
+          (is (= ~data (ex-data e#))))))

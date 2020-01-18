@@ -25,13 +25,13 @@
        ;; copy file
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
               (upload {:src "test/files/copy/test.txt" :dest tf})))
-       (is (= (slurp "test/files/copy/test.txt") (slurp tf)))
+       (is (test-utils/files-md5-match? "test/files/copy/test.txt" tf))
 
        (with-redefs [spire.scp/scp-to no-scp]
          ;; second copy doesn't transfer files
          (is (= {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}
                 (upload {:src "test/files/copy/test.txt" :dest tf})))
-         (is (= (slurp "test/files/copy/test.txt") (slurp tf)))
+         (is (test-utils/files-md5-match? "test/files/copy/test.txt" tf))
 
          ;; reupload changed file modes with :changed
          (is (= {:result :changed, :attr-result {:result :changed} :copy-result {:result :ok}}
@@ -44,18 +44,19 @@
          (is (= "777" (test-utils/mode tf))))
 
        ;; try and copy directory without recurse
-       (try (upload {:src "test/files" :dest tf})
-            (catch clojure.lang.ExceptionInfo e
-              (is (= (ex-data e)
-                     {:exit 3, :out "", :err ":recurse must be true when :src specifies a directory.", :result :failed}))))
+       (test-utils/should-ex-data
+        {:exit 3
+         :out ""
+         :err ":recurse must be true when :src specifies a directory."
+         :result :failed}
+        (upload {:src "test/files" :dest tf}))
 
        ;; try and copy directory over existing file without :force
-       (try (upload {:src "test/files" :dest tf :recurse true})
-            (catch clojure.lang.ExceptionInfo e
-              (is (= (ex-data e)
-                     {:result :failed,
-                      :attr-result {:result :ok},
-                      :copy-result {:result :failed, :err "Cannot copy `content` directory over `dest`: destination is a file. Use :force to delete destination file and replace."}}))))
+       (test-utils/should-ex-data
+        {:result :failed,
+                  :attr-result {:result :ok},
+                  :copy-result {:result :failed, :err "Cannot copy `content` directory over `dest`: destination is a file. Use :force to delete destination file and replace."}}
+        (upload {:src "test/files" :dest tf :recurse true}))
 
        ;; force copy dir over file
        (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
