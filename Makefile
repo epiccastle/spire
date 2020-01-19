@@ -126,7 +126,7 @@ ssh_test_key_rsa:
 	sudo bash -c 'cat ssh_test_key_rsa.pub >> ~root/.ssh/authorized_keys'
 	# -cat ~/.ssh/authorized_keys
 
-circle-setup: ssh_test_key_rsa
+circle-ci: ssh_test_key_rsa
 	-lsb_release -a
 	sudo /usr/sbin/sshd -f test/config/sshd_config -D & echo "$$!" > sshd.pid
 	eval `ssh-agent` && \

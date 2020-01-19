@@ -145,7 +145,7 @@ jobs:
             sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
             #sudo mkdir /run/sshd
 
-            make circle-setup
+            make circle-ci
 
       #       make clean
       # - run:
