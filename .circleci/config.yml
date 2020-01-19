@@ -37,7 +37,7 @@ jobs:
             sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
             sudo mkdir /run/sshd
             make clean lib
-            make circle-setup
+            make circle-ci
       - save_cache:
           paths:
             - ~/.m2
