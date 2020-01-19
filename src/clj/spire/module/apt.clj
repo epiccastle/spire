@@ -110,6 +110,47 @@
            :err-lines (string/split err #"\n")
            )))
 
+
+;;
+;; (apt :remove ...)
+;;
+(defmethod preflight :remove [_ _]
+  (when-not (facts/get-fact [:paths :apt-get])
+    {:exit 1
+     :out ""
+     :err "apt module requires apt-get installed and present in the path."
+     :result :failed}))
+
+(defmethod make-script :remove [_ package-or-packages]
+  (let [package-string (if (string? package-or-packages)
+                         package-or-packages
+                         (string/join " " package-or-packages))]
+    (str "DEBIAN_FRONTEND=noninteractive apt-get remove -y " package-string)))
+
+(defmethod process-result :remove
+  [_ _ {:keys [out err exit] :as result}]
+  (if (zero? exit)
+    (let [[_ upgraded installed removed]
+          (re-find #"(\d+)\s*\w*\s*upgrade\w*, (\d+)\s*\w*\s*newly instal\w*, (\d+) to remove" out)
+
+          upgraded (Integer/parseInt upgraded)
+          installed (Integer/parseInt installed)
+          removed (Integer/parseInt removed)
+          ]
+      (assoc result
+             :result (if (and (zero? upgraded)
+                              (zero? installed)
+                              (zero? removed))
+                       :ok
+                       :changed)
+             :out-lines (string/split out #"\n")
+             :packages {:upgraded upgraded
+                        :removeed installed
+                        :removed removed}))
+    (assoc result :result :failed)))
+
+
+
 (utils/defmodule apt* [command & [opts]]
   [host-string session]
   (or
