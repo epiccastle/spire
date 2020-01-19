@@ -129,10 +129,9 @@ ssh_test_key_rsa:
 circle-ci: ssh_test_key_rsa
 	-lsb_release -a
 	-sw_vers
-	-system_profiler -detailLevel mini
+	#-system_profiler -detailLevel mini
 
-
--system_profiler SPHardwareDataType
+	-system_profiler SPHardwareDataType
 	-system_profiler SPParallelATADataType
 	-system_profiler SPUniversalAccessDataType
 	-system_profiler SPApplicationsDataType
