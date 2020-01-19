@@ -146,7 +146,6 @@ jobs:
             #sudo mkdir /run/sshd
 
             make circle-setup
-            make circle-facts
 
       #       make clean
       # - run:
