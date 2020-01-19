@@ -247,6 +247,30 @@
      :release (res "Release")
      :description (res "Description")}))
 
+(def mac-codenames
+  {
+   "10.0" :cheetah
+   "10.1" :cheetah
+   "10.2" :cheetah
+   "10.3" :panther
+   "10.4" :tiger
+   "10.5" :leopard
+   "10.6" :snow-leopard
+   "10.7" :lion
+   "10.8" :mountain-lion
+   "10.9" :mavericks
+   "10.10" :yosemite
+   "10.11" :el-capitan
+   "10.12" :sierra
+   "10.13" :high-sierra
+   "10.14" :mojave
+   "10.15" :catalina
+   })
+
+(def guess-mac-codename [version]
+  (let [[_ maj-min _] (re-matches #"(\d+\.\d+).*" version)]
+    (get mac-codenames maj-min)))
+
 (defn process-system-profiler [sp-out]
   (let [res (some->> sp-out
                      :out
@@ -259,8 +283,8 @@
         [_ distro version build] (re-matches #"([\w\s]+)\s+([\d.]+)\s+\((\S+)\)" system-version)
         ]
     {:description system-version
-     :codename "codename"
-     :distro distro
+     :codename (guess-mac-codename version)
+     :distro :macos
      :release version}
     )
   )
