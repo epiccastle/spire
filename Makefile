@@ -130,10 +130,57 @@ circle-ci: ssh_test_key_rsa
 	-lsb_release -a
 	-sw_vers
 	-system_profiler -detailLevel mini
-	-system_profiler SPHardwareDataType
+
+
+-system_profiler SPHardwareDataType
+	-system_profiler SPParallelATADataType
+	-system_profiler SPUniversalAccessDataType
+	-system_profiler SPApplicationsDataType
+	-system_profiler SPAudioDataType
+	-system_profiler SPBluetoothDataType
+	-system_profiler SPCameraDataType
+	-system_profiler SPCardReaderDataType
+	-system_profiler SPComponentDataType
+	-system_profiler SPDeveloperToolsDataType
+	-system_profiler SPDiagnosticsDataType
+	-system_profiler SPDisabledSoftwareDataType
+	-system_profiler SPDiscBurningDataType
 	-system_profiler SPEthernetDataType
+	-system_profiler SPExtensionsDataType
+	-system_profiler SPFibreChannelDataType
+	-system_profiler SPFireWireDataType
+	-system_profiler SPFirewallDataType
+	-system_profiler SPFontsDataType
+	-system_profiler SPFrameworksDataType
+	-system_profiler SPDisplaysDataType
+	-system_profiler SPHardwareDataType
+	-system_profiler SPHardwareRAIDDataType
+	-system_profiler SPInstallHistoryDataType
+	-system_profiler SPNetworkLocationDataType
+	-system_profiler SPLogsDataType
+	-system_profiler SPManagedClientDataType
+	-system_profiler SPMemoryDataType
+	-system_profiler SPNVMeDataType
+	-system_profiler SPNetworkDataType
+	-system_profiler SPPCIDataType
+	-system_profiler SPParallelSCSIDataType
+	-system_profiler SPPowerDataType
+	-system_profiler SPPrefPaneDataType
+	-system_profiler SPPrintersSoftwareDataType
+	-system_profiler SPPrintersDataType
+	-system_profiler SPConfigurationProfileDataType
+	-system_profiler SPSASDataType
+	-system_profiler SPSerialATADataType
+	-system_profiler SPSPIDataType
 	-system_profiler SPSoftwareDataType
-	-system_profiler SPStorageDataType SPInstallHistoryDataType
+	-system_profiler SPStartupItemDataType
+	-system_profiler SPStorageDataType
+	-system_profiler SPSyncServicesDataType
+	-system_profiler SPThunderboltDataType
+	-system_profiler SPUSBDataType
+	-system_profiler SPNetworkVolumeDataType
+	-system_profiler SPWWANDataType
+	-system_profiler SPAirPortDataType
 	sudo /usr/sbin/sshd -f test/config/sshd_config -D & echo "$$!" > sshd.pid
 	eval `ssh-agent` && \
 		ssh-add ssh_test_key_rsa && \
