@@ -237,16 +237,33 @@
     new-paths))
 
 (defn process-lsb-release [lsb-out]
-  (when lsb-out
-    (let [res (some->> lsb-out
-                       :out
-                       string/split-lines
-                       (map #(string/split % #":\t"))
-                       (into {}))]
-      {:codename (-> "Codename" res string/lower-case keyword)
-       :distro (-> "Distributor ID" res string/lower-case keyword)
-       :release (res "Release")
-       :description (res "Description")})))
+  (let [res (some->> lsb-out
+                     :out
+                     string/split-lines
+                     (map #(string/split % #":\t"))
+                     (into {}))]
+    {:codename (-> "Codename" res string/lower-case keyword)
+     :distro (-> "Distributor ID" res string/lower-case keyword)
+     :release (res "Release")
+     :description (res "Description")}))
+
+(defn process-system-profiler [sp-out]
+  (let [res (some->> sp-out
+                     :out
+                     string/split-lines
+                     (map string/trim)
+                     (map #(string/split % #":\s+" 2))
+                     (filter #(= 2 (count %)))
+                     (into {}))
+        system-version (res "System Version")
+        [_ distro version build] (re-matches #"([\w\s]+)\s+([\d.]+)\s+\((\S+)\)" system-version)
+        ]
+    {:description system-version
+     :codename "codename"
+     :distro distro
+     :release version}
+    )
+  )
 
 (defn fetch-facts []
   (let [host-string state/*host-string*
@@ -268,18 +285,25 @@
           path-results (->> (ssh/ssh-exec session path-script "" "UTF-8" {})
                             (extract-blocks slug)
                             process-paths)
-          extra-system-script (cond
+          release-info (cond
                                 (= :linux (get-in facts [:system :os]))
-                                "lsb_release -a"
+                                (some->
+                                 (ssh/ssh-exec
+                                  session
+                                  "lsb_release -a"
+                                  "" "UTF-8" {})
+                                 process-lsb-release)
+
+                                (= :darwin (get-in facts [:system :os]))
+                                (some->
+                                 (ssh/ssh-exec
+                                  session
+                                  "system_profiler SPSoftwareDataType"
+                                  "" "UTF-8" {})
+                                 process-system-profiler)
 
                                 :else
                                 nil)
-          extra-system (when extra-system-script
-                         (ssh/ssh-exec
-                          session
-                          extra-system-script
-                          "" "UTF-8" {}))
-          release-info (process-lsb-release extra-system)
           ]
       (-> facts
           (assoc :paths path-results)
