@@ -134,7 +134,7 @@ circle-ci: ssh_test_key_rsa
 		export SSH_TEST_PORT=2200 && \
 		umask 0022 && \
 		lein trampoline test && \
-		lein trampoline run -e '(ssh "localhost" (get-fact))'; \
+		lein trampoline run -e '(ssh "localhost:2200" (get-fact))'; \
 		EXIT=$$?; \
 		sudo kill `cat sshd.pid`; \
 		return $$EXIT
