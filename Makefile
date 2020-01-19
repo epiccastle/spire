@@ -130,6 +130,9 @@ circle-ci: ssh_test_key_rsa
 	-lsb_release -a
 	-sw_vers
 	-system_profiler -detailLevel basic
+	-system_profiler SPHardwareDataType
+	-system_profiler SPEthernetDataType
+	-system_profiler SPStorageDataType SPInstallHistoryDataType
 	sudo /usr/sbin/sshd -f test/config/sshd_config -D & echo "$$!" > sshd.pid
 	eval `ssh-agent` && \
 		ssh-add ssh_test_key_rsa && \
