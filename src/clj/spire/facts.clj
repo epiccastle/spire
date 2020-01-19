@@ -267,7 +267,7 @@
    "10.15" :catalina
    })
 
-(def guess-mac-codename [version]
+(defn guess-mac-codename [version]
   (let [[_ maj-min _] (re-matches #"(\d+\.\d+).*" version)]
     (get mac-codenames maj-min)))
 
