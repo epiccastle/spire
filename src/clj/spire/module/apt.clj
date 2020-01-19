@@ -150,6 +150,35 @@
     (assoc result :result :failed)))
 
 
+;;
+;; (apt :upgrade)
+;;
+(defmethod preflight :upgrade [_ _]
+  (when-not (facts/get-fact [:paths :apt-get])
+    {:exit 1
+     :out ""
+     :err "apt module requires apt-get installed and present in the path."
+     :result :failed}))
+
+(defmethod make-script :upgrade [_ _]
+  (str "DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"))
+
+(defmethod process-result :upgrade
+  [_ _ {:keys [out err exit] :as result}]
+  (if (zero? exit)
+    (let [changed? true]
+      (assoc result
+             :result (if changed? :changed :ok)
+             :out-lines (string/split out #"\n")
+             :err-lines (string/split err #"\n")
+             :upgrade data))
+    (assoc result
+           :result :failed
+           :out-lines (string/split out #"\n")
+           :err-lines (string/split err #"\n")
+           )))
+
+
 
 (utils/defmodule apt* [command & [opts]]
   [host-string session]
