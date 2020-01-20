@@ -171,7 +171,8 @@
              :result (if changed? :changed :ok)
              :out-lines (string/split out #"\n")
              :err-lines (string/split err #"\n")
-             :upgrade data))
+             ;;:upgrade data
+             ))
     (assoc result
            :result :failed
            :out-lines (string/split out #"\n")
