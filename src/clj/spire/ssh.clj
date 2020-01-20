@@ -264,9 +264,9 @@ keys.  All other option key pairs will be passed as SSH config options."
                         (:hostname host-description)))
               "cant have both host-string and hostname set in description.")
       (if (:host-string host-description)
-        (let [{:keys [username hostname port]} (parse-host-string (:host-string host-description))]
+        (let [{:keys [username hostname port] :as parsed} (parse-host-string (:host-string host-description))]
           (-> host-description
-              (update :key #(or % (host-config-to-string host-description)))
+              (update :key #(or % (host-config-to-string parsed)))
               (assoc :username username ;; would be nil if none specified
                      :hostname hostname
                      :port port)))
