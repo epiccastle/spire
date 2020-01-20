@@ -312,14 +312,13 @@
 
 (defmacro defmodule [name module-args pipeline-args & body]
   `(defn ~name [& args#]
-     (binding [spire.state/*form* (concat '(~name) args#)]
-        (let [~module-args args#
-              ~pipeline-args [spire.state/*host-config* spire.state/*connection*]
-              result# (do ~@body)
-              result-code# (:result result#)]
-          (if (#{:ok :changed} result-code#)
-            result#
-            (throw (ex-info "module failed" result#)))))))
+     (let [~module-args args#
+           ~pipeline-args [spire.state/*host-config* spire.state/*connection*]
+           result# (do ~@body)
+           result-code# (:result result#)]
+       (if (#{:ok :changed} result-code#)
+         result#
+         (throw (ex-info "module failed" result#))))))
 
 (defmacro wrap-report [file form & body]
   `(do

@@ -78,15 +78,8 @@
   `(let [host-config# (ssh/host-description-to-host-config ~host-string)]
      (try
        (let [conn# (open-connection host-config#)]
-         (binding [ ;;state/*sessions* ~[host-string]
-                   ;;state/*connections* ~[host-string]
-                   state/*host-config* host-config#
-
-                   #_state/*host-string*
-                   #_(ssh/host-config-to-string
-                      (ssh/host-description-to-host-config ~host-string))
-                   state/*connection* conn#
-                   ]
+         (binding [state/*host-config* host-config#
+                   state/*connection* conn#]
            (safe-deref (future ~@body))))
        (finally
          (close-connection host-config#)))))
