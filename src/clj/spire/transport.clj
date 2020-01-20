@@ -21,20 +21,36 @@
     (doto session
       (.setHostKeyRepository (known-hosts/make-host-key-repository))
       (.setUserInfo user-info)
-      (.connect))
+      (.connect))))
 
-    (swap! state/ssh-connections assoc
-           (ssh/host-config-to-connection-key host-config) session)
-    session))
+(defn disconnect [connection]
+  (.disconnect connection))
 
-(defn disconnect [host-config]
-  (let [connection-key (ssh/host-config-to-connection-key host-config)]
+(defn open-connection [host-config]
+  (let [conn-key (ssh/host-config-to-connection-key host-config)
+        new-state (swap! state/ssh-connections
+                         update conn-key
+                         (fn [{:keys [connection use-count]}]
+                           (if (not connection)
+                             {:connection (connect host-config)
+                              :use-count 1}
+                             {:connection connection
+                              :use-count (inc use-count)})))]
+    (get-in new-state [conn-key :connection])))
+
+(defn close-connection [host-config]
+  (let [conn-key (ssh/host-config-to-connection-key host-config)]
     (swap! state/ssh-connections
            (fn [s]
-             (some-> s
-                     (get connection-key)
-                     .disconnect)
-             (dissoc s connection-key)))))
+             (let [{:keys [connection use-count] :as conn} (get s conn-key)]
+               (if (= 1 use-count)
+                 (do
+                   (disconnect connection)
+                   (dissoc s conn-key))
+                 (update-in s [conn-key :use-count] dec)))))))
+
+(defn get-connection [conn-key]
+  (get-in @state/ssh-connections [conn-key :connection]))
 
 (defn flush-out []
   (.flush *out*))
@@ -61,7 +77,7 @@
 (defmacro ssh [host-string & body]
   `(let [host-config# (ssh/host-description-to-host-config ~host-string)]
      (try
-       (let [conn# (connect host-config#)]
+       (let [conn# (open-connection host-config#)]
          (binding [ ;;state/*sessions* ~[host-string]
                    ;;state/*connections* ~[host-string]
                    state/*host-config* host-config#
@@ -73,14 +89,14 @@
                    ]
            (safe-deref (future ~@body))))
        (finally
-         (disconnect host-config#)))))
+         (close-connection host-config#)))))
 
 
 (defmacro ssh-group [host-strings & body]
   `(try
      (doseq [host-string# ~host-strings]
        (let [host-config# (ssh/host-description-to-host-config host-string#)]
-         (connect host-config#)))
+         (open-connection host-config#)))
      (let [threads#
            (doall
             (for [host-string# ~host-strings]
@@ -88,16 +104,16 @@
                 [(:key host-config#)
                  (future
                    (binding [state/*host-config* host-config#
-                             state/*connection* (get @state/ssh-connections
-                                                     (ssh/host-config-to-connection-key
-                                                      host-config#))]
+                             state/*connection* (get-connection
+                                                 (ssh/host-config-to-connection-key
+                                                  host-config#))]
                      (let [result# (do ~@body)]
                        result#)))])))]
        (into {} (map (fn [[host-name# fut#]] [host-name# (safe-deref fut#)]) threads#)))
      (finally
        (doseq [host-string# ~host-strings]
          (let [host-config# (ssh/host-description-to-host-config host-string#)]
-           (disconnect host-config#))))))
+           (close-connection host-config#))))))
 
 #_ (defmacro on [host-strings & body]
   `(let [present-sessions# (into #{} (state/get-sessions))
