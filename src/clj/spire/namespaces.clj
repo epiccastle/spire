@@ -135,16 +135,9 @@
                  }
    'spire.facts {'get-fact facts/get-fact}
    'spire.state {
-                 '*sessions* #'state/*sessions*
-                 '*connections* #'state/*connections*
-                 '*form* #'state/*form*
-                 'get-sessions #'state/get-sessions
-
                  '*host-config* #'state/*host-config*
-                 '*host-string* #'state/*host-string*
                  '*connection* #'state/*connection*
                  'ssh-connections state/ssh-connections
-
                  'get-host-config state/get-host-config
                  }
    'spire.output {

@@ -290,8 +290,7 @@
   )
 
 (defn fetch-facts []
-  (let [host-string state/*host-string*
-        host-config state/*host-config*
+  (let [host-config state/*host-config*
         session state/*connection*
         slug (make-separator-slug)
         script (make-fact-script slug)]
@@ -335,12 +334,13 @@
 
 (defn update-facts! []
   (let [facts (fetch-facts)]
-    (swap! state update state/*host-string* merge facts)))
+    (swap! state update (:host-string state/*host-config*) merge facts)))
 
 (defn get-fact [& [path default]]
-  (if (@state state/*host-string*)
-    (get-in @state (concat [state/*host-string*] path default))
-    (get-in (update-facts!) (concat [state/*host-string*] path default)))
+  (let [host-string (:host-string state/*host-config*)]
+    (if (@state host-string)
+      (get-in @state (concat [host-string] path default))
+      (get-in (update-facts!) (concat [host-string] path default))))
   )
 
 

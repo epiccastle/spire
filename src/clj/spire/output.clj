@@ -235,18 +235,12 @@
          (fn [s]
            (if-let [match (first (find-forms-matching-index s {:form form :file file :meta meta}))]
             s
-
-            (let [cumulative-widths (concat [0] (reductions + (map (comp inc count) (butlast state/*connections*))))
-                  form-width (count (pr-str form))
-                  offsets (map #(+ % form-width) cumulative-widths)]
-              (conj s {:form form
-                       :file file
-                       :meta meta
-                       :line (count s)
-                       :width (count (pr-str form))
-                       :results []})))
-           ))
-  )
+            (conj s {:form form
+                     :file file
+                     :meta meta
+                     :line (count s)
+                     :width (count (pr-str form))
+                     :results []})))))
 
 (defn print-result [form file meta host-config result]
   (comment
