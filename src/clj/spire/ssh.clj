@@ -233,7 +233,7 @@ keys.  All other option key pairs will be passed as SSH config options."
     (if username
       {:username username
        :hostname hostname
-       :port port}
+       :port (Integer/parseInt port)}
       (let [[_ username hostname] (re-matches #"(.+)@(.+)" host-string)]
         (if username
           {:username username
