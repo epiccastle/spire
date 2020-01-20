@@ -114,22 +114,3 @@
        (doseq [host-string# ~host-strings]
          (let [host-config# (ssh/host-description-to-host-config host-string#)]
            (close-connection host-config#))))))
-
-#_ (defmacro on [host-strings & body]
-  `(let [present-sessions# (into #{} (state/get-sessions))
-         sessions# (into #{} ~host-strings)
-         subset# (into [] (clojure.set/intersection present-sessions# sessions#))
-         futs# (->> subset#
-                    (map
-                     (fn [host-string#]
-                       [host-string#
-                        (binding [state/*host-string* host-string#
-                                  state/*sessions* [host-string#]
-                                  state/*connection* (get @state/ssh-connections host-string#)]
-                          (future
-                            ~@body))]))
-                    (into {}))]
-     (->> futs#
-          (map (fn [[host-string# fut#]]
-                 [host-string# @fut#]))
-          (into {}))))
