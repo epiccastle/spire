@@ -116,7 +116,9 @@ keys.  All other option key pairs will be passed as SSH config options."
       )
     ;; :strict-host-key-checking
     (doseq [[k v] session-options]
-      (.setConfig session (to-camel-case k) (name v)))
+      (.setConfig session (to-camel-case k) (if (boolean? v)
+                                              (if v "yes" "no")
+                                              (name v))))
     session))
 
 (defn ssh-exec-proc
