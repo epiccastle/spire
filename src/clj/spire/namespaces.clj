@@ -118,6 +118,9 @@
                  }
    'spire.transport {'connect transport/connect
                      'disconnect transport/disconnect
+                     'open-connection transport/open-connection
+                     'close-connection transport/close-connection
+                     'get-connection transport/get-connection
                      'flush-out transport/flush-out
                      'safe-deref transport/safe-deref
                      }
