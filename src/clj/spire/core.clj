@@ -21,12 +21,7 @@
 
 (defn initialise []
   (config/init!)
-
-  ;;(prn "java.library.path:" (System/getProperty "java.library.path"))
-
-  ;;(System/loadLibrary "spire")
-  (clojure.lang.RT/loadLibrary "spire")
-  )
+  (clojure.lang.RT/loadLibrary "spire"))
 
 (defn usage [options-summary]
   (->> ["Pragmatic Provisioning"
@@ -81,7 +76,7 @@
         (-> arguments first slurp (->> (evaluate args)) puget/cprint))
 
       :else
-      ;; repl
+      ;; repl?
       (puget/cprint 0))
 
     (shutdown-agents)))
