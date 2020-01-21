@@ -228,7 +228,10 @@ keys.  All other option key pairs will be passed as SSH config options."
 
 (def default-port 22)
 
-(defn parse-host-string [host-string]
+(defn parse-host-string
+  "parse a host-string and return a hashmap containing the elements.
+  If no username is specified, then the field is not included"
+  [host-string]
   (let [[_ username hostname port] (re-matches #"(.+)@(.+):(\d+)" host-string)]
     (if username
       {:username username
@@ -257,24 +260,24 @@ keys.  All other option key pairs will be passed as SSH config options."
   (select-keys host-config [:username :hostname :port])
   )
 
+(defn fill-in-defaults [host-description]
+  (do
+    (assert (not (and (:host-string host-description)
+                      (:hostname host-description)))
+            "cant have both host-string and hostname set in description.")
+    (if (:host-string host-description)
+      (let [{:keys [username hostname port] :as parsed} (parse-host-string (:host-string host-description))]
+        (-> host-description
+            (update :key #(or % (host-config-to-string parsed)))
+            (assoc :username username ;; would be nil if none specified
+                   :hostname hostname
+                   :port port)))
+
+      (-> host-description
+          (update :key #(or % (host-config-to-string host-description)))
+          (assoc :host-string (host-config-to-string host-description))))))
+
 (defn host-description-to-host-config [host-description]
   (if-not (string? host-description)
-    (do
-      (assert (not (and (:host-string host-description)
-                        (:hostname host-description)))
-              "cant have both host-string and hostname set in description.")
-      (if (:host-string host-description)
-        (let [{:keys [username hostname port] :as parsed} (parse-host-string (:host-string host-description))]
-          (-> host-description
-              (update :key #(or % (host-config-to-string parsed)))
-              (assoc :username username ;; would be nil if none specified
-                     :hostname hostname
-                     :port port)))
-
-        (-> host-description
-            (update :key #(or % (host-config-to-string host-description)))
-            (assoc :host-string (host-config-to-string host-description)))))
-
-    ;; todo: feels warty to recurse here. breakout key annotation and default filling to a seperate func
-    (host-description-to-host-config
-     (parse-host-string host-description))))
+    (fill-in-defaults host-description)
+    (fill-in-defaults (parse-host-string host-description))))
