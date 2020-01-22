@@ -1,12 +1,10 @@
-# Introduction to spire
-
-TODO: write [great documentation](http://jacobian.org/writing/what-to-write/)
-
-## Tutorial
+# Spire Tutorial
 
 Install spire to your path
 
-    $ bash <(curl -s https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install)
+```shell-session
+$ bash <(curl -s https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install)
+```
 
 ### Create A Cloud Server
 
@@ -47,17 +45,19 @@ Replace `X.X.X.X` with the IP number of your new cloud machine.
 
 Run the blueprint with `spire` to connect and then report the type of system it is. When it asks "Are you sure you want to continue connecting?" answer by typing `y` and hitting enter.
 
-    $ spire wireguard.clj
-    The authenticity of host 'X.X.X.X' can't be established.
-    RSA key fingerprint is 43:d6:ed:1e:86:26:f2:5a:8a:ed:06:35:99:a3:6f:8b.
-    Are you sure you want to continue connecting? y
-    {:codename :bionic,
-     :description "Ubuntu 18.04.3 LTS",
-     :distro :ubuntu,
-     :os :linux,
-     :platform :x86_64,
-     :release "18.04",
-     :shell :bash}
+```shell-session
+$ spire wireguard.clj
+The authenticity of host 'X.X.X.X' can't be established.
+RSA key fingerprint is 43:d6:ed:1e:86:26:f2:5a:8a:ed:06:35:99:a3:6f:8b.
+Are you sure you want to continue connecting? y
+{:codename :bionic,
+ :description "Ubuntu 18.04.3 LTS",
+ :distro :ubuntu,
+ :os :linux,
+ :platform :x86_64,
+ :release "18.04",
+ :shell :bash}
+```
 
 #### Install wireguard on the server
 
@@ -74,7 +74,7 @@ The installation instructions for wireguard [https://www.wireguard.com/install/]
 
 Let's run this to install wireguard...
 
-```
+```shell-session
 $ spire wireguard.clj
 (apt-repo :present "ppa:wireguard/wireguard") root@X.X.X.X:22
 (apt :update) root@X.X.X.X:22
@@ -98,7 +98,7 @@ Lets generate a key pair for the server and return it. We will run this on the s
      :public-key (string/trim (:out (get-file "publickey")))})
 ```
 
-```
+```shell-session
 $ spire wireguard.clj
 (apt-repo :present "ppa:wireguard/wireguard") root@X.X.X.X:22
 (apt :install "wireguard") root@X.X.X.X:22
@@ -141,7 +141,7 @@ Lets connect to localhost and generate some client keys. We can break out some o
 
 Now running this gives:
 
-```
+```shell-session
 $ spire wireguard.clj
 (apt-repo :present "ppa:wireguard/wireguard") root@X.X.X.X:22 root@localhost:22
 (apt :update) root@X.X.X.X:22 root@localhost:22
@@ -207,7 +207,7 @@ You will need to write the server config templates.
 
 In the same directory, put the following in `wireguard-server.conf`:
 
-```ini
+```jinja2
 [Interface]
 Address = {{ wan-ip }}
 PrivateKey = {{ private }}
@@ -234,7 +234,7 @@ PersistentKeepalive = {{ peer.keepalive }}
 
 Also put the following client config in `wireguard-client.conf`:
 
-```ini
+```jinja2
 [Interface]
 Address = {{ wan-ip }}
 ListenPort = 51820
@@ -249,7 +249,7 @@ PersistentKeepalive = 30
 
 Now build the blueprint to finish the setup:
 
-```
+```shell-session
 $ spire wireguard.clj
 (apt-repo :present "ppa:wireguard/wireguard") root@139.59.92.63:22 root@localhost:22
 (apt :update) root@139.59.92.63:22 root@localhost:22
@@ -266,12 +266,12 @@ $ spire wireguard.clj
 
 Your setup is now complete. Try and start up the tunnel with
 
-```
+```shell-session
 $ sudo service wg-quick@vpn-tunnel start
 ```
 
-Now check that your vpn tunnel is working by opening a browser and going to [https://whatismypublicip.com/]
+Now check that your vpn tunnel is working by opening a browser and going to [whatismypublicip.com](https://whatismypublicip.com/)
 
 You should see your web browser is being seen by the internet with an IP of X.X.X.X in the remote country you started the server in!
 
-Congratulations! You have built your own personal vpn service!
+Congratulations! You have built your own personal VPN service!
