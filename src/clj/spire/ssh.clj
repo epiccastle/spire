@@ -260,7 +260,7 @@ keys.  All other option key pairs will be passed as SSH config options."
   (select-keys host-config [:username :hostname :port])
   )
 
-(defn fill-in-defaults [host-description]
+(defn fill-in-host-description-defaults [host-description]
   (do
     (assert (not (and (:host-string host-description)
                       (:hostname host-description)))
@@ -279,5 +279,5 @@ keys.  All other option key pairs will be passed as SSH config options."
 
 (defn host-description-to-host-config [host-description]
   (if-not (string? host-description)
-    (fill-in-defaults host-description)
-    (fill-in-defaults (parse-host-string host-description))))
+    (fill-in-host-description-defaults host-description)
+    (fill-in-host-description-defaults (parse-host-string host-description))))
