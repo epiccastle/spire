@@ -127,3 +127,45 @@
 
 (defmacro authorized-keys [& args]
   `(utils/wrap-report ~*file* ~&form (authorized-keys* ~@args)))
+
+(def documentation
+  {
+   :module "authorized-keys"
+   :blurb "add and removed ssh authorized keys to users accounts"
+   :description
+   [
+    "This module manages users' ssh authorized key lists."
+    "It can add a key to an authorized_keys file."
+    "It can ensure a key is not present in an authorized_keys file."
+    "It can return all the public keys in the authorized_keys file."]
+   :form "(authorized-keys command options)"
+   :args
+   [{:arg "command"
+     :desc "The operation to execute. Should be one of `:present`, `:absent` or `:get`"
+     :values
+     [[:present "Ensure the specified key is in the authorized_keys file"
+       :absent "Ensure the specified key is removed from the authorized_keys file"
+       :get "Return every key present in the authorized_keys file"]]}
+    {:arg "options"
+     :desc "A hashmap of options. All available options and their values are described below"}]
+
+   :opts
+   [
+    [:user
+     {:description ["The username of the user to recieve the credential in their authorized_keys file"]
+      :type :string
+      :required false}]
+
+    [:key
+     {:description ["The public key contents to add or remove from the file"]
+      :type :string
+      :required false}]
+
+    [:file
+     {:description ["Instead of specifying a user, specify the location of an authorized_keys file to work with"]
+      :type :string
+      :required false}]
+
+    [:options
+     {:description ["A hashmap containing a set of ssh key options that will be prepended to the key in the authorized_keys file."]
+      :type :string}]]})
