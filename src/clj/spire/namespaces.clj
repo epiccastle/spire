@@ -21,6 +21,7 @@
             [spire.module.service :as service]
             [spire.module.authorized-keys :as authorized-keys]
             [clojure.tools.cli]
+            [sci.core :as sci]
             )
   )
 
