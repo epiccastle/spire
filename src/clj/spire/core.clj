@@ -49,32 +49,24 @@
   [& args]
   (initialise)
   (output/print-thread)
-  (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
-    (cond
-      (:help options)
-      (println (usage summary))
+  (binding [*command-line-args* args]
+    (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
+      (cond
+        (:help options)
+        (println (usage summary))
 
-      (:version options)
-      (println "Version:" version)
+        (:version options)
+        (println "Version:" version)
 
-      (:server options)
-      (doseq [line (line-seq (java.io.BufferedReader. *in*))]
-        (try
-          (-> line evaluate prn)
-          (catch Exception e
-            (binding [*out* *err*]
-              (prn e)))))
+        (:evaluate options)
+        (binding [*file* ""]
+          (->> options :evaluate (evaluate args) puget/cprint))
 
+        (pos? (count arguments))
+        (binding [*file* (first arguments)]
+          (-> arguments first slurp (->> (evaluate args)) puget/cprint))
 
-      (:evaluate options)
-      (binding [*file* ""]
-        (->> options :evaluate (evaluate args) puget/cprint))
+        :else
+        (println (usage summary)))
 
-      (pos? (count arguments))
-      (binding [*file* (first arguments)]
-        (-> arguments first slurp (->> (evaluate args)) puget/cprint))
-
-      :else
-      (println (usage summary)))
-
-    (shutdown-agents)))
+      (shutdown-agents))))
