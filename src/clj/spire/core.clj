@@ -41,11 +41,9 @@
   (sci/eval-string
    (remove-shebang script)
    {:namespaces namespaces/namespaces
-    :bindings (assoc namespaces/bindings
-                     'argv args
-                     'get-argv (fn [] args))
+    :bindings namespaces/bindings
     :imports {'System 'java.lang.System}
-    :classes {'java.lang.System System}}))
+    :classes namespaces/classes}))
 
 (defn -main
   [& args]
