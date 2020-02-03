@@ -182,7 +182,7 @@
 
 
 (utils/defmodule apt* [command & [opts]]
-  [host-string session]
+  [host-config session]
   (or
    (preflight command opts)
    (->>
