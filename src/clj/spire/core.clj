@@ -69,14 +69,14 @@
 
 
       (:evaluate options)
-      (->> options :evaluate (evaluate args) puget/cprint)
+      (binding [*file* ""]
+        (->> options :evaluate (evaluate args) puget/cprint))
 
       (pos? (count arguments))
-      (binding [*file* (or (first arguments) "")]
+      (binding [*file* (first arguments)]
         (-> arguments first slurp (->> (evaluate args)) puget/cprint))
 
       :else
-      ;; repl?
-      (puget/cprint 0))
+      (println (usage summary)))
 
     (shutdown-agents)))
