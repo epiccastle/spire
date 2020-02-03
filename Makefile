@@ -26,8 +26,7 @@ build/spire: target/uberjar/spire-$(VERSION)-standalone.jar
 		--allow-incomplete-classpath \
 		--no-fallback \
 		--no-server \
-		"-J-Xmx6g" \
-		-H:+TraceClassInitialization -H:+PrintClassInitialization
+		"-J-Xmx6g"
 	cp build/spire spire
 
 JNI_DIR=target/jni
