@@ -99,10 +99,10 @@
 
    'changed? utils/changed?
 
-   (with-meta '*command-line-args* {:sci.impl/deref! true}) (sci/new-dynamic-var '*command-line-args* *command-line-args*)
-   (with-meta '*in* {:sci.impl/deref! true}) (sci/new-dynamic-var '*in* *in*)
-   (with-meta '*out* {:sci.impl/deref! true}) (sci/new-dynamic-var '*out* *out*)
-   (with-meta '*err* {:sci.impl/deref! true}) (sci/new-dynamic-var '*err* *err*)
+   ;; '*command-line-args* (sci/new-dynamic-var '*command-line-args* *command-line-args*)
+   '*in* (sci/new-dynamic-var '*in* *in*)
+   '*out* (sci/new-dynamic-var '*out* *out*)
+   '*err* (sci/new-dynamic-var '*err* *err*)
    })
 
 (def namespaces
@@ -141,8 +141,8 @@
                  }
    'spire.facts {'get-fact facts/get-fact}
    'spire.state {
-                 '*host-config* #'state/*host-config*
-                 '*connection* #'state/*connection*
+                 (with-meta '*host-config* {:sci.impl/deref! true}) (sci/new-dynamic-var 'state/*host-config* state/*host-config*)
+                 (with-meta '*connection* {:sci.impl/deref! true}) (sci/new-dynamic-var 'state/*connection* state/*host-config*)
                  'ssh-connections state/ssh-connections
                  'get-host-config state/get-host-config
                  }

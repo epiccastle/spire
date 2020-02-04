@@ -41,7 +41,8 @@
   (sci/eval-string
    (remove-shebang script)
    {:namespaces namespaces/namespaces
-    :bindings namespaces/bindings
+    :bindings (assoc namespaces/bindings
+                     '*command-line-args* (sci/new-dynamic-var '*command-line-args* *command-line-args*))
     :imports {'System 'java.lang.System}
     :classes namespaces/classes}))
 
