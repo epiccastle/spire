@@ -141,8 +141,8 @@
                  }
    'spire.facts {'get-fact facts/get-fact}
    'spire.state {
-                 (with-meta '*host-config* {:sci.impl/deref! true}) (sci/new-dynamic-var 'state/*host-config* state/*host-config*)
-                 (with-meta '*connection* {:sci.impl/deref! true}) (sci/new-dynamic-var 'state/*connection* state/*host-config*)
+                 '*host-config* (sci/new-dynamic-var 'state/*host-config* state/*host-config*)
+                 '*connection* (sci/new-dynamic-var 'state/*connection* state/*host-config*)
                  'ssh-connections state/ssh-connections
                  'get-host-config state/get-host-config
                  }
