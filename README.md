@@ -1,8 +1,10 @@
 # spire
 
-Pragmatic Provisioning
+Pragmatic Provisioning Using Clojure
 
 A Clojure domain specific language tailored to idempotently orchestrate machines in parallel over SSH.
+
+[Official Website](https://epiccastle.io/spire/)
 
 ## Overview
 
@@ -48,6 +50,14 @@ $ spire FILE
 ## How To
 
 [Find examples to solve common problems.](doc/howto.md)
+
+## Module Reference
+
+[Built in modules.](https://epiccastle.io/spire/modules.html)
+
+## Source Code
+
+You can find the source code to Spire on github [here.](https://github.com/epiccastle/spire)
 
 ## Build
 
@@ -105,21 +115,21 @@ $ lein test
 
 This is the binary spire program you run on your local machine.
 
-* [X] Linux 64 bit
-* [ ] MacOS 64 bit
+* [x] Linux 64 bit
+* [x] MacOS 64 bit
 * [ ] Windows 64 bit
 
 ### Target Systems
 
 This is the operating systems you will be provisioning, that the spire modules and operations will work against.
 
-* [X] Ubuntu Linux
-* [ ] FreeBSD
-* [ ] MacOS
+* [x] Ubuntu Linux
+* [x] FreeBSD
+* [x] MacOS
 
 ### Bugs
 
-There will be an enormous number of bugs. Especially on different target machines. Open tickets for any issues you find.
+There will be many bugs at this early stage. Especially on different target machines. Please open tickets for any issues you find.
 
 ## License
 
