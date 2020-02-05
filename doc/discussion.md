@@ -14,19 +14,19 @@ A host string is of the format `username@hostname:port`. The `username` and `por
 
 A connection hashmap can be used instead of a host string. The hashmap can contain some subset of the following keys:
 
- * :host-string
- * :username
- * :hostname
- * :port
- * :password
- * :identity
- * :passphrase
- * :private-key
- * :public-key
- * :agent-forwarding
- * :strict-host-key-checking
- * :accept-host-key
- * :key
+* :host-string
+* :username
+* :hostname
+* :port
+* :password
+* :identity
+* :passphrase
+* :private-key
+* :public-key
+* :agent-forwarding
+* :strict-host-key-checking
+* :accept-host-key
+* :key
 
 ##### host-string
 
