@@ -81,7 +81,7 @@ Pass the key's file location into the `:identity-file` of a host config:
 ```clojure
 (ssh {:username "root"
       :hostname "localhost"
-      :identity-file "/home/user/.ssh/id_rsa"}
+      :identity (slurp "/home/user/.ssh/id_rsa")}
   ;; commands here
   )
 ```
@@ -93,7 +93,7 @@ You can provide the key _content_ to be used to authenticate with `:identity`:
 ```clojure
 (ssh {:username "root"
       :password "localhost"
-      :identity (slurp "/home/user/.ssh/id_rsa")}
+      :identity my-identity-var}
   ;; commands here
   )
 ```
@@ -305,7 +305,7 @@ The `System` namespace is available. Use its `getenv` function:
 
 ```clojure
 (when (= "dev" (System/getenv "SPIRE_ENV"))
-  ;; some speical rules for dev
+  ;; some special rules for dev
   )
 ```
 
