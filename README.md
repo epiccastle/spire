@@ -55,6 +55,10 @@ $ spire FILE
 
 [Built in modules.](https://epiccastle.io/spire/modules.html)
 
+## Discussion
+
+[Higher level discussion of the use of spire](doc/discussion.md)
+
 ## Source Code
 
 You can find the source code to Spire on github [here.](https://github.com/epiccastle/spire)
