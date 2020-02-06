@@ -12,16 +12,15 @@
 
 (defmulti process-result (fn [command opts result] command))
 
-(defmethod preflight :present [_ {:keys [name gid system] :as opts}]
+(defmethod preflight :present [_ {:keys [name gid] :as opts}]
   nil
   )
 
-(defmethod make-script :present [_ {:keys [name gid system password] :as opts}]
+(defmethod make-script :present [_ {:keys [name gid password] :as opts}]
   (utils/make-script
    "group_present.sh"
    {:NAME name
     :GROUP_ID gid
-    :SYSTEM system
     :PASSWORD password}))
 
 (defmethod process-result :present
