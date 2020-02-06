@@ -188,3 +188,71 @@
 
 (defmacro download [& args]
   `(utils/wrap-report ~*file* ~&form (download* ~@args)))
+
+(def documentation
+  {
+   :module "download"
+   :blurb "Transfer files and directories from the remote machines to the local client."
+   :description
+   [
+    "This module downloads files from the remote machines"]
+   :form "(download options)"
+   :args
+   [{:arg "options"
+     :desc "A hashmap of options. All available keys and their values are described below"}]
+
+   :opts
+   [
+    [:src
+     {:description ["A path to a file or directory on the remote hosts"]
+      :type :string
+      :required true}]
+
+    [:dest
+     {:description ["A local path to copy the files into"]
+      :type :string
+      :required true}]
+
+    [:recurse
+     {:description ["If the remote path is a directory, recurse through all the files and directories"]
+      :type :boolean
+      :required false}]
+
+    [:preserve
+     {:description ["Preserve the remote files' modification flags when copying them to the local filesystem"]
+      :type :boolean
+      :required false}]
+
+    [:flat
+     {:description ["When set to false (the default) each remote host's files are written into a subdirectory on the client `:dest` that is the name of the host."
+                    "When set to true, each host's files are written directly into the destination. Later copies from one host will overwrite earlier copies from another host"]
+      :type :boolean
+      :required false}]
+
+    [:dir-mode
+     {:description ["If `:preserve` is false, this parameter specifies the file modification mode that created directories on the client will have"]
+      :type :integer
+      :required false}]
+
+    [:mode
+     {:description ["If `:preserve` is false, this parameter specifies the file modification mode that copied files on the client will have"]
+      :type :integer
+      :required false}]
+
+    [:owner
+     {:description ["If specified the local files and directories will be owned by this user"]
+      :type :string
+      :required false}]
+
+    [:group
+     {:description ["If specified the local files and directories will be owned by this group"]
+      :type :string
+      :required false}]
+
+    #_
+    [:attrs
+     {:description ["If specified the local files and directories will have the specified attrs."]
+      :type :string
+      :required false
+      }]
+    ]})
