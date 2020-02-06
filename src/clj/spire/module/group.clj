@@ -80,3 +80,35 @@
 
 (defmacro group [& args]
   `(utils/wrap-report ~*file* ~&form (group* ~@args)))
+
+(def documentation
+  {:module "group"
+   :blurb "Manage the system groups"
+   :description
+   ["This module ensures a particular group is present on, or absent from, the remote machine."]
+   :form "(group command options)"
+   :args
+   [{:arg "command"
+     :desc "The state the group should be in. Should be one of `:present` or `:absent`."
+     :values
+     [[:present "Ensures the named group is present and has the specified settings"]
+      [:absent "Ensures the named group is absent"]]}
+    {:arg "options"
+     :desc "A hashmap of options. All available option keys and their values are described below"}]
+
+   :opts
+   [
+    [:name
+     {:description ["The name of the group"]
+      :type :string
+      :required true}]
+
+    [:gid
+     {:description ["The group id number of the named group"]
+      :type :integer
+      :required false}]
+
+    [:password
+     {:description ["A global password for the group."]
+      :type :string
+      :required false}]]})
