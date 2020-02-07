@@ -111,3 +111,20 @@
 
 (defmacro pkg [& args]
   `(utils/wrap-report ~*file* ~&form (pkg* ~@args)))
+
+(def documentation
+  {
+   :module "pkg"
+   :blurb "Manage packages on a FreeBSD system."
+   :description
+   [
+    "This module manages the installation and removal of FreeBSD packages."]
+   :form "(pkg command opts)"
+   :args
+   [{:arg "command"
+     :desc "The overall command to execure. Must be one of: `:install` or `:remove`."
+     :values
+     [[:install "Ensure the specied package is installed on the system"]
+      [:remove "Ensure the specified package is removed from the syste,"]]}
+    {:arg "opts"
+     :desc "A package name or a list of packages"}]})
