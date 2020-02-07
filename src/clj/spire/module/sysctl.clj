@@ -54,9 +54,21 @@
    (preflight command opts)
    (->>
     (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
-    (process-result command opts)))
-
-  )
+    (process-result command opts))))
 
 (defmacro sysctl [& args]
   `(utils/wrap-report ~*file* ~&form (sysctl* ~@args)))
+
+(def documentation
+  {
+   :module "sysctl"
+   :blurb "Manage the kernel system control parameters."
+   :description
+   [
+    "This module manages the configurable parameters of the running OS kernel."]
+   :form "(service command opts)"
+   :args
+   [{:arg "command"
+     :desc "The overall command to execure. Only `:present` is implemented."}
+    {:arg "opts"
+     :desc "A hashmap of options"}]})
