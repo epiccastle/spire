@@ -33,8 +33,7 @@
      :result :failed}))
 
 (defmethod make-script :present [_ repo]
-    (let [repo "ppa:wireguard/wireguard"
-          ppa? (string/starts-with? repo "ppa:")]
+    (let [ppa? (string/starts-with? repo "ppa:")]
       (if ppa?
         (let [[_ ppa] (string/split repo #":")
               [ppa-owner ppa-name] (string/split ppa #"/")
@@ -88,3 +87,19 @@
 
 (defmacro apt-repo [& args]
   `(utils/wrap-report ~*file* ~&form (apt-repo* ~@args)))
+
+(def documentation
+  {
+   :module "apt-repo"
+   :blurb "Manage extra apt repositories"
+   :description
+   [
+    "This module manages the presence of extra apt repositories."]
+   :form "(apt-repo command opts)"
+   :args
+   [{:arg "command"
+     :desc "The overall command to execure. Presently only `:present` is implemented."
+     :values
+     [[:present "Ensure the specied apt repository is present on the machine"]]}
+    {:arg "repository"
+     :desc "A string describing the repository to add"}]})
