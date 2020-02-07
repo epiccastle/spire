@@ -18,3 +18,18 @@
 
 (defmacro get-file [& args]
   `(utils/wrap-report ~*file* ~&form (get-file* ~@args)))
+
+(defmacro apt-repo [& args]
+  `(utils/wrap-report ~*file* ~&form (apt-repo* ~@args)))
+
+(def documentation
+  {
+   :module "get-file"
+   :blurb "Gather the contents of a remote file"
+   :description
+   [
+    "This module returns the contents of a file on the remote machine"]
+   :form "(get-file file-path)"
+   :args
+   [{:arg "file-path"
+     :desc "The path on the remote filesystem to the file"}]})
