@@ -111,3 +111,19 @@
 
 (defmacro service [& args]
   `(utils/wrap-report ~*file* ~&form (service* ~@args)))
+
+(def documentation
+  {
+   :module "service"
+   :blurb "Manage system services"
+   :description
+   [
+    "This module manages the running of system services."
+    "It can start, stop, restart and reload services."
+    "It can configure a service to start on boot, or to not start on boot."]
+   :form "(service command opts)"
+   :args
+   [{:arg "command"
+     :desc "The overall command to execure. Use `:started`, `:stopped` or `:restarted`"}
+    {:arg "opts"
+     :desc "A hashmap of options"}]})
