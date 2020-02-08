@@ -1,13 +1,8 @@
 (ns spire.module.apt-repo
-  (:require [spire.output :as output]
-            [spire.state :as state]
-            [spire.transport :as transport]
-            [spire.ssh :as ssh]
+  (:require [spire.ssh :as ssh]
             [spire.facts :as facts]
             [spire.utils :as utils]
             [clojure.string :as string]
-            [clj-http.lite.client :as client]
-            [clojure.data.json :as json]
             ))
 
 ;; defaults
