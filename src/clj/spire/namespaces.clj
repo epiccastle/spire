@@ -22,6 +22,10 @@
             [spire.module.authorized-keys :as authorized-keys]
             [clojure.tools.cli]
             [sci.core :as sci]
+            [clj-http.lite.core]
+            [clj-http.lite.client]
+            [clj-http.lite.links]
+            [clj-http.lite.util]
             )
   )
 
@@ -193,8 +197,66 @@
    'spire.module.user {'user* user/user*
                        'user (with-meta @#'user/user {:sci/macro true})}
 
+   'clj-http.lite.client
+   {
+    'update clj-http.lite.client/update
+    'when-pos clj-http.lite.client/when-pos
+    'parse-url clj-http.lite.client/parse-url
+    'unexceptional-status? clj-http.lite.client/unexceptional-status?
+    'wrap-exceptions clj-http.lite.client/wrap-exceptions
+    'wrap-redirects clj-http.lite.client/wrap-redirects
+    'follow-redirect clj-http.lite.client/follow-redirect
+    'wrap-decompression clj-http.lite.client/wrap-decompression
+    'wrap-output-coercion clj-http.lite.client/wrap-output-coercion
+    'wrap-input-coercion clj-http.lite.client/wrap-input-coercion
+    'content-type-value clj-http.lite.client/content-type-value
+    'wrap-content-type clj-http.lite.client/wrap-content-type
+    'wrap-accept clj-http.lite.client/wrap-accept
+    'accept-encoding-value clj-http.lite.client/accept-encoding-value
+    'wrap-accept-encoding clj-http.lite.client/wrap-accept-encoding
+    'generate-query-string clj-http.lite.client/generate-query-string
+    'wrap-query-params clj-http.lite.client/wrap-query-params
+    'basic-auth-value clj-http.lite.client/basic-auth-value
+    'wrap-basic-auth clj-http.lite.client/wrap-basic-auth
+    'parse-user-info clj-http.lite.client/parse-user-info
+    'wrap-user-info clj-http.lite.client/wrap-user-info
+    'wrap-method clj-http.lite.client/wrap-method
+    'wrap-form-params clj-http.lite.client/wrap-form-params
+    'wrap-url clj-http.lite.client/wrap-url
+    'wrap-unknown-host clj-http.lite.client/wrap-unknown-host
+    'wrap-request clj-http.lite.client/wrap-request
+    'request clj-http.lite.client/request
+    'get clj-http.lite.client/get
+    'head clj-http.lite.client/head
+    'post clj-http.lite.client/post
+    'put clj-http.lite.client/put
+    'delete clj-http.lite.client/delete}
 
-   })
+   'clj-http.lite.core
+   {
+    'parse-headers clj-http.lite.core/parse-headers
+    'request clj-http.lite.core/request}
+
+   'clj-http.lite.links
+   {
+    'read-link-params clj-http.lite.links/read-link-params
+    'read-link-value clj-http.lite.links/read-link-value
+    'read-link-headers clj-http.lite.links/read-link-headers
+    'wrap-links clj-http.lite.links/wrap-links
+    }
+
+   'clj-http.lite.util
+   {
+    'utf8-bytes clj-http.lite.util/utf8-bytes
+    'utf8-string clj-http.lite.util/utf8-string
+    'url-decode clj-http.lite.util/url-decode
+    'url-encode clj-http.lite.util/url-encode
+    'to-byte-array clj-http.lite.util/to-byte-array
+    'gunzip clj-http.lite.util/gunzip
+    'gzip clj-http.lite.util/gzip
+    'inflate clj-http.lite.util/inflate
+    'deflate clj-http.lite.util/deflate
+    }})
 
 (def classes
   {'java.lang.System System
