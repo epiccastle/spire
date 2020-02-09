@@ -43,11 +43,12 @@
     (swap! state/ssh-connections
            (fn [s]
              (let [{:keys [connection use-count] :as conn} (get s conn-key)]
-               (if (= 1 use-count)
-                 (do
-                   (disconnect connection)
-                   (dissoc s conn-key))
-                 (update-in s [conn-key :use-count] dec)))))))
+               (when conn
+                 (if (= 1 use-count)
+                   (do
+                     (disconnect connection)
+                     (dissoc s conn-key))
+                   (update-in s [conn-key :use-count] dec))))))))
 
 (defn get-connection [conn-key]
   (get-in @state/ssh-connections [conn-key :connection]))
