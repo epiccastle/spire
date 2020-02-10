@@ -99,8 +99,6 @@
    'on-shell (with-meta @#'facts/on-shell {:sci/macro true})
    'on-distro (with-meta @#'facts/on-distro {:sci/macro true})
 
-   'binding (with-meta @#'clojure.core/binding {:sci/macro true})
-
    'changed? utils/changed?
 
    ;; '*command-line-args* (sci/new-dynamic-var '*command-line-args* *command-line-args*)
@@ -145,8 +143,8 @@
                  }
    'spire.facts {'get-fact facts/get-fact}
    'spire.state {
-                 '*host-config* (sci/new-dynamic-var 'state/*host-config* state/*host-config*)
-                 '*connection* (sci/new-dynamic-var 'state/*connection* state/*host-config*)
+                 '*host-config* #'state/*host-config*
+                 '*connection* #'state/*connection*
                  'ssh-connections state/ssh-connections
                  'get-host-config state/get-host-config
                  }
