@@ -75,13 +75,14 @@ while [ ! -w "$INSTALL_DIR" ]; do
   echo "Cannot write to $INSTALL_DIR. Insufficient privileges."
 
   echo -n "Enter new install path, or press return to su to root and install in $INSTALL_DIR: "
-  read INSTALL_DIR
-  if [ "$INSTALL_DIR" == "" ]; then
+  read NEW_INSTALL_DIR
+  if [ "$NEW_INSTALL_DIR" == "" ]; then
     echo "Enter root password to install"
     su -c 'mv -f "$INSTALL_DIR/spire" "$INSTALL_DIR/spire.old"; mv -f "$DOWNLOAD_DIR/spire" "$INSTALL_DIR/spire"'
     echo "done"
     exit 0
   fi
+  INSTALL_DIR="$NEW_INSTALL_DIR"
 done
 
 cd "$INSTALL_DIR"
