@@ -44,7 +44,6 @@ echo $PLATFORM
 
 case "$PLATFORM" in
   freebsd) echo "freebsd install not supported from installer script"; exit 1;;
-  macos) echo "macos install not supported from installer script"; exit 1;;
   windows) echo "spire does not support windows clients (yet)"; exit 1;;
 esac
 
