@@ -522,6 +522,29 @@
         "allPublicMethods" : true,
         "allPublicFields" : true,
         "allPublicConstructors" : true
+    },
+    {
+        "name" : "java.util.concurrent.ExecutionException",
+        "allPublicMethods" : true,
+        "allPublicFields" : true,
+        "allPublicConstructors" : true
+    },
+    {
+        "name" : "java.lang.StackTraceElement",
+        "allPublicMethods" : true,
+        "allPublicFields" : true,
+        "allPublicConstructors" : true
+    },
+    {
+        "name" : "java.lang.IllegalArgumentException",
+        "allPublicMethods" : true,
+        "allPublicFields" : true,
+        "allPublicConstructors" : true
+    },
+    {
+        "name" : "java.io.BufferedInputStream",
+        "allPublicMethods" : true,
+        "allPublicFields" : true,
+        "allPublicConstructors" : true
     }
-
 ]
