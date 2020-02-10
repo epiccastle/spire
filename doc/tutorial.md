@@ -3,7 +3,8 @@
 Install spire to your path
 
 ```shell-session
-$ bash <(curl -s https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install)
+$ curl -O https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install
+$ bash install
 ```
 
 ### Create A Cloud Server
@@ -30,24 +31,24 @@ You can use your favourite cloud provider to create a linux Virtual Private Serv
 
  6. Wait for the machine to be created
 
- 7. Write down the machines IP number. We'll call this X.X.X.X from now on. Anywhere you see X.X.X.X from now on, write this real IP number instead
+ 7. Write down the machines IP number. The machine I built has an IP of 159.203.119.225. Anywhere you see 159.203.119.225 from now on, **write your real IP number instead**
 
 ### Write A Blueprint To Provision The Cloud Server
 
 Create the following blueprint. Create a file `wireguard.clj` with the following contents:
 
 ```clojure
-(ssh "root@X.X.X.X"
+(ssh "root@159.203.119.225"
     (get-fact [:system]))
 ```
 
-Replace `X.X.X.X` with the IP number of your new cloud machine.
+Replace `159.203.119.225` with the IP number of your new cloud machine.
 
 Run the blueprint with `spire` to connect and then report the type of system it is. When it asks "Are you sure you want to continue connecting?" answer by typing `y` and hitting enter.
 
 ```shell-session
 $ spire wireguard.clj
-The authenticity of host 'X.X.X.X' can't be established.
+The authenticity of host '159.203.119.225' can't be established.
 RSA key fingerprint is 43:d6:ed:1e:86:26:f2:5a:8a:ed:06:35:99:a3:6f:8b.
 Are you sure you want to continue connecting? y
 {:codename :bionic,
@@ -66,7 +67,7 @@ Now we know we can connect, lets provision the machine.
 The installation instructions for wireguard [https://www.wireguard.com/install/] tell us we need to install a `wireguard` package from a ppa. Let's do that now. Change the `wireguard.clj` to read:
 
 ```clojure
-(ssh "root@X.X.X.X"
+(ssh "root@159.203.119.225"
     (apt-repo :present "ppa:wireguard/wireguard")
     (apt :update)
     (apt :install "wireguard"))
@@ -76,9 +77,13 @@ Let's run this to install wireguard...
 
 ```shell-session
 $ spire wireguard.clj
-(apt-repo :present "ppa:wireguard/wireguard") root@X.X.X.X:22
-(apt :update) root@X.X.X.X:22
-(apt :install "wireguard") root@X.X.X.X:22
+wireguard.clj:2 (apt-repo :present "ppa:wireguard/wireguard") root@159.203.119.225
+wireguard.clj:3 (apt :update) root@159.203.119.225
+wireguard.clj:4 (apt :install "wireguard") root@159.203.119.225
+{:err "",
+ :exit 0,
+...
+}
 ```
 
 #### Generate server keypair
@@ -88,7 +93,7 @@ Lets generate a key pair for the server and return it. We will run this on the s
 ```clojure
 (require '[clojure.string :as string])
 
-(ssh "root@X.X.X.X"
+(ssh "root@159.203.119.225"
     (apt-repo :present "ppa:wireguard/wireguard")
     (apt :update)
     (apt :install "wireguard")
@@ -100,18 +105,21 @@ Lets generate a key pair for the server and return it. We will run this on the s
 
 ```shell-session
 $ spire wireguard.clj
-(apt-repo :present "ppa:wireguard/wireguard") root@X.X.X.X:22
-(apt :install "wireguard") root@X.X.X.X:22
-(shell {:creates ["privatekey" "publickey"], :cmd "umask 077 && wg genkey | tee privatekey | wg pubkey > publickey"}) root@X.X.X.X:22
-(get-file "privatekey") root@X.X.X.X:22
-(get-file "publickey") root@X.X.X.X:22
-{:private-key "sMMp11XSZcPqAs4F62mNr5u1j8eXDe7aG5KHrt37Gmg=",
- :public-key "90uBkuU1tAMgR/qYwXrz+nZYFUx5qJbIVnv3AxE2DAo="}
+wireguard.clj:4 (apt-repo :present "ppa:wireguard/wireguard") root@159.203.119.225
+wireguard.clj:5 (apt :update) root@159.203.119.225
+wireguard.clj:6 (apt :install "wireguard") root@159.203.119.225
+wireguard.clj:7 (shell {:creates ["privatekey" "publickey"], :cmd "umask 077 && wg genkey | tee privatekey | wg pu
+wireguard.clj:9 (get-file "privatekey") root@159.203.119.225
+wireguard.clj:10 (get-file "publickey") root@159.203.119.225
+{:private-key "8M5di1Sahxqe0hlnQMAKTN4YRx9mUMPC9upfGr9BcE8=",
+ :public-key "rKjdEHcNNClS5cyhPpAx0/eKaswhxmJHrFMwx+5ZAn4="}
 ```
 
 We will need to use these keys in setting up our local client.
 
 #### Generate client keypair
+
+** Note: This local installation requires you to be running ubuntu linux on the local client **
 
 Lets connect to localhost and generate some client keys. We can break out some of our wireguard installer into some functions now to avoid repeating ourselves. Change `wireguard.clj` to:
 
@@ -129,7 +137,7 @@ Lets connect to localhost and generate some client keys. We can break out some o
   {:private-key (string/trim (:out (get-file "privatekey")))
    :public-key (string/trim (:out (get-file "publickey")))})
 
-(let [server-keys (ssh "root@X.X.X.X"
+(let [server-keys (ssh "root@159.203.119.225"
                        (install)
                        (generate-keypair))
       client-keys (ssh "root@localhost"
@@ -143,16 +151,16 @@ Now running this gives:
 
 ```shell-session
 $ spire wireguard.clj
-(apt-repo :present "ppa:wireguard/wireguard") root@X.X.X.X:22 root@localhost:22
-(apt :update) root@X.X.X.X:22 root@localhost:22
-(apt :install "wireguard") root@X.X.X.X:22 root@localhost:22
-(shell {:creates ["privatekey" "publickey"], :cmd "umask 077 && wg genkey | tee privatekey | wg pubkey > publickey"}) root@X.X.X.X:22 root@localhost:22
-(get-file "privatekey") root@X.X.X.X:22 root@localhost:22
-(get-file "publickey") root@X.X.X.X:22 root@localhost:22
+wireguard.clj:4 (apt-repo :present "ppa:wireguard/wireguard") root@159.203.119.225 root@localhost
+wireguard.clj:5 (apt :update) root@159.203.119.225 root@localhost
+wireguard.clj:6 (apt :install "wireguard") root@159.203.119.225 root@localhost
+wireguard.clj:9 (shell {:creates ["privatekey" "publickey"], :cmd "umask 077 && wg genkey | tee privatekey | wg pu
+wireguard.clj:11 (get-file "privatekey") root@159.203.119.225 root@localhost
+wireguard.clj:12 (get-file "publickey") root@159.203.119.225 root@localhost
 {:client {:private-key "YJaxgsPuQsWijT0lbcMCjDzBuC7OkDk7RK5DTUunpl0=",
           :public-key "NcOb0sNKGf4uXwH4W90geHVd7/eGyW8zYESfx9KZSR8="},
- :server {:private-key "sMMp11XSZcPqAs4F62mNr5u1j8eXDe7aG5KHrt37Gmg=",
-          :public-key "90uBkuU1tAMgR/qYwXrz+nZYFUx5qJbIVnv3AxE2DAo="}}
+ :server {:private-key "8M5di1Sahxqe0hlnQMAKTN4YRx9mUMPC9upfGr9BcE8=",
+          :public-key "rKjdEHcNNClS5cyhPpAx0/eKaswhxmJHrFMwx+5ZAn4="}}
 ```
 
 #### Complete the setup of the client and server
@@ -175,15 +183,15 @@ Change `wireguard.clj` to read:
   {:private (string/trim (:out (get-file "privatekey")))
    :public (string/trim (:out (get-file "publickey")))})
 
-(let [server-keys (ssh "root@139.59.92.63"
+(let [server-keys (ssh "root@159.203.119.225"
                        (install)
                        (generate-keypair))
       client-keys (ssh "root@localhost"
                        (install)
                        (generate-keypair))]
-  (ssh "root@139.59.92.63"
+  (ssh "root@159.203.119.225"
        (upload {:content (selmer "wireguard-server.conf"
-                                 {:wan-ip "139.59.92.63"
+                                 {:wan-ip "159.203.119.225"
                                   :private (:private server-keys)
                                   :peers [{:name "my desktop"
                                            :public (:public client-keys)
@@ -198,7 +206,7 @@ Change `wireguard.clj` to read:
                                  {:wan-ip "10.20.30.40/24"
                                   :private (:private client-keys)
                                   :peer {:public (:public server-keys)
-                                         :endpoint "139.59.92.63"}})
+                                         :endpoint "159.203.119.225"}})
                 :dest "/etc/wireguard/vpn-tunnel.conf"
                 :mode 0600})))
 ```
@@ -251,16 +259,16 @@ Now build the blueprint to finish the setup:
 
 ```shell-session
 $ spire wireguard.clj
-(apt-repo :present "ppa:wireguard/wireguard") root@139.59.92.63:22 root@localhost:22
-(apt :update) root@139.59.92.63:22 root@localhost:22
-(apt :install "wireguard") root@139.59.92.63:22 root@localhost:22
-(shell {:creates ["privatekey" "publickey"], :cmd "umask 077 && wg genkey | tee privatekey | wg pubkey > publickey"}) root@139.59.92.63:22 root@localhost:22
-(get-file "privatekey") root@139.59.92.63:22 root@localhost:22
-(get-file "publickey") root@139.59.92.63:22 root@localhost:22
-(upload {:content "[Interface]\nAddress = 139.59.92.63\nPrivateKey = sMMp11XSZcPqAs4F62mNr5u1j8eXDe7aG5KHrt37Gmg=\nListenPort = 51820\n\nPostUp = iptables -A FORWARD -i %i
-(sysctl :present {:name "net.ipv4.ip_forward", :value "1"}) root@139.59.92.63:22
-(service :restarted {:name "wg-quick@wg0"}) root@139.59.92.63:22
-(upload {:content "[Interface]\nAddress = 10.20.30.40/24\nListenPort = 51820\nPrivateKey = YJaxgsPuQsWijT0lbcMCjDzBuC7OkDk7RK5DTUunpl0=\n\n[Peer]\nPublicKey = \nAllowedIPs
+wireguard.clj:4 (apt-repo :present "ppa:wireguard/wireguard") root@159.203.119.225 root@localhost
+wireguard.clj:5 (apt :update) root@159.203.119.225 root@localhost
+wireguard.clj:6 (apt :install "wireguard") root@159.203.119.225 root@localhost
+wireguard.clj:9 (shell {:creates ["privatekey" "publickey"], :cmd "umask 077 && wg genkey | tee privatekey | wg pu
+wireguard.clj:11 (get-file "privatekey") root@159.203.119.225 root@localhost
+wireguard.clj:12 (get-file "publickey") root@159.203.119.225 root@localhost
+wireguard.clj:21 (upload {:content (selmer "wireguard-server.conf" {:private (:private server-keys), :peers [{:all
+wireguard.clj:30 (sysctl :present {:name "net.ipv4.ip_forward", :value "1"}) root@159.203.119.225
+wireguard.clj:31 (service :restarted {:name "wg-quick@wg0"}) root@159.203.119.225
+wireguard.clj:33 (upload {:content (selmer "wireguard-client.conf" {:private (:private client-keys), :peer {:publi
 {:attr-result {:result :ok}, :copy-result {:result :changed}, :result :changed}
 ```
 
@@ -272,6 +280,6 @@ $ sudo service wg-quick@vpn-tunnel start
 
 Now check that your vpn tunnel is working by opening a browser and going to [whatismypublicip.com](https://whatismypublicip.com/)
 
-You should see your web browser is being seen by the internet with an IP of X.X.X.X in the remote country you started the server in!
+You should see your web browser is being seen by the internet with an IP of 159.203.119.225 in the remote country you started the server in!
 
 Congratulations! You have built your own personal VPN service!
