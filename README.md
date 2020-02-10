@@ -25,7 +25,8 @@ Spire is a single executable binary you can use to provision and configure remot
 ## Quickstart
 
 ```shell-session
-$ bash <(curl -s https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install)
+$ curl -O https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install\
+$ bash install
 $ spire -e '(ssh "localhost" (get-fact))'
 ```
 
