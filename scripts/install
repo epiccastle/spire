@@ -78,7 +78,7 @@ while [ ! -w "$INSTALL_DIR" ]; do
   read NEW_INSTALL_DIR
   if [ "$NEW_INSTALL_DIR" == "" ]; then
     echo "Enter root password to install"
-    su -c 'mv -f "$INSTALL_DIR/spire" "$INSTALL_DIR/spire.old"; mv -f "$DOWNLOAD_DIR/spire" "$INSTALL_DIR/spire"'
+    su -c "mv -f \"$INSTALL_DIR/spire\" \"$INSTALL_DIR/spire.old\"; mv -f \"$DOWNLOAD_DIR/spire\" \"$INSTALL_DIR/spire\""
     echo "done"
     exit 0
   fi
