@@ -174,6 +174,12 @@ jobs:
             make all macos-package GRAALVM=$GRAALVM_HOME
           no_output_timeout: 60m
       - run:
+          name: rgrep reports
+          command: |
+            grep -r VerifyFixClassname reports/
+            grep -r VerifyClassname reports/
+          no_output_timeout: 60m
+      - run:
           name: Test running binary
           command: |
             ./spire -h
