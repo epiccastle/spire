@@ -142,9 +142,16 @@ circle-ci: ssh_test_key_rsa
 
 macos-client-test: ssh_test_key_rsa
 	sudo /usr/sbin/sshd -f test/config/sshd_config -D & echo "$$!" > sshd.pid
-	./spire -e '(inc 0)'
 	eval `ssh-agent` && \
 		ssh-add ssh_test_key_rsa && \
 		export SSH_TEST_PORT=2200 && \
 		umask 0022 && \
 		./spire -e '(ssh "localhost:2200" (get-fact))'
+
+macos-client-test-jvm: ssh_test_key_rsa
+	sudo /usr/sbin/sshd -f test/config/sshd_config -D & echo "$$!" > sshd.pid
+	eval `ssh-agent` && \
+		ssh-add ssh_test_key_rsa && \
+		export SSH_TEST_PORT=2200 && \
+		umask 0022 && \
+		lein trampoline run -- -e '(ssh "localhost:2200" (get-fact))'
