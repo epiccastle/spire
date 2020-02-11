@@ -48,7 +48,8 @@
 (defn request-identities [sock]
   (when debug (prn 'request-identities sock))
   ;; send query
-  (send-query sock (pack/pack-byte (codes :request-identities)))
+  (let [bytes-written (send-query sock (pack/pack-byte (codes :request-identities)))]
+    (when debug (prn 'request-identities 'bytes-written bytes-written)))
 
   ;; read response
   (when debug (prn 'request-identities 'read-response))
