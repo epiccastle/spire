@@ -126,10 +126,10 @@ jobs:
           name: MacOS cc info
           command: |
             cc -v
-      - run:
-          name: MacOS linker info
-          command: |
-            cc -Wl,-v
+      # - run:
+      #     name: MacOS linker info
+      #     command: |
+      #       cc -Wl,-v
       - run:
           name: MacOS version info
           command: |
