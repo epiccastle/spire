@@ -171,44 +171,40 @@ jobs:
           name: Build binary
           command: |
             #make clean
-            make all macos-package GRAALVM=$GRAALVM_HOME
-          no_output_timeout: 60m
-      - run:
-          name: rgrep reports
-          command: |
+            make all macos-package GRAALVM=$GRAALVM_HOME || true
             grep -r VerifyFixClassname reports/
             grep -r VerifyClassname reports/
           no_output_timeout: 60m
-      - run:
-          name: Test running binary
-          command: |
-            ./spire -h
-          no_output_timeout: 1m
-      - run:
-          name: Client tests
-          command: |
-            make macos-client-test-jvm
-          no_output_timeout: 1m
-      - run:
-          name: Client tests
-          command: |
-            make macos-client-test
-          no_output_timeout: 1m
+      # - run:
+      #     name: Test running binary
+      #     command: |
+      #       ./spire -h
+      #     no_output_timeout: 1m
+      # - run:
+      #     name: Client tests
+      #     command: |
+      #       make macos-client-test-jvm
+      #     no_output_timeout: 1m
+      # - run:
+      #     name: Client tests
+      #     command: |
+      #       make macos-client-test
+      #     no_output_timeout: 1m
 
-      - run:
-          name: Dump .spire directory
-          command: |
-            ls -alFR ~/.spire
-          no_output_timeout: 1m
+      # - run:
+      #     name: Dump .spire directory
+      #     command: |
+      #       ls -alFR ~/.spire
+      #     no_output_timeout: 1m
 
-      - save_cache:
-          paths:
-            - ~/.m2
-            - ~/graalvm-ce-java8-19.3.1
-          key: mac-{{ checksum "project.clj" }}-{{ checksum ".circleci/config.yml" }}
-      - store_artifacts:
-          path: build
-          destination: build
+      # - save_cache:
+      #     paths:
+      #       - ~/.m2
+      #       - ~/graalvm-ce-java8-19.3.1
+      #     key: mac-{{ checksum "project.clj" }}-{{ checksum ".circleci/config.yml" }}
+      # - store_artifacts:
+      #     path: build
+      #     destination: build
 
 workflows:
   version: 2
