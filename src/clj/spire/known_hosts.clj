@@ -204,7 +204,7 @@
                                   first)
                result (when (:key found-key)
                         (into-array HostKey [(HostKey. hostname (Base64/decodeBase64 (:key found-key)))]))]
-           (prn 'make-host-key-repository 'getHostKey 'returning result)
+           (when debug (prn 'make-host-key-repository 'getHostKey 'returning result))
            result)))
       (add [hostkey userinfo]
         (when debug (prn 'make-host-key-repository 'add hostkey userinfo))
