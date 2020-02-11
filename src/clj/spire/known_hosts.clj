@@ -194,15 +194,17 @@
       (getHostKey
         ([]
          (when debug (prn 'make-host-key-repository 'getHostKey))
+         nil
          )
         ([hostname type]
          (when debug (prn 'make-host-key-repository 'getHostKey hostname type))
          (let [found-key (some->> hostname
                                   (find-matching-host-entries known-hosts-keys)
                                   (filter #(= (keyword type) (:type %)))
-                                  first)]
-           (when (:key found-key)
-             (into-array HostKey [(HostKey. hostname (Base64/decodeBase64 (:key found-key)))])))))
+                                  first)
+               result (when (:key found-key)
+                        (into-array HostKey [(HostKey. hostname (Base64/decodeBase64 (:key found-key)))]))]
+           (prn 'make-host-key-repository 'getHostKey 'returning result))))
       (add [hostkey userinfo]
         (when debug (prn 'make-host-key-repository 'add hostkey userinfo))
         (append-host-key-to-file
