@@ -108,7 +108,8 @@ jobs:
     macos:
       xcode: "9.0"
     environment:
-      GRAALVM_HOME: /Users/distiller/graalvm-ce-java8-20.1.0-dev/Contents/Home
+      # GRAALVM_HOME: /Users/distiller/graalvm-ce-java8-20.1.0-dev/Contents/Home
+      GRAALVM_HOME: /Users/distiller/graalvm-ce-java8-19.3.1/Contents/Home
     steps:
       - checkout
       - restore_cache:
@@ -140,9 +141,11 @@ jobs:
             cd ~
             ls -la
             if ! [ -d graalvm-ce-java8-19.3.1 ]; then
-              curl -O -sL https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/20.1.0-dev-20200211_0341/graalvm-ce-java8-darwin-amd64-20.1.0-dev.tar.gz
+              # curl -O -sL https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/20.1.0-dev-20200211_0341/graalvm-ce-java8-darwin-amd64-20.1.0-dev.tar.gz
+              curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java8-darwin-amd64-19.3.1.tar.gz
               ls -alF
-              tar xzf graalvm-ce-java8-darwin-amd64-20.1.0-dev.tar.gz
+              # tar xzf graalvm-ce-java8-darwin-amd64-20.1.0-dev.tar.gz
+              tar xzf graalvm-ce-java8-darwin-amd64-19.3.1.tar.gz
             fi
             $GRAALVM_HOME/bin/gu install native-image
           no_output_timeout: 30m
