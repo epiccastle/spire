@@ -25,7 +25,7 @@ Spire is a single executable binary you can use to provision and configure remot
 ## Quickstart
 
 ```shell-session
-$ curl -O https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install\
+$ curl -O https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install
 $ bash install
 $ spire -e '(ssh "localhost" (get-fact))'
 ```
@@ -35,7 +35,8 @@ $ spire -e '(ssh "localhost" (get-fact))'
 For Linux and MacOS:
 
 ```shell-session
-$ bash <(curl -s https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install)
+$ curl -O https://raw.githubusercontent.com/epiccastle/spire/master/scripts/install
+$ bash install
 ```
 
 ## Usage
@@ -66,7 +67,7 @@ You can find the source code to Spire on github [here.](https://github.com/epicc
 
 ## Build
 
-Install graalvm-ce-19.2.1 in your home directory. Add the native image bundle to it. Then:
+Install graalvm-ce-19.3.1 in your home directory. Add the native image bundle to it. Then:
 
 ```shell-session
 $ make clean all
