@@ -161,12 +161,12 @@ jobs:
       - run:
           name: Client tests
           command: |
-            make macos-client-test
+            make macos-client-test-jvm
           no_output_timeout: 1m
       - run:
           name: Client tests
           command: |
-            make macos-client-test-jvm
+            make macos-client-test
           no_output_timeout: 1m
 
       - run:
