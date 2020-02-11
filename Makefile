@@ -21,7 +21,7 @@ build/spire: target/uberjar/spire-$(VERSION)-standalone.jar
 		--initialize-at-run-time=com.jcraft.jsch.PortWatcher \
 		-H:Log=registerResource: \
 		-H:EnableURLProtocols=http,https \
-		-H:+PrintAnalysisCallTree \
+		-J-XX:TraceClassLoadingCause=Verify \
 		--verbose \
 		--allow-incomplete-classpath \
 		--no-fallback \
