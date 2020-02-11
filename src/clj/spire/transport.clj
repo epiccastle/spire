@@ -9,7 +9,10 @@
             [clojure.stacktrace])
   (:import [com.jcraft.jsch JSch]))
 
+(def debug true)
+
 (defn connect [host-config]
+  (when debug (prn 'connect host-config))
   (let [
         agent (JSch.)
         session (ssh/make-session agent (:hostname host-config) host-config)
@@ -24,9 +27,11 @@
       (.connect))))
 
 (defn disconnect [connection]
+  (when debug (prn 'disconnect connection))
   (.disconnect connection))
 
 (defn open-connection [host-config]
+  (when debug (prn 'open-connection host-config))
   (let [conn-key (ssh/host-config-to-connection-key host-config)
         new-state (swap! state/ssh-connections
                          update conn-key
@@ -39,6 +44,7 @@
     (get-in new-state [conn-key :connection])))
 
 (defn close-connection [host-config]
+  (when debug (prn 'close-connection host-config))
   (let [conn-key (ssh/host-config-to-connection-key host-config)]
     (swap! state/ssh-connections
            (fn [s]

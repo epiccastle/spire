@@ -8,7 +8,7 @@
             ByteArrayInputStream ByteArrayOutputStream
             ]))
 
-(def debug false)
+(def debug true)
 
 (defn print-flush-ask-yes-no [s]
   (print (str s " "))
@@ -94,6 +94,7 @@ Requires hostname.  You can also pass values for :username, :password and :port
 keys.  All other option key pairs will be passed as SSH config options."
   [^JSch agent hostname
    {:keys [port username password identity passphrase private-key public-key] :or {port 22} :as options}]
+  (when debug (prn 'make-session agent hostname options))
   (let [username (or username (System/getProperty "user.name"))
         session-options (dissoc options :password :port :passphrase :identity :private-key :public-key)
         session (.getSession agent username hostname port)]
@@ -125,6 +126,7 @@ keys.  All other option key pairs will be passed as SSH config options."
   "Run a command via exec, returning a map with the process streams."
   [^Session session ^String cmd
    {:keys [agent-forwarding pty in out err] :as opts}]
+  (when debug (prn 'ssh-exec-proc session cmd opts))
   (let [^ChannelExec exec (.openChannel session "exec")]
     (doto exec
       (.setCommand cmd)
