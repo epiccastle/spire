@@ -8,6 +8,8 @@
            [com.jcraft.jsch HostKey HostKeyRepository]
            ))
 
+(def debug true)
+
 (defn process-hosts [hosts]
   (->> (string/split hosts #",")
        (into #{})))
@@ -176,6 +178,7 @@
                              read-known-hosts-file)]
     (proxy [HostKeyRepository] []
       (check [hostname network-key-data]
+        (when debug (prn 'make-host-key-repository 'check hostname network-key-data))
         ;; find key
         (let [{:keys [type]} (decode-key network-key-data)
               found-key (some->> hostname
@@ -189,8 +192,11 @@
               host-key-repository-changed)
             host-key-repository-not-included)))
       (getHostKey
-        ([])
+        ([]
+         (when debug (prn 'make-host-key-repository 'getHostKey))
+         )
         ([hostname type]
+         (when debug (prn 'make-host-key-repository 'getHostKey hostname type))
          (let [found-key (some->> hostname
                                   (find-matching-host-entries known-hosts-keys)
                                   (filter #(= (keyword type) (:type %)))
@@ -198,6 +204,7 @@
            (when (:key found-key)
              (into-array HostKey [(HostKey. hostname (Base64/decodeBase64 (:key found-key)))])))))
       (add [hostkey userinfo]
+        (when debug (prn 'make-host-key-repository 'add hostkey userinfo))
         (append-host-key-to-file
          (users-known-hosts-filename)
          (.getHost hostkey)

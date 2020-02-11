@@ -23,6 +23,7 @@
     (proxy [UserInfo] []
 
       (getPassword []
+        (when debug (prn 'make-user-info 'getPassword))
         (print (str "Enter " @state ": "))
         (.flush *out*)
         (SpireUtils/enter-raw-mode 0)
@@ -32,6 +33,7 @@
           password))
 
       (promptYesNo [s]
+        (when debug (prn 'make-user-info 'promptYesNo))
         (let [host-key-missing? (and (.contains s "authenticity of host")
                                      (.contains s "can't be established"))]
           (if host-key-missing?
@@ -56,6 +58,7 @@
             (print-flush-ask-yes-no s))))
 
       (getPassphrase []
+        (when debug (prn 'make-user-info 'getPassphrase))
         (print (str "Enter " @state ": "))
         (.flush *out*)
         (SpireUtils/enter-raw-mode 0)
@@ -65,6 +68,7 @@
           password))
 
       (promptPassphrase [s]
+        (when debug (prn 'make-user-info 'promptPassphrase))
         (reset! state s)
         ;; true decrypt key
         ;; false cancel key decrypt
@@ -72,6 +76,7 @@
         )
 
       (promptPassword [s]
+        (when debug (prn 'make-user-info 'promptPassword))
         (reset! state s)
         ;; return true to continue
         ;; false to cancel auth
@@ -79,6 +84,7 @@
         )
 
       (showMessage [s]
+        (when debug (prn 'make-user-info 'showMessage))
         (println "showing...")
         (println s)))))
 
