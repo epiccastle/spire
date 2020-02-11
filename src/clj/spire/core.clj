@@ -19,13 +19,16 @@
    ["-e" "--evaluate CODE" "Evaluate a snipped of code instead of loading code from file"]
    ["-v" "--version" "Print the version string and exit"]])
 
+(def debug false)
+
 (defn initialise []
-  (JSch/setLogger
-   (proxy [Logger] []
-     (isEnabled [level]
-       true)
-     (log [level mesg]
-       (println mesg))))
+  (when debug
+    (JSch/setLogger
+     (proxy [Logger] []
+       (isEnabled [level]
+         true)
+       (log [level mesg]
+         (println mesg)))))
   (config/init!)
   (clojure.lang.RT/loadLibrary "spire"))
 
