@@ -21,10 +21,14 @@
         ]
     (when (System/getenv "SSH_AUTH_SOCK")
       (.setIdentityRepository session irepo))
+    (when debug (prn 'connect 'connecting))
     (doto session
       (.setHostKeyRepository (known-hosts/make-host-key-repository))
       (.setUserInfo user-info)
-      (.connect))))
+      (.connect))
+    (when debug (prn 'connect 'connected))
+    session
+    ))
 
 (defn disconnect [connection]
   (when debug (prn 'disconnect connection))
