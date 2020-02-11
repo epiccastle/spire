@@ -123,6 +123,14 @@ jobs:
           command: |
             .circleci/script/install-leiningen
       - run:
+          name: MacOS cc info
+          command: |
+            cc -v
+      - run:
+          name: MacOS linker info
+          command: |
+            cc -Wl,-v
+      - run:
           name: Download GraalVM
           command: |
             cd ~
