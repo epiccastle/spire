@@ -129,6 +129,10 @@ jobs:
       - run:
           name: MacOS linker info
           command: |
+            cc -Wl
+      - run:
+          name: MacOS linker info
+          command: |
             cc -Wl,-v
       - run:
           name: MacOS version info
