@@ -40,8 +40,12 @@
                              {:connection (connect host-config)
                               :use-count 1}
                              {:connection connection
-                              :use-count (inc use-count)})))]
-    (get-in new-state [conn-key :connection])))
+                              :use-count (inc use-count)})))
+        new-conn (get-in new-state [conn-key :connection])]
+    (prn 'open-connection 'conn-key conn-key)
+    (prn 'open-connection 'new-state new-state)
+    (prn 'open-connection 'new-conn new-conn)
+    new-conn))
 
 (defn close-connection [host-config]
   (when debug (prn 'close-connection host-config))
