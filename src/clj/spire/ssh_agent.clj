@@ -46,14 +46,18 @@
     (SpireUtils/ssh-auth-socket-write sock qarr n)))
 
 (defn request-identities [sock]
+  (when debug (prn 'request-identities sock))
   ;; send query
   (send-query sock (pack/pack-byte (codes :request-identities)))
 
   ;; read response
+  (when debug (prn 'request-identities 'read-response))
   (let [read (byte-array 4)]
     (SpireUtils/ssh-auth-socket-read sock read 4)
+    (when debug (prn 'request-identities 'response-read))
     (let [size (pack/unpack-int read)
           read (byte-array size)]
+      (when debug (prn 'request-identities 'reading size 'bytes))
       (SpireUtils/ssh-auth-socket-read sock read size)
       (case (code->keyword (first read))
         :identities-answer
