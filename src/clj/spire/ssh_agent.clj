@@ -94,10 +94,12 @@
         (throw (ex-info "improper response code from ssh-agent" {:code (first read)}))))))
 
 (defn open-auth-socket []
+  (when debug (prn 'open-auth-socket (System/getenv "SSH_AUTH_SOCK")))
   (when-let [ssh-auth-sock (System/getenv "SSH_AUTH_SOCK")]
     (SpireUtils/ssh-open-auth-socket ssh-auth-sock)))
 
 (defn close-auth-socket [sock]
+  (when debug (prn 'close-auth-socket sock))
   (SpireUtils/ssh-close-auth-socket sock))
 
 (defn make-identity [[blob comment]]
@@ -134,7 +136,9 @@
       (when debug (prn 'make-identity-repository 'getIdentities))
       (let [sock (open-auth-socket)
             identites (request-identities sock)]
+        (when debug (prn 'make-identity-repository 'close-auth-socket))
         (close-auth-socket sock)
+        (when debug (prn 'make-identity-repository 'close-auth-socket 'closed))
         (Vector.
          (mapv make-identity identites))))
     (getName []
