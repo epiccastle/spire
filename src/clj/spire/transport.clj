@@ -9,7 +9,7 @@
             [clojure.stacktrace])
   (:import [com.jcraft.jsch JSch]))
 
-(def debug true)
+(def debug false)
 
 (defn connect [host-config]
   (when debug (prn 'connect host-config))

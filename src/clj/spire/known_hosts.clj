@@ -8,7 +8,7 @@
            [com.jcraft.jsch HostKey HostKeyRepository]
            ))
 
-(def debug true)
+(def debug false)
 
 (defn process-hosts [hosts]
   (->> (string/split hosts #",")

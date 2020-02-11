@@ -8,7 +8,7 @@
             ByteArrayInputStream ByteArrayOutputStream
             ]))
 
-(def debug true)
+(def debug false)
 
 (defn print-flush-ask-yes-no [s]
   (print (str s " "))
