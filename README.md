@@ -67,7 +67,7 @@ You can find the source code to Spire on github [here.](https://github.com/epicc
 
 ## Build
 
-Install graalvm-ce-19.3.1 in your home directory. Add the native image bundle to it. Then:
+Install graalvm-ce-java8-19.3.1 in your home directory. Add the native image bundle to it. Then:
 
 ```shell-session
 $ make clean all
