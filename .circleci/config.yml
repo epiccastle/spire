@@ -159,6 +159,12 @@ jobs:
             ./spire -h
           no_output_timeout: 1m
       - run:
+          name: Client tests
+          command: |
+            make macos-client-test
+          no_output_timeout: 1m
+
+      - run:
           name: Dump .spire directory
           command: |
             ls -alFR ~/.spire

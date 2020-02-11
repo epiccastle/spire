@@ -139,3 +139,11 @@ circle-ci: ssh_test_key_rsa
 		EXIT=$$?; \
 		sudo kill `cat sshd.pid`; \
 		exit $$EXIT
+
+macos-client-test: ssh_test_key_rsa
+	sudo /usr/sbin/sshd -f test/config/sshd_config -D & echo "$$!" > sshd.pid
+	eval `ssh-agent` && \
+		ssh-add ssh_test_key_rsa && \
+		export SSH_TEST_PORT=2200 && \
+		umask 0022 &&
+		./spire -e '(inc 0)'
