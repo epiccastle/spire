@@ -131,6 +131,10 @@ jobs:
           command: |
             cc -Wl,-v
       - run:
+          name: MacOS version info
+          command: |
+             sw_vers
+      - run:
           name: Download GraalVM
           command: |
             cd ~
@@ -141,6 +145,10 @@ jobs:
             fi
             $GRAALVM_HOME/bin/gu install native-image
           no_output_timeout: 30m
+      - run:
+          name: MacOS java info
+          command: |
+             java -Xinternalversion
       - run:
           name: Run MacOS tests
           command: |
