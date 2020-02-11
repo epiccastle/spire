@@ -28,8 +28,7 @@
                  [commons-codec/commons-codec "1.12"]
 
                  ;; http
-                 [org.martinklepsch/clj-http-lite "0.4.3"]
-                 ]
+                 [org.martinklepsch/clj-http-lite "0.4.3"]]
   :plugins [[cider/cider-nrepl "0.21.1"]]
   :source-paths ["src/clj"]
   :java-source-paths ["src/c"]

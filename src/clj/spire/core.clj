@@ -7,8 +7,8 @@
             [puget.printer :as puget]
             [sci.core :as sci]
             [clojure.string :as string]
-            [clojure.tools.cli :as cli]
-            )
+            [clojure.tools.cli :as cli])
+  (:import [com.jcraft.jsch JSch Logger])
   (:gen-class))
 
 (def version (utils/embed ".meta/VERSION"))
@@ -20,6 +20,12 @@
    ["-v" "--version" "Print the version string and exit"]])
 
 (defn initialise []
+  (JSch/setLogger
+   (proxy [Logger] []
+     (isEnabled [level]
+       true)
+     (log [level mesg]
+       (println mesg))))
   (config/init!)
   (clojure.lang.RT/loadLibrary "spire"))
 
