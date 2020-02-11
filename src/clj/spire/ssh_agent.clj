@@ -3,6 +3,8 @@
   (:import [com.jcraft.jsch Identity IdentityRepository]
            [java.util Vector]))
 
+(def debug true)
+
 (def codes {:ssh-agent-failure 5
             :request-identities 11
             :identities-answer 12
@@ -101,19 +103,25 @@
 (defn make-identity [[blob comment]]
   (proxy [Identity] []
     (getPublicKeyBlob []
+      (when debug (prn 'make-identity 'getPublicKeyBlob))
       (byte-array blob))
     (getSignature [data]
+      (when debug (prn 'make-identity 'getSignature data))
       (let [sock (open-auth-socket)
             signature (sign-request sock blob data)]
         (close-auth-socket sock)
         (byte-array signature)))
     (getName []
+      (when debug (prn 'make-identity 'getName))
       comment)
     (getAlgName []
+      (when debug (prn 'make-identity 'getAlgName))
       (->> blob pack/decode-string first (map char) (apply str)))
     (isEncrypted []
+      (when debug (prn 'make-identity 'isEncrypted))
       false)
     (setPassphrase [passphrase]
+      (when debug (prn 'make-identity 'setPassphrase))
       true)))
 
 (def identity-repository-unavailable 0)
@@ -123,10 +131,15 @@
 (defn make-identity-repository []
   (proxy [IdentityRepository] []
     (getIdentities []
+      (when debug (prn 'make-identity-repository 'getIdentities))
       (let [sock (open-auth-socket)
             identites (request-identities sock)]
         (close-auth-socket sock)
         (Vector.
          (mapv make-identity identites))))
-    (getName [] "ssh-agent")
-    (getStatus [] identity-repository-running)))
+    (getName []
+      (when debug (prn 'make-identity-repository 'getName))
+      "ssh-agent")
+    (getStatus []
+      (when debug (prn 'make-identity-repository 'getStatus))
+      identity-repository-running)))
