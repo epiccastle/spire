@@ -43,11 +43,13 @@
   (let [query (concat (pack/pack-int (count query-data)) query-data)
         qarr (byte-array query)
         n (count query)]
+    (when debug (prn 'send-query sock query qarr n))
     (SpireUtils/ssh-auth-socket-write sock qarr n)))
 
 (defn request-identities [sock]
   (when debug (prn 'request-identities sock))
   ;; send query
+  (when debug (prn 'request-identities 'sending (codes :request-identities) (pack/pack-byte (codes :request-identities))))
   (let [bytes-written (send-query sock (pack/pack-byte (codes :request-identities)))]
     (when debug (prn 'request-identities 'bytes-written bytes-written)))
 
