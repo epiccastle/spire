@@ -96,7 +96,9 @@
 (defn open-auth-socket []
   (when debug (prn 'open-auth-socket (System/getenv "SSH_AUTH_SOCK")))
   (when-let [ssh-auth-sock (System/getenv "SSH_AUTH_SOCK")]
-    (SpireUtils/ssh-open-auth-socket ssh-auth-sock)))
+    (let [result (SpireUtils/ssh-open-auth-socket ssh-auth-sock)]
+      (when debug (prn 'open-auth-socket 'returning result))
+      result)))
 
 (defn close-auth-socket [sock]
   (when debug (prn 'close-auth-socket sock))
