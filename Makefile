@@ -21,6 +21,7 @@ build/spire: target/uberjar/spire-$(VERSION)-standalone.jar
 		--initialize-at-run-time=com.jcraft.jsch.PortWatcher \
 		-H:Log=registerResource: \
 		-H:EnableURLProtocols=http,https \
+		--report-unsupported-elements-at-runtime \
 		--verbose \
 		--allow-incomplete-classpath \
 		--no-fallback \
@@ -67,7 +68,12 @@ header: $(C_HEADER)
 
 $(C_HEADER): $(CLASS_FILE)
 	mkdir -p $(JNI_DIR)
-	javah -o $(C_HEADER) -cp $(CLASS_DIR) $(CLASS_NAME)
+	# java 8
+	#javah -o $(C_HEADER) -cp $(CLASS_DIR) $(CLASS_NAME)
+
+	# java 11
+	javac -h target/jni/ src/c/SpireUtils.java
+
 	@touch $(C_HEADER)
 
 lib: $(LIB_FILE)
