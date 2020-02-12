@@ -156,56 +156,55 @@ jobs:
       #     name: MacOS java info
       #     command: |
       #        java -Xinternalversion
-      # - run:
-      #     name: Run MacOS tests
-      #     command: |
-      #       make clean lib JAVA_HOME=$GRAALVM_HOME
-      #       ls -alF
+      - run:
+          name: Run MacOS tests
+          command: |
+            make clean lib JAVA_HOME=$GRAALVM_HOME
+            ls -alF
 
-      #       make jar
-      #       java -Djava.library.path="." -jar target/uberjar/spire-0.1.0-SNAPSHOT-standalone.jar -h
+            make jar
+            java -Djava.library.path="." -jar target/uberjar/spire-0.1.0-SNAPSHOT-standalone.jar -h
 
-      #       sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
-      #       #sudo mkdir /run/sshd
+            sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
+            #sudo mkdir /run/sshd
 
-      #       make circle-ci
-      #       make clean
+            make circle-ci
+            make clean
       - run:
           name: Build binary
           command: |
             make all macos-package GRAALVM=$GRAALVM_HOME
           no_output_timeout: 60m
+      - run:
+          name: Test running binary
+          command: |
+            ./spire -h
+          no_output_timeout: 1m
+      - run:
+          name: Client tests
+          command: |
+            make macos-client-test-jvm
+          no_output_timeout: 1m
+      - run:
+          name: Client tests
+          command: |
+            make macos-client-test
+          no_output_timeout: 1m
 
-      # - run:
-      #     name: Test running binary
-      #     command: |
-      #       ./spire -h
-      #     no_output_timeout: 1m
-      # - run:
-      #     name: Client tests
-      #     command: |
-      #       make macos-client-test-jvm
-      #     no_output_timeout: 1m
-      # - run:
-      #     name: Client tests
-      #     command: |
-      #       make macos-client-test
-      #     no_output_timeout: 1m
+      - run:
+          name: Dump .spire directory
+          command: |
+            ls -alFR ~/.spire
+          no_output_timeout: 1m
 
-      # - run:
-      #     name: Dump .spire directory
-      #     command: |
-      #       ls -alFR ~/.spire
-      #     no_output_timeout: 1m
-
-      # - save_cache:
-      #     paths:
-      #       - ~/.m2
-      #       - ~/graalvm-ce-java8-19.3.1
-      #     key: mac-{{ checksum "project.clj" }}-{{ checksum ".circleci/config.yml" }}
-      # - store_artifacts:
-      #     path: build
-      #     destination: build
+      - save_cache:
+          paths:
+            - ~/.m2
+            - ~/graalvm-ce-java8-19.3.1
+          key: mac-{{ checksum "project.clj" }}-{{ checksum ".circleci/config.yml" }}
+      - store_artifacts:
+          path: build
+          destination: build
 
 workflows:
   version: 2
