@@ -31,7 +31,7 @@
                  [org.martinklepsch/clj-http-lite "0.4.3"]]
   :plugins [[cider/cider-nrepl "0.21.1"]]
   :source-paths ["src/clj"]
-  :java-source-paths ["src/c"]
+  :java-source-paths ["src/c" "src/java"]
 
   :jvm-opts ["-Djava.library.path=./"]
   ;;:native-path "./"
