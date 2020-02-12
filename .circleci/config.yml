@@ -132,10 +132,10 @@ jobs:
       #     name: MacOS linker info
       #     command: |
       #       cc -Wl,-v
-      - run:
-          name: MacOS version info
-          command: |
-             sw_vers
+      # - run:
+      #     name: MacOS version info
+      #     command: |
+      #        sw_vers
       - run:
           name: Download GraalVM
           command: |
@@ -152,10 +152,10 @@ jobs:
             fi
             $GRAALVM_HOME/bin/gu install native-image
           no_output_timeout: 30m
-      - run:
-          name: MacOS java info
-          command: |
-             java -Xinternalversion
+      # - run:
+      #     name: MacOS java info
+      #     command: |
+      #        java -Xinternalversion
       # - run:
       #     name: Run MacOS tests
       #     command: |
@@ -173,16 +173,9 @@ jobs:
       - run:
           name: Build binary
           command: |
-            #make clean
-            set +e
             make all macos-package GRAALVM=$GRAALVM_HOME
-            grep -r VerifyFixClassname -A 5 -B 5 reports/
-            grep -r VerifyClassname -A 5 -B 5 reports/
           no_output_timeout: 60m
 
-      - store_artifacts:
-          path: reports
-          destination: reports
       # - run:
       #     name: Test running binary
       #     command: |
