@@ -1,4 +1,9 @@
 GRAALVM = $(HOME)/graalvm-ce-java11-19.3.1
+ifneq (,$(findstring java11,$(GRAALVM)))
+	JAVA_VERSION = 11
+else
+	JAVA_VERSION = 8
+endif
 VERSION = 0.1.0-SNAPSHOT
 UNAME = $(shell uname)
 
@@ -68,12 +73,11 @@ header: $(C_HEADER)
 
 $(C_HEADER): $(CLASS_FILE)
 	mkdir -p $(JNI_DIR)
-	# java 8
-	#javah -o $(C_HEADER) -cp $(CLASS_DIR) $(CLASS_NAME)
-
-	# java 11
-	javac -h target/jni/ src/c/SpireUtils.java
-
+ifeq ($(JAVA_VERSION),8)
+	javah -o $(C_HEADER) -cp $(CLASS_DIR) $(CLASS_NAME)
+else
+	javac -h $(JNI_DIR) $(JAVA_FILE)
+endif
 	@touch $(C_HEADER)
 
 lib: $(LIB_FILE)
@@ -123,12 +127,9 @@ macos-package:
 #
 ssh_test_key_rsa:
 	ssh-keygen -t rsa -f ssh_test_key_rsa -b 2048 -q -N ""
-	# -cat ssh_test_key_rsa.pub
-	# -cat ~/.ssh/authorized_keys
 	cat ssh_test_key_rsa.pub >> ~/.ssh/authorized_keys
 	sudo mkdir ~root/.ssh
 	sudo bash -c 'cat ssh_test_key_rsa.pub >> ~root/.ssh/authorized_keys'
-	# -cat ~/.ssh/authorized_keys
 
 circle-ci: ssh_test_key_rsa
 	-lsb_release -a
