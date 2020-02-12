@@ -3,7 +3,7 @@
   (:import [com.jcraft.jsch Identity IdentityRepository]
            [java.util Vector]))
 
-(def debug false)
+(def debug true)
 
 (def codes {:ssh-agent-failure 5
             :request-identities 11
