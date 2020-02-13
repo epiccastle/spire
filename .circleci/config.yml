@@ -205,6 +205,10 @@ jobs:
       - store_artifacts:
           path: build
           destination: build
+      - store_artifacts:
+          path: target/uberjar
+          destination: target/uberjar
+
 
 workflows:
   version: 2
