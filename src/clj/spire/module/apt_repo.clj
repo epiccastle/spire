@@ -17,15 +17,28 @@
 
 (defmulti process-result (fn [command opts result] command))
 
+(defn check-bins-present
+  "Ensure all the binaries specified are present.
+  Binaries are specified as keywords. They are looked up in facts under :paths
+  "
+  [bins]
+  (let [paths (facts/get-fact [:paths])
+        not-present
+        (->> bins
+             (map #(when (not (paths %)) (name %)))
+             (filter identity)
+             )]
+    (when (seq not-present)
+      {:exit 1
+       :out ""
+       :err (format "missing commands: %s" (string/join ", " not-present))
+       :result :failed})))
+
 ;;
 ;; (line-in-file :present ...)
 ;;
 (defmethod preflight :present [_ _]
-  (when-not (facts/get-fact [:paths :apt-key])
-    {:exit 1
-     :out ""
-     :err "apt-repo module requires apt-key installed and present in the path."
-     :result :failed}))
+  (check-bins-present #{:sed :grep :awk :apt-key :curl}))
 
 (defmethod make-script :present [_ repo]
     (let [ppa? (string/starts-with? repo "ppa:")]
@@ -93,8 +106,9 @@
    :form "(apt-repo command opts)"
    :args
    [{:arg "command"
-     :desc "The overall command to execure. Presently only `:present` is implemented."
+     :desc "The overall command to execure. Should be one of `:present` or `:absent`"
      :values
-     [[:present "Ensure the specied apt repository is present on the machine"]]}
+     [[:present "Ensure the specified apt repository is present on the machine"]
+      [:absent "Ensure the specified apt repository is absent on the machine"]]}
     {:arg "repository"
      :desc "A string describing the repository to add"}]})
