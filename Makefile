@@ -99,7 +99,7 @@ $(DYLIB_FILE):  $(C_FILE) $(C_HEADER)
 clean:
 	-rm -rf build target
 	lein clean
-	-rm src/c/*.o libspire.so src/c/SpireUtils.h resources/libspire.so
+	-rm src/c/*.o libspire.so src/c/SpireUtils.h resources/libspire.so libspire.dynlib resources/libspire.dynlib
 	-rm -rf $(JNI_DIR)
 
 copy-libs-to-resource:
