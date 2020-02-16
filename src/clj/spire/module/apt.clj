@@ -23,11 +23,7 @@
 ;; (apt :install ...)
 ;;
 (defmethod preflight :install [_ _]
-  (when-not (facts/get-fact [:paths :apt-get])
-    {:exit 1
-     :out ""
-     :err "apt module requires apt-get installed and present in the path."
-     :result :failed}))
+  (facts/check-bins-present #{:apt-get}))
 
 (defmethod make-script :install [_ package-or-packages]
   (let [package-string (if (string? package-or-packages)
@@ -62,11 +58,7 @@
 ;; (apt :update)
 ;;
 (defmethod preflight :update [_ _]
-  (when-not (facts/get-fact [:paths :apt-get])
-    {:exit 1
-     :out ""
-     :err "apt module requires apt-get installed and present in the path."
-     :result :failed}))
+  (facts/check-bins-present #{:apt-get}))
 
 (defmethod make-script :update [_ _]
   (str "DEBIAN_FRONTEND=noninteractive apt-get update -y"))
@@ -115,11 +107,7 @@
 ;; (apt :remove ...)
 ;;
 (defmethod preflight :remove [_ _]
-  (when-not (facts/get-fact [:paths :apt-get])
-    {:exit 1
-     :out ""
-     :err "apt module requires apt-get installed and present in the path."
-     :result :failed}))
+  (facts/check-bins-present #{:apt-get}))
 
 (defmethod make-script :remove [_ package-or-packages]
   (let [package-string (if (string? package-or-packages)
@@ -154,11 +142,7 @@
 ;; (apt :upgrade)
 ;;
 (defmethod preflight :upgrade [_ _]
-  (when-not (facts/get-fact [:paths :apt-get])
-    {:exit 1
-     :out ""
-     :err "apt module requires apt-get installed and present in the path."
-     :result :failed}))
+  (facts/check-bins-present #{:apt-get}))
 
 (defmethod make-script :upgrade [_ _]
   (str "DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"))
