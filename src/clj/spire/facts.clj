@@ -413,3 +413,20 @@
                        `(~pred ~shell))
 
                      form]))))))
+
+(defn check-bins-present
+  "Ensure all the binaries specified are present.
+  Binaries are specified as keywords. They are looked up in facts under :paths
+  "
+  [bins]
+  (let [paths (get-fact [:paths])
+        not-present
+        (->> bins
+             (map #(when (not (paths %)) (name %)))
+             (filter identity)
+             )]
+    (when (seq not-present)
+      {:exit 1
+       :out ""
+       :err (format "missing commands: %s" (string/join ", " not-present))
+       :result :failed})))
