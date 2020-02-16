@@ -93,7 +93,7 @@
    "bash" "ksh" "zsh" "csh" "tcsh"
    "dash" "sh" "stat" "ls" "id"
    "file" "touch" "chacl" "chown" "chgrp"
-   "chmod" "cp" "cat" "printf" "find"
+   "chmod" "cp" "cat" "cut" "printf" "find"
    "date" "sed" "grep" "awk" "curl"
    "wget" "git" "tar" "rsync" "bzip2"
    "bzcat" "bunzip2" "gzip" "gunzip" "zip"
