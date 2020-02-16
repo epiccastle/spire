@@ -115,4 +115,19 @@
      [[:present "Ensure the specified apt repository is present on the machine"]
       [:absent "Ensure the specified apt repository is absent on the machine"]]}
     {:arg "repository"
-     :desc "A string describing the repository to add"}]})
+     :desc "A string describing the repository to add"}]
+
+   :examples
+   [
+    {:description
+     "Add specified repository into sources list using specified filename."
+     :form "
+(apt-repo :present {:repo \"deb http://dl.google.com/linux/chrome/deb/ stable main\"
+                    :filename \"google-chrome\"})"}
+    {:description
+     "Install an ubuntu ppa apt source for php packages"
+     :form "
+(apt-repo :present {:repo \"ppa:ondrej/php\"})"}
+
+    ]
+   })
