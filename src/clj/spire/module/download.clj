@@ -2,6 +2,7 @@
   (:require [spire.output :as output]
             [spire.ssh :as ssh]
             [spire.scp :as scp]
+            [spire.facts :as facts]
             [spire.utils :as utils]
             [spire.local :as local]
             [spire.nio :as nio]
@@ -16,26 +17,28 @@
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
 (defn preflight [{:keys [src dest recurse preserve flat dir-mode mode] :as opts}]
-  (cond
-    (not src)
-    (assoc failed-result
-           :exit 3
-           :err ":src must be provided")
+  (or
+   (facts/check-bins-present #{:scp})
+   (cond
+     (not src)
+     (assoc failed-result
+            :exit 3
+            :err ":src must be provided")
 
-    (not dest)
-    (assoc failed-result
-           :exit 3
-           :err ":dest must be provided")
+     (not dest)
+     (assoc failed-result
+            :exit 3
+            :err ":dest must be provided")
 
-    (and preserve (or mode dir-mode))
-    (assoc failed-result
-           :exit 3
-           :err "when providing :preverse you cannot also specify :mode or :dir-mode")
+     (and preserve (or mode dir-mode))
+     (assoc failed-result
+            :exit 3
+            :err "when providing :preverse you cannot also specify :mode or :dir-mode")
 
-    (and src (utils/content-recursive? (io/file src)) (not recurse))
-    (assoc failed-result
-           :exit 3
-           :err ":recurse must be true when :src specifies a directory.")))
+     (and src (utils/content-recursive? (io/file src)) (not recurse))
+     (assoc failed-result
+            :exit 3
+            :err ":recurse must be true when :src specifies a directory."))))
 
 (defn process-result [opts copy-result attr-result]
   (let [result {:result :failed

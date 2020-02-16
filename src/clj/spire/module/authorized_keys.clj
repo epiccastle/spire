@@ -3,6 +3,7 @@
             [spire.ssh :as ssh]
             [spire.scp :as scp]
             [spire.utils :as utils]
+            [spire.facts :as facts]
             [spire.local :as local]
             [spire.remote :as remote]
             [spire.compare :as compare]
@@ -28,8 +29,7 @@
 (defmulti process-result (fn [command opts result] command))
 
 (defmethod preflight :present [_ {:keys [user key options file] :as opts}]
-  nil
-  )
+  (facts/check-bins-present #{:sed :cut :bash :id}))
 
 (defmethod make-script :present [_ {:keys [user key options file] :as opts}]
   (utils/make-script
@@ -59,7 +59,7 @@
              :result :failed))))
 
 (defmethod preflight :absent [_ {:keys [user key options file] :as opts}]
-  nil
+  (facts/check-bins-present #{:sed :cut :bash :id})
   )
 
 (defmethod make-script :absent [_ {:keys [user key file] :as opts}]
@@ -89,8 +89,7 @@
              :result :failed))))
 
 (defmethod preflight :get [_ {:keys [user file] :as opts}]
-  nil
-  )
+  (facts/check-bins-present #{:bash}))
 
 (defmethod make-script :get [_ {:keys [user file] :as opts}]
   (utils/make-script

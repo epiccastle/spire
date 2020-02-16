@@ -18,36 +18,38 @@
                          owner group mode attrs
                          dir-mode preserve recurse force]
                   :as opts}]
-  (cond
-    (not (or src content))
-    (assoc failed-result
-           :exit 3
-           :err ":src or :content must be provided")
+  (or
+   (facts/check-bins-present #{:scp})
+   (cond
+     (not (or src content))
+     (assoc failed-result
+            :exit 3
+            :err ":src or :content must be provided")
 
-    (not dest)
-    (assoc failed-result
-           :exit 3
-           :err ":dest must be provided")
+     (not dest)
+     (assoc failed-result
+            :exit 3
+            :err ":dest must be provided")
 
-    (and src content)
-    (assoc failed-result
-           :exit 3
-           :err ":src and :content cannot both be specified")
+     (and src content)
+     (assoc failed-result
+            :exit 3
+            :err ":src and :content cannot both be specified")
 
-    (and preserve (or mode dir-mode))
-    (assoc failed-result
-           :exit 3
-           :err "when providing :preverse you cannot also specify :mode or :dir-mode")
+     (and preserve (or mode dir-mode))
+     (assoc failed-result
+            :exit 3
+            :err "when providing :preverse you cannot also specify :mode or :dir-mode")
 
-    (and content (utils/content-recursive? content) (not recurse))
-    (assoc failed-result
-           :exit 3
-           :err ":recurse must be true when :content specifies a directory.")
+     (and content (utils/content-recursive? content) (not recurse))
+     (assoc failed-result
+            :exit 3
+            :err ":recurse must be true when :content specifies a directory.")
 
-    (and src (utils/content-recursive? (io/file src)) (not recurse))
-    (assoc failed-result
-           :exit 3
-           :err ":recurse must be true when :src specifies a directory.")))
+     (and src (utils/content-recursive? (io/file src)) (not recurse))
+     (assoc failed-result
+            :exit 3
+            :err ":recurse must be true when :src specifies a directory."))))
 
 (defn process-result [opts copy-result attr-result]
   (let [result {:result :failed
