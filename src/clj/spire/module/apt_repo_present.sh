@@ -22,7 +22,6 @@ else
   if [ "$PPA_NAME" ]; then
     ppa_key
   fi
-  echo "setting up sources"
   echo "$CONTENTS" > "$FILE"
   exit -1
 fi

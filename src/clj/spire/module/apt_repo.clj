@@ -49,8 +49,9 @@
         (utils/make-script
          "apt_repo_present.sh"
          {:FILE (some->
-                 "/etc/apt/sources.list.d/%s-%s-%s-%s.list"
-                 (format ppa-owner "ubuntu" ppa-name codename)
+                 (or filename
+                     (format "%s-%s-%s-%s.list" ppa-owner "ubuntu" ppa-name codename))
+                 (->> (str "/etc/apt/sources.list.d/"))
                  utils/path-escape)
           :CONTENTS (some->> contents utils/path-escape)
           :PPA_NAME ppa-name
@@ -61,8 +62,10 @@
       ;; non ppa repository source
       (utils/make-script
        "apt_repo_present.sh"
-       {:FILE (some-> (or filename (make-filename-from-repo repo))
-                      utils/path-escape)
+       {:FILE (some->
+               (or filename (make-filename-from-repo repo))
+               (->> (str "/etc/apt/sources.list.d/"))
+               utils/path-escape)
         :CONTENTS (some-> repo utils/path-escape)
         :CODENAME codename}))))
 
