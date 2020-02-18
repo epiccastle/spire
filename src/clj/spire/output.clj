@@ -108,21 +108,15 @@
                 (utils/escape-codes 40 0 31 5)
                 (:host-string host-config)
                 (:exit result)
-                (utils/reset))
-        #_ (utils/reset)
-        #_ (utils/escape-codes 40 0 31 1)
-        #_ (utils/escape-codes 31 42)))
-      ;;(println (str (utils/escape-codes 40 0 31 1) "==========STDOUT==========" (utils/reset)))
+                (utils/reset))))
       (println "--stdout--")
       (let [trimmed (cut-trailing-blank-line (:out result))]
         (when-not (empty? trimmed)
           (println trimmed)))
-      ;;(println (str (utils/escape-codes 40 0 31 1) "==========STDERR==========" (utils/reset)))
       (println "--stderr--")
       (let [trimmed (cut-trailing-blank-line (:err result))]
         (when-not (empty? trimmed)
           (println trimmed)))
-      ;; (println (str (utils/escape-codes 40 0 31 1) "==========================" (utils/reset)))
       (println "----------"))
     new-failed))
 
@@ -146,21 +140,14 @@
       (println (utils/append-erasure-to-line line)))
 
     ;; progress bars for this module
-    (let [max-host-string-length (when-not (empty? copy-progress)
-                                   (apply max (map (fn [[h _]] (count h)) copy-progress)))
+    (let [max-host-key-length (when-not (empty? copy-progress)
+                                (apply max (map (fn [[h _]] (count (:key h))) copy-progress)))
           max-filename-length (when-not (empty? copy-progress)
                                 (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
           ]
-      (doseq [[host-string progress] copy-progress]
-        (println (utils/progress-bar-from-stats host-string max-host-string-length max-filename-length progress))
-        ;; (println)
-        ;; (println)
-        ))
+      (doseq [[host-config progress] copy-progress]
+        (println (utils/progress-bar-from-stats (:key host-config) max-host-key-length max-filename-length progress)))))
 
-
-
-
-    )
   (let [just-printed
         (->>
          (for [{:keys [results] :as line} s]
@@ -170,24 +157,7 @@
          (filter identity)
          flatten)]
     (when (not (empty? just-printed))
-      (print-state s)
-      )
-    )
-
-
-
-  )
-
-    #_ (doall
-         (for [n (range 40 48)
-               m (range 0 10)
-               o (range 30 38)
-               p (range 0 10)]
-           (println (utils/escape-codes n m)
-                    (utils/escape-codes o p)
-                    (format "(utils/escape-codes %d %d %d %d)" n m o p)
-                    (utils/escape-code 0))
-           ))
+      (print-state s))))
 
 (defn state-change [[o n]]
   (let [[_ old-total-height] (calculate-heights o)
@@ -229,11 +199,11 @@
                   i)))
          (filter identity))))
 
-(defn print-form [form file meta host-config]
+(defn print-form [file form file-meta host-config]
   ;;(prn 'print-form form file meta)
   (swap! state
          (fn [s]
-           (if-let [match (first (find-forms-matching-index s {:form form :file file :meta meta}))]
+           (if-let [match (first (find-forms-matching-index s {:form form :file file :meta file-meta}))]
             s
             (conj s {:form form
                      :file file
@@ -242,13 +212,13 @@
                      :width (count (pr-str form))
                      :results []})))))
 
-(defn print-result [form file meta host-config result]
+(defn print-result [file form file-meta host-config result]
   (comment
     (prn 'print-result result host-config)
     (prn (find-forms-matching-index @state {:form form :file file :meta meta})))
   (swap! state
          (fn [s]
-           (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta meta}))]
+           (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta file-meta}))]
              (update
               s
               matching-index
@@ -269,13 +239,17 @@
              s
              ))))
 
-(defn print-progress [host-string {:keys [progress context] :as data}]
-  #_ (prn 'print-progress host-string data)
-  #_ (swap! state
+(defn print-progress [file form form-meta host-string {:keys [progress context] :as data}]
+  ;;(prn 'print-progress file form form-meta host-string data)
+  (swap! state
          (fn [s]
-           (update
-            s
-            (find-first-form-missing-hoststring-index s state/*form* host-string)
-            (fn [{:keys [width results] :as data}]
-              (assoc-in data [:copy-progress host-string] progress)))))
+           (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta form-meta}))]
+             (update
+              s
+              matching-index
+              (fn [{:keys [width results] :as data}]
+                (assoc-in data [:copy-progress host-string] progress)))
+
+             ;; no matching-index. probably a test being run
+             s)))
   context)

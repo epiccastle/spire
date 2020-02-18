@@ -72,8 +72,9 @@
      (catch Exception e#
        {:result :failed :exception e#})))
 
-(utils/defmodule download* [{:keys [src dest recurse preserve flat
-                                   dir-mode mode owner group attrs] :as opts}]
+(utils/defmodule download* [source-code-file form form-meta
+                            {:keys [src dest recurse preserve flat
+                                    dir-mode mode owner group attrs] :as opts}]
   [host-config session]
   (or
    (preflight opts)
@@ -104,6 +105,7 @@
 
          progress-fn (fn [file bytes total frac context]
                        (output/print-progress
+                        source-code-file form form-meta
                         host-config
                         (utils/progress-stats
                          file bytes total frac
@@ -170,7 +172,7 @@
                   (and (= :ok (:result copy-result)) passed-attrs?)
                   (do
                     #_ (println ">>>" mode remote-file?
-                             (io/file destination (.getName (io/file src))))
+                                (io/file destination (.getName (io/file src))))
                     (nio/set-attrs
                      {:path (io/file destination (.getName (io/file src)))
                       :owner owner
@@ -190,7 +192,7 @@
       {:result (if attrs? :changed :ok)}))))
 
 (defmacro download [& args]
-  `(utils/wrap-report ~*file* ~&form (download* ~@args)))
+  `(utils/wrap-report ~*file* ~&form (download* ~*file* (quote ~&form) ~(meta &form) ~@args)))
 
 (def documentation
   {

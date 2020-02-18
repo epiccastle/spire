@@ -322,13 +322,13 @@
 
 (defmacro wrap-report [file form & body]
   `(do
-     (spire.output/print-form (quote ~form) ~file ~(meta form) (spire.state/get-host-config))
+     (spire.output/print-form ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
      (try
        (let [result# (do ~@body)]
-         (spire.output/print-result (quote ~form) ~file ~(meta form) (spire.state/get-host-config) result#)
+         (spire.output/print-result ~file (quote ~form) ~(meta form) (spire.state/get-host-config) result#)
          result#)
        (catch clojure.lang.ExceptionInfo e#
-         (spire.output/print-result (quote ~form) ~file ~(meta form) (spire.state/get-host-config) (ex-data e#))
+         (spire.output/print-result ~file (quote ~form) ~(meta form) (spire.state/get-host-config) (ex-data e#))
          (throw e#)))))
 
 #_ (content-size (byte-array [1 2]))

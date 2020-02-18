@@ -94,7 +94,8 @@
      (let [[_ filename hash] (re-matches #"MD5\s+\((.+)\)\s*=\s*([0-9a-fA-F]+)" line)]
        [hash filename])     )))
 
-(utils/defmodule upload* [{:keys [src content dest
+(utils/defmodule upload* [source-code-file form form-meta
+                          {:keys [src content dest
                                   owner group mode attrs
                                   dir-mode preserve recurse force]
                            :as opts}]
@@ -156,6 +157,7 @@
                   (scp/scp-to session content dest
                               :progress-fn (fn [file bytes total frac context]
                                              (output/print-progress
+                                              source-code-file form form-meta
                                               host-config
                                               (utils/progress-stats
                                                file bytes total frac
@@ -179,6 +181,7 @@
                   (scp/scp-to session content dest
                               :progress-fn (fn [file bytes total frac context]
                                              (output/print-progress
+                                              source-code-file form form-meta
                                               host-config
                                               (utils/progress-stats
                                                file bytes total frac
@@ -210,6 +213,7 @@
                 (scp/scp-to session content dest
                             :progress-fn (fn [file bytes total frac context]
                                            (output/print-progress
+                                            source-code-file form form-meta
                                             host-config
                                             (utils/progress-stats
                                              file bytes total frac
@@ -264,7 +268,7 @@
      )))
 
 (defmacro upload [& args]
-  `(utils/wrap-report ~*file* ~&form (upload* ~@args)))
+  `(utils/wrap-report ~*file* ~&form (upload* ~*file* (quote ~&form) ~(meta &form) ~@args)))
 
 (def documentation
   {
