@@ -207,7 +207,7 @@
             s
             (conj s {:form form
                      :file file
-                     :meta meta
+                     :meta file-meta
                      :line (count s)
                      :width (count (pr-str form))
                      :results []})))))
@@ -215,7 +215,7 @@
 (defn print-result [file form file-meta host-config result]
   (comment
     (prn 'print-result result host-config)
-    (prn (find-forms-matching-index @state {:form form :file file :meta meta})))
+    (prn (find-forms-matching-index @state {:form form :file file :meta file-meta})))
   (swap! state
          (fn [s]
            (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta file-meta}))]
