@@ -50,7 +50,8 @@
          "apt_repo_present.sh"
          {:FILE (some->
                  (or filename
-                     (format "%s-%s-%s-%s.list" ppa-owner "ubuntu" ppa-name codename))
+                     (format "%s-%s-%s-%s" ppa-owner "ubuntu" ppa-name codename))
+                 (str ".list")
                  (->> (str "/etc/apt/sources.list.d/"))
                  utils/path-escape)
           :CONTENTS (some->> contents utils/path-escape)
@@ -116,7 +117,7 @@
       ;; non ppa repository source
       (utils/make-script
        "apt_repo_absent.sh"
-       {:REGEX (some-> repo re-pattern utils/re-pattern-to-sed)
+       {:REGEX (some-> repo (some->> (str "^")) re-pattern utils/re-pattern-to-sed)
         :FILES "/etc/apt/sources.list.d/*.list"}))))
 
 (defmethod process-result :absent
