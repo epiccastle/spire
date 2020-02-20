@@ -92,6 +92,55 @@
            :out-lines (string/split out #"\n")
            :err-lines (string/split err #"\n"))))
 
+;;
+;; (line-in-file :absent ...)
+;;
+(defmethod preflight :absent [_ _]
+  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl}))
+
+(defmethod make-script :absent [_ {:keys [repo filename]}]
+  (let [ppa? (string/starts-with? repo "ppa:")
+        codename (name (facts/get-fact [:system :codename]))]
+    (if ppa?
+      ;; ppa repository source
+      (let [[_ ppa] (string/split repo #":")
+            [ppa-owner ppa-name] (string/split ppa #"/")
+            ppa-name (or ppa-name "ppa")
+            deb-line (format "deb http://ppa.launchpad.net/%s/%s/ubuntu %s main" ppa-owner ppa-name codename)
+            debsrc-line (format "deb-src http://ppa.launchpad.net/%s/%s/ubuntu %s main" ppa-owner ppa-name codename)]
+        (utils/make-script
+         "apt_repo_absent.sh"
+         {:REGEX (utils/path-escape deb-line)
+          :FILES "/etc/apt/sources.list.d/*.list"}))
+
+      ;; non ppa repository source
+      (utils/make-script
+       "apt_repo_absent.sh"
+       {:REGEX (some-> repo re-pattern utils/re-pattern-to-sed)
+        :FILES "/etc/apt/sources.list.d/*.list"}))))
+
+(defmethod process-result :absent
+  [_ _ {:keys [out err exit] :as result}]
+  (cond
+    (zero? exit)
+    (assoc result
+           :result :ok
+           :out-lines (string/split out #"\n")
+           :err-lines (string/split err #"\n"))
+
+    (= 255 exit)
+    (assoc result
+           :result :changed
+           :out-lines (string/split out #"\n")
+           :err-lines (string/split err #"\n"))
+
+    :else
+    (assoc result
+           :result :failed
+           :out-lines (string/split out #"\n")
+           :err-lines (string/split err #"\n"))))
+
+
 (utils/defmodule apt-repo* [command opts]
   [host-config session]
   (or
