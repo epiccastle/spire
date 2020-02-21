@@ -108,16 +108,19 @@
             [ppa-owner ppa-name] (string/split ppa #"/")
             ppa-name (or ppa-name "ppa")
             deb-line (format "deb http://ppa.launchpad.net/%s/%s/ubuntu %s main" ppa-owner ppa-name codename)
-            debsrc-line (format "deb-src http://ppa.launchpad.net/%s/%s/ubuntu %s main" ppa-owner ppa-name codename)]
+            ;;debsrc-line (format "deb-src http://ppa.launchpad.net/%s/%s/ubuntu %s main" ppa-owner ppa-name codename)
+            ]
         (utils/make-script
          "apt_repo_absent.sh"
          {:REGEX (utils/path-escape deb-line)
+          :LINE (some-> deb-line utils/path-escape)
           :FILES "/etc/apt/sources.list.d/*.list"}))
 
       ;; non ppa repository source
       (utils/make-script
        "apt_repo_absent.sh"
        {:REGEX (some-> repo (some->> (str "^")) re-pattern utils/re-pattern-to-sed)
+        :LINE (some-> repo utils/path-escape)
         :FILES "/etc/apt/sources.list.d/*.list"}))))
 
 (defmethod process-result :absent
