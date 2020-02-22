@@ -2,6 +2,7 @@
   (:require [spire.output :as output]
             [spire.state :as state]
             [spire.transport :as transport]
+            [spire.facts :as facts]
             [spire.ssh :as ssh]
             [spire.utils :as utils]
             [clojure.string :as string]))
