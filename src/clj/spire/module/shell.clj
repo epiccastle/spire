@@ -28,21 +28,30 @@
 #_ (make-exists-string ["privatekey" "public\"key"])
 
 (utils/defmodule shell* [{:keys [env dir shell out opts cmd creates]
-                         :or {env {}
-                              dir "."
-                              shell "bash"}
+                          :or {env {}
+                               dir "."
+                               shell "bash"}
 
-                         :as opts}]
+                          :as opts}]
   [host-string session]
   (or (preflight opts)
       (let [{:keys [exit out err] :as result}
-            (ssh/ssh-exec session shell
+            (ssh/ssh-exec session
+                          ;; command
+                          shell
+
+                          ;; stdin
                           (if creates
                             (format "cd \"%s\"\nif [ %s ]; then\nexit 0\nelse\n%s %s\nexit -1\nfi\n"
                                     dir (make-exists-string creates)
                                     (make-env-string env) cmd)
                             (format "cd \"%s\"; %s %s" dir (make-env-string env) cmd))
-             (or out "UTF-8") (or opts {}))]
+
+                          ;; output format
+                          (or out "UTF-8")
+
+                          ;; options
+                          (or opts {}))]
         (assoc result
                :out-lines (string/split-lines out)
 
