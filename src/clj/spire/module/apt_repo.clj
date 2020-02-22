@@ -112,7 +112,7 @@
             ]
         (utils/make-script
          "apt_repo_absent.sh"
-         {:REGEX (utils/path-escape deb-line)
+         {:REGEX (some-> deb-line (some->> (str "^")) re-pattern utils/re-pattern-to-sed)
           :LINE (some-> deb-line utils/path-escape)
           :FILES "/etc/apt/sources.list.d/*.list"}))
 
@@ -184,6 +184,11 @@
      "Install an ubuntu ppa apt source for php packages"
      :form "
 (apt-repo :present {:repo \"ppa:ondrej/php\"})"}
+
+    {:description
+     "Remove the ubuntu php ppa"
+     :form "
+(apt-repo :absent {:repo \"ppa:ondrej/php\"})"}
 
     ]
    })
