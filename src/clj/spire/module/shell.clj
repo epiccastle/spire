@@ -35,7 +35,8 @@
                           :as opts}]
   [host-string session]
   (or (preflight opts)
-      (let [{:keys [exit out err] :as result}
+      (let [{:keys [agent-forwarding]} (state/get-host-config)
+            {:keys [exit out err] :as result}
             (ssh/ssh-exec session
                           ;; command
                           shell
@@ -51,7 +52,8 @@
                           (or out "UTF-8")
 
                           ;; options
-                          (or opts {}))]
+                          (into {:agent-forwarding agent-forwarding}
+                                (or opts {})))]
         (assoc result
                :out-lines (string/split-lines out)
 
