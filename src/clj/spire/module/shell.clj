@@ -8,8 +8,8 @@
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
-(defn preflight [opts]
-  nil)
+(defn preflight [{:keys [shell] :as opts}]
+  (facts/check-bins-present #{(keyword (or shell "bash"))}))
 
 (defn process-result [opts result]
   {:result :ok})
