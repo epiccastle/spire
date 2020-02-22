@@ -37,6 +37,15 @@ or
     )
 ```
 
+or
+
+```clojure
+(ssh {:host-string "root@localhost"}
+    ;; commands here
+    )
+```
+
+
 ## Connect to an SSH server on a non-standard port
 
 Append the port number to the host string:
@@ -61,7 +70,7 @@ If key authentication is not being used `spire` will try to use password authent
 
 ```shell
 $ spire -e '(ssh "localhost" ...)'
-...password text here...
+Enter password for user@locahost: ...type in password here...
 ```
 
 To provide a password inside the program to be used, use the `:password` host config key
