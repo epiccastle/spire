@@ -147,6 +147,7 @@
                  '*connection* #'state/*connection*
                  'ssh-connections state/ssh-connections
                  'get-host-config state/get-host-config
+                 'get-connection state/get-connection
                  }
    'spire.output {
                   'print-form output/print-form
