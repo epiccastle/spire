@@ -195,6 +195,7 @@
               host-key-repository-changed)
             host-key-repository-not-included)))
       (getKnownHostsRepositoryID []
+        (when debug (prn 'make-host-key-repository 'getKnownHostsRepositoryID))
         (users-known-hosts-filename))
       (getHostKey
         ([]
@@ -211,6 +212,13 @@
                         (into-array HostKey [(HostKey. hostname (Base64/decodeBase64 (:key found-key)))]))]
            (when debug (prn 'make-host-key-repository 'getHostKey 'returning result))
            result)))
+      (remove
+        ([host type]
+         (when debug (prn 'make-host-key-repository 'remove host type))
+         )
+        ([host type key]
+         (when debug (prn 'make-host-key-repository 'remove host type key)))
+        )
       (add [hostkey userinfo]
         (when debug (prn 'make-host-key-repository 'add hostkey userinfo))
         (append-host-key-to-file
