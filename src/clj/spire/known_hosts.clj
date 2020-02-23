@@ -120,10 +120,13 @@
 (defn find-matching-host-entries [hosts-data hostname]
   (filter (fn [{:keys [hosts]}] (any-host-matches? hosts hostname)) hosts-data))
 
-(defn users-known-hosts-filename []
+(defn users-known-hosts-file []
   (io/file (System/getProperty "user.home") ".ssh/known_hosts"))
 
-#_ (-> (users-known-hosts-filename)
+(defn users-known-hosts-filename []
+  (.getPath (users-known-hosts-file)))
+
+#_ (-> (users-known-hosts-file)
        read-known-hosts-file
        (find-matching-host-entries "epiccastle.io"))
 
@@ -174,7 +177,7 @@
 (def host-key-repository-changed 2)
 
 (defn make-host-key-repository []
-  (let [known-hosts-keys (-> (users-known-hosts-filename)
+  (let [known-hosts-keys (-> (users-known-hosts-file)
                              read-known-hosts-file)]
     (proxy [HostKeyRepository] []
       (check [hostname network-key-data]
@@ -191,6 +194,8 @@
               host-key-repository-ok
               host-key-repository-changed)
             host-key-repository-not-included)))
+      (getKnownHostsRepositoryID []
+        (users-known-hosts-filename))
       (getHostKey
         ([]
          (when debug (prn 'make-host-key-repository 'getHostKey))
@@ -209,7 +214,7 @@
       (add [hostkey userinfo]
         (when debug (prn 'make-host-key-repository 'add hostkey userinfo))
         (append-host-key-to-file
-         (users-known-hosts-filename)
+         (users-known-hosts-file)
          (.getHost hostkey)
          (.getType hostkey)
          (.getKey hostkey)
