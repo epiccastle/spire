@@ -141,19 +141,18 @@ If you specify an encrypted identity and no passphrase, spire will ask for your 
 
 ## Dangerously connect to an SSH server without checking the host key
 
-Pass in `:strict-host-key-check` with a value of `"no"` to the host configuration:
+Pass in `:strict-host-key-check` with a value of `false` to the host configuration:
 
 ```clojure
-(ssh {:username "root"
-      :hostname "localhost"
-      :strict-host-key-checking "no"}
+(ssh {:host-string "root@localhost"
+      :strict-host-key-checking false}
   ;; commands here
   )
 ```
 
 Note: This parameter will both allow you to connect to a new host with an unknown key, and connect to an existing host with a key that differs from the one stored locally in the host key storage.
 
-Note: Connecting to a machine with this set stores the key in the known_hosts file with this option.
+Note: Connecting to a machine with this value set to false, stores the key in the known_hosts file.
 
 ## Automatically accept the provided host certificate and store it
 
