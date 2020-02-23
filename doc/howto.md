@@ -70,7 +70,7 @@ If key authentication is not being used `spire` will try to use password authent
 
 ```shell
 $ spire -e '(ssh "localhost" ...)'
-Enter password for user@locahost: ...type in password here...
+Enter Password for user@locahost: ...type in password here...
 ```
 
 To provide a password inside the program to be used, use the `:password` host config key
@@ -85,43 +85,55 @@ To provide a password inside the program to be used, use the `:password` host co
 
 ## Connect to an SSH server with a specific key located in a local file
 
-Pass the key's file location into the `:identity-file` of a host config:
+Pass the key's file location into the `:identity` of a host config:
 
 ```clojure
-(ssh {:username "root"
-      :hostname "localhost"
-      :identity (slurp "/home/user/.ssh/id_rsa")}
+(ssh {:host-string "root@localhost"
+      :identity "/home/user/.ssh/id_rsa"}
   ;; commands here
   )
+```
+
+```shell
+$ spire my-script.clj
+Enter Passphrase for /home/user/.ssh/id_rsa: ...type in key passphrase here...
 ```
 
 ## Connect to an SSH server with a specific key contained in a var
 
-You can provide the key _content_ to be used to authenticate with `:identity`:
+You can provide the key _content_ to be used to authenticate with `:private-key`:
 
 ```clojure
-(ssh {:username "root"
-      :password "localhost"
-      :identity my-identity-var}
+(ssh {:host-string "root@localhost"
+      :private-key (slurp "/home/user/.ssh/id_rsa")}
   ;; commands here
   )
 ```
 
-## Connect to an SSH server with an encrypted private key
-
-If you specify an encrypted identity and no passphrase, spire will ask for your passphrase via the terminal:
-
 ```shell
-$ spire
-...asking for passphrase...
+$ spire my-script.clj
+Enter Passphrase for inline key for root@localhost: ...type in key passphrase here...
 ```
 
-You can manually pass in both the key and the key's `:passphrase`
+## Connect to an SSH server with an encrypted private key in a file
+
+If you specify an encrypted identity and no passphrase, spire will ask for your passphrase via the terminal. You can manually pass in both the key and the key's `:passphrase`
 
 ```clojure
-(ssh {:username "root"
-      :hostname "localhost"
-      :identity (slurp "/home/user/.ssh/id_rsa")
+(ssh {:host-string "root@localhost"
+      :identity "/home/user/.ssh/id_rsa"
+      :passphrase "this is my super secret key passphrase"}
+  ;; commands here
+  )
+```
+
+## Connect to an SSH server with an encrypted private key from a var
+
+If you specify an encrypted identity and no passphrase, spire will ask for your passphrase via the terminal. You can manually pass in both the key and the key's `:passphrase`
+
+```clojure
+(ssh {:host-string "root@localhost"
+      :private-key (slurp "/home/user/.ssh/id_rsa")
       :passphrase "this is my super secret key passphrase"}
   ;; commands here
   )
