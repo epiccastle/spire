@@ -4,6 +4,11 @@
         "allPublicMethods": true
     },
     {
+        "name": "com.jcraft.jsch.JSch",
+        "allPublicConstructors": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "com.jcraft.jsch.jce.Random",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
