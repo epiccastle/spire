@@ -19,6 +19,10 @@
 
 (defn make-user-info [{:keys [strict-host-key-checking
                               accept-host-key]}]
+  (when debug (prn 'make-user-info
+                   'strict-host-key-checking strict-host-key-checking
+                   'accept-host-key accept-host-key
+                   ))
   (let [state (atom nil)]
     (proxy [UserInfo] []
 
@@ -33,13 +37,19 @@
           password))
 
       (promptYesNo [s]
-        (when debug (prn 'make-user-info 'promptYesNo))
+        (when debug (prn 'make-user-info 'promptYesNo s))
         (let [host-key-missing? (and (.contains s "authenticity of host")
-                                     (.contains s "can't be established"))]
-          (if host-key-missing?
+                                     (.contains s "can't be established"))
+              host-key-changed? (.contains s "IDENTIFICATION HAS CHANGED")]
+          (when debug
+            (prn 'make-user-info 'promptYesNo 'host-key-missing? host-key-missing?)
+            (prn 'make-user-info 'promptYesNo 'host-key-changed? host-key-changed?))
+          (cond
+            host-key-missing?
             (let [fingerprint (second (re-find #"fingerprint is ([0-9a-fA-F:]+)." s))]
+              (when debug (prn 'make-user-info 'promptYesNo 'fingerprint fingerprint))
               (cond
-                (#{false "no" :no "n" :n} strict-host-key-checking)
+                (not (nil? (#{false "no" :no "n" :n} strict-host-key-checking)))
                 true
 
                 (#{true "yes" :yes "y" :y "always" :always} accept-host-key)
@@ -55,7 +65,34 @@
 
                 :else
                 (print-flush-ask-yes-no s)))
-            (print-flush-ask-yes-no s))))
+
+            ;; strict-host-key-checking=true: showMessage will be called with a refusal to connect
+            ;; strict-host-key-checking=false: connection will proceed, but key will not be added
+            ;; strict-host-key-checking=nil: question will be "Do you want to delete the old key and insert the new key?"
+            host-key-changed?
+            (let [fingerprint (second (re-find #"\n([0-9a-fA-F:]+)." s))]
+              (when debug (prn 'make-user-info 'promptYesNo 'fingerprint fingerprint))
+              (cond
+                (#{true "yes" :yes "y" :y "always" :always} accept-host-key)
+                true
+
+                (not (nil? (#{false "no" :no "n" :n "never" :never} accept-host-key)))
+                false
+
+                (and (string? accept-host-key)
+                     (= (string/lower-case fingerprint)
+                        (string/lower-case accept-host-key)))
+                true
+
+                (string? accept-host-key)
+                false
+
+                :default
+                (print-flush-ask-yes-no s)))
+
+            :default
+            (print-flush-ask-yes-no s)
+            )))
 
       (getPassphrase []
         (when debug (prn 'make-user-info 'getPassphrase))
