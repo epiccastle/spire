@@ -172,6 +172,35 @@
    (str (make-host-key-line hostname type key comment) "\n")
    :append true))
 
+(defn copy-file [source-path dest-path]
+  (io/copy (io/file source-path) (io/file dest-path)))
+
+(defn delete-host-key-from-file [filename hostname type key]
+  (let [matching-lines (-> filename
+                           io/file
+                           read-known-hosts-file
+                           (find-matching-host-entries hostname)
+                           (->> (filter #(= type (:type %)))
+                                (filter #(if key (= key (:key %)) true))
+                                (map :line-num)
+                                (into #{})))
+        lines (with-open [reader (clojure.java.io/reader filename)]
+                (doall (line-seq reader)))
+        not-matching (->> lines
+                          (map-indexed (fn [index line]
+                                         (when-not (matching-lines (inc index)) line)))
+                          (filter identity))
+        ;; WARNING: assuming line endings. wont work on windows if it gets ported
+        new-file-contents (str (string/join "\n" not-matching) "\n")]
+
+    ;; before accidentally destroying your known_hosts file, I should probably back it up
+    (copy-file filename (str filename ".old"))
+
+    ;; write out the file with the lines deleted
+    (spit filename new-file-contents)))
+
+#_ (delete-host-key-from-file (users-known-hosts-filename) "localhost" :ssh-rsa nil)
+
 (def host-key-repository-ok 0)
 (def host-key-repository-not-included 1)
 (def host-key-repository-changed 2)
@@ -215,10 +244,10 @@
       (remove
         ([host type]
          (when debug (prn 'make-host-key-repository 'remove host type))
-         )
+         (delete-host-key-from-file (users-known-hosts-filename) host (keyword type) nil))
         ([host type key]
-         (when debug (prn 'make-host-key-repository 'remove host type key)))
-        )
+         (when debug (prn 'make-host-key-repository 'remove host type key))
+         (delete-host-key-from-file (users-known-hosts-filename) host (keyword type) key)))
       (add [hostkey userinfo]
         (when debug (prn 'make-host-key-repository 'add hostkey userinfo))
         (append-host-key-to-file
