@@ -61,7 +61,8 @@ jobs:
     working_directory: ~/repo
     environment:
       LEIN_ROOT: "true"
-      GRAALVM_HOME: /home/circleci/graalvm-ce-java8-19.3.1
+      #GRAALVM_HOME: /home/circleci/graalvm-ce-java8-19.3.1
+      GRAALVM_HOME: /home/circleci/graalvm-ce-java8-20.1.0-dev
     steps:
       - checkout
       - restore_cache:
@@ -82,11 +83,12 @@ jobs:
           name: Download GraalVM
           command: |
             cd ~
-            if ! [ -d graalvm-ce-java8-19.3.1 ]; then
-              curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java8-linux-amd64-19.3.1.tar.gz
-              tar xzf graalvm-ce-java8-linux-amd64-19.3.1.tar.gz
+            if ! [ -d graalvm-ce-java8-20.1.0-dev ]; then
+              # curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java8-linux-amd64-19.3.1.tar.gz
+              curl -O -sL https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/20.1.0-dev-20200225_0946/graalvm-ce-java8-linux-amd64-20.1.0-dev.tar.gz
+              tar xzf graalvm-ce-java8-linux-amd64-20.1.0-dev.tar.gz
             fi
-            graalvm-ce-java8-19.3.1/bin/gu install native-image
+            $GRAALVM_HOME/bin/gu install native-image
       - run:
           name: Build binary
           command: |
@@ -99,7 +101,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.m2
-            - ~/graalvm-ce-java8-19.3.1
+            - ~/graalvm-ce-java8-20.1.0-dev
           key: linux-{{ checksum "project.clj" }}-{{ checksum ".circleci/config.yml" }}
       - store_artifacts:
           path: /tmp/release
@@ -108,8 +110,8 @@ jobs:
     macos:
       xcode: "10.0"
     environment:
-      # GRAALVM_HOME: /Users/distiller/graalvm-ce-java8-20.1.0-dev/Contents/Home
-      GRAALVM_HOME: /Users/distiller/graalvm-ce-java8-19.3.1/Contents/Home
+      GRAALVM_HOME: /Users/distiller/graalvm-ce-java8-20.1.0-dev/Contents/Home
+      # GRAALVM_HOME: /Users/distiller/graalvm-ce-java8-19.3.1/Contents/Home
       # GRAALVM_HOME: /Users/distiller/graalvm-ce-java11-19.3.1/Contents/Home
     steps:
       - checkout
@@ -141,13 +143,13 @@ jobs:
           command: |
             cd ~
             ls -la
-            if ! [ -d graalvm-ce-java8-19.3.1 ]; then
-              # curl -O -sL https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/20.1.0-dev-20200211_0341/graalvm-ce-java8-darwin-amd64-20.1.0-dev.tar.gz
-              curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java8-darwin-amd64-19.3.1.tar.gz
+            if ! [ -d graalvm-ce-java8-20.1.0-dev ]; then
+              curl -O -sL https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/20.1.0-dev-20200225_0946/graalvm-ce-java8-darwin-amd64-20.1.0-dev.tar.gz
+              # curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java8-darwin-amd64-19.3.1.tar.gz
               #curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java11-darwin-amd64-19.3.1.tar.gz
               ls -alF
-              # tar xzf graalvm-ce-java8-darwin-amd64-20.1.0-dev.tar.gz
-              tar xzf graalvm-ce-java8-darwin-amd64-19.3.1.tar.gz
+              tar xzf graalvm-ce-java8-darwin-amd64-20.1.0-dev.tar.gz
+              # tar xzf graalvm-ce-java8-darwin-amd64-19.3.1.tar.gz
               #tar xzf graalvm-ce-java11-darwin-amd64-19.3.1.tar.gz
             fi
             $GRAALVM_HOME/bin/gu install native-image
@@ -200,7 +202,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.m2
-            - ~/graalvm-ce-java8-19.3.1
+            - ~/graalvm-ce-java8-20.1.0-dev
           key: mac-{{ checksum "project.clj" }}-{{ checksum ".circleci/config.yml" }}
       - store_artifacts:
           path: build
