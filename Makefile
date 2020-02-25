@@ -4,7 +4,7 @@ ifneq (,$(findstring java11,$(GRAALVM)))
 else
 	JAVA_VERSION = 8
 endif
-VERSION = 0.1.0-SNAPSHOT
+VERSION = $(shell cat .meta/VERSION)
 UNAME = $(shell uname)
 
 all: build/spire
@@ -38,7 +38,7 @@ JNI_DIR=target/jni
 CLASS_DIR=target/default/classes
 CLASS_NAME=SpireUtils
 CLASS_FILE=$(CLASS_DIR)/$(CLASS_NAME).class
-JAR_FILE=target/uberjar/spire-0.1.0-SNAPSHOT-standalone.jar
+JAR_FILE=target/uberjar/spire-$(VERSION)-standalone.jar
 SOLIB_FILE=$(JNI_DIR)/libspire.so
 DYLIB_FILE=$(JNI_DIR)/libspire.dylib
 JAVA_FILE=src/c/SpireUtils.java
