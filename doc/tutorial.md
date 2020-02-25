@@ -141,7 +141,7 @@ Lets connect to localhost and generate some client keys. We can break out some o
                        (install)
                        (generate-keypair))
       client-keys (ssh "root@localhost"
-                       (install)
+                       (install) ;; comment out this line if not running debian based linux locally
                        (generate-keypair))]
   {:server server-keys
    :client client-keys})
