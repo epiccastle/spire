@@ -307,10 +307,10 @@ $ ./my-file.clj
 
 ## Read the launch arguments
 
-Use the `get-argv` function.
+Use the `*command-line-args*` var.
 
 ```clojure
-(let [target (first (get-argv))]
+(let [target (first *command-line-args*)]
   (ssh target
     (get-fact)))
 ```
