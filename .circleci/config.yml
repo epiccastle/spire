@@ -158,20 +158,20 @@ jobs:
       #     name: MacOS java info
       #     command: |
       #        java -Xinternalversion
-      - run:
-          name: Run MacOS tests
-          command: |
-            make clean lib JAVA_HOME=$GRAALVM_HOME
-            ls -alF
+      # - run:
+      #     name: Run MacOS tests
+      #     command: |
+      #       make clean lib JAVA_HOME=$GRAALVM_HOME
+      #       ls -alF
 
-            make jar
-            java -Djava.library.path="." -jar target/uberjar/spire-0.1.0-SNAPSHOT-standalone.jar -h
+      #       make jar
+      #       java -Djava.library.path="." -jar target/uberjar/spire-0.1.0-SNAPSHOT-standalone.jar -h
 
-            sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
-            #sudo mkdir /run/sshd
+      #       sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
+      #       #sudo mkdir /run/sshd
 
-            make circle-ci
-            make clean
+      #       make circle-ci
+      #       make clean
       - run:
           name: Build binary
           command: |
