@@ -1,4 +1,4 @@
-GRAALVM = $(HOME)/graalvm-ce-java11-19.3.1
+GRAALVM = $(HOME)/graalvm-ce-java11-20.1.0-dev
 ifneq (,$(findstring java11,$(GRAALVM)))
 	JAVA_VERSION = 11
 else
