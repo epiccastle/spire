@@ -67,7 +67,7 @@ You can find the source code to Spire on github [here.](https://github.com/epicc
 
 ## Build
 
-Install graalvm-ce-java8-19.3.1 in your home directory. Add the native image bundle to it. Then:
+Install graalvm-ce-java11-20.1.0-dev in your home directory. Add the native image bundle to it. Then:
 
 ```shell-session
 $ make clean all
@@ -91,6 +91,8 @@ Install it.
 $ mv spire ~/bin/
 $ spire -h
 ```
+
+**Note:**  graalvm-ce-java8-20.1.0-dev should also work. Earlier versions of graalvm, up to and including 20.0.0 *do not work*.
 
 ## Running as a jar
 
