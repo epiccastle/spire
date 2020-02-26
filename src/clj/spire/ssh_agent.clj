@@ -31,13 +31,12 @@
     (loop [n num-identities
            data data
            identities []]
-      (let [[id data] (read-identity data)]
-        (if (pos? (dec n))
-          (recur (dec n) data (conj identities id))
-
-          (do
-            (assert (empty? data) "data should be empty now")
-            (conj identities id)))))))
+      (if (pos? n)
+        (let [[id data] (read-identity data)]
+          (recur (dec n) data (conj identities id)))
+        (do
+          (assert (empty? data) "data should be empty now")
+          identities)))))
 
 (defn send-query [sock query-data]
   (let [query (concat (pack/pack-int (count query-data)) query-data)
@@ -62,6 +61,7 @@
           read (byte-array size)]
       (when debug (prn 'request-identities 'reading size 'bytes))
       (SpireUtils/ssh-auth-socket-read sock read size)
+      (when debug (prn 'request-identities 'read (seq read)))
       (case (code->keyword (first read))
         :identities-answer
         (decode-identities (drop 1 read))
