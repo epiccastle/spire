@@ -8,6 +8,9 @@ A Clojure domain specific language tailored to idempotently orchestrate machines
 
 ## Overview
 
+[![CircleCI](https://circleci.com/gh/epiccastle/spire/tree/master.svg?style=shield)](https://circleci.com/gh/epiccastle/spire/tree/master)
+[![project chat](https://img.shields.io/badge/slack-join_chat-brightgreen.svg)](https://app.slack.com/client/T03RZGPFR/CUHG31VR6)
+
 This is a **work in progress**. Consider everything liable to change at any time.
 
 Spire is a single executable binary you can use to provision and configure remote Unix systems. It runs a Clojure _domain specific language_ that is:
