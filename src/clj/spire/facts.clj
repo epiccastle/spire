@@ -90,7 +90,7 @@
 
 (def bins
   [
-   "bash" "ksh" "zsh" "csh" "tcsh"
+   "bash" "ksh" "zsh" "csh" "tcsh" "fish"
    "dash" "sh" "stat" "ls" "id"
    "file" "touch" "chacl" "chown" "chgrp"
    "chmod" "cp" "cat" "cut" "printf" "find"
@@ -113,6 +113,9 @@
   (case shell
     :csh
     (apply str (map #(format "echo %s: `where %s`\n" % %) bins))
+
+    :fish
+    (apply str (map #(format "echo %s: (which %s)\n" % %) bins))
 
     (apply str (map #(format "echo %s: `which %s`\n" % %) bins))
     ))
@@ -181,7 +184,7 @@
     )
   )
 
-(defn process-shell-uname [[command file uname platform node-name os kernel-release kernel-version] shell-id]
+(defn process-shell-uname [[command file uname platform node-name os kernel-release kernel-version]]
   {:string uname
    :platform platform
    :node node-name
@@ -189,23 +192,23 @@
    :kernel {:release kernel-release
             :version kernel-version}})
 
-(defn process-shell-info [[command file uname platform node-name os kernel-release kernel-version] shell-id]
+(defn process-shell-info [[command file uname platform node-name os kernel-release kernel-version]]
   (let [[path info] (string/split file #":\s*" 2)]
     {:command command
      :path path
-     :info info
-     :detect (first shell-id)}))
+     :info info}))
 
 (defn process-system [uname-data shell-data]
   (let [detect (:detect shell-data)
         sh (case (:command shell-data)
-            "bash" :bash
-            "zsh"  :zsh
-            "csh"  :csh
-            "ksh"  :ksh
-            "sh"   (if (string/starts-with? detect "ash")
-                     :ash
-                     :sh))]
+             "bash" :bash
+             "fish" :fish
+             "zsh"  :zsh
+             "csh"  :csh
+             "ksh"  :ksh
+             "sh"   (if (string/starts-with? detect "ash")
+                      :ash
+                      :sh))]
     {:os (-> uname-data :os string/lower-case keyword)
      :platform (-> uname-data :platform keyword)
      :shell sh
@@ -215,13 +218,13 @@
   (assoc facts :ssh-config host-config))
 
 (defn process-facts [{:keys [paths shell shell-id] :as data}]
-  (let [uname-data (process-shell-uname shell shell-id)
-        shell-data (process-shell-info shell shell-id)]
+  (let [uname-data (process-shell-uname shell)
+        shell-data (process-shell-info shell)]
     ;; initial facts
     {
      :system (process-system uname-data shell-data)
      :uname uname-data
-     :shell shell-data
+     :shell (assoc shell-data :detect (first shell-id))
      }))
 
 (defn process-paths [{:keys [paths]}]
@@ -290,7 +293,72 @@
     )
   )
 
+(defn fetch-shell []
+  (let [host-config state/*host-config*
+        session state/*connection*
+        script "echo $SHELL"
+        {:keys [exit out err] :as result} (ssh/ssh-exec session script "" "UTF-8" {})
+        shell-path (string/trim out)]
+    (assert (zero? exit) (format "Initial shell check `echo $SHELL` failed: %s" err))
+    (keyword (last (string/split shell-path #"/" -1)))))
+
+(defmulti fetch-shell-facts identity)
+
 (defn fetch-facts []
+  (fetch-shell-facts (fetch-shell)))
+
+(defn run-and-return-lines [session script assert-format]
+  (let [{:keys [out err exit]} (ssh/ssh-exec session script "" "UTF-8" {})]
+    (assert (zero? exit) (format assert-format exit err))
+    (string/split-lines out)))
+
+(defmethod fetch-shell-facts :fish [_]
+  (let [session state/*connection*]
+    ;; base shell and uname
+    (let [base-shell-uname-output (run-and-return-lines
+                                   session
+                                   (utils/embed-src "facts_fish.fish")
+                                   "facts_fish.fish script exited %d: %s")
+          shell-version-output (run-and-return-lines session
+                                                     "echo $FISH_VERSION"
+                                                     "retrieving fish version script exited %d: %s")
+          paths-output (run-and-return-lines session (make-which :fish)
+                                             "retrieving paths script exited %d: %s")
+
+          uname-data (process-shell-uname base-shell-uname-output)
+          shell-data (process-shell-info base-shell-uname-output)
+          version (first shell-version-output)
+          detect (str "fish " version)
+          paths (process-paths {:paths paths-output})
+          shell-data (assoc shell-data :detect detect :version version)
+          system-data (process-system uname-data shell-data)
+          release-info (cond
+                         (= :linux (:os system-data))
+                         (some->
+                          (ssh/ssh-exec
+                           session
+                           "lsb_release -a"
+                           "" "UTF-8" {})
+                          process-lsb-release)
+
+                         (= :darwin (:os system-data))
+                         (some->
+                          (ssh/ssh-exec
+                           session
+                           "system_profiler SPSoftwareDataType"
+                           "" "UTF-8" {})
+                          process-system-profiler)
+
+                         :else
+                         nil)
+          system-data (into system-data release-info)]
+      (->> {:shell shell-data
+            :uname uname-data
+            :system system-data
+            :paths paths}
+           (process-host-string state/*host-config*)))))
+
+(defmethod fetch-shell-facts :default [_]
   (let [host-config state/*host-config*
         session state/*connection*
         slug (make-separator-slug)
@@ -298,6 +366,7 @@
     (comment (println "fetch-facts:" script)
              (println "session:" session))
     (let [result (ssh/ssh-exec session script "" "UTF-8" {})
+          _ (prn 'results result)
           facts (->> result
                      (extract-blocks slug)
                      process-facts
@@ -310,24 +379,24 @@
                             (extract-blocks slug)
                             process-paths)
           release-info (cond
-                                (= :linux (get-in facts [:system :os]))
-                                (some->
-                                 (ssh/ssh-exec
-                                  session
-                                  "lsb_release -a"
-                                  "" "UTF-8" {})
-                                 process-lsb-release)
+                         (= :linux (get-in facts [:system :os]))
+                         (some->
+                          (ssh/ssh-exec
+                           session
+                           "lsb_release -a"
+                           "" "UTF-8" {})
+                          process-lsb-release)
 
-                                (= :darwin (get-in facts [:system :os]))
-                                (some->
-                                 (ssh/ssh-exec
-                                  session
-                                  "system_profiler SPSoftwareDataType"
-                                  "" "UTF-8" {})
-                                 process-system-profiler)
+                         (= :darwin (get-in facts [:system :os]))
+                         (some->
+                          (ssh/ssh-exec
+                           session
+                           "system_profiler SPSoftwareDataType"
+                           "" "UTF-8" {})
+                          process-system-profiler)
 
-                                :else
-                                nil)
+                         :else
+                         nil)
           ]
       (-> facts
           (assoc :paths path-results)
