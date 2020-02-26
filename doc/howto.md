@@ -340,6 +340,8 @@ The `shell` module provides all you need
 
 ## Debug a blueprint by printing a result and then continuing
 
+**This is not presently implemented**
+
 Use `debug` to probe the return values of a module and print them on the output.
 
 ```clojure
