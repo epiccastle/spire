@@ -156,7 +156,7 @@ Note: Connecting to a machine with this value set to false, stores the key in th
 
 ## Automatically accept the provided host certificate and store it
 
-Pass in `:accept-host-key` with a value of `"yes"` and your blueprint will automatically answer yes for that host if it is asked whether to accept a new host-key:
+Pass in `:accept-host-key` with a value of `true` and your blueprint will automatically answer yes for that host if it is asked whether to accept a new host-key:
 
 ```clojure
 (ssh {:username "root"
