@@ -9,6 +9,11 @@
         "allPublicMethods": true
     },
     {
+        "name": "java.lang.NullPointerException",
+        "allPublicConstructors": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "com.jcraft.jsch.jce.Random",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
