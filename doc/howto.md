@@ -161,7 +161,7 @@ Pass in `:accept-host-key` with a value of `"yes"` and your blueprint will autom
 ```clojure
 (ssh {:username "root"
       :hostname "localhost"
-      :accept-host-key "yes"}
+      :accept-host-key true}
   ;; commands here
   )
 ```
