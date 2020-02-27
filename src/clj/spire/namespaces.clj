@@ -21,6 +21,7 @@
             [spire.module.service :as service]
             [spire.module.authorized-keys :as authorized-keys]
             [clojure.tools.cli]
+            [clojure.java.shell]
             [sci.core :as sci]
             [clj-http.lite.core]
             [clj-http.lite.client]
@@ -261,7 +262,13 @@
    {
     'parse-string edamame.core/parse-string
     'parse-string-all edamame.core/parse-string-all
-    }})
+    }
+
+   'clojure.java.shell
+   {
+    'with-sh-dir (with-meta @#'clojure.java.shell/with-sh-dir {:sci/macro true})
+    'with-sh-env (with-meta @#'clojure.java.shell/with-sh-env {:sci/macro true})
+    'sh clojure.java.shell/sh}})
 
 (def classes
   {'java.lang.System System
