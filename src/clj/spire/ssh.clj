@@ -122,7 +122,6 @@
 
       (showMessage [s]
         (when debug (prn 'make-user-info 'showMessage))
-        (println "showing...")
         (println s)))))
 
 (defn- to-camel-case [^String a]
