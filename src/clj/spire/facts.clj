@@ -82,9 +82,6 @@
      :shell sh
      }))
 
-(defn process-host-string [host-config facts]
-  (assoc facts :ssh-config host-config))
-
 (defn process-paths [{:keys [paths]}]
   (let [
         path-data
@@ -216,8 +213,8 @@
     (->> {:shell shell-data
           :uname uname-data
           :system system-data
-          :paths paths}
-         (process-host-string state/*host-config*))))
+          :paths paths
+          :ssh-config state/*host-config*})))
 
 (defmethod fetch-shell-facts :default [shell]
   (let [session state/*connection*
@@ -243,8 +240,8 @@
     (->> {:shell shell-data
           :uname uname-data
           :system system-data
-          :paths paths}
-         (process-host-string state/*host-config*))))
+          :paths paths
+          :ssh-config state/*host-config*})))
 
 (defn update-facts! []
   (let [facts (fetch-facts)]
