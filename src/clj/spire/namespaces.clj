@@ -26,6 +26,7 @@
             [clj-http.lite.client]
             [clj-http.lite.links]
             [clj-http.lite.util]
+            [edamame.core]
             )
   )
 
@@ -254,7 +255,12 @@
     'gunzip clj-http.lite.util/gunzip
     'gzip clj-http.lite.util/gzip
     'inflate clj-http.lite.util/inflate
-    'deflate clj-http.lite.util/deflate
+    'deflate clj-http.lite.util/deflate}
+
+   'edamame.core
+   {
+    'parse-string edamame.core/parse-string
+    'parse-string-all edamame.core/parse-string-all
     }})
 
 (def classes
