@@ -358,27 +358,28 @@
             :paths paths}
            (process-host-string state/*host-config*)))))
 
-(defmethod fetch-shell-facts :default [_]
-  (let [host-config state/*host-config*
-        session state/*connection*
-        slug (make-separator-slug)
-        script (make-fact-script slug)]
-    (comment (println "fetch-facts:" script)
-             (println "session:" session))
-    (let [result (ssh/ssh-exec session script "" "UTF-8" {})
-          facts (->> result
-                     (extract-blocks slug)
-                     process-facts
-                     (process-host-string host-config))
-          shell (get-in facts [:system :shell])
-          path-script (str
-                       (start-block slug "paths")
-                       (make-which shell))
-          path-results (->> (ssh/ssh-exec session path-script "" "UTF-8" {})
-                            (extract-blocks slug)
-                            process-paths)
+(defmethod fetch-shell-facts :default [shell]
+  (let [session state/*connection*]
+    ;; base shell and uname
+    (let [base-shell-uname-output (run-and-return-lines
+                                   session
+                                   (utils/embed-src "facts_shell.sh")
+                                   "facts_shell.sh script exited %d: %s")
+          shell-version-output (run-and-return-lines session
+                                                     (utils/embed-src "facts_id.sh")
+                                                     "facts_id.sh exited %d: %s")
+          paths-output (run-and-return-lines session (make-which shell)
+                                             "retrieving paths script exited %d: %s")
+
+          uname-data (process-shell-uname base-shell-uname-output)
+          shell-data (process-shell-info base-shell-uname-output)
+          detect (first shell-version-output)
+          version (last (string/split detect #"\s+"))
+          paths (process-paths {:paths paths-output})
+          shell-data (assoc shell-data :detect detect :version version)
+          system-data (process-system uname-data shell-data)
           release-info (cond
-                         (= :linux (get-in facts [:system :os]))
+                         (= :linux (:os system-data))
                          (some->
                           (ssh/ssh-exec
                            session
@@ -386,7 +387,7 @@
                            "" "UTF-8" {})
                           process-lsb-release)
 
-                         (= :darwin (get-in facts [:system :os]))
+                         (= :darwin (:os system-data))
                          (some->
                           (ssh/ssh-exec
                            session
@@ -396,10 +397,12 @@
 
                          :else
                          nil)
-          ]
-      (-> facts
-          (assoc :paths path-results)
-          (update :system into release-info)))))
+          system-data (into system-data release-info)]
+      (->> {:shell shell-data
+            :uname uname-data
+            :system system-data
+            :paths paths}
+           (process-host-string state/*host-config*)))))
 
 (defn update-facts! []
   (let [facts (fetch-facts)]
