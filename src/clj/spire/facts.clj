@@ -366,7 +366,6 @@
     (comment (println "fetch-facts:" script)
              (println "session:" session))
     (let [result (ssh/ssh-exec session script "" "UTF-8" {})
-          _ (prn 'results result)
           facts (->> result
                      (extract-blocks slug)
                      process-facts
