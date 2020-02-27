@@ -29,7 +29,11 @@
   (let [package-string (if (string? package-or-packages)
                          package-or-packages
                          (string/join " " package-or-packages))]
-    (str "DEBIAN_FRONTEND=noninteractive apt-get install -y " package-string)))
+    (str
+     (facts/on-shell
+      :fish "env DEBIAN_FRONTEND=noninteractive apt-get install -y "
+      :else "DEBIAN_FRONTEND=noninteractive apt-get install -y ")
+     package-string)))
 
 (defmethod process-result :install
   [_ _ {:keys [out err exit] :as result}]
@@ -61,7 +65,9 @@
   (facts/check-bins-present #{:apt-get}))
 
 (defmethod make-script :update [_ _]
-  (str "DEBIAN_FRONTEND=noninteractive apt-get update -y"))
+  (facts/on-shell
+   :fish "env DEBIAN_FRONTEND=noninteractive apt-get update -y"
+   :else "DEBIAN_FRONTEND=noninteractive apt-get update -y"))
 
 (defn process-values [result func]
   (->> result
@@ -113,7 +119,11 @@
   (let [package-string (if (string? package-or-packages)
                          package-or-packages
                          (string/join " " package-or-packages))]
-    (str "DEBIAN_FRONTEND=noninteractive apt-get remove -y " package-string)))
+    (str
+     (facts/on-shell
+      :fish "env DEBIAN_FRONTEND=noninteractive apt-get remove -y "
+      :else "DEBIAN_FRONTEND=noninteractive apt-get remove -y ")
+     package-string)))
 
 (defmethod process-result :remove
   [_ _ {:keys [out err exit] :as result}]
@@ -145,7 +155,9 @@
   (facts/check-bins-present #{:apt-get}))
 
 (defmethod make-script :upgrade [_ _]
-  (str "DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"))
+  (facts/on-shell
+   :fish "env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"
+   :else "DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"))
 
 (defmethod process-result :upgrade
   [_ _ {:keys [out err exit] :as result}]
