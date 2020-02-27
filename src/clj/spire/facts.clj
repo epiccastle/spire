@@ -85,16 +85,6 @@
 (defn process-host-string [host-config facts]
   (assoc facts :ssh-config host-config))
 
-(defn process-facts [{:keys [paths shell shell-id] :as data}]
-  (let [uname-data (process-shell-uname shell)
-        shell-data (process-shell-info shell)]
-    ;; initial facts
-    {
-     :system (process-system uname-data shell-data)
-     :uname uname-data
-     :shell (assoc shell-data :detect (first shell-id))
-     }))
-
 (defn process-paths [{:keys [paths]}]
   (let [
         path-data
@@ -162,8 +152,7 @@
   )
 
 (defn fetch-shell []
-  (let [host-config state/*host-config*
-        session state/*connection*
+  (let [session state/*connection*
         script "echo $SHELL"
         {:keys [exit out err] :as result} (ssh/ssh-exec session script "" "UTF-8" {})
         shell-path (string/trim out)]
@@ -180,97 +169,82 @@
     (assert (zero? exit) (format assert-format exit err))
     (string/split-lines out)))
 
+(defn run-lsb-release [session]
+  (some->
+   (ssh/ssh-exec
+    session
+    "lsb_release -a"
+    "" "UTF-8" {})
+   process-lsb-release))
+
+(defn run-system-profiler [session]
+  (some->
+   (ssh/ssh-exec
+    session
+    "system_profiler SPSoftwareDataType"
+    "" "UTF-8" {})
+   process-system-profiler))
+
+(defn process-release-info [{:keys [os]} session]
+  (cond
+    (= :linux os) (run-lsb-release session)
+    (= :darwin os) (run-system-profiler session)
+    ;; what about freebsd?
+    :else nil))
+
 (defmethod fetch-shell-facts :fish [_]
-  (let [session state/*connection*]
-    ;; base shell and uname
-    (let [base-shell-uname-output (run-and-return-lines
-                                   session
-                                   (utils/embed-src "facts_fish.fish")
-                                   "facts_fish.fish script exited %d: %s")
-          shell-version-output (run-and-return-lines session
-                                                     "echo $FISH_VERSION"
-                                                     "retrieving fish version script exited %d: %s")
-          paths-output (run-and-return-lines session (make-which :fish)
-                                             "retrieving paths script exited %d: %s")
+  (let [session state/*connection*
+        base-shell-uname-output (run-and-return-lines
+                                 session
+                                 (utils/embed-src "facts_fish.fish")
+                                 "facts_fish.fish script exited %d: %s")
+        shell-version-output (run-and-return-lines session
+                                                   "echo $FISH_VERSION"
+                                                   "retrieving fish version script exited %d: %s")
+        paths-output (run-and-return-lines session (make-which :fish)
+                                           "retrieving paths script exited %d: %s")
 
-          uname-data (process-shell-uname base-shell-uname-output)
-          shell-data (process-shell-info base-shell-uname-output)
-          version (first shell-version-output)
-          detect (str "fish " version)
-          paths (process-paths {:paths paths-output})
-          shell-data (assoc shell-data :detect detect :version version)
-          system-data (process-system uname-data shell-data)
-          release-info (cond
-                         (= :linux (:os system-data))
-                         (some->
-                          (ssh/ssh-exec
-                           session
-                           "lsb_release -a"
-                           "" "UTF-8" {})
-                          process-lsb-release)
-
-                         (= :darwin (:os system-data))
-                         (some->
-                          (ssh/ssh-exec
-                           session
-                           "system_profiler SPSoftwareDataType"
-                           "" "UTF-8" {})
-                          process-system-profiler)
-
-                         :else
-                         nil)
-          system-data (into system-data release-info)]
-      (->> {:shell shell-data
-            :uname uname-data
-            :system system-data
-            :paths paths}
-           (process-host-string state/*host-config*)))))
+        uname-data (process-shell-uname base-shell-uname-output)
+        shell-data (process-shell-info base-shell-uname-output)
+        version (first shell-version-output)
+        detect (str "fish " version)
+        paths (process-paths {:paths paths-output})
+        shell-data (assoc shell-data :detect detect :version version)
+        system-data (process-system uname-data shell-data)
+        release-info (process-release-info system-data session)
+        system-data (into system-data release-info)]
+    (->> {:shell shell-data
+          :uname uname-data
+          :system system-data
+          :paths paths}
+         (process-host-string state/*host-config*))))
 
 (defmethod fetch-shell-facts :default [shell]
-  (let [session state/*connection*]
-    ;; base shell and uname
-    (let [base-shell-uname-output (run-and-return-lines
-                                   session
-                                   (utils/embed-src "facts_shell.sh")
-                                   "facts_shell.sh script exited %d: %s")
-          shell-version-output (run-and-return-lines session
-                                                     (utils/embed-src "facts_id.sh")
-                                                     "facts_id.sh exited %d: %s")
-          paths-output (run-and-return-lines session (make-which shell)
-                                             "retrieving paths script exited %d: %s")
+  (let [session state/*connection*
+        base-shell-uname-output (run-and-return-lines
+                                 session
+                                 (utils/embed-src "facts_shell.sh")
+                                 "facts_shell.sh script exited %d: %s")
+        shell-version-output (run-and-return-lines session
+                                                   (utils/embed-src "facts_id.sh")
+                                                   "facts_id.sh exited %d: %s")
+        paths-output (run-and-return-lines session (make-which shell)
+                                           "retrieving paths script exited %d: %s")
 
-          uname-data (process-shell-uname base-shell-uname-output)
-          shell-data (process-shell-info base-shell-uname-output)
-          detect (first shell-version-output)
-          version (last (string/split detect #"\s+"))
-          paths (process-paths {:paths paths-output})
-          shell-data (assoc shell-data :detect detect :version version)
-          system-data (process-system uname-data shell-data)
-          release-info (cond
-                         (= :linux (:os system-data))
-                         (some->
-                          (ssh/ssh-exec
-                           session
-                           "lsb_release -a"
-                           "" "UTF-8" {})
-                          process-lsb-release)
-
-                         (= :darwin (:os system-data))
-                         (some->
-                          (ssh/ssh-exec
-                           session
-                           "system_profiler SPSoftwareDataType"
-                           "" "UTF-8" {})
-                          process-system-profiler)
-
-                         :else
-                         nil)
-          system-data (into system-data release-info)]
-      (->> {:shell shell-data
-            :uname uname-data
-            :system system-data
-            :paths paths}
-           (process-host-string state/*host-config*)))))
+        uname-data (process-shell-uname base-shell-uname-output)
+        shell-data (process-shell-info base-shell-uname-output)
+        detect (first shell-version-output)
+        version (last (string/split detect #"\s+"))
+        paths (process-paths {:paths paths-output})
+        shell-data (assoc shell-data :detect detect :version version)
+        system-data (process-system uname-data shell-data)
+        release-info (process-release-info system-data session)
+        system-data (into system-data release-info)]
+    (->> {:shell shell-data
+          :uname uname-data
+          :system system-data
+          :paths paths}
+         (process-host-string state/*host-config*))))
 
 (defn update-facts! []
   (let [facts (fetch-facts)]
