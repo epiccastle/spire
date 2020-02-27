@@ -161,3 +161,6 @@ macos-client-test-jvm: ssh_test_key_rsa
 		export SSH_TEST_PORT=2200 && \
 		umask 0022 && \
 		lein trampoline run -- -e '(ssh "localhost:2200" (get-fact))'
+
+jar-help:
+	java -Djava.library.path="." -jar target/uberjar/spire-$(VERSION)-standalone.jar -h

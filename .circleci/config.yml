@@ -163,13 +163,9 @@ jobs:
           command: |
             make clean lib JAVA_HOME=$GRAALVM_HOME
             ls -alF
-
-            make jar
-            java -Djava.library.path="." -jar target/uberjar/spire-0.1.0-alpha.1-standalone.jar -h
-
+            make jar jar-help
             sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
             #sudo mkdir /run/sshd
-
             make circle-ci
             make clean
       - run:
