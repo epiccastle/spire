@@ -22,6 +22,7 @@
             [spire.module.authorized-keys :as authorized-keys]
             [clojure.tools.cli]
             [clojure.java.shell]
+            [clojure.edn]
             [sci.core :as sci]
             [clj-http.lite.core]
             [clj-http.lite.client]
@@ -262,6 +263,12 @@
    {
     'parse-string edamame.core/parse-string
     'parse-string-all edamame.core/parse-string-all
+    }
+
+   'clojure.edn
+   {
+    'read clojure.edn/read
+    'read-string clojure.edn/read-string
     }
 
    'clojure.java.shell
