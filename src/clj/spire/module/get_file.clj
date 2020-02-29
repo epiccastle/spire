@@ -19,9 +19,6 @@
 (defmacro get-file [& args]
   `(utils/wrap-report ~*file* ~&form (get-file* ~@args)))
 
-(defmacro apt-repo [& args]
-  `(utils/wrap-report ~*file* ~&form (apt-repo* ~@args)))
-
 (def documentation
   {
    :module "get-file"
