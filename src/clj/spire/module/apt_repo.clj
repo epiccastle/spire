@@ -168,7 +168,7 @@
    :form "(apt-repo command opts)"
    :args
    [{:arg "command"
-     :desc "The overall command to execure. Should be one of `:present` or `:absent`"
+     :desc "The overall command to execute. Should be one of `:present` or `:absent`"
      :values
      [[:present "Ensure the specified apt repository is present on the machine"]
       [:absent "Ensure the specified apt repository is absent on the machine"]]}
