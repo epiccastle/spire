@@ -1,7 +1,7 @@
 (ns spire.module.user
   (:require [spire.utils :as utils]
             [spire.ssh :as ssh]
-            [spire.output :as output]
+            [spire.facts :as facts]
             [clojure.string :as string]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
@@ -19,16 +19,28 @@
 (defmethod make-script :present [_ {:keys [name comment uid home
                                            group groups password shell
                                            ] :as opts}]
-  (utils/make-script
-   "user_present.sh"
-   {:NAME name
-    :COMMENT comment
-    :USER_ID uid
-    :HOME_DIR home
-    :GROUP group
-    :GROUPSET groups
-    :PASSWORD (some->> password utils/var-escape)
-    :SHELL shell}))
+  (facts/on-shell
+   :fish (utils/make-script
+          "user_present.fish"
+          {:NAME name
+           :COMMENT comment
+           :USER_ID uid
+           :HOME_DIR home
+           :GROUP group
+           :GROUPSET groups
+           :PASSWORD (some->> password utils/var-escape)
+           :SHELL shell}
+          :fish)
+   :else (utils/make-script
+          "user_present.sh"
+          {:NAME name
+           :COMMENT comment
+           :USER_ID uid
+           :HOME_DIR home
+           :GROUP group
+           :GROUPSET groups
+           :PASSWORD (some->> password utils/var-escape)
+           :SHELL shell})))
 
 (defmethod process-result :present
   [_ {:keys [user] :as opts} {:keys [out err exit] :as result}]
