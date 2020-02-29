@@ -20,6 +20,7 @@
             [spire.module.sysctl :as sysctl]
             [spire.module.service :as service]
             [spire.module.authorized-keys :as authorized-keys]
+            [spire.module.stat :as stat]
             [clojure.tools.cli]
             [clojure.java.shell]
             [clojure.edn]
@@ -81,6 +82,9 @@
    'download (with-meta @#'download/download {:sci/macro true})
    'authorized-keys* authorized-keys/authorized-keys*
    'authorized-keys (with-meta @#'authorized-keys/authorized-keys {:sci/macro true})
+
+   'stat* stat/stat*
+   'stat (with-meta @#'stat/stat {:sci/macro true})
 
    'slurp slurp
 
@@ -192,6 +196,8 @@
                           'service (with-meta @#'service/service {:sci/macro true})}
    'spire.module.shell {'shell* shell/shell*
                         'shell (with-meta @#'shell/shell {:sci/macro true})}
+   'spire.module.stat {'stat* stat/stat*
+                        'stat (with-meta @#'stat/stat {:sci/macro true})}
    'spire.module.sysctl {'sysctl* sysctl/sysctl*
                          'sysctl (with-meta @#'sysctl/sysctl {:sci/macro true})}
    'spire.module.upload {'upload* upload/upload*
