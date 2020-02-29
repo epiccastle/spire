@@ -150,8 +150,10 @@
   (or
    (preflight command opts)
    (->>
-      (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
-      (process-result command opts))))
+    (facts/on-shell
+     :fish (ssh/ssh-exec session "bash" (make-script command opts) "UTF-8" {})
+     :else (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {}))
+    (process-result command opts))))
 
 (defmacro apt-repo [& args]
   `(utils/wrap-report ~*file* ~&form (apt-repo* ~@args)))

@@ -279,9 +279,11 @@
        (io/file p fname)
        (io/file "src/clj" p fname)))))
 
-(defmacro make-script [fname vars]
+(defmacro make-script [fname vars & [shell]]
   `(str
-    (apply str (for [[k# v#] ~vars] (str (name k#) "=\"" v# "\"\n")))
+    ~(case shell
+       :fish `(apply str (for [[k# v#] ~vars] (str "set "(name k#) " \"" v# "\"\n")))
+       `(apply str (for [[k# v#] ~vars] (str (name k#) "=\"" v# "\"\n"))))
     (embed-src ~fname)))
 
 (defn re-pattern-to-sed [re]
