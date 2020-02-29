@@ -8,12 +8,48 @@
   (facts/check-bins-present #{:stat}))
 
 (defn make-script [path]
-  (str "stat -c '%a %A %b %B %d' " (utils/path-escape path)))
+  (str "stat -c '%a\t%b\t%B\t%d\t%f\t%F\t%g\t%G\t%h\t%i\t%m\t%n\t%N\t%o\t%s\t%t\t%T\t%u\t%U\t%W\t%X\t%Y\t%Z' " (utils/path-escape path))
+  #_ (str "stat -c '%a %b %c %d %f %i %l %n %s %S %t %T' " (utils/path-escape path))
+  )
+
+(defn split-and-process-out [out]
+  (let [[access blocks block-size device mode file-type
+         group-id group hard-links inode-number mount-point
+         file-name quoted-file-name optimal-io size
+         device-major device-minor user-id user create-time
+         access-time mod-time status-time] (string/split (string/trim out) #"\t")]
+    {:access (Integer/parseInt access 8)
+     :blocks (Integer/parseInt blocks)
+     :block-size (Integer/parseInt block-size)
+     :device (Integer/parseInt device)
+     :mode (Integer/parseInt mode 16)
+     :file-type file-type
+     :group-id (Integer/parseInt group-id)
+     :group group
+     :hard-links (Integer/parseInt hard-links)
+     :inode-number (Integer/parseInt inode-number)
+     :mount-point mount-point
+     :file-name file-name
+     :quoted-file-name quoted-file-name
+     :optimal-io (Integer/parseInt optimal-io)
+     :size (Integer/parseInt size)
+     :device-major (Integer/parseInt device-major)
+     :device-minor (Integer/parseInt device-minor)
+     :user-id (Integer/parseInt user-id)
+     :user user
+     :create-time (Integer/parseInt create-time)
+     :access-time (Integer/parseInt access-time)
+     :mod-time (Integer/parseInt mod-time)
+     :status-time (Integer/parseInt status-time)
+     }
+    )
+  )
 
 (defn process-result [path {:keys [out err exit] :as result}]
   (cond
     (zero? exit)
     (assoc result
+           :stat (split-and-process-out out)
            :result :ok
            :out-lines (string/split out #"\n")
            :err-lines (string/split err #"\n")
@@ -60,56 +96,3 @@
      "Stat a file."
      :form "
 (stat \"/etc/resolv.conf\")"}]})
-
-
-#_ (comment
-  The valid format sequences for files (without --file-system)
-
-  %a   access rights in octal (note '#' and '0' printf flags)
-  %A   access rights in human readable form
-  %b   number of blocks allocated (see %B)
-  %B   the size in bytes of each block reported by %b
-  %C   SELinux security context string
-  %d   device number in decimal
-  %D   device number in hex
-  %f   raw mode in hex
-  %F   file type
-  %g   group ID of owner
-  %G   group name of owner
-  %h   number of hard links
-  %i   inode number
-  %m   mount point
-  %n   file name
-  %N   quoted file name with dereference if symbolic link
-  %o   optimal I/O transfer size hint
-  %s   total size, in bytes
-  %t   major device type in hex, for character/block device special files
-  %T   minor device type in hex, for character/block device special files
-  %u   user ID of owner
-  %U   user name of owner
-  %w   time of file birth, human-readable; - if unknown
-  %W   time of file birth, seconds since Epoch; 0 if unknown
-  %x   time of last access, human-readable
-  %X   time of last access, seconds since Epoch
-  %y   time of last data modification, human-readable
-  %Y   time of last data modification, seconds since Epoch
-  %z   time of last status change, human-readable
-  %Z   time of last status change, seconds since Epoch
-
-Valid format sequences for file systems
-
-  %a   free blocks available to non-superuser
-  %b   total data blocks in file system
-  %c   total file nodes in file system
-  %d   free file nodes in file system
-  %f   free blocks in file system
-  %i   file system ID in hex
-  %l   maximum length of filenames
-  %n   file name
-  %s   block size (for faster transfers)
-  %S   fundamental block size (for block counts)
-  %t   file system type in hex
-  %T   file system type in human readable form
-
-
-  )
