@@ -2,22 +2,30 @@
   (:require [spire.ssh :as ssh]
             [spire.utils :as utils]
             [spire.facts :as facts]
-            [clojure.string :as string]))
+            [clojure.string :as string])
+  (:import [java.util Date]))
 
 (defn preflight [path]
   (facts/check-bins-present #{:stat}))
 
 (defn make-script [path]
-  (str "stat -c '%a\t%b\t%B\t%d\t%f\t%F\t%g\t%G\t%h\t%i\t%m\t%n\t%N\t%o\t%s\t%t\t%T\t%u\t%U\t%W\t%X\t%Y\t%Z' " (utils/path-escape path))
-  #_ (str "stat -c '%a %b %c %d %f %i %l %n %s %S %t %T' " (utils/path-escape path))
-  )
+  (str "stat -c '%a\t%b\t%B\t%d\t%f\t%F\t%g\t%G\t%h\t%i\t%m\t%n\t%N\t%o\t%s\t%t\t%T\t%u\t%U\t%W\t%X\t%Y\t%Z' " (utils/path-escape path) "\n"
+       "stat -f -c '%a\t%b\t%c\t%d\t%f\t%i\t%l\t%s\t%S\t%t\t%T' " (utils/path-escape path)))
+
+(defn- epoch-string->inst [s]
+  (-> s Integer/parseInt (* 1000) Date.))
 
 (defn split-and-process-out [out]
-  (let [[access blocks block-size device mode file-type
+  (let [[line1 line2] (string/split (string/trim out) #"\n")
+        [access blocks block-size device mode file-type
          group-id group hard-links inode-number mount-point
          file-name quoted-file-name optimal-io size
          device-major device-minor user-id user create-time
-         access-time mod-time status-time] (string/split (string/trim out) #"\t")]
+         access-time mod-time status-time] (string/split line1 #"\t")
+        [user-blocks-free blocks-total nodes-total nodes-free
+         blocks-free file-system-id filename-max-len block-size-2
+         block-size-fundamental filesystem-type filesystem-type-2] (string/split line2 #"\t")
+        ]
     {:access (Integer/parseInt access 8)
      :blocks (Integer/parseInt blocks)
      :block-size (Integer/parseInt block-size)
@@ -37,13 +45,25 @@
      :device-minor (Integer/parseInt device-minor)
      :user-id (Integer/parseInt user-id)
      :user user
-     :create-time (Integer/parseInt create-time)
-     :access-time (Integer/parseInt access-time)
-     :mod-time (Integer/parseInt mod-time)
-     :status-time (Integer/parseInt status-time)
-     }
-    )
-  )
+     :create-time (when-not (= "0" create-time)
+                    (epoch-string->inst create-time)) ;; on linux 0 means "unknown"
+     :access-time (epoch-string->inst access-time)
+     :mod-time (epoch-string->inst mod-time)
+     :status-time (epoch-string->inst status-time)
+     :filesystem {
+                  :user-blocks-free (Integer/parseInt user-blocks-free)
+                  :blocks-total (Integer/parseInt blocks-total)
+                  :nodes-total (Integer/parseInt nodes-total)
+                  :nodes-free (Integer/parseInt nodes-free)
+                  :blocks-free (Integer/parseInt blocks-free)
+                  :file-system-id file-system-id
+                  :filename-max-len (Integer/parseInt filename-max-len)
+                  :block-size-2 (Integer/parseInt block-size-2)
+                  :block-size-fundamental (Integer/parseInt block-size-fundamental)
+                  :filesystem-type (Integer/parseInt filesystem-type 16)
+                  :filesystem-type-hex filesystem-type
+                  :filesystem-type-2 filesystem-type-2
+                  }}))
 
 (defn process-result [path {:keys [out err exit] :as result}]
   (cond
