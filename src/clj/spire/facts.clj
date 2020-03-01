@@ -31,7 +31,9 @@
 (defn make-which [shell]
   (case shell
     :csh
-    (apply str (map #(format "echo %s: `where %s`\n" % %) bins))
+    (str (apply str (map #(format "echo %s: `where %s`\n" % %) bins))
+         "\n"
+         "exit 0")
 
     :fish
     (apply str (map #(format "echo %s: (which %s)\n" % %) bins))
