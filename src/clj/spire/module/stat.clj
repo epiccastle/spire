@@ -12,12 +12,22 @@
   (str "stat -c '%a\t%b\t%B\t%d\t%f\t%F\t%g\t%G\t%h\t%i\t%m\t%n\t%N\t%o\t%s\t%t\t%T\t%u\t%U\t%W\t%X\t%Y\t%Z' " (utils/path-escape path) "\n"
        "stat -f -c '%a\t%b\t%c\t%d\t%f\t%i\t%l\t%s\t%S\t%t\t%T' " (utils/path-escape path)))
 
+(defn make-script-bsd [path]
+  (str "stat -f '%Lp ' " (utils/path-escape path)))
+
 (defn- epoch-string->inst [s]
   (-> s Integer/parseInt (* 1000) Date.))
 
+(defn split-and-process-out-bsd [out]
+  (let [parts (-> out string/trim (string/split #"\s+"))
+        [mode] parts]
+    {:mode (Integer/parseInt mode 8)}
+    )
+  )
+
 (defn split-and-process-out [out]
   (let [[line1 line2] (string/split (string/trim out) #"\n")
-        [access blocks block-size device mode file-type
+        [mode blocks block-size device raw-mode file-type
          group-id group hard-links inode-number mount-point
          file-name quoted-file-name optimal-io size
          device-major device-minor user-id user create-time
@@ -26,11 +36,11 @@
          blocks-free file-system-id filename-max-len block-size-2
          block-size-fundamental filesystem-type filesystem-type-2] (string/split line2 #"\t")
         ]
-    {:access (Integer/parseInt access 8)
+    {:mode (Integer/parseInt mode 8)
      :blocks (Integer/parseInt blocks)
      :block-size (Integer/parseInt block-size)
      :device (Integer/parseInt device)
-     :mode (Integer/parseInt mode 16)
+     :raw-mode (Integer/parseInt raw-mode 16)
      :file-type file-type
      :group-id (Integer/parseInt group-id)
      :group group
@@ -69,7 +79,8 @@
   (cond
     (zero? exit)
     (assoc result
-           :stat (split-and-process-out out)
+           :stat (facts/on-os :linux (split-and-process-out out)
+                              :else (split-and-process-out-bsd out))
            :result :ok
            :out-lines (string/split out #"\n")
            :err-lines (string/split err #"\n")
@@ -93,7 +104,8 @@
   [host-config session]
   (or
    (preflight path)
-   (->> (ssh/ssh-exec session (make-script path) "" "UTF-8" {})
+   (->> (ssh/ssh-exec session (facts/on-os :linux (make-script path)
+                                           :else (make-script-bsd path)) "" "UTF-8" {})
         (process-result path))))
 
 (defmacro stat [& args]
