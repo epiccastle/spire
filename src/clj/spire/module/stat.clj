@@ -13,15 +13,33 @@
        "stat -f -c '%a\t%b\t%c\t%d\t%f\t%i\t%l\t%s\t%S\t%t\t%T' " (utils/path-escape path)))
 
 (defn make-script-bsd [path]
-  (str "stat -f '%Lp ' " (utils/path-escape path)))
+  (str "stat -f '%Lp %d %i %l %u %g %r %a %m %c %B %z %b %k %f %v' " (utils/path-escape path)))
 
 (defn- epoch-string->inst [s]
   (-> s Integer/parseInt (* 1000) Date.))
 
 (defn split-and-process-out-bsd [out]
   (let [parts (-> out string/trim (string/split #"\s+"))
-        [mode] parts]
-    {:mode (Integer/parseInt mode 8)}
+        [mode device inode nlink uid gid rdev
+         atime mtime ctime btime filesize blocks
+         blksize flags gen] parts]
+    {:mode (Integer/parseInt mode 8)
+     :device device
+     :inode (Integer/parseInt inode)
+     :num-links (Integer/parseInt nlink)
+     :uid (Integer/parseInt uid)
+     :gid (Integer/parseInt gid)
+     :rdev rdev
+     :atime (epoch-string->inst atime)
+     :mtime (epoch-string->inst mtime)
+     :ctime (epoch-string->inst ctime)
+     :btime (epoch-string->inst btime)
+     :size (Integer/parseInt filesize)
+     :blocks (Integer/parseInt blocks)
+     :blksize (Integer/parseInt blksize)
+     :flags (Integer/parseInt flags)
+     :gen (Integer/parseInt gen)
+     }
     )
   )
 
