@@ -48,8 +48,8 @@
         [mode blocks blksize device raw-mode file-type
          gid group nlink inode mount-point
          file-name quoted-file-name optimal-io size
-         device-major device-minor uid user create-time
-         access-time mod-time status-time] (string/split line1 #"\t")
+         device-major device-minor uid user ctime
+         atime mtime stime] (string/split line1 #"\t")
         [user-blocks-free blocks-total nodes-total nodes-free
          blocks-free file-system-id filename-max-len blksize-2
          blksize-fundamental filesystem-type filesystem-type-2] (string/split line2 #"\t")
