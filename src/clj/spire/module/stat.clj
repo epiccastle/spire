@@ -26,7 +26,7 @@
     {:mode (Integer/parseInt mode 8)
      :device device
      :inode (Integer/parseInt inode)
-     :num-links (Integer/parseInt nlink)
+     :nlink (Integer/parseInt nlink)
      :uid (Integer/parseInt uid)
      :gid (Integer/parseInt gid)
      :rdev rdev
@@ -45,53 +45,66 @@
 
 (defn split-and-process-out [out]
   (let [[line1 line2] (string/split (string/trim out) #"\n")
-        [mode blocks block-size device raw-mode file-type
-         group-id group hard-links inode-number mount-point
+        [mode blocks blksize device raw-mode file-type
+         gid group nlink inode mount-point
          file-name quoted-file-name optimal-io size
-         device-major device-minor user-id user create-time
+         device-major device-minor uid user create-time
          access-time mod-time status-time] (string/split line1 #"\t")
         [user-blocks-free blocks-total nodes-total nodes-free
-         blocks-free file-system-id filename-max-len block-size-2
-         block-size-fundamental filesystem-type filesystem-type-2] (string/split line2 #"\t")
+         blocks-free file-system-id filename-max-len blksize-2
+         blksize-fundamental filesystem-type filesystem-type-2] (string/split line2 #"\t")
         ]
     {:mode (Integer/parseInt mode 8)
-     :blocks (Integer/parseInt blocks)
-     :block-size (Integer/parseInt block-size)
      :device (Integer/parseInt device)
-     :raw-mode (Integer/parseInt raw-mode 16)
-     :file-type file-type
-     :group-id (Integer/parseInt group-id)
-     :group group
-     :hard-links (Integer/parseInt hard-links)
-     :inode-number (Integer/parseInt inode-number)
-     :mount-point mount-point
-     :file-name file-name
-     :quoted-file-name quoted-file-name
-     :optimal-io (Integer/parseInt optimal-io)
+     :inode (Integer/parseInt inode)
+     :nlink (Integer/parseInt nlink)
+     :uid (Integer/parseInt uid)
+     :gid (Integer/parseInt gid)
+     :rdev nil
+     :ctime (when-not (= "0" ctime)
+                    (epoch-string->inst ctime)) ;; on linux 0 means "unknown"
+     :atime (epoch-string->inst atime)
+     :mtime (epoch-string->inst mtime)
+     :btime nil
      :size (Integer/parseInt size)
-     :device-major (Integer/parseInt device-major)
-     :device-minor (Integer/parseInt device-minor)
-     :user-id (Integer/parseInt user-id)
-     :user user
-     :create-time (when-not (= "0" create-time)
-                    (epoch-string->inst create-time)) ;; on linux 0 means "unknown"
-     :access-time (epoch-string->inst access-time)
-     :mod-time (epoch-string->inst mod-time)
-     :status-time (epoch-string->inst status-time)
-     :filesystem {
-                  :user-blocks-free (Integer/parseInt user-blocks-free)
-                  :blocks-total (Integer/parseInt blocks-total)
-                  :nodes-total (Integer/parseInt nodes-total)
-                  :nodes-free (Integer/parseInt nodes-free)
-                  :blocks-free (Integer/parseInt blocks-free)
-                  :file-system-id file-system-id
-                  :filename-max-len (Integer/parseInt filename-max-len)
-                  :block-size-2 (Integer/parseInt block-size-2)
-                  :block-size-fundamental (Integer/parseInt block-size-fundamental)
-                  :filesystem-type (Integer/parseInt filesystem-type 16)
-                  :filesystem-type-hex filesystem-type
-                  :filesystem-type-2 filesystem-type-2
-                  }}))
+     :blocks (Integer/parseInt blocks)
+     :blksize (Integer/parseInt blksize)
+     :flags nil
+     :gen nil
+
+     ;; :raw-mode (Integer/parseInt raw-mode 16)
+     ;; :file-type file-type
+
+     ;; :group group
+
+
+     ;; :mount-point mount-point
+     ;; :file-name file-name
+     ;; :quoted-file-name quoted-file-name
+     ;; :optimal-io (Integer/parseInt optimal-io)
+
+     ;; :device-major (Integer/parseInt device-major)
+     ;; :device-minor (Integer/parseInt device-minor)
+
+     ;; :user user
+
+     ;; :status-time (epoch-string->inst status-time)
+     ;; :filesystem {
+     ;;              :user-blocks-free (Integer/parseInt user-blocks-free)
+     ;;              :blocks-total (Integer/parseInt blocks-total)
+     ;;              :nodes-total (Integer/parseInt nodes-total)
+     ;;              :nodes-free (Integer/parseInt nodes-free)
+     ;;              :blocks-free (Integer/parseInt blocks-free)
+     ;;              :file-system-id file-system-id
+     ;;              :filename-max-len (Integer/parseInt filename-max-len)
+     ;;              :blksize-2 (Integer/parseInt blksize-2)
+     ;;              :blksize-fundamental (Integer/parseInt blksize-fundamental)
+     ;;              :filesystem-type (Integer/parseInt filesystem-type 16)
+     ;;              :filesystem-type-hex filesystem-type
+     ;;              :filesystem-type-2 filesystem-type-2}
+
+
+     }))
 
 (defn process-result [path {:keys [out err exit] :as result}]
   (cond
