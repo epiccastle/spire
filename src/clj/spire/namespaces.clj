@@ -94,6 +94,7 @@
    'user-exec? stat/user-exec?
    'user-read? stat/user-read?
    'user-write? stat/user-write?
+   'mode-flags stat/mode-flags
 
    'slurp slurp
 

@@ -172,6 +172,17 @@
 (defn user-read? [{{:keys [mode]} :stat}]
   (pos? (bit-and mode 256)))
 
+(defn mode-flags [result]
+  {:user-read? (user-read? result)
+   :user-write? (user-write? result)
+   :user-exec? (user-exec? result)
+   :group-read? (group-read? result)
+   :group-write? (group-write? result)
+   :group-exec? (group-exec? result)
+   :other-read? (other-read? result)
+   :other-write? (other-write? result)
+   :other-exec? (other-exec? result)})
+
 
 (def documentation
   {
