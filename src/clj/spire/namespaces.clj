@@ -97,7 +97,7 @@
    'mode-flags stat/mode-flags
    'exec? stat/exec?
    'readable? stat/readable?
-   'writable? stat/writable?
+   'writeable? stat/writeable?
 
    'slurp slurp
 
