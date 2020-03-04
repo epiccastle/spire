@@ -191,6 +191,28 @@
     ;; what about freebsd?
     :else nil))
 
+(defn- process-id-name-substring [substring]
+  (let [[_ id name] (re-matches #"(\d+)\((\w+)\)" substring)]
+    {:id (Integer/parseInt id)
+     :name name}))
+
+(defn process-id [id-out]
+  (let [{:keys [gid uid groups]}
+        (-> id-out first string/trim (string/split #"\s+")
+            (->> (map (fn [line]
+                        (let [[type val] (string/split line #"=" 2)
+                              vals (->> (string/split val #",")
+                                        (mapv process-id-name-substring))]
+                          [(keyword type) vals])))
+                 (into {})))]
+    {:gid (first gid)
+     :uid (first uid)
+     :groups groups
+     :group-ids (into #{} (map :id groups))
+     :group-names (into #{} (map :name groups))
+     })
+  )
+
 (defmethod fetch-shell-facts :fish [_]
   (let [session state/*connection*
         base-shell-uname-output (run-and-return-lines
@@ -202,6 +224,7 @@
                                                    "retrieving fish version script exited %d: %s")
         paths-output (run-and-return-lines session (make-which :fish)
                                            "retrieving paths script exited %d: %s")
+        id-out (run-and-return-lines session "id" "running remote `id` command exited %d: %s")
 
         uname-data (process-shell-uname base-shell-uname-output)
         shell-data (process-shell-info base-shell-uname-output)
@@ -215,6 +238,7 @@
     (->> {:shell shell-data
           :uname uname-data
           :system system-data
+          :user (process-id id-out)
           :paths paths
           :ssh-config state/*host-config*})))
 
@@ -229,6 +253,7 @@
                                                    "facts_id.sh exited %d: %s")
         paths-output (run-and-return-lines session (make-which shell)
                                            "retrieving paths script exited %d: %s")
+        id-out (run-and-return-lines session "id" "running remote `id` command exited %d: %s")
 
         uname-data (process-shell-uname base-shell-uname-output)
         shell-data (process-shell-info base-shell-uname-output)
@@ -242,6 +267,7 @@
     (->> {:shell shell-data
           :uname uname-data
           :system system-data
+          :user (process-id id-out)
           :paths paths
           :ssh-config state/*host-config*})))
 
