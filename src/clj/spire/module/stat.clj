@@ -207,6 +207,19 @@
        (and (group-ids gid) (pos? (bit-and mode 32)))
        (pos? (bit-and mode 4))))))
 
+(defn writeable? [{{:keys [mode uid gid]} :stat}]
+  (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:user])]
+    (if (zero? fact-uid)
+      ;; root can write to any file
+      true
+
+      ;; check individual flags
+      (or
+       (and (= fact-uid uid) (pos? (bit-and mode 128)))
+       (and (group-ids gid) (pos? (bit-and mode 16)))
+       (pos? (bit-and mode 2))))))
+
+
 
 (def documentation
   {
