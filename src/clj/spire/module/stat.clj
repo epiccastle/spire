@@ -195,6 +195,17 @@
        (and (group-ids gid) (pos? (bit-and mode 8)))
        (pos? (bit-and mode 1))))))
 
+(defn readable? [{{:keys [mode uid gid]} :stat}]
+  (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:user])]
+    (if (zero? fact-uid)
+      ;; root can read any file
+      true
+
+      ;; check individual flags
+      (or
+       (and (= fact-uid uid) (pos? (bit-and mode 256)))
+       (and (group-ids gid) (pos? (bit-and mode 32)))
+       (pos? (bit-and mode 4))))))
 
 
 (def documentation
