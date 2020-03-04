@@ -183,6 +183,19 @@
    :other-write? (other-write? result)
    :other-exec? (other-exec? result)})
 
+(defn exec? [{{:keys [mode uid gid]} :stat}]
+  (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:user])]
+    (if (zero? fact-uid)
+      ;; root can execute any file that has any executable bit set
+      (pos? (bit-and mode (bit-or 64 8 1)))
+
+      ;; check individual flags
+      (or
+       (and (= fact-uid uid) (pos? (bit-and mode 64)))
+       (and (group-ids gid) (pos? (bit-and mode 8)))
+       (pos? (bit-and mode 1))))))
+
+
 
 (def documentation
   {
