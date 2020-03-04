@@ -85,6 +85,15 @@
 
    'stat* stat/stat*
    'stat (with-meta @#'stat/stat {:sci/macro true})
+   'other-exec? stat/other-exec?
+   'other-read? stat/other-read?
+   'other-write? stat/other-write?
+   'group-exec? stat/group-exec?
+   'group-read? stat/group-read?
+   'group-write? stat/group-write?
+   'user-exec? stat/user-exec?
+   'user-read? stat/user-read?
+   'user-write? stat/user-write?
 
    'slurp slurp
 
