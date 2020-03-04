@@ -142,34 +142,35 @@
 (defmacro stat [& args]
   `(utils/wrap-report ~*file* ~&form (stat* ~@args)))
 
+;;
+;; Test mode flags
+;;
 (defn other-exec? [{{:keys [mode]} :stat}]
-  (boolean (bit-and mode 1)))
+  (pos? (bit-and mode 1)))
 
 (defn other-write? [{{:keys [mode]} :stat}]
-  (boolean (bit-and mode 2)))
+  (pos? (bit-and mode 2)))
 
 (defn other-read? [{{:keys [mode]} :stat}]
-  (boolean (bit-and mode 4)))
+  (pos? (bit-and mode 4)))
 
 (defn group-exec? [{{:keys [mode]} :stat}]
-  (boolean (bit-and mode 8)))
+  (pos? (bit-and mode 8)))
 
 (defn group-write? [{{:keys [mode]} :stat}]
-  (boolean (bit-and mode 16)))
+  (pos? (bit-and mode 16)))
 
 (defn group-read? [{{:keys [mode]} :stat}]
-  (boolean (bit-and mode 32)))
+  (pos? (bit-and mode 32)))
 
 (defn user-exec? [{{:keys [mode]} :stat}]
-  (boolean (bit-and mode 64)))
+  (pos? (bit-and mode 64)))
 
 (defn user-write? [{{:keys [mode]} :stat}]
-  (boolean (bit-and mode 128)))
+  (pos? (bit-and mode 128)))
 
 (defn user-read? [{{:keys [mode]} :stat}]
-  (boolean (bit-and mode 256)))
-
-
+  (pos? (bit-and mode 256)))
 
 
 (def documentation
