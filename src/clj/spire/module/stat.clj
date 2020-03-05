@@ -10,9 +10,7 @@
   (facts/check-bins-present #{:stat}))
 
 (defn make-script [path]
-  (str "stat -c '%a\t%b\t%B\t%d\t%f\t%F\t%g\t%G\t%h\t%i\t%m\t%n\t%N\t%o\t%s\t%t\t%T\t%u\t%U\t%W\t%X\t%Y\t%Z\t%F' " (utils/path-quote path) "\n"
-       #_ "stat -f -c '%a\t%b\t%c\t%d\t%f\t%i\t%l\t%s\t%S\t%t\t%T' "
-       #_ (utils/path-escape path)))
+  (str "stat -c '%a\t%b\t%B\t%d\t%f\t%F\t%g\t%G\t%h\t%i\t%m\t%n\t%N\t%o\t%s\t%t\t%T\t%u\t%U\t%W\t%X\t%Y\t%Z\t%F' " (utils/path-quote path) "\n"))
 
 (defn make-script-bsd [path]
   (str "stat -f '%Lp%t%d%t%i%t%l%t%u%t%g%t%r%t%a%t%m%t%c%t%B%t%z%t%b%t%k%t%f%t%v%t%HT%t%N%t%Y%t%Hr%t%Lr' " (utils/path-quote path)))
@@ -115,20 +113,13 @@
    })
 
 (defn split-and-process-out [out]
-  (let [[line1 line2] (string/split (string/trim out) #"\n")
-        [mode blocks blksize device raw-mode file-type
+  (let [[mode blocks blksize device raw-mode file-type
          gid group nlink inode mount-point
          file-name quoted-file-name optimal-io size
          device-major device-minor uid user ctime
-         atime mtime stime file-type] (string/split line1 #"\t")
-        ;;link-destination line2
-        #_ [user-blocks-free blocks-total nodes-total nodes-free
-            blocks-free file-system-id filename-max-len blksize-2
-            blksize-fundamental filesystem-type filesystem-type-2]
-        #_ (string/split line2 #"\t")
+         atime mtime stime file-type] (string/split (string/trim out) #"\t")
         {:keys [source dest]} (process-quoted-symlink-line quoted-file-name)
         file-type (linux-file-types file-type)
-
         result {:mode (Integer/parseInt mode 8)
                 :device (Integer/parseInt device)
                 :inode (Integer/parseInt inode)
@@ -148,44 +139,9 @@
                 :blksize (Integer/parseInt blksize)
                 :flags nil
                 :gen nil
-
                 :file-type file-type
-
-                ;; :link-source source
-                ;; :link-dest dest
-
-                ;; :raw-mode (Integer/parseInt raw-mode 16)
-                ;; :file-type file-type
-
-                ;; :group group
-
-
-                ;; :mount-point mount-point
-                ;; :file-name file-name
-                ;; :quoted-file-name quoted-file-name
-                ;; :link-dest link-destination
-                ;; :optimal-io (Integer/parseInt optimal-io)
-
                 :device-major (Integer/parseInt device-major)
-                :device-minor (Integer/parseInt device-minor)
-
-                ;; :user user
-
-                ;; :status-time (epoch-string->inst status-time)
-                ;; :filesystem {
-                ;;              :user-blocks-free (Integer/parseInt user-blocks-free)
-                ;;              :blocks-total (Integer/parseInt blocks-total)
-                ;;              :nodes-total (Integer/parseInt nodes-total)
-                ;;              :nodes-free (Integer/parseInt nodes-free)
-                ;;              :blocks-free (Integer/parseInt blocks-free)
-                ;;              :file-system-id file-system-id
-                ;;              :filename-max-len (Integer/parseInt filename-max-len)
-                ;;              :blksize-2 (Integer/parseInt blksize-2)
-                ;;              :blksize-fundamental (Integer/parseInt blksize-fundamental)
-                ;;              :filesystem-type (Integer/parseInt filesystem-type 16)
-                ;;              :filesystem-type-hex filesystem-type
-                ;;              :filesystem-type-2 filesystem-type-2}
-                }]
+                :device-minor (Integer/parseInt device-minor)}]
     (assert (= file-name source)
             (str "decoding of quoted stat filename mismatched: "
                  (prn-str file-name source)))
@@ -206,13 +162,6 @@
      :stat (facts/on-os :linux (split-and-process-out out)
                         :else (split-and-process-out-bsd out))
      :result :ok}
-
-    ;; (= 255 exit)
-    ;; (assoc result
-    ;;        :result :changed
-    ;;        :out-lines (string/split out #"\n")
-    ;;        :err-lines (string/split err #"\n")
-    ;;        )
 
     :else
     (assoc result
