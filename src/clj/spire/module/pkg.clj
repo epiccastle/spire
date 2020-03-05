@@ -20,7 +20,30 @@
 (defmulti process-result (fn [command opts result] command))
 
 ;;
-;; (line-in-file :present ...)
+;; (pkg :update)
+;;
+(defmethod preflight :update [_ _]
+  (facts/check-bins-present #{:pkg}))
+
+(defmethod make-script :update [_ _]
+  "pkg update")
+
+(defmethod process-result :upgrade
+  [_ _ {:keys [out err exit] :as result}]
+  (if (zero? exit)
+    (assoc result
+           :result (if changed? :changed :ok)
+           :out-lines (string/split out #"\n")
+           :err-lines (string/split err #"\n")
+           )
+    (assoc result
+           :result :failed
+           :out-lines (string/split out #"\n")
+           :err-lines (string/split err #"\n")
+           )))
+
+;;
+;; (pkg :install ...)
 ;;
 (defmethod preflight :install [_ _]
   (when-not (facts/get-fact [:paths :pkg])
@@ -62,6 +85,10 @@
     (assoc result
            :result :failed)))
 
+
+;;
+;; (pkg :remove ...)
+;;
 (defmethod preflight :remove [_ _]
   (when-not (facts/get-fact [:paths :pkg])
     {:exit 1
