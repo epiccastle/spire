@@ -43,7 +43,7 @@
 
 (defn remove-shebang [script]
   (if (string/starts-with? script "#!")
-    (second (string/split script #"\n" 2))
+    (str "\n" (second (string/split script #"\n" 2)))
     script))
 
 (defn evaluate [args script]
