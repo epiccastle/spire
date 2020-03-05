@@ -317,4 +317,10 @@
     {:description
      "Stat a file."
      :form "
-(stat \"/etc/resolv.conf\")"}]})
+(stat \"/etc/resolv.conf\")"}
+
+    {:description
+     "Test the return value of a stat call for a unix domain socket"
+     :from "
+(socket? (stat (System/getenv \"SSH_AUTH_SOCK\")))
+"}]})
