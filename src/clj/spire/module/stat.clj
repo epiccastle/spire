@@ -2,7 +2,8 @@
   (:require [spire.ssh :as ssh]
             [spire.utils :as utils]
             [spire.facts :as facts]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [clojure.edn :as edn])
   (:import [java.util Date]))
 
 (defn preflight [path]
@@ -14,33 +15,53 @@
        #_ (utils/path-escape path)))
 
 (defn make-script-bsd [path]
-  (str "stat -f '%Lp %d %i %l %u %g %r %a %m %c %B %z %b %k %f %v' " (utils/path-quote path)))
+  (str "stat -f '%Lp%t%d%t%i%t%l%t%u%t%g%t%r%t%a%t%m%t%c%t%B%t%z%t%b%t%k%t%f%t%v%t%HT%t%N%t%Y%t%Hr%t%Lr' " (utils/path-quote path)))
 
 (defn- epoch-string->inst [s]
   (-> s Integer/parseInt (* 1000) Date.))
 
+(def bsd-file-types
+  {
+   "Directory" :directory
+   "Block Device" :block-device
+   "Character Device" :char-device
+   "Symbolic Link" :symlink
+   "Fifo File" :fifo
+   "Regular File" :regular-file
+   "Socket" :socket
+   })
+
 (defn split-and-process-out-bsd [out]
-  (let [parts (-> out string/trim (string/split #"\s+"))
+  (let [parts (-> out string/trim (string/split #"\t"))
         [mode device inode nlink uid gid rdev
          atime mtime ctime btime filesize blocks
-         blksize flags gen] parts]
-    {:mode (Integer/parseInt mode 8)
-     :device device
-     :inode (Integer/parseInt inode)
-     :nlink (Integer/parseInt nlink)
-     :uid (Integer/parseInt uid)
-     :gid (Integer/parseInt gid)
-     :rdev rdev
-     :atime (epoch-string->inst atime)
-     :mtime (epoch-string->inst mtime)
-     :ctime (epoch-string->inst ctime)
-     :btime (epoch-string->inst btime)
-     :size (Integer/parseInt filesize)
-     :blocks (Integer/parseInt blocks)
-     :blksize (Integer/parseInt blksize)
-     :flags (Integer/parseInt flags)
-     :gen (Integer/parseInt gen)
-     }
+         blksize flags gen file-type link-source link-dest
+         device-major device-minor] parts
+        file-type (bsd-file-types file-type)
+        result {:mode (Integer/parseInt mode 8)
+                :device (edn/read-string device)
+                :inode (Integer/parseInt inode)
+                :nlink (Integer/parseInt nlink)
+                :uid (Integer/parseInt uid)
+                :gid (Integer/parseInt gid)
+                :rdev (edn/read-string rdev)
+                :atime (epoch-string->inst atime)
+                :mtime (epoch-string->inst mtime)
+                :ctime (epoch-string->inst ctime)
+                :btime (epoch-string->inst btime)
+                :size (Integer/parseInt filesize)
+                :blocks (Integer/parseInt blocks)
+                :blksize (Integer/parseInt blksize)
+                :flags (Integer/parseInt flags)
+                :gen (Integer/parseInt gen)
+                :file-type file-type
+                :device-major (edn/read-string device-major)
+                :device-minor (edn/read-string device-minor)}]
+    (if (= file-type :symlink)
+      (assoc result
+             :link-source link-source
+             :link-dest link-dest)
+      result)
     )
   )
 
@@ -82,6 +103,17 @@
        (process-quoted-filename "'spire/spire-link'\\''f'")
        "spire/spire-link'f"))
 
+(def linux-file-types
+  {
+   "directory" :directory
+   "block special file" :block-device
+   "character special file" :char-device
+   "symbolic link" :symlink
+   "fifo" :fifo
+   "regular file" :regular-file
+   "socket" :socket
+   })
+
 (defn split-and-process-out [out]
   (let [[line1 line2] (string/split (string/trim out) #"\n")
         [mode blocks blksize device raw-mode file-type
@@ -95,6 +127,7 @@
             blksize-fundamental filesystem-type filesystem-type-2]
         #_ (string/split line2 #"\t")
         {:keys [source dest]} (process-quoted-symlink-line quoted-file-name)
+        file-type (linux-file-types file-type)
 
         result {:mode (Integer/parseInt mode 8)
                 :device (Integer/parseInt device)
@@ -157,7 +190,7 @@
             (str "decoding of quoted stat filename mismatched: "
                  (prn-str file-name source)))
 
-    (if (= file-type "symbolic link")
+    (if (= file-type :symlink)
       (assoc result
              :link-source source
              :link-dest dest)
@@ -280,25 +313,25 @@
 ;; File types
 ;;
 (defn directory? [{{:keys [file-type]} :stat}]
-  (= "directory" file-type))
+  (= :directory file-type))
 
 (defn block-device? [{{:keys [file-type]} :stat}]
-  (= "block special file" file-type))
+  (= :block-device file-type))
 
 (defn char-device? [{{:keys [file-type]} :stat}]
-  (= "character special file" file-type))
+  (= :char-device file-type))
 
 (defn symlink? [{{:keys [file-type]} :stat}]
-  (= "symbolic link" file-type))
+  (= :symlink file-type))
 
 (defn fifo? [{{:keys [file-type]} :stat}]
-  (= "fifo" file-type))
+  (= :fifo file-type))
 
 (defn regular-file? [{{:keys [file-type]} :stat}]
-  (= "regular file" file-type))
+  (= :regular file-type))
 
 (defn socket? [{{:keys [file-type]} :stat}]
-  (= "socket" file-type))
+  (= :socket file-type))
 
 
 (def documentation
