@@ -98,6 +98,13 @@
    'exec? stat/exec?
    'readable? stat/readable?
    'writeable? stat/writeable?
+   'directory? stat/directory?
+   'block-device? stat/block-device?
+   'char-device? stat/char-device?
+   'symlink? stat/symlink?
+   'fifo? stat/fifo?
+   'regular-file? stat/regular-file?
+   'socket? stat/socket?
 
    'slurp slurp
 
