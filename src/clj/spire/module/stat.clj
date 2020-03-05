@@ -276,6 +276,29 @@
        (and (group-ids gid) (pos? (bit-and mode 16)))
        (pos? (bit-and mode 2))))))
 
+;;
+;; File types
+;;
+(defn directory? [{{:keys [file-type]} :stat}]
+  (= "directory" file-type))
+
+(defn block-device? [{{:keys [file-type]} :stat}]
+  (= "block special file" file-type))
+
+(defn char-device? [{{:keys [file-type]} :stat}]
+  (= "character special file" file-type))
+
+(defn symlink? [{{:keys [file-type]} :stat}]
+  (= "symbolic link" file-type))
+
+(defn fifo? [{{:keys [file-type]} :stat}]
+  (= "fifo" file-type))
+
+(defn regular-file? [{{:keys [file-type]} :stat}]
+  (= "regular file" file-type))
+
+(defn socket? [{{:keys [file-type]} :stat}]
+  (= "socket" file-type))
 
 
 (def documentation
