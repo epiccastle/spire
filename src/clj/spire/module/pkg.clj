@@ -32,7 +32,7 @@
   [_ _ {:keys [out err exit] :as result}]
   (if (zero? exit)
     (assoc result
-           :result (if changed? :changed :ok)
+           :result :ok
            :out-lines (string/split out #"\n")
            :err-lines (string/split err #"\n")
            )
