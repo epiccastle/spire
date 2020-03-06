@@ -21,6 +21,7 @@
             [spire.module.service :as service]
             [spire.module.authorized-keys :as authorized-keys]
             [spire.module.stat :as stat]
+            [spire.module.sudo :as sudo]
             [clojure.tools.cli]
             [clojure.java.shell]
             [clojure.edn]
@@ -75,6 +76,9 @@
 
    'group* group/group*
    'group (with-meta @#'group/group {:sci/macro true})
+
+   ;;'sudo* sudo/sudo*
+   'sudo (with-meta @#'sudo/sudo {:sci/macro true})
 
    'selmer selmer/selmer
 
