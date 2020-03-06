@@ -255,6 +255,7 @@
                                            "retrieving paths script exited %d: %s")
         id-out (run-and-return-lines session "id" "running remote `id` command exited %d: %s")
 
+        _ (prn 'id-out id-out)
         uname-data (process-shell-uname base-shell-uname-output)
         shell-data (process-shell-info base-shell-uname-output)
         detect (first shell-version-output)
