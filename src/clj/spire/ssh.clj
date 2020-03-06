@@ -10,6 +10,26 @@
 
 (def debug false)
 
+(def ctrl-c 3)
+(def carridge-return 10)
+
+(defn raw-mode-read-line
+  "Read from stdin with terminal in raw mode. Detect ctrl-c break
+  input and exit if found. Ends input on detection of carridge return.
+
+  returns: the entered string or nil if ctrl-c pressed
+  "
+  []
+  (SpireUtils/enter-raw-mode 0)
+  (let [result (loop [text ""]
+                 (let [c (.read *in*)]
+                   (condp = c
+                     ctrl-c nil
+                     carridge-return text
+                     (recur (str text (char c))))))]
+    (SpireUtils/leave-raw-mode 0)
+    result))
+
 (defn print-flush-ask-yes-no [s]
   (print (str s " "))
   (.flush *out*)
@@ -30,11 +50,13 @@
         (when debug (prn 'make-user-info 'getPassword))
         (print (str "Enter " @state ": "))
         (.flush *out*)
-        (SpireUtils/enter-raw-mode 0)
-        (let [password (read-line)]
-          (SpireUtils/leave-raw-mode 0)
-          (println)
-          password))
+        (if-let [password (raw-mode-read-line)]
+          (do
+            (println)
+            password)
+          (do
+            (println "^C")
+            (System/exit 1))))
 
       (promptYesNo [s]
         (when debug (prn 'make-user-info 'promptYesNo s))
@@ -98,11 +120,13 @@
         (when debug (prn 'make-user-info 'getPassphrase))
         (print (str "Enter " @state ": "))
         (.flush *out*)
-        (SpireUtils/enter-raw-mode 0)
-        (let [password (read-line)]
-          (SpireUtils/leave-raw-mode 0)
-          (println)
-          password))
+        (if-let [password (raw-mode-read-line)]
+          (do
+            (println)
+            password)
+          (do
+            (println "^C")
+            (System/exit 1))))
 
       (promptPassphrase [s]
         (when debug (prn 'make-user-info 'promptPassphrase))
