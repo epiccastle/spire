@@ -192,7 +192,7 @@
     :else nil))
 
 (defn- process-id-name-substring [substring]
-  (let [[_ id name] (re-matches #"(\d+)\((\w+)\)" substring)]
+  (let [[_ id name] (re-matches #"(\d+)\(([\d\w_\.\-]+)\)" substring)]
     {:id (Integer/parseInt id)
      :name name}))
 
@@ -210,8 +210,7 @@
      :groups groups
      :group-ids (into #{} (map :id groups))
      :group-names (into #{} (map :name groups))
-     })
-  )
+     }))
 
 (defmethod fetch-shell-facts :fish [_]
   (let [session state/*connection*
@@ -255,7 +254,6 @@
                                            "retrieving paths script exited %d: %s")
         id-out (run-and-return-lines session "id" "running remote `id` command exited %d: %s")
 
-        _ (prn 'id-out id-out)
         uname-data (process-shell-uname base-shell-uname-output)
         shell-data (process-shell-info base-shell-uname-output)
         detect (first shell-version-output)
