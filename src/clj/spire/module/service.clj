@@ -1,6 +1,6 @@
 (ns spire.module.service
   (:require [spire.output :as output]
-            [spire.state :as state]
+            [spire.facts :as facts]
             [spire.transport :as transport]
             [spire.ssh :as ssh]
             [spire.utils :as utils]
@@ -14,18 +14,24 @@
 
 (defmulti process-result (fn [command opts result] command))
 
+(defmethod preflight :default [_ opts]
+  (facts/on-os
+   :freebsd (facts/check-bins-present #{:bash :service :awk})
+   :linux (facts/check-bins-present #{:bash :service :grep :awk})
+   ))
+
 ;;
 ;; (service :restarted ...)
 ;;
-(defmethod preflight :restarted [_ {:keys [name value reload file] :as opts}]
-  nil)
 
-(defmethod make-script :restarted [_ {:keys [value reload file] :as opts}]
-  (format "service %s restart" (name (:name opts)))
+(defmethod make-script :restarted [_ opts]
+  (facts/on-os
+   :freebsd (format "service %s onerestart" (name (:name opts)))
+   :else (format "service %s restart" (name (:name opts))))
   )
 
 (defmethod process-result :restarted
-  [_ {:keys [name value reload file] :as opts} {:keys [out err exit] :as result}]
+  [_ opts {:keys [out err exit] :as result}]
   (cond
     (zero? exit)
     (assoc result
@@ -39,17 +45,17 @@
 ;;
 ;; (service :stopped ...)
 ;;
-
-(defmethod preflight :stopped [_ {:keys [name value reload file] :as opts}]
-  nil)
-
-(defmethod make-script :stopped [_ {:keys [value reload file] :as opts}]
-  (utils/make-script
-   "service_systemd_stopped.sh"
-   {:NAME (some->> opts :name name utils/path-escape)}))
+(defmethod make-script :stopped [_ opts]
+  (facts/on-os
+   :linux (utils/make-script
+           "service_systemd_stopped.sh"
+           {:NAME (some->> opts :name name utils/path-escape)})
+   :freebsd (utils/make-script
+             "service_freebsd_stopped.sh"
+             {:NAME (some->> opts :name name utils/path-escape)})))
 
 (defmethod process-result :stopped
-  [_ {:keys [name value reload file] :as opts} {:keys [out err exit] :as result}]
+  [_ opts {:keys [out err exit] :as result}]
   (cond
     (zero? exit)
     (assoc result
@@ -69,17 +75,17 @@
 ;;
 ;; (service :started ...)
 ;;
-
-(defmethod preflight :started [_ {:keys [name value reload file] :as opts}]
-  nil)
-
-(defmethod make-script :started [_ {:keys [value reload file] :as opts}]
-  (utils/make-script
-   "service_systemd_started.sh"
-   {:NAME (some->> opts :name name utils/path-escape)}))
+(defmethod make-script :started [_ opts]
+  (facts/on-os
+   :linux (utils/make-script
+           "service_systemd_started.sh"
+           {:NAME (some->> opts :name name utils/path-escape)})
+   :freebsd (utils/make-script
+             "service_freebsd_started.sh"
+             {:NAME (some->> opts :name name utils/path-escape)})))
 
 (defmethod process-result :started
-  [_ {:keys [name value reload file] :as opts} {:keys [out err exit] :as result}]
+  [_ opts {:keys [out err exit] :as result}]
   (cond
     (zero? exit)
     (assoc result
@@ -99,12 +105,12 @@
 
 
 
-(utils/defmodule service* [command {:keys [name value reload file] :as opts}]
+(utils/defmodule service* [command opts]
   [host-string session]
   (or
    (preflight command opts)
    (->>
-    (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
+    (ssh/ssh-exec session "bash" (make-script command opts) "UTF-8" {})
     (process-result command opts)))
 
   )
@@ -126,4 +132,11 @@
    [{:arg "command"
      :desc "The overall command to execure. Use `:started`, `:stopped` or `:restarted`"}
     {:arg "opts"
-     :desc "A hashmap of options"}]})
+     :desc "A hashmap of options"}]
+
+   :opts
+   [
+    [:name
+     {:description ["The name of the service"]
+      :type :string
+      :required true}]]})

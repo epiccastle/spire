@@ -23,7 +23,7 @@
    "sha256sum" "sha256"
    "sha384sum" "sha384"
    "sha512sum" "sha512"
-   "scp"
+   "scp" "service"
    "apt" "apt-get" "dpkg" "yum" "rpm" "pkg"
    "apt-key"
    ])
