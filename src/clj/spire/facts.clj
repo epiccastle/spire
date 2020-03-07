@@ -281,6 +281,19 @@
       (get-in (update-facts!) (concat [host-string] path default))))
   )
 
+(defn fetch-facts-paths
+  ([shell]
+   (process-paths
+    {:paths (run-and-return-lines state/*connection* (make-which shell)
+                                  "retrieving paths script exited %d: %s")}))
+  ([]
+   (fetch-facts-paths (get-fact [:system :shell]))))
+
+(defn update-facts-paths! []
+  (let [paths (fetch-facts-paths)]
+    (swap! state assoc-in [(:host-string state/*host-config*) :paths] paths)))
+
+
 
 #_
 (transport/ssh "localhost"

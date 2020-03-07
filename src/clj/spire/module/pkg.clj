@@ -132,9 +132,11 @@
   [host-string session]
   (or
    (preflight command opts)
-   (->>
-    (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
-    (process-result command opts))))
+   (let [result (->>
+                 (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
+                 (process-result command opts))]
+     (facts/update-facts-paths!)
+     result)))
 
 (defmacro pkg [& args]
   `(utils/wrap-report ~*file* ~&form (pkg* ~@args)))
