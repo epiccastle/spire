@@ -310,7 +310,7 @@ $ ./my-file.clj
 Use the `*command-line-args*` var.
 
 ```clojure
-(let [target (first *command-line-args*)]
+(let [target (second *command-line-args*)]
   (ssh target
     (get-fact)))
 ```
