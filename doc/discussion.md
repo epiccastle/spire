@@ -50,7 +50,7 @@ Authenticate with the remote server using a plain text password. The password to
 
 ##### identity
 
-Authenticate with the remote server using a private ssh key identity. The identity to use is specified as the value for this key. Note: This value is *not* a filename but the contents of the identity file itself.
+Authenticate with the remote server using a private ssh key identity stored in a file. The value should be the path to the private key file.
 
 ##### passphrase
 
@@ -58,11 +58,13 @@ If the identity specified is encrypted, decrypt it with this passphrase. If it i
 
 ##### private-key
 
-What is the difference between this and `identity`?
+Authenticate with the remote server using a private ssh key identity. The identity to use is specified as the value for this key.
+
+Note: This value is *not* a filename but the contents of the identity file itself.
 
 ##### public-key
 
-How is public key used?
+Presently, spire does not use the public key field, but it is passed to the underlying JSch ssh implementation for it's use. You may need to supply this if you are extending spire itself with new JSch functionality.
 
 ##### agent-forwarding
 
