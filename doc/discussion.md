@@ -84,9 +84,9 @@ Specify a custom key to key the return value in group connections. The default i
 
 ### ssh
 
-The ssh command initiates a connection to a single remote host via ssh and then executes the body of the form in an implicit do block. It takes the form:
+The `ssh` macro initiates a connection to a single remote host via ssh and then executes the body of the form in an implicit do block. It takes the form:
 
-```
+```clojure
 (ssh connection-config
     ...body...)
 ```
@@ -101,7 +101,20 @@ The result of the evaluation of the final form in body is returned by `ssh` unal
 
 ### ssh-group
 
+The `ssh-group` macro initiates ssh connections to more than one remote host. Once the connections are established it then spawns a thread for each connection and executes the body of the form in each thread. It takes the form:
+
+```clojure
+(ssh-group [connection-conf-1 connection-conf-2 ... connection-conf-n]
+    ...body...)
+```
+
+Each `connection-config` can be a host-string or a hashmap defining the connection.
+
+If one thread/connection experiences a failure, its execution will stop, but the others will continue.
+
 #### Return Value
+
+
 
 ### Nested Connections
 
