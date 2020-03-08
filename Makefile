@@ -122,6 +122,13 @@ macos-package:
 	cd build/macos-package && zip ../spire-$(VERSION)-macos-amd64.zip spire
 	du -sh spire build/spire-$(VERSION)-macos-amd64.zip
 
+jar-package:
+	-rm -rf build/jar-package
+	-mkdir -p build/jar-package
+	cp target/uberjar/spire-$(VERSION)-standalone.jar build/jar-package/spire-$(VERSION).jar
+	cd build/jar-package && zip ../spire-$(VERSION)-jar.zip spire-$(VERSION).jar
+	du -sh build/jar-package/spire-$(VERSION).jar build/spire-$(VERSION)-jar.zip
+
 #
 # CircleCI
 #
