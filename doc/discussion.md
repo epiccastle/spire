@@ -84,7 +84,20 @@ Specify a custom key to key the return value in group connections. The default i
 
 ### ssh
 
+The ssh command initiates a connection to a single remote host via ssh and then executes the body of the form in an implicit do block. It takes the form:
+
+```
+(ssh connection-config
+    ...body...)
+```
+
+`connection-config` can be a host-string or a hashmap defining the connection.
+
+Once connected, each form in `body` will be executed in turn.
+
 #### Return Value
+
+The result of the evaluation of the final form in body is returned by `ssh` unaltered.
 
 ### ssh-group
 
