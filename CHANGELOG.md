@@ -28,4 +28,4 @@ Initial release
 
 [Unreleased]: https://github.com/your-name/spire/compare/v0.1.0-alpha.2...HEAD
 [0.1.0-alpha.2]: https://github.com/your-name/spire/compare/v0.1.0-alpha1...v0.1.0-alpha.2
-[0.1.0-alpha.1]: https://github.com/your-name/spire/compare/...v0.1.0-alpha.1
+[0.1.0-alpha.1]: https://github.com/your-name/spire/tree/v0.1.0-alpha.1
