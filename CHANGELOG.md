@@ -2,23 +2,30 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
-### Changed
-- Add a new arity to `make-widget-async` to provide a different widget shape.
 
-## [0.1.1] - 2019-11-14
-### Changed
-- Documentation on how to make the widgets.
-
-### Removed
-- `make-widget-sync` - we're all async, all the time.
-
+## [0.1.0-alpha.2] - 2020-03-08
 ### Fixed
-- Fixed widget maker to keep working when daylight savings switches over.
+- Fact gathering for when default shell is fish - #9
+- General refactor of fact gathering - #9
+- csh returns exit code of last subshell bug on path gathering fixed
+- off by one bug on reporting line numbers when shebang is in use
+- service module on FreeBSD - #19
+- handle ctrl-c keypress when entering password or passphrase - #11
 
-## 0.1.0 - 2019-11-14
 ### Added
-- Files from the new template.
-- Widget maker public API - `make-widget-sync`.
+- edamame.core namespace - #15
+- clojure.edn namespace - #15
+- clojure.java.shell namespace - #16
+- fix broken reflection for using `assert`
+- stat module for bsd and linux
+- stat module result test predicates
+- current shell user and group information in facts
+- some documentation
+- pkg :install for FreeBSD
 
-[Unreleased]: https://github.com/your-name/spire/compare/0.1.1...HEAD
-[0.1.1]: https://github.com/your-name/spire/compare/0.1.0...0.1.1
+## [0.1.0-alpha.1] - 2020-02-26
+Initial release
+
+[Unreleased]: https://github.com/your-name/spire/compare/v0.1.0-alpha.2...HEAD
+[0.1.0-alpha.2]: https://github.com/your-name/spire/compare/v0.1.0-alpha1...v0.1.0-alpha.2
+[0.1.0-alpha.1]: https://github.com/your-name/spire/compare/...v0.1.0-alpha.1
