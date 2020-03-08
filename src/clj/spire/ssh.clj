@@ -162,7 +162,7 @@ keys.  All other option key pairs will be passed as SSH config options."
    {:keys [port username password identity passphrase private-key public-key] :or {port 22} :as options}]
   (when debug (prn 'make-session agent hostname options))
   (let [username (or username (System/getProperty "user.name"))
-        session-options (dissoc options :password :port :passphrase :identity :private-key :public-key)
+        session-options (select-keys options [:agent-forwarding :strict-host-key-checking :accept-host-key])
         session (.getSession agent username hostname port)]
     (when password (.setPassword session password))
     ;; jsch.addIdentity(chooser.getSelectedFile().getAbsolutePath())
@@ -184,9 +184,11 @@ keys.  All other option key pairs will be passed as SSH config options."
     ;; :strict-host-key-checking
     (doseq [[k v] session-options]
       (when debug (prn 'make-session 'adding-option k v))
-      (.setConfig session (to-camel-case k) (if (boolean? v)
-                                              (if v "yes" "no")
-                                              (name v))))
+      (when-not (nil? v)
+        (.setConfig session (to-camel-case k) (case v
+                                                true "yes"
+                                                false "no"
+                                                (name v)))))
 
     (when debug (prn 'make-session 'returning session))
 
