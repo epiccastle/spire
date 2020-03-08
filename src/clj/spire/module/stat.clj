@@ -294,6 +294,8 @@
    [{:arg "path"
      :desc "The path of the file or directory to stat."}]
 
+   :opts []
+
    :examples
    [
     {:description
@@ -303,6 +305,6 @@
 
     {:description
      "Test the return value of a stat call for a unix domain socket"
-     :from "
+     :form "
 (socket? (stat (System/getenv \"SSH_AUTH_SOCK\")))
 "}]})
