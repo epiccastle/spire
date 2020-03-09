@@ -118,6 +118,28 @@ If one thread/connection experiences a failure, its execution will stop, but the
 
 ### Nested Connections
 
+Both `ssh` and `ssh-group`, when used in isolation, will open a connection when the call is entered, and close a connection when the body exits. Consider the following:
+
+```clojure
+(ssh "host-1" body-1)
+(ssh "host-2" body-2)
+(ssh "host-1" body-3)
+```
+
+In the above case, spire will open a connection to `host-1`, then run `body-1`, and then close the connection to `host-1`. It will then open a connection to `host-2`, run `body-2`, and then close the connection to `host-2`. It wil then *reopen* the connection to `host-1`, run `body-3` and then close the connection to `host-1`.
+
+Thus the connection to `host-1` is performed *twice*, including all the connection negotiation and authentication. This approach is perfectly valid, but with a larger and more complex script, this connection overhead may become a substantial performance bottleneck. To mitigate this issue you can nest connections.
+
+If `ssh` or `ssh-group` is called, and a connection to the host is already established, spire will use that existing connection but use a new *channel* on it to run the body.
+
+Thus the previous example could be rewritten:
+
+```clojure
+(ssh "host-1" body-1
+    (ssh "host-2" body-2)
+    body-3)
+```
+
 ### Agent Forwarding
 
 ## Output
