@@ -140,6 +140,28 @@ Thus the previous example could be rewritten:
     body-3)
 ```
 
+In this case, each host is only connected to once.
+
+You can also nest more deely, if you wish. This is useful if there was some result of an operation on `host-1` that you are going to use on `host-2` thus:
+
+```clojure
+(ssh "host-1"
+    (ssh "host-2"
+        (use-something-from (ssh "host-1" (get-file ...)))
+        ...more...
+        )
+    )
+```
+
+**Warning** When nesting an ssh connection context inside `ssh-group`, the inner body code will be run multiple times, one for each `ssh-group` thread. In many such cases it will be prudent to gather that information outside of the `ssh-group` call and pass the data through.
+
+```clojure
+(ssh "host-1"
+    (let [data (get-file ...)]
+        (ssh-group ["host-2" "host-3"]
+            (do-something-wth data))))
+```
+
 ### Agent Forwarding
 
 ## Output
