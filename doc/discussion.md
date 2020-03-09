@@ -114,7 +114,7 @@ If one thread/connection experiences a failure, its execution will stop, but the
 
 #### Return Value
 
-
+`ssh-group` will take the return value from the last form evaluated by each thread and collate them together into a hashmap. The values for each connection will be stored under a key. This key will be the host-string by default, but you can override this return value key by specifying a custome `:key` in the `connection-conf` hashmap passed in to `ssh-group`.
 
 ### Nested Connections
 
