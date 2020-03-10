@@ -85,7 +85,7 @@ jobs:
             cd ~
             if ! [ -d graalvm-ce-java8-20.1.0-dev ]; then
               # curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java8-linux-amd64-19.3.1.tar.gz
-              curl -O -sL https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/20.1.0-dev-20200307_0307/graalvm-ce-java8-linux-amd64-20.1.0-dev.tar.gz
+              curl -O -sL https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/20.1.0-dev-20200229_0326/graalvm-ce-java8-linux-amd64-20.1.0-dev.tar.gz
               tar xzf graalvm-ce-java8-linux-amd64-20.1.0-dev.tar.gz
             fi
             $GRAALVM_HOME/bin/gu install native-image
@@ -144,7 +144,7 @@ jobs:
             cd ~
             ls -la
             if ! [ -d graalvm-ce-java8-20.1.0-dev ]; then
-              curl -O -sL https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/20.1.0-dev-20200307_0307/graalvm-ce-java8-darwin-amd64-20.1.0-dev.tar.gz
+              curl -O -sL https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/20.1.0-dev-20200229_0326/graalvm-ce-java8-darwin-amd64-20.1.0-dev.tar.gz
               # curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java8-darwin-amd64-19.3.1.tar.gz
               #curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java11-darwin-amd64-19.3.1.tar.gz
               ls -alF
