@@ -7,6 +7,8 @@
             [spire.utils :as utils]
             [clojure.string :as string]))
 
+(defonce passwords (atom {}))
+
 (defn requires-password? [{:keys [username group uid gid]}]
   (let [session state/*connection*
         user-flags (cond
@@ -33,8 +35,13 @@
                exit (prn-str err) (prn-str out))))))
 
 (defmacro sudo [conf & body]
-  `(do
-     ;; test if password is needed
-     (requires-password? ~conf)
+  `(let [conf# ~conf
+         required?# (requires-password? conf#)
+         host-config# (state/get-host-config)
+         store-key# (select-keys host-config# [:username :hostname :port])
+         stored-password# (get @passwords store-key#)
+         password# (get conf# :password stored-password#)]
+     (assert (or (not required?#) (not (nil? password#))) "sudo password is required but not specified")
+     [conf# password# required?# host-config#]
 
      ~@body))
