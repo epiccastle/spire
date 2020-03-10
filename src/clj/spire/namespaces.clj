@@ -222,6 +222,8 @@
                         'shell (with-meta @#'shell/shell {:sci/macro true})}
    'spire.module.stat {'stat* stat/stat*
                         'stat (with-meta @#'stat/stat {:sci/macro true})}
+
+   'spire.module.sudo {'requires-password? sudo/requires-password?}
    'spire.module.sysctl {'sysctl* sysctl/sysctl*
                          'sysctl (with-meta @#'sysctl/sysctl {:sci/macro true})}
    'spire.module.upload {'upload* upload/upload*
