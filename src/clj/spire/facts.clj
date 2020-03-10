@@ -293,7 +293,8 @@
   (let [paths (fetch-facts-paths)]
     (swap! state assoc-in [(:host-string state/*host-config*) :paths] paths)))
 
-
+(defn update-facts-user! [id-out]
+  (swap! state assoc-in [(:host-string state/*host-config*) :user] (process-id id-out)))
 
 #_
 (transport/ssh "localhost"

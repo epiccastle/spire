@@ -225,6 +225,7 @@
 
    'spire.module.sudo {'requires-password? sudo/requires-password?
                        'passwords sudo/passwords
+                       'sudo-id sudo/sudo-id
                        }
    'spire.module.sysctl {'sysctl* sysctl/sysctl*
                          'sysctl (with-meta @#'sysctl/sysctl {:sci/macro true})}
