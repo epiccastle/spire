@@ -64,7 +64,7 @@ run: $(LIB_FILE) $(JAR_FILE)
 jar: $(JAR_FILE)
 
 $(JAR_FILE): $(CLASS_FILE) $(C_HEADER) $(LIB_FILE)
-	GRAALVM_HOME=$(GRAALVM) lein uberjar
+	GRAALVM_HOME=$(GRAALVM) lein with-profiles +native-image uberjar
 
 $(CLASS_FILE): $(JAVA_FILE)
 	lein javac
