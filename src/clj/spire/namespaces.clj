@@ -172,7 +172,8 @@
                  'wrap-report (with-meta @#'utils/wrap-report {:sci/macro true})
 
                  }
-   'spire.facts {'get-fact facts/get-fact}
+   'spire.facts {'get-fact facts/get-fact
+                 'replace-facts-user! facts/replace-facts-user!}
    'spire.state {
                  '*host-config* #'state/*host-config*
                  '*connection* #'state/*connection*

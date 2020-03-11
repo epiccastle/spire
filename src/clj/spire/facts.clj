@@ -296,6 +296,9 @@
 (defn update-facts-user! [id-out]
   (swap! state assoc-in [(:host-string state/*host-config*) :user] (process-id id-out)))
 
+(defn replace-facts-user! [user-facts]
+  (swap! state assoc-in [(:host-string state/*host-config*) :user] user-facts))
+
 #_
 (transport/ssh "localhost"
          (get-facts))

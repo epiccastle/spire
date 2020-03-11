@@ -57,11 +57,7 @@
       (assert
        false
        (format "Unknown response from sudo id in sudo-id exit: %d err: %s out: %s"
-               exit (prn-str err) (prn-str out))
-       )
-      )
-    )
-  )
+               exit (prn-str err) (prn-str out))))))
 
 (defmacro sudo [conf & body]
   `(let [conf# ~conf
@@ -77,7 +73,7 @@
 
      (let [original-facts# (facts/get-fact)]
        (sudo-id (assoc conf# :password password# :required? required?#))
-       )
-#_     [conf# password# required?# host-config#]
 
-     ~@body))
+       (let [result# (do ~@body)]
+         (facts/replace-facts-user! (:user original-facts#))
+         result#))))
