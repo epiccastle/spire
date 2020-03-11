@@ -25,7 +25,11 @@
     (str password "\n" stdin)
     stdin))
 
-(defn requires-password? [opts]
+(defn requires-password?
+  "tests the remote calling of sudo to determine if a password is
+  required to change user, or if it is passwordless. The result of
+  this alters the way subsequent calls to sudo are initiated."
+  [opts]
   (let [session state/*connection*
         cmd (make-sudo-command opts "password required" "id")
         {:keys [out err exit]} (ssh/ssh-exec session cmd "" "UTF-8" {})]
@@ -42,7 +46,12 @@
        (format "Unknown response from sudo test in requires-password? exit: %d err: %s out: %s"
                exit (prn-str err) (prn-str out))))))
 
-(defn sudo-id [opts]
+(defn sudo-id
+  "actually escallates privileges using sudo and calls the system
+  command `id`. This both tests if the password (if needed) is correct,
+  and gathers user/group data for the escallated session that is then
+  used to update system facts while in the body of the sudo macro."
+  [opts]
   (let [session state/*connection*
         cmd (make-sudo-command opts "" "id")
         {:keys [err out exit]} (ssh/ssh-exec session cmd (prefix-sudo-stdin opts "") "UTF-8" {})]
@@ -66,17 +75,22 @@
          store-key# (select-keys host-config# [:username :hostname :port])
          stored-password# (get @passwords store-key#)
          password# (get conf# :password stored-password#)]
+
+     ;; TODO: if password is required and not specified, prompt for it at the
+     ;; terminal
      (assert
       (or (not required?#) (not (nil? password#)))
       "sudo password is required but not specified")
+
      (swap! passwords assoc store-key# password#)
 
      (let [original-facts# (facts/get-fact)]
        (sudo-id (assoc conf# :password password# :required? required?#))
 
-       (binding [state/*shell-context* {:exec :sudo
-                                        :shell-fn (partial make-sudo-command (assoc conf# :password password# :required? required?#) "")
-                                        :stdin-fn (partial prefix-sudo-stdin (assoc conf# :password password# :required? required?#))}]
+       (binding [state/*shell-context*
+                 {:exec :sudo
+                  :shell-fn (partial make-sudo-command (assoc conf# :password password# :required? required?#) "")
+                  :stdin-fn (partial prefix-sudo-stdin (assoc conf# :password password# :required? required?#))}]
          (let [result# (do ~@body)]
            (facts/replace-facts-user! (:user original-facts#))
            result#)))))
