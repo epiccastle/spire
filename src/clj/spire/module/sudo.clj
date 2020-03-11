@@ -20,7 +20,12 @@
                       :else "")]
     (format "sudo -S -p '%s' %s %s %s" prompt user-flags group-flags command)))
 
-(defn requires-password? [{:keys [username group uid gid] :as opts}]
+(defn prefix-sudo-stdin [{:keys [password required?]} stdin]
+  (if required?
+    (str password "\n" stdin)
+    stdin))
+
+(defn requires-password? [opts]
   (let [session state/*connection*
         cmd (make-sudo-command opts "password required" "id")
         {:keys [out err exit]} (ssh/ssh-exec session cmd "" "UTF-8" {})]
@@ -37,15 +42,10 @@
        (format "Unknown response from sudo test in requires-password? exit: %d err: %s out: %s"
                exit (prn-str err) (prn-str out))))))
 
-(defn sudo-id [{:keys [username group uid gid password] :as opts} required?]
+(defn sudo-id [opts]
   (let [session state/*connection*
         cmd (make-sudo-command opts "" "id")
-        {:keys [err out exit]} (ssh/ssh-exec
-                                session cmd
-                                (if required?
-                                  (str password "\n")
-                                  "")
-                                "UTF-8" {})]
+        {:keys [err out exit]} (ssh/ssh-exec session cmd (prefix-sudo-stdin opts "") "UTF-8" {})]
     (cond
       (and (= 1 exit) (.contains err "incorrect password") (= "" out))
       (throw (ex-info "sudo: incorrect password" {:module :sudo :cause :incorrect-password}))
@@ -76,7 +76,7 @@
      (swap! passwords assoc store-key# password#)
 
      (let [original-facts# (facts/get-fact)]
-       (sudo-id (assoc conf# :password password#) required?#)
+       (sudo-id (assoc conf# :password password# :required? required?#))
        )
 #_     [conf# password# required?# host-config#]
 
