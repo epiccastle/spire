@@ -95,7 +95,10 @@
      (try
        (let [conn# (open-connection host-config#)]
          (binding [state/*host-config* host-config#
-                   state/*connection* conn#]
+                   state/*connection* conn#
+                   state/*shell-context* {:exec :shell
+                                          :shell-fn identity
+                                          :stdin-fn identity}]
            (safe-deref (future ~@body))))
        (finally
          (close-connection host-config#)))))
@@ -115,7 +118,10 @@
                    (binding [state/*host-config* host-config#
                              state/*connection* (get-connection
                                                  (ssh/host-config-to-connection-key
-                                                  host-config#))]
+                                                  host-config#))
+                             state/*shell-context* {:exec :shell
+                                                    :shell-fn identity
+                                                    :stdin-fn identity}]
                      (let [result# (do ~@body)]
                        result#)))])))]
        (into {} (map (fn [[host-name# fut#]] [host-name# (safe-deref fut#)]) threads#)))

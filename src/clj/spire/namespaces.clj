@@ -78,6 +78,7 @@
    'group (with-meta @#'group/group {:sci/macro true})
 
    ;;'sudo* sudo/sudo*
+   'sudo-user (with-meta @#'sudo/sudo-user {:sci/macro true})
    'sudo (with-meta @#'sudo/sudo {:sci/macro true})
 
    'selmer selmer/selmer
@@ -177,9 +178,11 @@
    'spire.state {
                  '*host-config* #'state/*host-config*
                  '*connection* #'state/*connection*
+                 '*shell-context* #'state/*shell-context*
                  'ssh-connections state/ssh-connections
                  'get-host-config state/get-host-config
                  'get-connection state/get-connection
+                 'get-shell-context state/get-shell-context
                  }
    'spire.output {
                   'print-form output/print-form
@@ -222,11 +225,15 @@
    'spire.module.shell {'shell* shell/shell*
                         'shell (with-meta @#'shell/shell {:sci/macro true})}
    'spire.module.stat {'stat* stat/stat*
-                        'stat (with-meta @#'stat/stat {:sci/macro true})}
+                       'stat (with-meta @#'stat/stat {:sci/macro true})}
 
    'spire.module.sudo {'requires-password? sudo/requires-password?
+                       'prefix-sudo-stdin sudo/prefix-sudo-stdin
+                       'make-sudo-command sudo/make-sudo-command
                        'passwords sudo/passwords
                        'sudo-id sudo/sudo-id
+                       'sudo-user (with-meta @#'sudo/sudo-user {:sci/macro true})
+                       'sudo (with-meta @#'sudo/sudo {:sci/macro true})
                        }
    'spire.module.sysctl {'sysctl* sysctl/sysctl*
                          'sysctl (with-meta @#'sysctl/sysctl {:sci/macro true})}

@@ -59,7 +59,7 @@
        (format "Unknown response from sudo id in sudo-id exit: %d err: %s out: %s"
                exit (prn-str err) (prn-str out))))))
 
-(defmacro sudo [conf & body]
+(defmacro sudo-user [conf & body]
   `(let [conf# ~conf
          required?# (requires-password? conf#)
          host-config# (state/get-host-config)
@@ -74,6 +74,12 @@
      (let [original-facts# (facts/get-fact)]
        (sudo-id (assoc conf# :password password# :required? required?#))
 
-       (let [result# (do ~@body)]
-         (facts/replace-facts-user! (:user original-facts#))
-         result#))))
+       (binding [state/*shell-context* {:exec :sudo
+                                        :shell-fn (partial make-sudo-command (assoc conf# :password password# :required? required?#) "")
+                                        :stdin-fn (partial prefix-sudo-stdin (assoc conf# :password password# :required? required?#))}]
+         (let [result# (do ~@body)]
+           (facts/replace-facts-user! (:user original-facts#))
+           result#)))))
+
+(defmacro sudo [& body]
+  `(sudo-user {} ~@body))

@@ -33,20 +33,21 @@
                                shell "bash"}
 
                           :as opts}]
-  [host-string session]
+  [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]
   (or (preflight opts)
       (let [{:keys [agent-forwarding]} (state/get-host-config)
             {:keys [exit out err] :as result}
             (ssh/ssh-exec session
                           ;; command
-                          shell
+                          (shell-fn shell)
 
                           ;; stdin
-                          (if creates
-                            (format "cd \"%s\"\nif [ %s ]; then\nexit 0\nelse\n%s %s\nexit -1\nfi\n"
-                                    dir (make-exists-string creates)
-                                    (make-env-string env) cmd)
-                            (format "cd \"%s\"; %s %s" dir (make-env-string env) cmd))
+                          (stdin-fn
+                           (if creates
+                             (format "cd \"%s\"\nif [ %s ]; then\nexit 0\nelse\n%s %s\nexit -1\nfi\n"
+                                     dir (make-exists-string creates)
+                                     (make-env-string env) cmd)
+                             (format "cd \"%s\"; %s %s" dir (make-env-string env) cmd)))
 
                           ;; output format
                           (or out "UTF-8")
@@ -54,6 +55,7 @@
                           ;; options
                           (into {:agent-forwarding agent-forwarding}
                                 (or opts {})))]
+
         (assoc result
                :out-lines (string/split-lines out)
 
