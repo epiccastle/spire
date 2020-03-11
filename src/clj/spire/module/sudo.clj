@@ -74,10 +74,11 @@
          host-config# (state/get-host-config)
          store-key# (select-keys host-config# [:username :hostname :port])
          stored-password# (get @passwords store-key#)
-         password# (get conf# :password stored-password#)]
+         password# (get conf# :password stored-password#)
+         full-conf# (assoc conf# :password password# :required? required?#)]
 
      ;; TODO: if password is required and not specified, prompt for it at the
-     ;; terminal
+     ;; terminal, and block thread here until its available.
      (assert
       (or (not required?#) (not (nil? password#)))
       "sudo password is required but not specified")
@@ -85,12 +86,12 @@
      (swap! passwords assoc store-key# password#)
 
      (let [original-facts# (facts/get-fact)]
-       (sudo-id (assoc conf# :password password# :required? required?#))
+       (sudo-id full-conf#)
 
        (binding [state/*shell-context*
                  {:exec :sudo
-                  :shell-fn (partial make-sudo-command (assoc conf# :password password# :required? required?#) "")
-                  :stdin-fn (partial prefix-sudo-stdin (assoc conf# :password password# :required? required?#))}]
+                  :shell-fn (partial make-sudo-command full-conf# "")
+                  :stdin-fn (partial prefix-sudo-stdin full-conf#)}]
          (let [result# (do ~@body)]
            (facts/replace-facts-user! (:user original-facts#))
            result#)))))
