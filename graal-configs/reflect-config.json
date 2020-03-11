@@ -19,6 +19,11 @@
         "allPublicMethods": true
     },
     {
+        "name": "java.lang.NumberFormatException",
+        "allPublicConstructors": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "java.lang.AssertionError",
         "allPublicConstructors": true,
         "allPublicMethods": true
