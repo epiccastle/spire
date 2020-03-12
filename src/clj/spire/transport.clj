@@ -99,7 +99,7 @@
                    state/*shell-context* {:exec :shell
                                           :shell-fn identity
                                           :stdin-fn identity}]
-           (safe-deref (future ~@body))))
+           (do ~@body)))
        (finally
          (close-connection host-config#)))))
 
