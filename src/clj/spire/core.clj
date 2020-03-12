@@ -60,23 +60,24 @@
   (initialise)
   (output/print-thread)
   (binding [*command-line-args* args]
-    (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
-      (cond
-        (:help options)
-        (println (usage summary))
+    (try
+      (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
+        (cond
+          (:help options)
+          (println (usage summary))
 
-        (:version options)
-        (println "Version:" version)
+          (:version options)
+          (println "Version:" version)
 
-        (:evaluate options)
-        (binding [*file* ""]
-          (->> options :evaluate (evaluate args) puget/cprint))
+          (:evaluate options)
+          (binding [*file* ""]
+            (->> options :evaluate (evaluate args) puget/cprint))
 
-        (pos? (count arguments))
-        (binding [*file* (first arguments)]
-          (-> arguments first slurp (->> (evaluate args)) puget/cprint))
+          (pos? (count arguments))
+          (binding [*file* (first arguments)]
+            (-> arguments first slurp (->> (evaluate args)) puget/cprint))
 
-        :else
-        (println (usage summary)))
-
-      (shutdown-agents))))
+          :else
+          (println (usage summary))))
+      (finally
+        (shutdown-agents)))))
