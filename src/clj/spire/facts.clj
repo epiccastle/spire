@@ -10,7 +10,8 @@
 (def bins
   [
    "bash" "ksh" "zsh" "csh" "tcsh" "fish"
-   "dash" "sh" "stat" "ls" "id"
+   "dash" "sh" "sash" "yash" "zsh"
+   "stat" "ls" "id" "sudo"
    "file" "touch" "chacl" "chown" "chgrp"
    "chmod" "cp" "cat" "cut" "printf" "find"
    "date" "sed" "grep" "awk" "curl"
