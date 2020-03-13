@@ -132,6 +132,7 @@
    'on-distro (with-meta @#'facts/on-distro {:sci/macro true})
 
    'changed? utils/changed?
+   'failed? (with-meta @#'utils/failed? {:sci/macro true})
 
    ;; '*command-line-args* (sci/new-dynamic-var '*command-line-args* *command-line-args*)
    '*in* (sci/new-dynamic-var '*in* *in*)

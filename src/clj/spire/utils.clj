@@ -339,3 +339,11 @@
 
 (defn changed? [{:keys [result]}]
   (= :changed result))
+
+(defmacro failed? [& body]
+  `(try
+     ~@body
+     false
+     (catch clojure.lang.ExceptionInfo exc#
+       (let [{:keys [result]} (ex-data e#)]
+         (= :failed result)))))
