@@ -4,6 +4,7 @@
             [spire.output :as output]
             [spire.namespaces :as namespaces]
             [spire.utils :as utils]
+            [spire.eval :as eval]
             [puget.printer :as puget]
             [sci.core :as sci]
             [clojure.string :as string]
@@ -47,13 +48,14 @@
     script))
 
 (defn evaluate [args script]
-  (sci/eval-string
-   (remove-shebang script)
-   {:namespaces namespaces/namespaces
-    :bindings (assoc namespaces/bindings
-                     '*command-line-args* (sci/new-dynamic-var '*command-line-args* *command-line-args*))
-    :imports {'System 'java.lang.System}
-    :classes namespaces/classes}))
+  (sci/binding [eval/context :sci]
+    (sci/eval-string
+     (remove-shebang script)
+     {:namespaces namespaces/namespaces
+      :bindings (assoc namespaces/bindings
+                       '*command-line-args* (sci/new-dynamic-var '*command-line-args* *command-line-args*))
+      :imports {'System 'java.lang.System}
+      :classes namespaces/classes})))
 
 (defn -main
   [& args]

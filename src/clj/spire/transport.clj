@@ -4,9 +4,11 @@
             [spire.state :as state]
             [spire.ssh-agent :as ssh-agent]
             [spire.known-hosts :as known-hosts]
+            [spire.eval :as eval]
             [clojure.set :as set]
             [clojure.string :as string]
-            [clojure.stacktrace])
+            [clojure.stacktrace]
+            [sci.core :as sci])
   (:import [com.jcraft.jsch JSch]))
 
 (def debug false)
@@ -76,7 +78,7 @@
     (deref fut)
     (catch java.util.concurrent.ExecutionException e
       (let [cause (.getCause e)
-            cause-data (some->> e .getCause ex-data)]
+            cause-data (some->> cause ex-data)]
         (if cause-data
           cause-data
           {:result :failed
@@ -94,11 +96,11 @@
   `(let [host-config# (ssh/host-description-to-host-config ~host-string)]
      (try
        (let [conn# (open-connection host-config#)]
-         (binding [state/host-config host-config#
-                   state/connection conn#
-                   state/shell-context {:exec :shell
-                                          :shell-fn identity
-                                          :stdin-fn identity}]
+         (eval/binding [state/host-config host-config#
+                        state/connection conn#
+                        state/shell-context {:exec :shell
+                                             :shell-fn identity
+                                             :stdin-fn identity}]
            (do ~@body)))
        (finally
          (close-connection host-config#)))))
@@ -115,13 +117,13 @@
               (let [host-config# (ssh/host-description-to-host-config host-string#)]
                 [(:key host-config#)
                  (future
-                   (binding [state/host-config host-config#
-                             state/connection (get-connection
-                                                 (ssh/host-config-to-connection-key
-                                                  host-config#))
-                             state/shell-context {:exec :shell
-                                                    :shell-fn identity
-                                                    :stdin-fn identity}]
+                   (eval/binding [state/host-config host-config#
+                                  state/connection (get-connection
+                                                    (ssh/host-config-to-connection-key
+                                                     host-config#))
+                                  state/shell-context {:exec :shell
+                                                       :shell-fn identity
+                                                       :stdin-fn identity}]
                      (let [result# (do ~@body)]
                        result#)))])))]
        (into {} (map (fn [[host-name# fut#]] [host-name# (safe-deref fut#)]) threads#)))
@@ -129,3 +131,6 @@
        (doseq [host-string# ~host-strings]
          (let [host-config# (ssh/host-description-to-host-config host-string#)]
            (close-connection host-config#))))))
+
+#_(clojure.lang.RT/loadLibrary "spire")
+#_(ssh "localhost" (spire.facts/get-fact))

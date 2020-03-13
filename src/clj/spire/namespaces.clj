@@ -22,6 +22,7 @@
             [spire.module.authorized-keys :as authorized-keys]
             [spire.module.stat :as stat]
             [spire.module.sudo :as sudo]
+            [spire.eval :as eval]
             [clojure.tools.cli]
             [clojure.java.shell]
             [clojure.edn]
@@ -183,8 +184,12 @@
                  'ssh-connections state/ssh-connections
                  'get-host-config state/get-host-config
                  'get-connection state/get-connection
-                 'get-shell-context state/get-shell-context
-                 }
+                 'get-shell-context state/get-shell-context}
+
+   'spire.eval {'context eval/context
+                'binding-sym eval/binding-sym
+                'binding (with-meta @#'eval/binding {:sci/macro true})}
+
    'spire.output {
                   'print-form output/print-form
                   'print-result output/print-result

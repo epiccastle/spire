@@ -1,7 +1,6 @@
 (ns spire.state
   (:require [sci.core :as sci]))
 
-
 ;; all the open ssh connections
 ;; keys => host-string
 ;; value => session
