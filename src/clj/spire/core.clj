@@ -81,11 +81,11 @@
 
           (:evaluate options)
           (binding [*file* ""]
-            (->> options :evaluate (evaluate args) puget/cprint))
+            (->> options :evaluate (evaluate args) delay-print))
 
           (pos? (count arguments))
           (binding [*file* (first arguments)]
-            (-> arguments first slurp (->> (evaluate args)) puget/cprint))
+            (-> arguments first slurp (->> (evaluate args)) delay-print))
 
           :else
           (println (usage summary))))
