@@ -54,8 +54,16 @@
      {:namespaces namespaces/namespaces
       :bindings (assoc namespaces/bindings
                        '*command-line-args* (sci/new-dynamic-var '*command-line-args* *command-line-args*))
-      :imports {'System 'java.lang.System}
+      :imports {'System 'java.lang.System
+                'Thread 'java.lang.Thread}
       :classes namespaces/classes})))
+
+(defn delay-print
+  "Wait for output module to finish printing, then print the value"
+  [val]
+  ;; TODO - efficiently test end out output module. for now just delay
+  (Thread/sleep 100)
+  (puget/cprint val))
 
 (defn -main
   [& args]
