@@ -2,12 +2,18 @@
   (:require [clojure.set :as set]
             [spire.utils :as utils]
             [spire.state :as state]
+            [puget.printer :as puget]
             [clojure.core.async :refer [<!! put! go chan thread]]))
 
 (defonce state
   (atom []))
 
+;; remember the state of those that have failed so we don't print twice
 (defonce failed-set
+  (atom #{}))
+
+;; remember the state of those that have print debug so we don't print twice
+(defonce debug-set
   (atom #{}))
 
 (defn up [n]
@@ -156,8 +162,28 @@
          doall
          (filter identity)
          flatten)]
-    (when (not (empty? just-printed))
-      (print-state s))))
+    (let [debug-entries (first (reset-vals! debug-set #{}))]
+      (doall
+       (for [[file form {:keys [line]} {:keys [key]} result] debug-entries]
+         (let [str-line (str "--------- " file ":" line " " key " " form " ---------")]
+           (println
+            (str
+             (utils/colour :blue)
+             str-line
+             (utils/reset)))
+           (puget/cprint result)
+           (println
+            (str
+             (utils/colour :blue)
+             (apply str (take (count str-line) (repeat "-")))
+             (utils/reset))))))
+
+      ;; reprint all output state at end
+      (when (or (not (empty? just-printed))
+                (not (empty? debug-entries)))
+        (print-state s))))
+
+  )
 
 (defn state-change [[o n]]
   (let [[_ old-total-height] (calculate-heights o)
@@ -238,6 +264,9 @@
              ;; in test output handler no key will exist because nothing is stored
              s
              ))))
+
+(defn debug-result [file form file-meta host-config result]
+  (swap! debug-set conj [file form file-meta host-config result]))
 
 (defn print-progress [file form form-meta host-string {:keys [progress context] :as data}]
   ;;(prn 'print-progress file form form-meta host-string data)

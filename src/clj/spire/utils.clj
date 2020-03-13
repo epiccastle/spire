@@ -347,3 +347,8 @@
      (catch clojure.lang.ExceptionInfo exc#
        (let [data# (ex-data exc#)]
          (= :failed (:result data#))))))
+
+(defmacro debug [& body]
+  `(let [result# (do ~@body)]
+     (spire.output/debug-result ~*file* (quote ~&form) ~(meta &form) (spire.state/get-host-config) result#)
+     result#))

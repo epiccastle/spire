@@ -134,6 +134,7 @@
 
    'changed? utils/changed?
    'failed? (with-meta @#'utils/failed? {:sci/macro true})
+   'debug (with-meta @#'utils/debug {:sci/macro true})
 
    ;; '*command-line-args* (sci/new-dynamic-var '*command-line-args* *command-line-args*)
    '*in* (sci/new-dynamic-var '*in* *in*)
@@ -193,6 +194,7 @@
    'spire.output {
                   'print-form output/print-form
                   'print-result output/print-result
+                  'debug-result output/debug-result
                   }
 
    'clojure.java.io {'file clojure.java.io/file
