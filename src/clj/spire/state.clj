@@ -9,14 +9,14 @@
   (atom {}))
 
 ;; the host config hashmap for the present executing context
-(def *host-config* (sci/new-dynamic-var '*host-config* nil))
+(def host-config (sci/new-dynamic-var 'host-config nil))
 
 ;; the ssh session
-(def *connection* (sci/new-dynamic-var '*connection* nil))
+(def connection (sci/new-dynamic-var 'connection nil))
 
 ;; the execution context. Used for priviledge escalation currently
-(def *shell-context* (sci/new-dynamic-var '*shell-context* nil))
+(def shell-context (sci/new-dynamic-var 'shell-context nil))
 
-(defn get-host-config [] @*host-config*)
-(defn get-connection [] @*connection*)
-(defn get-shell-context [] @*shell-context*)
+(defn get-host-config [] @host-config)
+(defn get-connection [] @connection)
+(defn get-shell-context [] @shell-context)

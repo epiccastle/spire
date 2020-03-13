@@ -177,9 +177,9 @@
    'spire.facts {'get-fact facts/get-fact
                  'replace-facts-user! facts/replace-facts-user!}
    'spire.state {
-                 '*host-config* state/*host-config*
-                 '*connection* state/*connection*
-                 '*shell-context* state/*shell-context*
+                 'host-config state/host-config
+                 'connection state/connection
+                 'shell-context state/shell-context
                  'ssh-connections state/ssh-connections
                  'get-host-config state/get-host-config
                  'get-connection state/get-connection

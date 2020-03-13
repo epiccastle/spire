@@ -152,7 +152,7 @@
   )
 
 (defn fetch-shell []
-  (let [session @state/*connection*
+  (let [session @state/connection
         script "echo $SHELL"
         {:keys [exit out err] :as result} (ssh/ssh-exec session script "" "UTF-8" {})
         shell-path (string/trim out)]
@@ -214,7 +214,7 @@
      }))
 
 (defmethod fetch-shell-facts :fish [_]
-  (let [session @state/*connection*
+  (let [session @state/connection
         base-shell-uname-output (run-and-return-lines
                                  session
                                  (utils/embed-src "facts_fish.fish")
@@ -240,10 +240,10 @@
           :system system-data
           :user (process-id id-out)
           :paths paths
-          :ssh-config @state/*host-config*})))
+          :ssh-config @state/host-config})))
 
 (defmethod fetch-shell-facts :default [shell]
-  (let [session @state/*connection*
+  (let [session @state/connection
         base-shell-uname-output (run-and-return-lines
                                  session
                                  (utils/embed-src "facts_shell.sh")
@@ -269,14 +269,14 @@
           :system system-data
           :user (process-id id-out)
           :paths paths
-          :ssh-config @state/*host-config*})))
+          :ssh-config @state/host-config})))
 
 (defn update-facts! []
   (let [facts (fetch-facts)]
-    (swap! state update (:host-string @state/*host-config*) merge facts)))
+    (swap! state update (:host-string @state/host-config) merge facts)))
 
 (defn get-fact [& [path default]]
-  (let [host-string (:host-string @state/*host-config*)]
+  (let [host-string (:host-string @state/host-config)]
     (if (@state host-string)
       (get-in @state (concat [host-string] path default))
       (get-in (update-facts!) (concat [host-string] path default))))
@@ -285,20 +285,20 @@
 (defn fetch-facts-paths
   ([shell]
    (process-paths
-    {:paths (run-and-return-lines @state/*connection* (make-which shell)
+    {:paths (run-and-return-lines @state/connection (make-which shell)
                                   "retrieving paths script exited %d: %s")}))
   ([]
    (fetch-facts-paths (get-fact [:system :shell]))))
 
 (defn update-facts-paths! []
   (let [paths (fetch-facts-paths)]
-    (swap! state assoc-in [(:host-string @state/*host-config*) :paths] paths)))
+    (swap! state assoc-in [(:host-string @state/host-config) :paths] paths)))
 
 (defn update-facts-user! [id-out]
-  (swap! state assoc-in [(:host-string @state/*host-config*) :user] (process-id id-out)))
+  (swap! state assoc-in [(:host-string @state/host-config) :user] (process-id id-out)))
 
 (defn replace-facts-user! [user-facts]
-  (swap! state assoc-in [(:host-string @state/*host-config*) :user] user-facts))
+  (swap! state assoc-in [(:host-string @state/host-config) :user] user-facts))
 
 #_
 (transport/ssh "localhost"

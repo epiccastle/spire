@@ -94,9 +94,9 @@
   `(let [host-config# (ssh/host-description-to-host-config ~host-string)]
      (try
        (let [conn# (open-connection host-config#)]
-         (binding [state/*host-config* host-config#
-                   state/*connection* conn#
-                   state/*shell-context* {:exec :shell
+         (binding [state/host-config host-config#
+                   state/connection conn#
+                   state/shell-context {:exec :shell
                                           :shell-fn identity
                                           :stdin-fn identity}]
            (do ~@body)))
@@ -115,11 +115,11 @@
               (let [host-config# (ssh/host-description-to-host-config host-string#)]
                 [(:key host-config#)
                  (future
-                   (binding [state/*host-config* host-config#
-                             state/*connection* (get-connection
+                   (binding [state/host-config host-config#
+                             state/connection (get-connection
                                                  (ssh/host-config-to-connection-key
                                                   host-config#))
-                             state/*shell-context* {:exec :shell
+                             state/shell-context {:exec :shell
                                                     :shell-fn identity
                                                     :stdin-fn identity}]
                      (let [result# (do ~@body)]

@@ -30,7 +30,7 @@
   required to change user, or if it is passwordless. The result of
   this alters the way subsequent calls to sudo are initiated."
   [opts]
-  (let [session @state/*connection*
+  (let [session @state/connection
         cmd (make-sudo-command opts "password required" "id")
         {:keys [out err exit]} (ssh/ssh-exec session cmd "" "UTF-8" {})]
     (cond
@@ -52,7 +52,7 @@
   and gathers user/group data for the escallated session that is then
   used to update system facts while in the body of the sudo macro."
   [opts]
-  (let [session @state/*connection*
+  (let [session @state/connection
         cmd (make-sudo-command opts "" "id")
         {:keys [err out exit]} (ssh/ssh-exec session cmd (prefix-sudo-stdin opts "") "UTF-8" {})]
     (cond
@@ -88,7 +88,7 @@
      (let [original-facts# (facts/get-fact)]
        (sudo-id full-conf#)
 
-       (binding [state/*shell-context*
+       (binding [state/shell-context
                  {:exec :sudo
                   :shell-fn (partial make-sudo-command full-conf# "")
                   :stdin-fn (partial prefix-sudo-stdin full-conf#)}]
