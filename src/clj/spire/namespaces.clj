@@ -143,9 +143,9 @@
 (def namespaces
   {
    'spire.transfer {'ssh (with-meta @#'transfer/ssh {:sci/macro true})}
-   'clojure.core {'binding (with-meta binding* {:sci/macro true})
-                  'push-thread-bindings clojure.core/push-thread-bindings
-                  'pop-thread-bindings clojure.core/pop-thread-bindings
+   'clojure.core {;;'binding (with-meta binding* {:sci/macro true})
+                  ;;'push-thread-bindings clojure.core/push-thread-bindings
+                  ;;'pop-thread-bindings clojure.core/pop-thread-bindings
                   ;;                  'var (with-meta @#'clojure.core/var {:sci/macro true})
                   'println println
                   'prn prn
@@ -177,9 +177,9 @@
    'spire.facts {'get-fact facts/get-fact
                  'replace-facts-user! facts/replace-facts-user!}
    'spire.state {
-                 '*host-config* #'state/*host-config*
-                 '*connection* #'state/*connection*
-                 '*shell-context* #'state/*shell-context*
+                 '*host-config* state/*host-config*
+                 '*connection* state/*connection*
+                 '*shell-context* state/*shell-context*
                  'ssh-connections state/ssh-connections
                  'get-host-config state/get-host-config
                  'get-connection state/get-connection

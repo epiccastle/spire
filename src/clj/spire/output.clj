@@ -133,7 +133,7 @@
                               :blue))
                            (str (:key host-config))
                            (utils/colour)))
-          line (str (format "%s:%d " file (:row meta))
+          line (str (format "%s:%d " file (:line meta))
                     (pr-str form)
                     (apply str completed))
           ]
@@ -200,7 +200,7 @@
          (filter identity))))
 
 (defn print-form [file form file-meta host-config]
-  ;;(prn 'print-form form file meta)
+  ;; (prn 'print-form form file file-meta)
   (swap! state
          (fn [s]
            (if-let [match (first (find-forms-matching-index s {:form form :file file :meta file-meta}))]

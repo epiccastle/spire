@@ -1,4 +1,6 @@
-(ns spire.state)
+(ns spire.state
+  (:require [sci.core :as sci]))
+
 
 ;; all the open ssh connections
 ;; keys => host-string
@@ -7,14 +9,14 @@
   (atom {}))
 
 ;; the host config hashmap for the present executing context
-(def ^:dynamic *host-config* nil)
+(def *host-config* (sci/new-dynamic-var '*host-config* nil))
 
 ;; the ssh session
-(def ^:dynamic *connection* nil)
+(def *connection* (sci/new-dynamic-var '*connection* nil))
 
 ;; the execution context. Used for priviledge escalation currently
-(def ^:dynamic *shell-context* nil)
+(def *shell-context* (sci/new-dynamic-var '*shell-context* nil))
 
-(defn get-host-config [] *host-config*)
-(defn get-connection [] *connection*)
-(defn get-shell-context [] *shell-context*)
+(defn get-host-config [] @*host-config*)
+(defn get-connection [] @*connection*)
+(defn get-shell-context [] @*shell-context*)
