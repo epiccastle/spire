@@ -324,10 +324,13 @@
    {
     'with-sh-dir (with-meta @#'clojure.java.shell/with-sh-dir {:sci/macro true})
     'with-sh-env (with-meta @#'clojure.java.shell/with-sh-env {:sci/macro true})
-    'sh clojure.java.shell/sh}})
+    'sh clojure.java.shell/sh}
+
+   })
 
 (def classes
   {'java.lang.System System
+   'java.lang.Thread Thread
    'java.time.Clock java.time.Clock
    'java.time.DateTimeException java.time.DateTimeException
    'java.time.DayOfWeek java.time.DayOfWeek
