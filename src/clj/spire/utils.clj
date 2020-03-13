@@ -342,8 +342,9 @@
 
 (defmacro failed? [& body]
   `(try
-     ~@body
-     false
+     (do
+       ~@body
+       false)
      (catch clojure.lang.ExceptionInfo exc#
        (let [data# (ex-data exc#)]
          (= :failed (:result data#))))))
