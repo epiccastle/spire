@@ -42,4 +42,4 @@
   :profiles {:uberjar {:aot :all}
              :native-image
              {:dependencies
-              [[borkdude/clj-reflector-graal-java11-fix "0.0.1-graalvm-20.0.0-alpha.2"]]}})
+              [#_[borkdude/clj-reflector-graal-java11-fix "0.0.1-graalvm-20.0.0-alpha.2"]]}})
