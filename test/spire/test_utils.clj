@@ -150,7 +150,7 @@
 
 (defn ssh-run [cmd]
   (let [{:keys [out err exit]}
-        (ssh/ssh-exec spire.state/*connection* cmd "" "UTF-8" {})]
+        (ssh/ssh-exec @spire.state/connection cmd "" "UTF-8" {})]
     (assert (zero? exit) (str "remote command '" cmd "' failed. err:" err))
     out))
 
