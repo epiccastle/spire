@@ -1,7 +1,6 @@
 (ns spire.facts
   (:require [clojure.string :as string]
             [spire.ssh :as ssh]
-            [spire.transport :as transport]
             [spire.utils :as utils]
             [spire.state :as state]))
 
@@ -32,7 +31,8 @@
 (defn make-which [shell]
   (case shell
     :csh
-    (str (apply str (map #(format "echo %s: `where %s`\n" % %) bins))
+    ;; `where` on freebsd. `which` on linux. wtf?
+    (str (apply str (map #(format "echo %s: `which %s`\n" % %) bins))
          "\n"
          "exit 0")
 
@@ -230,6 +230,35 @@
         shell-data (process-shell-info base-shell-uname-output)
         version (first shell-version-output)
         detect (str "fish " version)
+        paths (process-paths {:paths paths-output})
+        shell-data (assoc shell-data :detect detect :version version)
+        system-data (process-system uname-data shell-data)
+        release-info (process-release-info system-data session)
+        system-data (into system-data release-info)]
+    (->> {:shell shell-data
+          :uname uname-data
+          :system system-data
+          :user (process-id id-out)
+          :paths paths
+          :ssh-config @state/host-config})))
+
+(defmethod fetch-shell-facts :csh [shell]
+  (let [session @state/connection
+        base-shell-uname-output (run-and-return-lines
+                                 session
+                                 (utils/embed-src "facts_shell.csh")
+                                 "facts_shell.csh script exited %d: %s")
+        shell-version-output (run-and-return-lines session
+                                                   (utils/embed-src "facts_id.sh")
+                                                   "facts_id.sh exited %d: %s")
+        paths-output (run-and-return-lines session (make-which shell)
+                                           "retrieving paths script exited %d: %s")
+        id-out (run-and-return-lines session "id" "running remote `id` command exited %d: %s")
+
+        uname-data (process-shell-uname base-shell-uname-output)
+        shell-data (process-shell-info base-shell-uname-output)
+        detect (first shell-version-output)
+        version (last (string/split detect #"\s+"))
         paths (process-paths {:paths paths-output})
         shell-data (assoc shell-data :detect detect :version version)
         system-data (process-system uname-data shell-data)
