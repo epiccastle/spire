@@ -19,8 +19,9 @@
         (for [sh shells]
           (do
             (user :present {:name username :shell (get-fact [:paths (keyword sh)])})
-            (debug [:shell sh])
             (ssh user-conf
-                 (debug (get-fact [:shell]))))))
+                 (let [{:keys [command]} (get-fact [:shell])]
+                   ;; sash is reported as `sh`?
+                   (assert (= (get {"sh" "sash"} command command) sh)))))))
        (finally
          (user :present {:name username :shell "/bin/bash"}))))
