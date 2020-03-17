@@ -73,6 +73,7 @@
   (let [detect (:detect shell-data)
         sh (case (:command shell-data)
              "bash" :bash
+             "dash" :dash
              "fish" :fish
              "zsh"  :zsh
              "csh"  :csh
