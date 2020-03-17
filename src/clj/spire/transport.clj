@@ -3,6 +3,7 @@
             [spire.output :as output]
             [spire.state :as state]
             [spire.ssh-agent :as ssh-agent]
+            [spire.facts :as facts]
             [spire.known-hosts :as known-hosts]
             [spire.eval :as eval]
             [clojure.set :as set]
@@ -101,6 +102,7 @@
                         state/shell-context {:exec :shell
                                              :shell-fn identity
                                              :stdin-fn identity}]
+           (facts/update-facts!)
            (do ~@body)))
        (finally
          (close-connection host-config#)))))
@@ -124,6 +126,7 @@
                                   state/shell-context {:exec :shell
                                                        :shell-fn identity
                                                        :stdin-fn identity}]
+                     (facts/update-facts!)
                      (let [result# (do ~@body)]
                        result#)))])))]
        (into {} (map (fn [[host-name# fut#]] [host-name# (safe-deref fut#)]) threads#)))
