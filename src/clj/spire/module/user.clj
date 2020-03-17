@@ -90,13 +90,14 @@
       (assoc result
              :result :failed))))
 
-(utils/defmodule user* [command {:keys [user] :as opts}]
-  [host-string session]
+(utils/defmodule user* [command {:keys [name] :as opts}]
+  [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight command opts)
-   (->>
-    (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
-    (process-result command opts))))
+   (let [result (->>
+                 (ssh/ssh-exec session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
+                 (process-result command opts))]
+     result)))
 
 (defmacro user [& args]
   `(utils/wrap-report ~*file* ~&form (user* ~@args)))
