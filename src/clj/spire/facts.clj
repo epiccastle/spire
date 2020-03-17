@@ -74,6 +74,8 @@
         sh (case (:command shell-data)
              "bash" :bash
              "dash" :dash
+             "yash" :yash
+             "tcsh" :tcsh
              "fish" :fish
              "zsh"  :zsh
              "csh"  :csh
