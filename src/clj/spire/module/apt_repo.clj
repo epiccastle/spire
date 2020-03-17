@@ -146,13 +146,13 @@
 
 
 (utils/defmodule apt-repo* [command opts]
-  [host-config session]
+  [host-config session {:keys [shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight command opts)
    (->>
     (facts/on-shell
-     :fish (ssh/ssh-exec session "bash" (make-script command opts) "UTF-8" {})
-     :else (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {}))
+     :fish (ssh/ssh-exec session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
+     :else (ssh/ssh-exec session (shell-fn (make-script command opts)) (stdin-fn "") "UTF-8" {}))
     (process-result command opts))))
 
 (defmacro apt-repo [& args]
