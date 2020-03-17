@@ -177,7 +177,9 @@
 
                  }
    'spire.facts {'get-fact facts/get-fact
-                 'replace-facts-user! facts/replace-facts-user!}
+                 'replace-facts-user! facts/replace-facts-user!
+                 'update-facts! facts/update-facts!
+                 }
    'spire.state {
                  'host-config state/host-config
                  'connection state/connection
