@@ -65,6 +65,7 @@
        "apt_repo_present.sh"
        {:FILE (some->
                (or filename (make-filename-from-repo repo))
+               (str ".list")
                (->> (str "/etc/apt/sources.list.d/"))
                utils/path-escape)
         :CONTENTS (some-> repo utils/path-escape)
