@@ -15,13 +15,15 @@
      (apt :install shells)
 
      (try
-       (doall
-        (for [sh shells]
-          (do
-            (user :present {:name username :shell (get-fact [:paths (keyword sh)])})
-            (ssh user-conf
-                 (let [{:keys [command]} (get-fact [:shell])]
-                   ;; sash is reported as `sh`?
-                   (assert (= (get {"sh" "sash"} command command) sh)))))))
+       (->> (doall
+             (for [sh shells]
+               (do
+                 (user :present {:name username :shell (get-fact [:paths (keyword sh)])})
+                 (ssh user-conf
+                      (let [{:keys [command]} (get-fact [:shell])]
+                        ;; sash is reported as `sh`?
+                        (assert (= (get {"sh" "sash"} command command) sh))
+                        [sh (get-fact [:shell])])))))
+            (into {}))
        (finally
          (user :present {:name username :shell "/bin/bash"}))))
