@@ -113,14 +113,24 @@
             ]
         (utils/make-script
          "apt_repo_absent.sh"
-         {:REGEX (some-> deb-line (some->> (str "^")) re-pattern utils/re-pattern-to-sed)
+         {:REGEX (some-> deb-line
+                         (some->> (str "^"))
+                         (string/replace #"\[" "\\\\[")
+                         (string/replace #"\]" "\\\\]")
+                         re-pattern
+                         utils/re-pattern-to-sed)
           :LINE (some-> deb-line utils/path-escape)
           :FILES "/etc/apt/sources.list.d/*.list"}))
 
       ;; non ppa repository source
       (utils/make-script
        "apt_repo_absent.sh"
-       {:REGEX (some-> repo (some->> (str "^")) re-pattern utils/re-pattern-to-sed)
+       {:REGEX (some-> repo
+                       (some->> (str "^"))
+                       (string/replace #"\[" "\\\\[")
+                       (string/replace #"\]" "\\\\]")
+                       re-pattern
+                       utils/re-pattern-to-sed)
         :LINE (some-> repo utils/path-escape)
         :FILES "/etc/apt/sources.list.d/*.list"}))))
 
