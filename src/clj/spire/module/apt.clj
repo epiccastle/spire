@@ -29,11 +29,12 @@
   (let [package-string (if (string? package-or-packages)
                          package-or-packages
                          (string/join " " package-or-packages))]
-    (str
-     (facts/on-shell
-      :fish "env DEBIAN_FRONTEND=noninteractive apt-get install -y "
-      :else "DEBIAN_FRONTEND=noninteractive apt-get install -y ")
-     package-string)))
+    (facts/on-shell
+     :fish (str "env DEBIAN_FRONTEND=noninteractive apt-get install -y " package-string)
+     :csh (str "csh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get install -y " package-string "'")
+     :tcsh (str "tcsh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get install -y " package-string "'")
+     :sh (str "bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y " package-string "'")
+     :else (str "DEBIAN_FRONTEND=noninteractive apt-get install -y " package-string))))
 
 (defmethod process-result :install
   [_ _ {:keys [out err exit] :as result}]
@@ -67,6 +68,9 @@
 (defmethod make-script :update [_ _]
   (facts/on-shell
    :fish "env DEBIAN_FRONTEND=noninteractive apt-get update -y"
+   :csh (str "csh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get update -y")
+   :tcsh (str "tcsh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get update -y")
+   :sh (str "bash -c 'DEBIAN_FRONTEND=noninteractive apt-get update -y")
    :else "DEBIAN_FRONTEND=noninteractive apt-get update -y"))
 
 (defn process-values [result func]
@@ -119,11 +123,12 @@
   (let [package-string (if (string? package-or-packages)
                          package-or-packages
                          (string/join " " package-or-packages))]
-    (str
-     (facts/on-shell
-      :fish "env DEBIAN_FRONTEND=noninteractive apt-get remove -y "
-      :else "DEBIAN_FRONTEND=noninteractive apt-get remove -y ")
-     package-string)))
+    (facts/on-shell
+     :fish (str "env DEBIAN_FRONTEND=noninteractive apt-get remove -y " package-string)
+     :csh (str "csh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get remove -y " package-string "'")
+     :tcsh (str "tcsh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get remove -y " package-string "'")
+     :sh (str "bash -c 'DEBIAN_FRONTEND=noninteractive apt-get remove -y " package-string "'")
+     :else (str "DEBIAN_FRONTEND=noninteractive apt-get remove -y " package-string))))
 
 (defmethod process-result :remove
   [_ _ {:keys [out err exit] :as result}]
@@ -157,6 +162,9 @@
 (defmethod make-script :upgrade [_ _]
   (facts/on-shell
    :fish "env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"
+   :csh (str "csh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get upgrade -y")
+   :tcsh (str "tcsh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get upgrade -y")
+   :sh (str "bash -c 'DEBIAN_FRONTEND=noninteractive apt-get upgrade -y")
    :else "DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"))
 
 (defmethod process-result :upgrade
