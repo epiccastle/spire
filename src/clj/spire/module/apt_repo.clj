@@ -33,7 +33,7 @@
 ;; (line-in-file :present ...)
 ;;
 (defmethod preflight :present [_ _]
-  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl}))
+  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl :bash}))
 
 (defmethod make-script :present [_ {:keys [repo filename]}]
   (let [ppa? (string/starts-with? repo "ppa:")
@@ -98,7 +98,7 @@
 ;; (line-in-file :absent ...)
 ;;
 (defmethod preflight :absent [_ _]
-  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl}))
+  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl :bash}))
 
 (defmethod make-script :absent [_ {:keys [repo filename]}]
   (let [ppa? (string/starts-with? repo "ppa:")
@@ -161,9 +161,7 @@
   (or
    (preflight command opts)
    (->>
-    (facts/on-shell
-     :fish (ssh/ssh-exec session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
-     :else (ssh/ssh-exec session (shell-fn (make-script command opts)) (stdin-fn "") "UTF-8" {}))
+    (ssh/ssh-exec session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
     (process-result command opts))))
 
 (defmacro apt-repo [& args]
