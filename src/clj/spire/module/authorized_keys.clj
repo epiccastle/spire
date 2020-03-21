@@ -1,15 +1,7 @@
 (ns spire.module.authorized-keys
-  (:require [spire.output :as output]
-            [spire.ssh :as ssh]
-            [spire.scp :as scp]
+  (:require [spire.ssh :as ssh]
             [spire.utils :as utils]
             [spire.facts :as facts]
-            [spire.local :as local]
-            [spire.remote :as remote]
-            [spire.compare :as compare]
-            [spire.module.attrs :as attrs]
-            [digest :as digest]
-            [clojure.java.io :as io]
             [clojure.string :as string]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
