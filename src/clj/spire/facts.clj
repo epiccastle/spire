@@ -14,6 +14,7 @@
    "file" "touch" "chacl" "chown" "chgrp"
    "chmod" "cp" "cat" "cut" "printf" "find"
    "date" "sed" "grep" "awk" "curl"
+   "groupadd" "groupmod" "groupdel"
    "wget" "git" "tar" "rsync" "bzip2"
    "bzcat" "bunzip2" "gzip" "gunzip" "zip"
    "unzip" "uname" "lsb_release"
