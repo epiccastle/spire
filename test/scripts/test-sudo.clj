@@ -38,7 +38,17 @@
                  (assert (failed? (apt-repo :present {:repo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" :filename "spire-test"})))
                  (sudo
                   (assert (not (failed? (apt-repo :present {:repo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" :filename "spire-test"}))))
-                  (assert (not (failed? (apt-repo :absent {:repo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"})))))))))
+                  (assert (not (failed? (apt-repo :absent {:repo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"})))))
+
+                 ;; authorized-keys
+                 (assert (failed? (authorized-keys :present {:user "root" :key "my-fake-key"})))
+                 (sudo
+                  (assert (not (failed? (authorized-keys :present {:user "root" :key "my-fake-key"}))))
+                  (assert (= 1 (count (filter #(= "my-fake-key" %) (:out-lines (authorized-keys :get {:user "root"}))))))
+                  (assert (not (failed? (authorized-keys :absent {:user "root" :key "my-fake-key"})))))
+
+
+                 ))))
        (finally
          (user :present {:name "root" :shell "/bin/bash"})
          (user :present {:name username :shell "/bin/bash"}))))
