@@ -57,6 +57,17 @@
                  (assert (failed? (group :absent {:name "spire-test"})))
                  (sudo (assert (not (failed? (group :absent {:name "spire-test"})))))
 
+                 ;; line-in-file
+                 ;; TODO: file needs to already exist
+                 ;; TODO: regexp must be present
+                 ;;(sudo (debug (line-in-file :present {:path "/root/spire-test.txt" :line "test line" :regexp #""})))
+
+                 (assert (failed? (line-in-file :present {:path "/root/spire-test.txt" :line "test line" :regexp #"test line"})))
+                 (sudo (assert (not (failed? (line-in-file :present {:path "/root/spire-test.txt" :line "test line" :regexp #"test line"})))))
+                 (assert (failed? (line-in-file :absent {:path "/root/spire-test.txt" :regexp #"test line"})))
+                 (sudo (assert (not (failed? (line-in-file :absent {:path "/root/spire-test.txt" :regexp #"test line"})))))
+
+
                  ))))
        (finally
          (user :present {:name "root" :shell "/bin/bash"})
