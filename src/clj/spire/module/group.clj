@@ -1,5 +1,6 @@
 (ns spire.module.group
   (:require [spire.utils :as utils]
+            [spire.facts :as facts]
             [spire.ssh :as ssh]
             [spire.output :as output]
             [clojure.string :as string]))
@@ -13,7 +14,7 @@
 (defmulti process-result (fn [command opts result] command))
 
 (defmethod preflight :present [_ {:keys [name gid] :as opts}]
-  nil
+  (facts/check-bins-present #{:bash :groupadd :groupmod :grep})
   )
 
 (defmethod make-script :present [_ {:keys [name gid password] :as opts}]
@@ -43,7 +44,7 @@
              :result :failed))))
 
 (defmethod preflight :absent [_ {:keys [name gid system] :as opts}]
-  nil
+  (facts/check-bins-present #{:bash :groupdel :grep})
   )
 
 (defmethod make-script :absent [_ {:keys [name] :as opts}]
@@ -71,11 +72,11 @@
              :result :failed))))
 
 (utils/defmodule group* [command opts]
-  [host-string session]
+  [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight command opts)
    (->>
-    (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
+    (ssh/ssh-exec session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
     (process-result command opts))))
 
 (defmacro group [& args]
