@@ -47,6 +47,9 @@
                   (assert (= 1 (count (filter #(= "my-fake-key" %) (:out-lines (authorized-keys :get {:user "root"}))))))
                   (assert (not (failed? (authorized-keys :absent {:user "root" :key "my-fake-key"})))))
 
+                 (assert (failed? (get-file "/root/.bash_history")))
+                 (sudo (assert (not (failed? (get-file "/root/.bash_history")))))
+
 
                  ))))
        (finally

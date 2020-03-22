@@ -7,14 +7,14 @@
             [clojure.string :as string]))
 
 (utils/defmodule get-file* [file-path]
-  [host-string session]
+  [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]
   (let [{:keys [exit out err] :as result}
         (ssh/ssh-exec session
-                      (format "cat %s" (utils/path-quote file-path))
-                      ""
+                      (shell-fn (format "cat %s" (utils/path-quote file-path)))
+                      (stdin-fn "")
                       "UTF-8" {})]
     (assoc result
-           :result :ok)))
+           :result (if (zero? exit) :ok :failed))))
 
 (defmacro get-file [& args]
   `(utils/wrap-report ~*file* ~&form (get-file* ~@args)))
