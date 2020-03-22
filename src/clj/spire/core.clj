@@ -18,18 +18,18 @@
   [
    ["-h" "--help" "Print the command line help"]
    ["-e" "--evaluate CODE" "Evaluate a snipped of code instead of loading code from file"]
-   ["-v" "--version" "Print the version string and exit"]])
+   ["-v" "--version" "Print the version string and exit"]
+   [nil "--debug-ssh" "Debug ssh connections printing to stderr"]])
 
-(def debug false)
-
-(defn initialise []
-  (when debug
+(defn initialise [{:keys [debug-ssh]}]
+  (when debug-ssh
     (JSch/setLogger
      (proxy [Logger] []
        (isEnabled [level]
          true)
        (log [level mesg]
-         (println mesg)))))
+         (binding [*out* *err*]
+           (println mesg))))))
   (config/init!)
   (clojure.lang.RT/loadLibrary "spire"))
 
@@ -67,11 +67,13 @@
 
 (defn -main
   [& args]
-  (initialise)
-  (output/print-thread)
   (binding [*command-line-args* args]
     (try
       (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
+
+        (initialise options)
+        (output/print-thread)
+
         (cond
           (:help options)
           (println (usage summary))
