@@ -26,10 +26,6 @@
             (ssh user-conf
                  ;; (debug (get-fact [:shell]))
 
-                 ;; shell
-                 (assert (= username (first (:out-lines (shell {:cmd "whoami"})))))
-                 (assert (= "root" (first (:out-lines (sudo (shell {:cmd "whoami"}))))))
-
                  ;; apt
                  (assert (failed? (apt :install "bash")))
                  (assert (not (failed? (sudo (apt :install "bash")))))
@@ -67,9 +63,17 @@
                  (assert (failed? (line-in-file :absent {:path "/root/spire-test.txt" :regexp #"test line"})))
                  (sudo (assert (not (failed? (line-in-file :absent {:path "/root/spire-test.txt" :regexp #"test line"})))))
 
+                 ;; cron
                  (assert (failed? (service :restarted {:name "cron"})))
                  (sudo (assert (not (failed? (service :restarted {:name "cron"})))))
 
+                 ;; shell
+                 (assert (= username (first (:out-lines (shell {:cmd "whoami"})))))
+                 (assert (= "root" (first (:out-lines (sudo (shell {:cmd "whoami"}))))))
+
+                 ;; stat
+                 (assert (failed? (stat "/root/.bash_history")))
+                 (sudo (assert (not (failed? (stat "/root/.bash_history")))))
 
                  ))))
        (finally

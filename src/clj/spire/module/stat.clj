@@ -171,11 +171,14 @@
   )
 
 (utils/defmodule stat* [path]
-  [host-config session]
+  [host-config session {:keys [shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight path)
-   (->> (ssh/ssh-exec session (facts/on-os :linux (make-script path)
-                                           :else (make-script-bsd path)) "" "UTF-8" {})
+   (->> (ssh/ssh-exec session
+                      (shell-fn (facts/on-os :linux (make-script path)
+                                             :else (make-script-bsd path)))
+                      (stdin-fn "")
+                      "UTF-8" {})
         (process-result path))))
 
 (defmacro stat [& args]
