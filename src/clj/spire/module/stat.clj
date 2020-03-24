@@ -10,7 +10,7 @@
   (facts/check-bins-present #{:stat}))
 
 (defn make-script [path]
-  (str "stat -c '%a\t%b\t%B\t%d\t%f\t%F\t%g\t%G\t%h\t%i\t%m\t%n\t%N\t%o\t%s\t%t\t%T\t%u\t%U\t%W\t%X\t%Y\t%Z\t%F' " (utils/path-quote path) "\n"))
+  (str "stat -c '%a\t%b\t%B\t%d\t%f\t%F\t%g\t%G\t%h\t%i\t%m\t%n\t%N\t%o\t%s\t%t\t%T\t%u\t%U\t%W\t%X\t%Y\t%Z\t%F' " (utils/path-quote path)))
 
 (defn make-script-bsd [path]
   (str "stat -f '%Lp%t%d%t%i%t%l%t%u%t%g%t%r%t%a%t%m%t%c%t%B%t%z%t%b%t%k%t%f%t%v%t%HT%t%N%t%Y%t%Hr%t%Lr' " (utils/path-quote path)))
@@ -150,9 +150,7 @@
       (assoc result
              :link-source source
              :link-dest dest)
-      result)
-
-    ))
+      result)))
 
 (defn process-result [path {:keys [out err exit] :as result}]
   (cond
@@ -167,19 +165,29 @@
     (assoc result
            :result :failed
            :out-lines (string/split out #"\n")
-           :err-lines (string/split err #"\n")))
-  )
+           :err-lines (string/split err #"\n"))))
 
 (utils/defmodule stat* [path]
   [host-config session {:keys [shell-fn stdin-fn] :as shell-context}]
-  (or
-   (preflight path)
-   (->> (ssh/ssh-exec session
-                      (shell-fn (facts/on-os :linux (make-script path)
-                                             :else (make-script-bsd path)))
-                      (stdin-fn "")
-                      "UTF-8" {})
-        (process-result path))))
+  (let [script (facts/on-os :linux (make-script path)
+                            :else (make-script-bsd path))]
+    (or
+     (preflight path)
+
+     ;; sash (reported as sh) does not correctly return its exit code
+     ;; $ sash -c "echo foo; exit 1"; echo $?
+     ;; foo
+     ;; 0
+     ;; so we invoke bash in this case as a work around
+     (->> (ssh/ssh-exec session
+                        (shell-fn (facts/on-shell
+                                   :sh "bash"
+                                   :else script))
+                        (stdin-fn (facts/on-shell
+                                   :sh script
+                                   :else ""))
+                        "UTF-8" {})
+          (process-result path)))))
 
 (defmacro stat [& args]
   `(utils/wrap-report ~*file* ~&form (stat* ~@args)))

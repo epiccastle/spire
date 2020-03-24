@@ -6,9 +6,7 @@
 (assert (and username host)
         "No username and hostname/ip specified. Pass in username as first argument, and host as second argument.")
 
-(def shells
-  ["fish" "bash" "dash" "csh" "sash" "yash" "zsh" "ksh" "tcsh"]
-  #_["fish" "bash" "dash" "csh" "sash" "yash" "zsh" "ksh" "tcsh"])
+(def shells ["fish" "bash" "dash" "csh" "sash" "yash" "zsh" "ksh" "tcsh"])
 
 (def user-conf {:username username :hostname host :key :user})
 (def root-conf {:username "root" :hostname host :key :root})
@@ -56,8 +54,6 @@
                  ;; line-in-file
                  ;; TODO: file needs to already exist
                  ;; TODO: regexp must be present
-                 ;;(sudo (debug (line-in-file :present {:path "/root/spire-test.txt" :line "test line" :regexp #""})))
-
                  (assert (failed? (line-in-file :present {:path "/root/spire-test.txt" :line "test line" :regexp #"test line"})))
                  (sudo (assert (not (failed? (line-in-file :present {:path "/root/spire-test.txt" :line "test line" :regexp #"test line"})))))
                  (assert (failed? (line-in-file :absent {:path "/root/spire-test.txt" :regexp #"test line"})))
