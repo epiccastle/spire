@@ -106,11 +106,11 @@
 
 
 (utils/defmodule service* [command opts]
-  [host-string session]
+  [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight command opts)
    (->>
-    (ssh/ssh-exec session "bash" (make-script command opts) "UTF-8" {})
+    (ssh/ssh-exec session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
     (process-result command opts)))
 
   )

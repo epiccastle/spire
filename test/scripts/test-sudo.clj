@@ -67,6 +67,9 @@
                  (assert (failed? (line-in-file :absent {:path "/root/spire-test.txt" :regexp #"test line"})))
                  (sudo (assert (not (failed? (line-in-file :absent {:path "/root/spire-test.txt" :regexp #"test line"})))))
 
+                 (assert (failed? (service :restarted {:name "cron"})))
+                 (sudo (assert (not (failed? (service :restarted {:name "cron"})))))
+
 
                  ))))
        (finally
