@@ -1,7 +1,5 @@
 (ns spire.module.sysctl
-  (:require [spire.output :as output]
-            [spire.state :as state]
-            [spire.transport :as transport]
+  (:require [spire.facts :as facts]
             [spire.ssh :as ssh]
             [spire.utils :as utils]
             [clojure.string :as string]))
@@ -18,7 +16,7 @@
 ;; (sysctl :present ...)
 ;;
 (defmethod preflight :present [_ {:keys [name value reload file] :as opts}]
-  nil)
+  (facts/check-bins-present #{:sed :sysctl :head :bash}))
 
 (defmethod make-script :present [_ {:keys [value reload file] :as opts}]
   (utils/make-script
@@ -47,13 +45,46 @@
       (assoc result
              :result :failed))))
 
+;;
+;; (sysctl :absent ...)
+;;
+(defmethod preflight :absent [_ {:keys [name value reload file] :as opts}]
+  (facts/check-bins-present #{:sed :sysctl :head :bash}))
+
+(defmethod make-script :absent [_ {:keys [value reload file] :as opts}]
+  (utils/make-script
+   "sysctl_absent.sh"
+   {:FILE (or file "/etc/sysctl.conf")
+    :REGEX (format "^%s\\s*=" (:name opts))
+    :NAME (:name opts)
+    :VALUE (some-> value name)
+    :RELOAD (str reload)}))
+
+(defmethod process-result :absent
+  [_ {:keys [name value reload file] :as opts} {:keys [out err exit] :as result}]
+  (let [result (assoc result :out-lines (string/split out #"\n"))]
+    (cond
+      (zero? exit)
+      (assoc result
+             :exit 0
+             :result :ok)
+
+      (= 255 exit)
+      (assoc result
+             :exit 0
+             :result :changed)
+
+      :else
+      (assoc result
+             :result :failed))))
+
 
 (utils/defmodule sysctl* [command {:keys [name value reload file] :as opts}]
-  [host-string session]
+  [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight command opts)
    (->>
-    (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
+    (ssh/ssh-exec session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
     (process-result command opts))))
 
 (defmacro sysctl [& args]

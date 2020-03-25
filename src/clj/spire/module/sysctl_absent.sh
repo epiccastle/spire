@@ -18,19 +18,18 @@ if [ "$LINENUM" ]; then
   LINECONTENT=$(sed -n "${LINENUM}p" "$FILE")
   IFS="= " read -ra PARTS <<< "$LINECONTENT"
   if [ "${PARTS[1]}" != "$VALUE" ]; then
-    sed -i "${LINENUM}c${NAME}=${VALUE}" "$FILE"
+    sed -i "${LINENUM}d" "$FILE"
     EXIT=-1
   fi
-else
-  sed -i "\$a${NAME}=${VALUE}" "$FILE"
-  EXIT=-1
 fi
 
 # reload
 if [ "$RELOAD" == "true" ]; then
   sysctl -p "$FILE"
   EXIT=-1
-else
+fi
+
+if [ "$VALUE" ]; then
   # running state
   RUNNING=$(sysctl "$NAME")
   IFS="= " read -ra PARTS <<< "$RUNNING"
