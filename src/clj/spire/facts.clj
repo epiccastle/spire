@@ -13,6 +13,7 @@
    "stat" "ls" "id" "sudo"
    "file" "touch" "chacl" "chown" "chgrp"
    "chmod" "cp" "cat" "cut" "printf" "find"
+   "head" "tail" "sysctl"
    "date" "sed" "grep" "awk" "curl"
    "groupadd" "groupmod" "groupdel"
    "wget" "git" "tar" "rsync" "bzip2"
