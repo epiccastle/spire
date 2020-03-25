@@ -71,7 +71,20 @@
                  (assert (failed? (stat "/root/.bash_history")))
                  (sudo (assert (not (failed? (stat "/root/.bash_history")))))
 
+                 ;; sysctl
+                 (assert (failed? (sysctl :present {:name "net.ipv4.ip_forward" :value "1"})))
+                 (sudo (assert (not (failed? (sysctl :present {:name "net.ipv4.ip_forward" :value "1"})))))
+                 (assert (failed? (sysctl :absent {:name "net.ipv4.ip_forward"})))
+                 (sudo (assert (not (failed? (sysctl :absent {:name "net.ipv4.ip_forward" :value "0"})))))
                  ))))
        (finally
          (user :present {:name "root" :shell "/bin/bash"})
-         (user :present {:name username :shell "/bin/bash"}))))
+         (user :present {:name username :shell "/bin/bash"})
+
+         ;; in case of exit or ctrl-c
+         (apt-repo :absent {:repo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"})
+         (authorized-keys :absent {:user "root" :key "my-fake-key"})
+         (group :absent {:name "spire-test"})
+         (line-in-file :absent {:path "/root/spire-test.txt" :regexp #"test line"})
+         (sysctl :absent {:name "net.ipv4.ip_forward" :value "0"})
+         )))
