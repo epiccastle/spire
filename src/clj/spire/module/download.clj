@@ -75,7 +75,7 @@
 (utils/defmodule download* [source-code-file form form-meta
                             {:keys [src dest recurse preserve flat
                                     dir-mode mode owner group attrs] :as opts}]
-  [host-config session]
+  [host-config session {:keys [shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight opts)
    (let [run (fn [command]
@@ -131,7 +131,9 @@
                               :dir-mode (or dir-mode 0755)
                               :mode (or mode 0644)
                               :recurse true
-                              :skip-files #{})))
+                              :skip-files #{}
+                              :shell-fn shell-fn
+                              :stdin-fn stdin-fn)))
 
              (not local-file?)
              (do
@@ -147,7 +149,8 @@
                                 :mode (or mode 0644)
                                 :recurse true
                                 :skip-files identical-content
-                                )))))
+                                :shell-fn shell-fn
+                                :stdin-fn stdin-fn)))))
 
            ;; non recursive
            (let [local-md5sum (get-in local [(.getName (io/file src)) :md5sum])
@@ -162,6 +165,8 @@
                               :preserve preserve
                               :dir-mode (or dir-mode 0755)
                               :mode (or mode 0644)
+                              :shell-fn shell-fn
+                              :stdin-fn stdin-fn
                               )))))
 
          passed-attrs? (or owner group dir-mode mode attrs)
