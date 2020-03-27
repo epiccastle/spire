@@ -13,25 +13,12 @@
 (defmulti process-result (fn [command opts result] command))
 
 (defmethod preflight :present [_ {:keys [user] :as opts}]
-  nil
-  )
+  (facts/check-bins-present [:grep :true :useradd :usermod :bash]))
 
 (defmethod make-script :present [_ {:keys [name comment uid home
                                            group groups password shell
                                            ] :as opts}]
-  (facts/on-shell
-   :fish (utils/make-script
-          "user_present.fish"
-          {:NAME name
-           :COMMENT comment
-           :USER_ID uid
-           :HOME_DIR home
-           :GROUP group
-           :GROUPSET groups
-           :PASSWORD (some->> password utils/var-escape)
-           :SHELL shell}
-          :fish)
-   :else (utils/make-script
+  (utils/make-script
           "user_present.sh"
           {:NAME name
            :COMMENT comment
@@ -40,7 +27,7 @@
            :GROUP group
            :GROUPSET groups
            :PASSWORD (some->> password utils/var-escape)
-           :SHELL shell})))
+           :SHELL shell}))
 
 (defmethod process-result :present
   [_ {:keys [user] :as opts} {:keys [out err exit] :as result}]
@@ -63,7 +50,7 @@
 
 
 (defmethod preflight :absent [_ {:keys [name] :as opts}]
-  nil
+  (facts/check-bins-present [:grep :true :userdel])
   )
 
 (defmethod make-script :absent [_ {:keys [name] :as opts}]

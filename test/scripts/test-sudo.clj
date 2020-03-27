@@ -76,6 +76,12 @@
                  (sudo (assert (not (failed? (sysctl :present {:name "net.ipv4.ip_forward" :value "1"})))))
                  (assert (failed? (sysctl :absent {:name "net.ipv4.ip_forward"})))
                  (sudo (assert (not (failed? (sysctl :absent {:name "net.ipv4.ip_forward" :value "0"})))))
+
+                 ;; user
+                 (assert (failed? (user :present {:name "spire-test" :shell "/bin/bash"})))
+                 (sudo (assert (not (failed? (user :present {:name "spire-test" :shell "/bin/bash"})))))
+                 (assert (failed? (user :absent {:name "spire-test"})))
+                 (sudo (assert (not (failed? (user :absent {:name "spire-test"})))))
                  ))))
        (finally
          (user :present {:name "root" :shell "/bin/bash"})
@@ -87,4 +93,5 @@
          (group :absent {:name "spire-test"})
          (line-in-file :absent {:path "/root/spire-test.txt" :regexp #"test line"})
          (sysctl :absent {:name "net.ipv4.ip_forward" :value "0"})
+         (user :absent {:name "spire-test"})
          )))
