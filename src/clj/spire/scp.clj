@@ -386,7 +386,10 @@
 (defn scp-from
   "Copy remote path(s) to local path via scp."
   [session remote-path ^String local-path
-   & {:keys [username password port mode dir-mode recurse preserve] :as opts}]
+   & {:keys [username password port mode dir-mode recurse preserve shell-fn stdin-fn]
+      :as opts
+      :or {shell-fn identity
+           stdin-fn identity}}]
   (let [file (File. local-path)
         [^PipedInputStream in
          ^PipedOutputStream send] (ssh/streams-for-in)
