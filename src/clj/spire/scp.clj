@@ -409,7 +409,7 @@
         _ (debugf "scp-from: %s" cmd)
         {:keys [^ChannelExec channel
                 ^PipedInputStream out-stream]}
-        (ssh/ssh-exec session cmd in :stream opts)
+        (ssh/ssh-exec session (shell-fn cmd) (stdin-fn in) :stream opts)
         exec channel
         recv out-stream]
     (debugf
