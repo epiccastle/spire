@@ -5,7 +5,8 @@
             [spire.ssh :as ssh]
             [spire.facts :as facts]
             [spire.utils :as utils]
-            [clojure.string :as string]))
+            [clojure.string :as string])
+  (:import [java.io PipedInputStream PipedOutputStream]))
 
 (defonce passwords (atom {}))
 
@@ -22,7 +23,34 @@
 
 (defn prefix-sudo-stdin [{:keys [password required?]} stdin]
   (if required?
-    (str password "\n" stdin)
+    (cond
+      (string? stdin)
+      (str password "\n" stdin)
+
+      (= PipedInputStream (type stdin))
+      (let [prefix (atom (if password (str password "\n") ""))]
+        (proxy [PipedInputStream] []
+          (available [this]
+            (+ (count @prefix)
+               (.available stdin)))
+          (close [this]
+            (.close stdin))
+          #_ (connect [this ^PipedOutputStream out]
+            (.connect stdin out))
+          (read
+            ([this]
+             (let [[old remain] (swap-vals! prefix (fn [s] (if (empty? s) s (subs s 1))))]
+               (if (empty? old)
+                 (.read stdin)
+                 (int (.charAt old 0)))))
+            ([this byte-arr off len]
+             (if (zero? len)
+               0
+               ;; TODO: transfer to buffer with prefix
+               ;; for now Im tired, just pass through
+               (.read stdin byte-arr off len))))
+          (receive [this b]
+            (.receive stdin b)))))
     stdin))
 
 (defn requires-password?
