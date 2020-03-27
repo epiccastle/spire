@@ -210,16 +210,19 @@
 
 (defn scp-to
   "Copy local path(s) to remote path via scp"
-  [session local-paths remote-path & {:keys [recurse] :as opts}]
+  [session local-paths remote-path & {:keys [recurse shell-fn stdin-fn]
+                                      :as opts
+                                      :or {shell-fn identity
+                                           stdin-fn identity}}]
   (let [local-paths (if (sequential? local-paths) local-paths [local-paths])
         ;;files (scp-files local-paths recurse)
         ]
     (let [[^PipedInputStream in
            ^PipedOutputStream send] (ssh/streams-for-in)
-          cmd (format "umask 0000; scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
+          cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
           _ (debugf "scp-to: %s" cmd)
           {:keys [^PipedInputStream out-stream]}
-          (ssh/ssh-exec session cmd in :stream opts)
+          (ssh/ssh-exec session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts)
           recv out-stream]
       (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)
       (debug "Receive initial ACK")
