@@ -95,115 +95,123 @@
 
          ;; analyse local and remote paths
          local-file? (local/is-file? dest)
-         remote-file? (remote/is-file? run src)
+         remote-readable? (remote/is-readable? run src)]
 
-         destination (if flat (io/file dest) (io/file dest (name (:key host-config))))
+     (if-not remote-readable?
+       {:result :failed
+        :err "destination path unreadable"
+        :exit 1
+        :out ""
+        }
+       (let [remote-file? (remote/is-file? run src)
 
-         {:keys [remote-to-local identical-content local remote] :as comparison}
-         (compare/compare-full-info
-          (if remote-file? destination (io/file destination (.getName (io/file src))))
-          run src)
+             destination (if flat (io/file dest) (io/file dest (name (:key host-config))))
 
-         {:keys [sizes total]} (compare/remote-to-local comparison)
+             {:keys [remote-to-local identical-content local remote] :as comparison}
+             (compare/compare-full-info
+              (if remote-file? destination (io/file destination (.getName (io/file src))))
+              run src)
 
-         max-filename-length (->> remote-to-local
-                                  (map count)
-                                  (apply max 0))
+             {:keys [sizes total]} (compare/remote-to-local comparison)
 
-         all-files-total total
+             max-filename-length (->> remote-to-local
+                                      (map count)
+                                      (apply max 0))
 
-         progress-fn (fn [file bytes total frac context]
-                       (output/print-progress
-                        source-code-file form form-meta
-                        host-config
-                        (utils/progress-stats
-                         file bytes total frac
-                         all-files-total
-                         max-filename-length
-                         context)
-                        ))
+             all-files-total total
 
-         copy-result
-         (if recurse
-           (cond
-             (and local-file? (not force))
-             {:result :failed :err "Cannot copy remote `src` over local `dest`: destination is a file. Use :force to delete destination file and replace."}
+             progress-fn (fn [file bytes total frac context]
+                           (output/print-progress
+                            source-code-file form form-meta
+                            host-config
+                            (utils/progress-stats
+                             file bytes total frac
+                             all-files-total
+                             max-filename-length
+                             context)
+                            ))
 
-             (and local-file? force)
-             (do
-               (.delete (io/file dest))
-               (.mkdirs destination)
-               (scp-result
-                (scp/scp-from session src (str destination)
-                              :progress-fn progress-fn
-                              :preserve preserve
-                              :dir-mode (or dir-mode 0755)
-                              :mode (or mode 0644)
-                              :recurse true
-                              :skip-files #{}
-                              :shell-fn shell-fn
-                              :stdin-fn stdin-fn)))
+             copy-result
+             (if recurse
+               (cond
+                 (and local-file? (not force))
+                 {:result :failed :err "Cannot copy remote `src` over local `dest`: destination is a file. Use :force to delete destination file and replace."}
 
-             (not local-file?)
-             (do
-               (.mkdirs destination)
-               (scp-result
-                (when (not=
-                       (count identical-content)
-                       (count (filter #(= :file (:type (second %))) remote)))
-                  (scp/scp-from session src (str destination)
-                                :progress-fn progress-fn
-                                :preserve preserve
-                                :dir-mode (or dir-mode 0755)
-                                :mode (or mode 0644)
-                                :recurse true
-                                :skip-files identical-content
-                                :shell-fn shell-fn
-                                :stdin-fn stdin-fn)))))
+                 (and local-file? force)
+                 (do
+                   (.delete (io/file dest))
+                   (.mkdirs destination)
+                   (scp-result
+                    (scp/scp-from session src (str destination)
+                                  :progress-fn progress-fn
+                                  :preserve preserve
+                                  :dir-mode (or dir-mode 0755)
+                                  :mode (or mode 0644)
+                                  :recurse true
+                                  :skip-files #{}
+                                  :shell-fn shell-fn
+                                  :stdin-fn stdin-fn)))
 
-           ;; non recursive
-           (let [local-md5sum (get-in local [(.getName (io/file src)) :md5sum])
-                 remote-md5sum (get-in remote ["" :md5sum])]
-             (.mkdirs destination)
-             (scp-result
-              ;; (println "--" local remote)
-              ;; (println ">>" local-md5sum remote-md5sum)
-              (when (not= local-md5sum remote-md5sum)
-                (scp/scp-from session src (str destination)
-                              :progress-fn progress-fn
-                              :preserve preserve
-                              :dir-mode (or dir-mode 0755)
-                              :mode (or mode 0644)
-                              :shell-fn shell-fn
-                              :stdin-fn stdin-fn
-                              )))))
+                 (not local-file?)
+                 (do
+                   (.mkdirs destination)
+                   (scp-result
+                    (when (not=
+                           (count identical-content)
+                           (count (filter #(= :file (:type (second %))) remote)))
+                      (scp/scp-from session src (str destination)
+                                    :progress-fn progress-fn
+                                    :preserve preserve
+                                    :dir-mode (or dir-mode 0755)
+                                    :mode (or mode 0644)
+                                    :recurse true
+                                    :skip-files identical-content
+                                    :shell-fn shell-fn
+                                    :stdin-fn stdin-fn)))))
 
-         passed-attrs? (or owner group dir-mode mode attrs)
+               ;; non recursive
+               (let [local-md5sum (get-in local [(.getName (io/file src)) :md5sum])
+                     remote-md5sum (get-in remote ["" :md5sum])]
+                 (.mkdirs destination)
+                 (scp-result
+                  ;; (println "--" local remote)
+                  ;; (println ">>" local-md5sum remote-md5sum)
+                  (when (not= local-md5sum remote-md5sum)
+                    (scp/scp-from session src (str destination)
+                                  :progress-fn progress-fn
+                                  :preserve preserve
+                                  :dir-mode (or dir-mode 0755)
+                                  :mode (or mode 0644)
+                                  :shell-fn shell-fn
+                                  :stdin-fn stdin-fn
+                                  )))))
 
-         attrs? (cond
-                  ;; generally we assume that if a copy happened, all attributes
-                  ;; and modes are correctly setup.
-                  (and (= :ok (:result copy-result)) passed-attrs?)
-                  (do
-                    #_ (println ">>>" mode remote-file?
-                                (io/file destination (.getName (io/file src))))
-                    (nio/set-attrs
-                     {:path (io/file destination (.getName (io/file src)))
-                      :owner owner
-                      :group group
-                      :mode mode
-                      :dir-mode dir-mode
-                      :attrs attrs
-                      :recurse recurse}))
+             passed-attrs? (or owner group dir-mode mode attrs)
 
-                  preserve
-                  (nio/set-attrs-preserve
-                   remote
-                   (if remote-file? destination (io/file destination (.getName (io/file src))))))]
-     (process-result
-      opts
-      copy-result
-      {:result (if attrs? :changed :ok)}))))
+             attrs? (cond
+                      ;; generally we assume that if a copy happened, all attributes
+                      ;; and modes are correctly setup.
+                      (and (= :ok (:result copy-result)) passed-attrs?)
+                      (do
+                        #_ (println ">>>" mode remote-file?
+                                    (io/file destination (.getName (io/file src))))
+                        (nio/set-attrs
+                         {:path (io/file destination (.getName (io/file src)))
+                          :owner owner
+                          :group group
+                          :mode mode
+                          :dir-mode dir-mode
+                          :attrs attrs
+                          :recurse recurse}))
+
+                      preserve
+                      (nio/set-attrs-preserve
+                       remote
+                       (if remote-file? destination (io/file destination (.getName (io/file src))))))]
+         (process-result
+          opts
+          copy-result
+          {:result (if attrs? :changed :ok)}))))))
 
 (defmacro download [& args]
   `(utils/wrap-report ~*file* ~&form (download* ~*file* (quote ~&form) ~(meta &form) ~@args)))
