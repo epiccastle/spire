@@ -12,6 +12,8 @@
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
+(def debug false)
+
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
 (defn preflight [{:keys [src content dest
@@ -99,17 +101,19 @@
                                   owner group mode attrs
                                   dir-mode preserve recurse force]
                            :as opts}]
-  [host-config session]
+  [host-config session {:keys [shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight opts)
    (let [run (fn [command]
                (let [{:keys [out exit err]}
                      (ssh/ssh-exec session command "" "UTF-8" {})]
-                 (comment
-                   (println "command:" command)
-                   (println "exit:" exit)
-                   (println "out:" out)
-                   (println "err:" err))
+                 (when debug
+                   (println "-------")
+                   (prn 'shell (shell-fn "bash"))
+                   (prn 'stdin (stdin-fn command))
+                   (prn 'exit exit)
+                   (prn 'out out)
+                   (prn 'err err))
                  (if (zero? exit)
                    (string/trim out)
                    "")))
