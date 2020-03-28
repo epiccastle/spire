@@ -222,6 +222,8 @@
                                   'authorized-keys (with-meta @#'authorized-keys/authorized-keys {:sci/macro true})}
    'spire.module.apt-repo {'apt-repo* apt-repo/apt-repo*
                            'apt-repo (with-meta @#'apt-repo/apt-repo {:sci/macro true})}
+   'spire.module.download {'download* download/download*
+                           'download (with-meta @#'download/download {:sci/macro true})}
    'spire.module.group {'group* group/group*
                         'group (with-meta @#'group/group {:sci/macro true})}
    'spire.module.get-file {'get-file* get-file/get-file*
