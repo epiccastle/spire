@@ -11,6 +11,8 @@
             PosixFilePermission PosixFilePermissions PosixFileAttributeView
             FileTime]))
 
+(set! *warn-on-reflection* true)
+
 (defn relativise
   "return the relative path that gets you from a working directory
   `source` to the file or directory `target`"
@@ -34,7 +36,7 @@
 (defn last-access-time [file]
   (let [p (.toPath (io/file file))]
     (int
-     (/ (.toMillis (.lastAccessTime (Files/readAttributes p  java.nio.file.attribute.BasicFileAttributes empty-link-options)))
+     (/ (.toMillis (.lastAccessTime (Files/readAttributes p java.nio.file.attribute.BasicFileAttributes ^"[Ljava.nio.file.LinkOption;" empty-link-options)))
         1000))))
 
 #_ (last-access-time ".")
@@ -42,7 +44,7 @@
 (defn last-modified-time [file]
   (let [p (.toPath (io/file file))]
     (int
-     (/ (.toMillis (.lastModifiedTime (Files/readAttributes p  java.nio.file.attribute.BasicFileAttributes empty-link-options)))
+     (/ (.toMillis (.lastModifiedTime (Files/readAttributes p java.nio.file.attribute.BasicFileAttributes ^"[Ljava.nio.file.LinkOption;" empty-link-options)))
         1000))))
 
 #_ (last-modified-time ".")
@@ -60,7 +62,7 @@
 
 (defn file-mode [file]
   (let [p (.toPath (io/file file))
-        perm-hash-set (.permissions (Files/readAttributes p  java.nio.file.attribute.PosixFileAttributes empty-link-options))]
+        perm-hash-set (.permissions ^java.nio.file.attribute.PosixFileAttributes (Files/readAttributes p java.nio.file.attribute.PosixFileAttributes ^"[Ljava.nio.file.LinkOption;" empty-link-options))]
     (reduce (fn [acc [perm-mode perm-val]]
               (if (.contains perm-hash-set perm-mode)
                 (bit-or acc perm-val)
@@ -129,7 +131,7 @@
 (defn set-last-access-time [file ts]
   (let [file-time (FileTime/fromMillis (* ts 1000))
         p (.toPath (io/file file))]
-    (.setTimes (Files/getFileAttributeView p BasicFileAttributeView empty-link-options)
+    (.setTimes ^java.nio.file.attribute.BasicFileAttributeView (Files/getFileAttributeView p BasicFileAttributeView ^"[Ljava.nio.file.LinkOption;" empty-link-options)
                ;; modified access create
                nil file-time nil
                )))
@@ -140,7 +142,7 @@
   (let [modified-time (FileTime/fromMillis (* modified 1000))
         access-time (FileTime/fromMillis (* access 1000))
         p (.toPath (io/file file))]
-    (.setTimes (Files/getFileAttributeView p BasicFileAttributeView empty-link-options)
+    (.setTimes ^java.nio.file.attribute.BasicFileAttributeView (Files/getFileAttributeView p BasicFileAttributeView ^"[Ljava.nio.file.LinkOption;" empty-link-options)
                ;; modified access create
                modified-time access-time nil)))
 
@@ -177,9 +179,9 @@
 (defn idem-set-owner [file owner]
   (let [p (.toPath (io/file file))]
     (if (number? owner)
-      (let [uid (Files/getAttribute p "unix:uid" empty-link-options)]
+      (let [uid (Files/getAttribute p "unix:uid" ^"[Ljava.nio.file.LinkOption;" empty-link-options)]
         (when (not= owner uid) (set-owner file owner)))
-      (let [user (Files/getAttribute p "unix:owner" empty-link-options)]
+      (let [user (Files/getAttribute p "unix:owner" ^"[Ljava.nio.file.LinkOption;" empty-link-options)]
         (when (not= owner (str user)) (set-owner file owner))))))
 
 #_ (idem-set-owner "foo" "crispin")
@@ -194,8 +196,7 @@
         fs (FileSystems/getDefault)
         upls (.getUserPrincipalLookupService fs)
         new-group (.lookupPrincipalByGroupName upls group)]
-    (-> (Files/getFileAttributeView p PosixFileAttributeView empty-link-options)
-        (.setGroup new-group))
+    (.setGroup ^java.nio.file.attribute.PosixFileAttributeView (Files/getFileAttributeView p PosixFileAttributeView ^"[Ljava.nio.file.LinkOption;" empty-link-options) new-group)
     true))
 
 (defmethod set-group Long [path group]
@@ -208,9 +209,9 @@
 (defn idem-set-group [file group]
   (let [p (.toPath (io/file file))]
     (if (number? group)
-      (let [gid (Files/getAttribute p "unix:gid" empty-link-options)]
+      (let [gid (Files/getAttribute p "unix:gid" ^"[Ljava.nio.file.LinkOption;" empty-link-options)]
         (when (not= group gid) (set-group file group)))
-      (let [group-name (Files/getAttribute p "unix:group" empty-link-options)]
+      (let [group-name (Files/getAttribute p "unix:group" ^"[Ljava.nio.file.LinkOption;" empty-link-options)]
         (when (not= group (str group-name)) (set-group file group-name))))))
 
 #_ (idem-set-group "foo" "crispin")
@@ -237,10 +238,10 @@
            changed? false]
       (if file
         (cond
-          (.isDirectory file)
+          (.isDirectory ^java.io.File file)
           (recur remain (set-attr file owner group dir-mode))
 
-          (.isFile file)
+          (.isFile ^java.io.File file)
           (recur remain (set-attr file owner group mode))
 
           :else
