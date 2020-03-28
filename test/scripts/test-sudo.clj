@@ -85,8 +85,12 @@
 
                  ;; file download
                  (assert (failed? (download {:src "/root/.bash_history" :dest "/tmp/root-bash-history"})))
-                 (assert (not (failed? (sudo (download {:src "/root/.bash_history" :dest "/tmp/root-bash-history"})))))
+                 (sudo (assert (not (failed? (download {:src "/root/.bash_history" :dest "/tmp/root-bash-history"})))))
 
+                 ;; file upload
+                 (assert (failed? (upload {:content "test" :dest "/root/spire-test"})))
+                 (sudo (assert (not (failed? (upload {:content "test" :dest "/root/spire-test"})))))
+                 (sudo (assert (= "test" (:out (get-file "/root/spire-test")))))
                  ))))
        (finally
          (user :present {:name "root" :shell "/bin/bash"})
