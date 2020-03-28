@@ -147,7 +147,7 @@
 
     ;; progress bars for this module
     (let [max-host-key-length (when-not (empty? copy-progress)
-                                (apply max (map (fn [[h _]] (count (:key h))) copy-progress)))
+                                (apply max (map (fn [[h _]] (count (str (:key h)))) copy-progress)))
           max-filename-length (when-not (empty? copy-progress)
                                 (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
           ]
