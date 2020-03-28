@@ -4,6 +4,21 @@
         "allPublicMethods": true
     },
     {
+        "name": "java.util.regex.Pattern",
+        "allPublicConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "java.nio.file.Files",
+        "allPublicConstructors": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "sun.nio.fs.UnixFileAttributes",
+        "allPublicConstructors": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "clojure.lang.LineNumberingPushbackReader",
         "allPublicConstructors": true,
         "allPublicMethods": true
