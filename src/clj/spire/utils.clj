@@ -294,6 +294,14 @@
       (str "/")
       (->> (str "/"))))
 
+(defn containing-folder
+  "given a path, try to return the path of the folder containing the file"
+  [path]
+  (cond
+    (string/ends-with? path "/") path
+    (not (.contains path "/")) "./"
+    :else (string/join "/" (butlast (string/split path #"/" -1)))))
+
 (defn path-escape [path]
   (string/replace path "\"" "\\\""))
 
