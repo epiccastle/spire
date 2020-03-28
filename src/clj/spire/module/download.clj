@@ -14,6 +14,8 @@
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
+(def debug false)
+
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
 (defn preflight [{:keys [src dest recurse preserve flat dir-mode mode] :as opts}]
@@ -79,8 +81,15 @@
   (or
    (preflight opts)
    (let [run (fn [command]
-               (let [{:keys [out exit]}
-                     (ssh/ssh-exec session command "" "UTF-8" {})]
+               (let [{:keys [out err exit]}
+                     (ssh/ssh-exec session (shell-fn "bash") (stdin-fn command) "UTF-8" {})]
+                 (when debug
+                   (println "-------")
+                   (prn 'shell (shell-fn "bash"))
+                   (prn 'stdin (stdin-fn command))
+                   (prn 'exit exit)
+                   (prn 'out out)
+                   (prn 'err err))
                  (when (zero? exit)
                    (string/trim out))))
 
