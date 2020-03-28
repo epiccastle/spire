@@ -11,6 +11,13 @@
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
+(defn is-writable? [run path]
+  (->> (facts/on-os
+        :freebsd (run (format "if ( -w \"%s\" ) then\necho write\nelse\necho no\nendif\n" path))
+        :else (run (format "if [ -w \"%s\" ]; then echo write; else echo no; fi" path)))
+       string/trim
+       (= "write")))
+
 (defn is-readable? [run path]
   (->> (facts/on-os
         :freebsd (run (format "if ( -r \"%s\" ) then\necho read\nelse\necho no\nendif\n" path))
