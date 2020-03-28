@@ -82,6 +82,11 @@
                  (sudo (assert (not (failed? (user :present {:name "spire-test" :shell "/bin/bash"})))))
                  (assert (failed? (user :absent {:name "spire-test"})))
                  (sudo (assert (not (failed? (user :absent {:name "spire-test"})))))
+
+                 ;; file download
+                 (assert (failed? (download {:src "/root/.bash_history" :dest "/tmp/root-bash-history"})))
+                 (assert (not (failed? (sudo (download {:src "/root/.bash_history" :dest "/tmp/root-bash-history"})))))
+
                  ))))
        (finally
          (user :present {:name "root" :shell "/bin/bash"})
