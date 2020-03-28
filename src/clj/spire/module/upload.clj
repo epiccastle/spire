@@ -106,7 +106,7 @@
    (preflight opts)
    (let [run (fn [command]
                (let [{:keys [out exit err]}
-                     (ssh/ssh-exec session command "" "UTF-8" {})]
+                     (ssh/ssh-exec session (shell-fn "bash") (stdin-fn command) "UTF-8" {})]
                  (when debug
                    (println "-------")
                    (prn 'shell (shell-fn "bash"))
@@ -120,155 +120,171 @@
 
          ;; analyse local and remote paths
          local-file? (when-not content (local/is-file? src))
-         remote-file? (remote/is-file? run dest)
 
-         content (or content (io/file src))
+         remote-writable? (if (or content local-file?)
+                            (remote/is-writable? run (utils/containing-folder dest))
+                            (remote/is-writable? run dest))]
 
-         copied?
-         (if recurse
-           (let [
-                 transfers (compare/compare-full-info (str content) run
-                                                      dest
-                                                      #_(if local-file?
+     (if-not remote-writable?
+       {:result :failed
+        :err "destination path unwritable"
+        :exit 1
+        :out ""}
+       (let [remote-file? (remote/is-file? run dest)
+
+             content (or content (io/file src))
+
+             copied?
+             (if recurse
+               (let [
+                     transfers (compare/compare-full-info (str content) run
                                                           dest
-                                                          (io/file dest (.getName (io/file (str content))))))
-                 {:keys [local local-to-remote identical-content remote]} transfers
-                 total-size (->> local-to-remote
-                                 (map (comp :size local))
-                                 (apply +))
-                 max-filename-length (->> local-to-remote
-                                          (map (comp count #(.getName %) io/file :filename local))
-                                          (apply max 0))
+                                                          #_(if local-file?
+                                                              dest
+                                                              (io/file dest (.getName (io/file (str content))))))
+                     {:keys [local local-to-remote identical-content remote]} transfers
+                     total-size (->> local-to-remote
+                                     (map (comp :size local))
+                                     (apply +))
+                     max-filename-length (->> local-to-remote
+                                              (map (comp count #(.getName %) io/file :filename local))
+                                              (apply max 0))
 
-                 identical-content (->> identical-content
-                                        (map #(.getPath (io/file src %)))
-                                        (into #{}))
-                 ]
-             (comment
-               (prn "identical:" identical-content)
-               (prn "local:" local)
-               (prn "remote:" remote)
-               (prn "lkeys:" (keys local)))
+                     identical-content (->> identical-content
+                                            (map #(.getPath (io/file src %)))
+                                            (into #{}))
+                     ]
+                 (comment
+                   (prn "identical:" identical-content)
+                   (prn "local:" local)
+                   (prn "remote:" remote)
+                   (prn "lkeys:" (keys local)))
 
-             (cond
-               (and remote-file? (not force))
-               {:result :failed :err "Cannot copy `content` directory over `dest`: destination is a file. Use :force to delete destination file and replace."}
+                 (cond
+                   (and remote-file? (not force))
+                   {:result :failed :err "Cannot copy `content` directory over `dest`: destination is a file. Use :force to delete destination file and replace."}
 
-               (and remote-file? force)
-               (do
-                 (run (format "rm -f \"%s\"" dest))
+                   (and remote-file? force)
+                   (do
+                     (run (format "rm -f \"%s\"" dest))
+                     (scp-result
+                      (scp/scp-to session content dest
+                                  :progress-fn (fn [file bytes total frac context]
+                                                 (output/print-progress
+                                                  source-code-file form form-meta
+                                                  host-config
+                                                  (utils/progress-stats
+                                                   file bytes total frac
+                                                   total-size
+                                                   max-filename-length
+                                                   context)
+                                                  ))
+                                  :preserve preserve
+                                  :dir-mode (or dir-mode 0755)
+                                  :mode (or mode 0644)
+                                  :recurse true
+                                  :skip-files #{}
+                                  :shell-fn shell-fn
+                                  :stdin-fn stdin-fn
+                                  )))
+
+                   (not remote-file?)
+                   (scp-result
+                    (when (not=
+                           (count identical-content)
+                           (count (filter #(= :file (:type (second %))) local))
+                           )
+                      (scp/scp-to session content dest
+                                  :progress-fn (fn [file bytes total frac context]
+                                                 (output/print-progress
+                                                  source-code-file form form-meta
+                                                  host-config
+                                                  (utils/progress-stats
+                                                   file bytes total frac
+                                                   total-size
+                                                   max-filename-length
+                                                   context)
+                                                  ))
+                                  :preserve preserve
+                                  :dir-mode (or dir-mode 0755)
+                                  :mode (or mode 0644)
+                                  :recurse true
+                                  :skip-files identical-content
+                                  :shell-fn shell-fn
+                                  :stdin-fn stdin-fn
+                                  )))))
+
+               ;; straight single copy
+               (let [local-md5 (digest/md5 content)
+                     remote-md5 (some-> (facts/on-shell
+                                         :csh (run (format "%s \"%s\"" (facts/md5) dest))
+                                         :else (run (format "%s \"%s\"" (facts/md5) dest)))
+                                        process-md5-out
+                                        first)
+                     ;; _ (println "l:" local-md5 "r:" remote-md5)
+                     ;; _ (do (println "\n\n\n"))
+                     ]
+                 (comment (prn "local-md5:" local-md5)
+                          (prn "remote-md5:" remote-md5))
                  (scp-result
-                  (scp/scp-to session content dest
-                              :progress-fn (fn [file bytes total frac context]
-                                             (output/print-progress
-                                              source-code-file form form-meta
-                                              host-config
-                                              (utils/progress-stats
-                                               file bytes total frac
-                                               total-size
-                                               max-filename-length
-                                               context)
-                                              ))
-                              :preserve preserve
-                              :dir-mode (or dir-mode 0755)
-                              :mode (or mode 0644)
-                              :recurse true
-                              :skip-files #{}
-                              )))
+                  (when (not= local-md5 remote-md5)
+                    (scp/scp-to session content dest
+                                :progress-fn (fn [file bytes total frac context]
+                                               (output/print-progress
+                                                source-code-file form form-meta
+                                                host-config
+                                                (utils/progress-stats
+                                                 file bytes total frac
+                                                 (utils/content-size content)
+                                                 (count (utils/content-display-name content))
+                                                 context)
+                                                ))
+                                :preserve preserve
+                                :dir-mode (or dir-mode 0755)
+                                :mode (or mode 0644)
+                                :shell-fn shell-fn
+                                :stdin-fn stdin-fn
+                                )))))
 
-               (not remote-file?)
-               (scp-result
-                (when (not=
-                       (count identical-content)
-                       (count (filter #(= :file (:type (second %))) local))
-                       )
-                  (scp/scp-to session content dest
-                              :progress-fn (fn [file bytes total frac context]
-                                             (output/print-progress
-                                              source-code-file form form-meta
-                                              host-config
-                                              (utils/progress-stats
-                                               file bytes total frac
-                                               total-size
-                                               max-filename-length
-                                               context)
-                                              ))
-                              :preserve preserve
-                              :dir-mode (or dir-mode 0755)
-                              :mode (or mode 0644)
-                              :recurse true
-                              :skip-files identical-content
-                              )))))
+             passed-attrs? (or owner group dir-mode mode attrs)
 
-           ;; straight single copy
-           (let [local-md5 (digest/md5 content)
-                 remote-md5 (some-> (facts/on-shell
-                                     :csh (run (format "%s \"%s\"" (facts/md5) dest))
-                                     :else (run (format "%s \"%s\"" (facts/md5) dest)))
-                                    process-md5-out
-                                    first)
-                 ;; _ (println "l:" local-md5 "r:" remote-md5)
-                 ;; _ (do (println "\n\n\n"))
-                 ]
-             (comment (prn "local-md5:" local-md5)
-                      (prn "remote-md5:" remote-md5))
-             (scp-result
-              (when (not= local-md5 remote-md5)
-                (scp/scp-to session content dest
-                            :progress-fn (fn [file bytes total frac context]
-                                           (output/print-progress
-                                            source-code-file form form-meta
-                                            host-config
-                                            (utils/progress-stats
-                                             file bytes total frac
-                                             (utils/content-size content)
-                                             (count (utils/content-display-name content))
-                                             context)
-                                            ))
-                            :preserve preserve
-                            :dir-mode (or dir-mode 0755)
-                            :mode (or mode 0644)
-                            )))))
+             {:keys [exit err out]} (cond
+                                      ;; generally we assume that if a copy happened, all attributes
+                                      ;; and modes are correctly setup.
+                                      (and (= :ok (:result copied?)) passed-attrs?)
+                                      (attrs/set-attrs
+                                       session
+                                       {:path dest
+                                        :owner owner
+                                        :group group
+                                        :mode mode
+                                        :dir-mode dir-mode
+                                        :attrs attrs
+                                        :recurse recurse})
 
-         passed-attrs? (or owner group dir-mode mode attrs)
+                                      preserve
+                                      (attrs/set-attrs-preserve
+                                       session
+                                       src
+                                       dest))]
+         (process-result
+          opts
+          copied?
+          (cond
+            (= 0 exit)
+            {:result :ok}
 
-         {:keys [exit err out]} (cond
-                                  ;; generally we assume that if a copy happened, all attributes
-                                  ;; and modes are correctly setup.
-                                  (and (= :ok (:result copied?)) passed-attrs?)
-                                  (attrs/set-attrs
-                                   session
-                                   {:path dest
-                                    :owner owner
-                                    :group group
-                                    :mode mode
-                                    :dir-mode dir-mode
-                                    :attrs attrs
-                                    :recurse recurse})
+            (= 255 exit)
+            {:result :changed}
 
-                                  preserve
-                                  (attrs/set-attrs-preserve
-                                   session
-                                   src
-                                   dest))]
-     (process-result
-      opts
-      copied?
-      (cond
-        (= 0 exit)
-        {:result :ok}
+            (nil? exit)
+            {:result :ok}
 
-        (= 255 exit)
-        {:result :changed}
-
-        (nil? exit)
-        {:result :ok}
-
-        :else
-        {:result :failed
-         :exit exit
-         :err err
-         :out out}))
+            :else
+            {:result :failed
+             :exit exit
+             :err err
+             :out out}))))
      )))
 
 (defmacro upload [& args]
