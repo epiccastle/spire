@@ -9,6 +9,8 @@
            [java.nio.file.attribute FileAttribute BasicFileAttributes BasicFileAttributeView
             PosixFilePermission PosixFilePermissions FileTime]))
 
+(set! *warn-on-reflection* true)
+
 (defn to-camelcase [s]
   (-> s
       (string/split #"\s+")
@@ -83,28 +85,28 @@
   (.getCanonicalPath (io/as-file "/proc/self/exe")))
 
 (defmulti content-size type)
-(defmethod content-size java.io.File [f] (.length f))
+(defmethod content-size java.io.File [f] (.length ^java.io.File f))
 (defmethod content-size java.lang.String [f] (count f))
 (defmethod content-size (Class/forName "[B") [f] (count f))
 
 (defmulti content-display-name type)
-(defmethod content-display-name java.io.File [f] (.getName f))
+(defmethod content-display-name java.io.File [f] (.getName ^java.io.File f))
 (defmethod content-display-name java.lang.String [f] "[String Data]")
 (defmethod content-display-name (Class/forName "[B") [f] "[Byte Array]")
 
 (defmulti content-recursive? type)
-(defmethod content-recursive? java.io.File [f] (.isDirectory f))
+(defmethod content-recursive? java.io.File [f] (.isDirectory ^java.io.File f))
 (defmethod content-recursive? java.lang.String [f] false)
 (defmethod content-recursive? (Class/forName "[B") [f] false)
 
 (defmulti content-file? type)
-(defmethod content-file? java.io.File [f] (.isFile f))
+(defmethod content-file? java.io.File [f] (.isFile ^java.io.File f))
 (defmethod content-file? java.lang.String [f] false)
 (defmethod content-file? (Class/forName "[B") [f] false)
 
 (defmulti content-stream type)
-(defmethod content-stream java.io.File [f] (io/input-stream f))
-(defmethod content-stream java.lang.String [f] (io/input-stream (.getBytes f)))
+(defmethod content-stream java.io.File [f] (io/input-stream ^java.io.File f))
+(defmethod content-stream java.lang.String [f] (io/input-stream (.getBytes ^String f)))
 (defmethod content-stream (Class/forName "[B") [f] (io/input-stream f))
 
 (defn progress-bar [bytes total frac {:keys [start-time start-bytes]}]
@@ -287,8 +289,7 @@
     (embed-src ~fname)))
 
 (defn re-pattern-to-sed [re]
-  (-> re
-      .pattern
+  (-> (.pattern ^java.util.regex.Pattern re)
       (string/replace "\"" "\"")
       (string/replace "/" "\\/")
       (str "/")
@@ -299,7 +300,7 @@
   [path]
   (cond
     (string/ends-with? path "/") path
-    (not (.contains path "/")) "./"
+    (not (.contains ^String path "/")) "./"
     :else (string/join "/" (butlast (string/split path #"/" -1)))))
 
 (defn path-escape [path]
@@ -332,13 +333,13 @@
 
 (defmacro wrap-report [file form & body]
   `(do
-     (spire.output/print-form ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
+     (spire.output.core/print-form :default ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
      (try
        (let [result# (do ~@body)]
-         (spire.output/print-result ~file (quote ~form) ~(meta form) (spire.state/get-host-config) result#)
+         (spire.output.core/print-result :default ~file (quote ~form) ~(meta form) (spire.state/get-host-config) result#)
          result#)
        (catch clojure.lang.ExceptionInfo e#
-         (spire.output/print-result ~file (quote ~form) ~(meta form) (spire.state/get-host-config) (ex-data e#))
+         (spire.output.core/print-result :default ~file (quote ~form) ~(meta form) (spire.state/get-host-config) (ex-data e#))
          (throw e#)))))
 
 #_ (content-size (byte-array [1 2]))
@@ -359,5 +360,5 @@
 
 (defmacro debug [& body]
   `(let [result# (do ~@body)]
-     (spire.output/debug-result ~*file* (quote ~&form) ~(meta &form) (spire.state/get-host-config) result#)
+     (spire.output.core/debug-result :default ~*file* (quote ~&form) ~(meta &form) (spire.state/get-host-config) result#)
      result#))
