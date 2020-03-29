@@ -1,15 +1,9 @@
 (ns spire.remote
-  (:require [spire.output :as output]
-            [spire.ssh :as ssh]
-            [spire.scp :as scp]
-            [spire.utils :as utils]
-            [spire.nio :as nio]
-            [spire.transport :as transport]
+  (:require [spire.nio :as nio]
             [spire.facts :as facts]
-            [spire.module.attrs :as attrs]
-            [digest :as digest]
-            [clojure.java.io :as io]
             [clojure.string :as string]))
+
+(set! *warn-on-reflection* true)
 
 (defn is-writable? [run path]
   (->> (facts/on-os
