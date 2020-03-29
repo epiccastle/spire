@@ -4,7 +4,7 @@
             [spire.transfer :as transfer]
             [spire.transport :as transport]
             [spire.state :as state]
-            [spire.output :as output]
+            [spire.output.core :as output]
             [spire.facts :as facts]
             [spire.selmer :as selmer]
             [spire.module.line-in-file :as line-in-file]
@@ -193,7 +193,7 @@
                 'binding-sym eval/binding-sym
                 'binding (with-meta @#'eval/binding {:sci/macro true})}
 
-   'spire.output {
+   'spire.output.core {
                   'print-form output/print-form
                   'print-result output/print-result
                   'debug-result output/debug-result

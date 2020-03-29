@@ -1,10 +1,6 @@
 (ns spire.module.get-file
-  (:require [spire.output :as output]
-            [spire.state :as state]
-            [spire.transport :as transport]
-            [spire.ssh :as ssh]
-            [spire.utils :as utils]
-            [clojure.string :as string]))
+  (:require [spire.ssh :as ssh]
+            [spire.utils :as utils]))
 
 (utils/defmodule get-file* [file-path]
   [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]

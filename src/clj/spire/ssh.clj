@@ -266,7 +266,11 @@ keys.  All other option key pairs will be passed as SSH config options."
              be polled for connected status.
   "
   [^Session session ^String cmd in out opts]
-  (when debug (prn 'ssh-exec session cmd in out opts))
+  (when debug
+    (prn 'ssh-exec session)
+    (println cmd)
+    (println in)
+    (prn out opts))
   (let [[^PipedOutputStream out-stream
          ^PipedInputStream out-inputstream] (streams-for-out out)
         [^PipedOutputStream err-stream

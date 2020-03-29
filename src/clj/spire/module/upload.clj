@@ -1,5 +1,5 @@
 (ns spire.module.upload
-  (:require [spire.output :as output]
+  (:require [spire.output.core :as output]
             [spire.ssh :as ssh]
             [spire.facts :as facts]
             [spire.scp :as scp]
@@ -171,6 +171,7 @@
                       (scp/scp-to session content dest
                                   :progress-fn (fn [file bytes total frac context]
                                                  (output/print-progress
+                                                  :default
                                                   source-code-file form form-meta
                                                   host-config
                                                   (utils/progress-stats
@@ -197,6 +198,7 @@
                       (scp/scp-to session content dest
                                   :progress-fn (fn [file bytes total frac context]
                                                  (output/print-progress
+                                                  :default
                                                   source-code-file form form-meta
                                                   host-config
                                                   (utils/progress-stats
@@ -231,6 +233,7 @@
                     (scp/scp-to session content dest
                                 :progress-fn (fn [file bytes total frac context]
                                                (output/print-progress
+                                                :default
                                                 source-code-file form form-meta
                                                 host-config
                                                 (utils/progress-stats

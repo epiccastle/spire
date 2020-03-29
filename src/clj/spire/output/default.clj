@@ -1,9 +1,13 @@
-(ns spire.output
+(ns spire.output.default
   (:require [clojure.set :as set]
             [spire.utils :as utils]
             [spire.state :as state]
+            [spire.output.core :as output]
             [puget.printer :as puget]
             [clojure.core.async :refer [<!! put! go chan thread]]))
+
+
+(set! *warn-on-reflection* true)
 
 (defonce state
   (atom []))
@@ -181,7 +185,9 @@
       ;; reprint all output state at end
       (when (or (not (empty? just-printed))
                 (not (empty? debug-entries)))
-        (print-state s))))
+        (print-state s)
+        #_(reset! state [])
+        )))
 
   )
 
@@ -201,7 +207,7 @@
           (println (utils/erase-line)))
         (up lines-lost)))))
 
-(defn print-thread []
+(defmethod output/print-thread :default [_]
   (thread
     (loop []
       (state-change (<!! state-change-chan))
@@ -225,7 +231,7 @@
                   i)))
          (filter identity))))
 
-(defn print-form [file form file-meta host-config]
+(defmethod output/print-form :default [_ file form file-meta host-config]
   ;; (prn 'print-form form file file-meta)
   (swap! state
          (fn [s]
@@ -238,7 +244,7 @@
                      :width (count (pr-str form))
                      :results []})))))
 
-(defn print-result [file form file-meta host-config result]
+(defmethod output/print-result :default [_ file form file-meta host-config result]
   (comment
     (prn 'print-result result host-config)
     (prn (find-forms-matching-index @state {:form form :file file :meta file-meta})))
@@ -265,10 +271,10 @@
              s
              ))))
 
-(defn debug-result [file form file-meta host-config result]
+(defmethod output/debug-result :default [_ file form file-meta host-config result]
   (swap! debug-set conj [file form file-meta host-config result]))
 
-(defn print-progress [file form form-meta host-string {:keys [progress context] :as data}]
+(defmethod output/print-progress :default [_ file form form-meta host-string {:keys [progress context] :as data}]
   ;;(prn 'print-progress file form form-meta host-string data)
   (swap! state
          (fn [s]

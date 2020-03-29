@@ -1,10 +1,11 @@
 (ns spire.core
   (:require [spire.state]
             [spire.config :as config]
-            [spire.output :as output]
+            [spire.output.core :as output]
             [spire.namespaces :as namespaces]
             [spire.utils :as utils]
             [spire.eval :as eval]
+            [spire.output.default]
             [puget.printer :as puget]
             [sci.core :as sci]
             [clojure.string :as string]
@@ -72,7 +73,7 @@
       (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
 
         (initialise options)
-        (output/print-thread)
+        (output/print-thread :default)
 
         (cond
           (:help options)

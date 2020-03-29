@@ -2,7 +2,6 @@
   (:require [spire.utils :as utils]
             [spire.facts :as facts]
             [spire.ssh :as ssh]
-            [spire.output :as output]
             [clojure.string :as string]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})

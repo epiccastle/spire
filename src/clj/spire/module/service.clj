@@ -1,10 +1,7 @@
 (ns spire.module.service
-  (:require [spire.output :as output]
-            [spire.facts :as facts]
-            [spire.transport :as transport]
+  (:require [spire.facts :as facts]
             [spire.ssh :as ssh]
-            [spire.utils :as utils]
-            [clojure.string :as string]))
+            [spire.utils :as utils]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 

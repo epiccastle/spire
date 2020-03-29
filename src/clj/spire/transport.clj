@@ -1,6 +1,6 @@
 (ns spire.transport
   (:require [spire.ssh :as ssh]
-            [spire.output :as output]
+            [spire.output.core :as output]
             [spire.state :as state]
             [spire.ssh-agent :as ssh-agent]
             [spire.facts :as facts]
