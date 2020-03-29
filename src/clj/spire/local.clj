@@ -1,20 +1,16 @@
 (ns spire.local
-  (:require [spire.output :as output]
-            [spire.ssh :as ssh]
-            [spire.scp :as scp]
-            [spire.utils :as utils]
-            [spire.nio :as nio]
-            [spire.module.attrs :as attrs]
+  (:require [spire.nio :as nio]
             [digest :as digest]
-            [clojure.java.io :as io]
-            [clojure.string :as string]))
+            [clojure.java.io :as io]))
+
+(set! *warn-on-reflection* true)
 
 (defn is-file? [path]
   (.isFile (io/file path)))
 
 (defn path-md5sums [path]
   (->> (file-seq (io/file path))
-       (filter #(.isFile %))
+       (filter #(.isFile ^java.io.File %))
        (map (fn [f] [(nio/relativise path f) (digest/md5 f)]))
        (into {})))
 
@@ -25,7 +21,7 @@
   (->> (file-seq (io/file path))
        (map (fn [f]
               (cond
-                (.isFile f)
+                (.isFile ^java.io.File f)
                 (let [filename (nio/relativise path f)
                       mode (nio/file-mode f)]
                   [filename
@@ -37,10 +33,10 @@
                     :mode-string (format "%o" mode)
                     :last-access (nio/last-access-time f)
                     :last-modified (nio/last-modified-time f)
-                    :size (.length f)
+                    :size (.length ^java.io.File f)
                     }])
 
-                (.isDirectory f)
+                (.isDirectory ^java.io.File f)
                 (let [filename (nio/relativise path f)
                       mode (nio/file-mode f)]
                   [filename
