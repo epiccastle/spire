@@ -185,13 +185,18 @@
                  'connection state/connection
                  'shell-context state/shell-context
                  'ssh-connections state/ssh-connections
+                 'output-module state/output-module
                  'get-host-config state/get-host-config
                  'get-connection state/get-connection
-                 'get-shell-context state/get-shell-context}
+                 'get-shell-context state/get-shell-context
+                 'get-output-module state/get-output-module
+                 }
 
    'spire.eval {'context eval/context
                 'binding-sym eval/binding-sym
-                'binding (with-meta @#'eval/binding {:sci/macro true})}
+                'binding (with-meta @#'eval/binding {:sci/macro true})
+                'deref-sym eval/deref-sym
+                'deref (with-meta @#'eval/deref {:sci/macro true})}
 
    'spire.output.core {
                   'print-form output/print-form
