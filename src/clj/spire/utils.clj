@@ -1,5 +1,7 @@
 (ns spire.utils
-  (:require [clj-time.core :as time]
+  (:require [spire.state :as state]
+            [spire.eval :as eval]
+            [clj-time.core :as time]
             [clj-time.coerce :as coerce]
             [digest :as digest]
             [clojure.string :as string]
@@ -333,13 +335,13 @@
 
 (defmacro wrap-report [file form & body]
   `(do
-     (spire.output.core/print-form :default ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
+     (spire.output.core/print-form (eval/deref spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
      (try
        (let [result# (do ~@body)]
-         (spire.output.core/print-result :default ~file (quote ~form) ~(meta form) (spire.state/get-host-config) result#)
+         (spire.output.core/print-result (eval/deref spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) result#)
          result#)
        (catch clojure.lang.ExceptionInfo e#
-         (spire.output.core/print-result :default ~file (quote ~form) ~(meta form) (spire.state/get-host-config) (ex-data e#))
+         (spire.output.core/print-result (eval/deref spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) (ex-data e#))
          (throw e#)))))
 
 #_ (content-size (byte-array [1 2]))
@@ -360,5 +362,5 @@
 
 (defmacro debug [& body]
   `(let [result# (do ~@body)]
-     (spire.output.core/debug-result :default ~*file* (quote ~&form) ~(meta &form) (spire.state/get-host-config) result#)
+     (spire.output.core/debug-result (eval/deref spire.state/output-module) ~*file* (quote ~&form) ~(meta &form) (spire.state/get-host-config) result#)
      result#))
