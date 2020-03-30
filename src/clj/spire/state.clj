@@ -16,6 +16,10 @@
 ;; the execution context. Used for priviledge escalation currently
 (def shell-context (sci/new-dynamic-var 'shell-context nil))
 
+;; the output module
+(def output-module (sci/new-dynamic-var 'output-module nil))
+
 (defn get-host-config [] @host-config)
 (defn get-connection [] @connection)
 (defn get-shell-context [] @shell-context)
+(defn get-output-module [] @output-module)
