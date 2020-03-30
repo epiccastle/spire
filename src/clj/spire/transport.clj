@@ -1,15 +1,12 @@
 (ns spire.transport
   (:require [spire.ssh :as ssh]
-            [spire.output.core :as output]
             [spire.state :as state]
             [spire.ssh-agent :as ssh-agent]
             [spire.facts :as facts]
             [spire.known-hosts :as known-hosts]
             [spire.eval :as eval]
-            [clojure.set :as set]
             [clojure.string :as string]
-            [clojure.stacktrace]
-            [sci.core :as sci])
+            [clojure.stacktrace])
   (:import [com.jcraft.jsch JSch]))
 
 (def debug false)
