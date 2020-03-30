@@ -248,32 +248,12 @@
       (when (.exists (io/as-file "./spire")) "./spire")
       executable)))
 
-;; (defn push
-;;   [{{md5sum :md5sum} :paths} host-string runner session local-path remote-path]
-;;   (let [run (fn [command]
-;;                (let [{:keys [out exit]} (runner command "" "" {})]
-;;                  (when (zero? exit)
-;;                    (string/trim out))))
-;;         local-md5 (digest/md5 (io/as-file local-path))
-;;         remote-md5 (some-> (run (format "%s -b \"%s\"" md5sum remote-path))
-;;                            (string/split #"\s+")
-;;                            first)]
-;;     ;; (println local-md5 remote-md5)
-;;     ;; (println local-path remote-path)
-;;     (when (or (not remote-md5) (not= local-md5 remote-md5))
-;;       (println (format "Transfering %s to %s:%s" local-path host-string remote-path))
-;;       (scp/scp-to session local-path remote-path :mode 0775 :progress-fn progress-bar)
-;;       (println))))
-
 (defn compatible-arch? [{{:keys [processor]} :arch}]
   (let [local-processor-arch (string/trim (:out (shell/sh "uname" "-p")))]
     (= local-processor-arch processor)))
 
 (defmacro embed [filename]
   (slurp filename))
-
-#_ (defmacro embed-src [fname]
-  (slurp (io/file "src/clj" (.getParent (io/file *file*)) fname)))
 
 (defmacro embed-src [fname]
   (slurp
