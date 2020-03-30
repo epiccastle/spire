@@ -13,3 +13,11 @@
   (concat [(binding-sym) binding-pairs] body))
 
 #_ (macroexpand-1 '(binding [a 1 b 2] (foo) (bar)))
+
+(defn deref-sym []
+  (if (= :sci @context)
+    'identity
+    'deref))
+
+(defmacro deref [& body]
+  (concat [(deref-sym)] body))
