@@ -2,14 +2,9 @@
   (:require [spire.state :as state]
             [spire.eval :as eval]
             [clj-time.core :as time]
-            [clj-time.coerce :as coerce]
-            [digest :as digest]
             [clojure.string :as string]
             [clojure.java.io :as io]
-            [clojure.java.shell :as shell])
-  (:import [java.nio.file Paths Files LinkOption Path FileSystems]
-           [java.nio.file.attribute FileAttribute BasicFileAttributes BasicFileAttributeView
-            PosixFilePermission PosixFilePermissions FileTime]))
+            [clojure.java.shell :as shell]))
 
 (set! *warn-on-reflection* true)
 
