@@ -5,7 +5,9 @@
             [spire.namespaces :as namespaces]
             [spire.utils :as utils]
             [spire.eval :as eval]
+            [spire.state :as state]
             [spire.output.default]
+            [spire.output.quiet]
             [puget.printer :as puget]
             [sci.core :as sci]
             [clojure.string :as string]
@@ -19,6 +21,7 @@
   [
    ["-h" "--help" "Print the command line help"]
    ["-e" "--evaluate CODE" "Evaluate a snipped of code instead of loading code from file"]
+   ["-o" "--output MODULE" "Use the specified output module to print programme progress"]
    ["-v" "--version" "Print the version string and exit"]
    [nil "--debug-ssh" "Debug ssh connections printing to stderr"]])
 
@@ -72,25 +75,26 @@
     (try
       (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
 
-        (initialise options)
-        (output/print-thread :default)
+        (sci/binding [state/output-module (clojure.edn/read-string (get options :output ":default"))]
+          (initialise options)
+          (output/print-thread @state/output-module)
 
-        (cond
-          (:help options)
-          (println (usage summary))
+          (cond
+            (:help options)
+            (println (usage summary))
 
-          (:version options)
-          (println "Version:" version)
+            (:version options)
+            (println "Version:" version)
 
-          (:evaluate options)
-          (binding [*file* ""]
-            (->> options :evaluate (evaluate args) delay-print))
+            (:evaluate options)
+            (binding [*file* ""]
+              (->> options :evaluate (evaluate args) delay-print))
 
-          (pos? (count arguments))
-          (binding [*file* (first arguments)]
-            (-> arguments first slurp (->> (evaluate args)) delay-print))
+            (pos? (count arguments))
+            (binding [*file* (first arguments)]
+              (-> arguments first slurp (->> (evaluate args)) delay-print))
 
-          :else
-          (println (usage summary))))
+            :else
+            (println (usage summary)))))
       (finally
         (shutdown-agents)))))
