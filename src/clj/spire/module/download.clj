@@ -5,6 +5,7 @@
             [spire.facts :as facts]
             [spire.utils :as utils]
             [spire.local :as local]
+            [spire.state :as state]
             [spire.nio :as nio]
             [spire.remote :as remote]
             [spire.module.attrs :as attrs]
@@ -122,7 +123,7 @@
 
              progress-fn (fn [file bytes total frac context]
                            (output/print-progress
-                            :default
+                            @state/output-module
                             source-code-file form form-meta
                             host-config
                             (utils/progress-stats

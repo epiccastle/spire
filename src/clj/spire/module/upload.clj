@@ -5,6 +5,7 @@
             [spire.scp :as scp]
             [spire.utils :as utils]
             [spire.local :as local]
+            [spire.state :as state]
             [spire.remote :as remote]
             [spire.compare :as compare]
             [spire.module.attrs :as attrs]
@@ -134,26 +135,38 @@
 
              content (or content (io/file src))
 
-             copied?
-             (if recurse
-               (let [
-                     transfers (compare/compare-full-info (str content) run
+             transfers (compare/compare-full-info (str content) run
                                                           dest
                                                           #_(if local-file?
                                                               dest
                                                               (io/file dest (.getName (io/file (str content))))))
-                     {:keys [local local-to-remote identical-content remote]} transfers
-                     total-size (->> local-to-remote
-                                     (map (comp :size local))
-                                     (apply +))
-                     max-filename-length (->> local-to-remote
-                                              (map (comp count #(.getName %) io/file :filename local))
-                                              (apply max 0))
 
-                     identical-content (->> identical-content
+             {:keys [local local-to-remote identical-content remote]} transfers
+             total-size (->> local-to-remote
+                             (map (comp :size local))
+                             (apply +))
+
+             max-filename-length (->> local-to-remote
+                                      (map (comp count #(.getName %) io/file :filename local))
+                                      (apply max 0))
+
+             progress-fn (fn [file bytes total frac context]
+                           (output/print-progress
+                            @state/output-module
+                            source-code-file form form-meta
+                            host-config
+                            (utils/progress-stats
+                             file bytes total frac
+                             total-size
+                             max-filename-length
+                             context)
+                            ))
+
+             copied?
+             (if recurse
+               (let [identical-content (->> identical-content
                                             (map #(.getPath (io/file src %)))
-                                            (into #{}))
-                     ]
+                                            (into #{}))]
                  (comment
                    (prn "identical:" identical-content)
                    (prn "local:" local)
@@ -169,17 +182,7 @@
                      (run (format "rm -f \"%s\"" dest))
                      (scp-result
                       (scp/scp-to session content dest
-                                  :progress-fn (fn [file bytes total frac context]
-                                                 (output/print-progress
-                                                  :default
-                                                  source-code-file form form-meta
-                                                  host-config
-                                                  (utils/progress-stats
-                                                   file bytes total frac
-                                                   total-size
-                                                   max-filename-length
-                                                   context)
-                                                  ))
+                                  :progress-fn progress-fn
                                   :preserve preserve
                                   :dir-mode (or dir-mode 0755)
                                   :mode (or mode 0644)
@@ -196,17 +199,7 @@
                            (count (filter #(= :file (:type (second %))) local))
                            )
                       (scp/scp-to session content dest
-                                  :progress-fn (fn [file bytes total frac context]
-                                                 (output/print-progress
-                                                  :default
-                                                  source-code-file form form-meta
-                                                  host-config
-                                                  (utils/progress-stats
-                                                   file bytes total frac
-                                                   total-size
-                                                   max-filename-length
-                                                   context)
-                                                  ))
+                                  :progress-fn progress-fn
                                   :preserve preserve
                                   :dir-mode (or dir-mode 0755)
                                   :mode (or mode 0644)
@@ -231,17 +224,7 @@
                  (scp-result
                   (when (not= local-md5 remote-md5)
                     (scp/scp-to session content dest
-                                :progress-fn (fn [file bytes total frac context]
-                                               (output/print-progress
-                                                :default
-                                                source-code-file form form-meta
-                                                host-config
-                                                (utils/progress-stats
-                                                 file bytes total frac
-                                                 (utils/content-size content)
-                                                 (count (utils/content-display-name content))
-                                                 context)
-                                                ))
+                                :progress-fn progress-fn
                                 :preserve preserve
                                 :dir-mode (or dir-mode 0755)
                                 :mode (or mode 0644)
