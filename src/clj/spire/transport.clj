@@ -94,13 +94,13 @@
   `(let [host-config# (ssh/host-description-to-host-config ~host-string)]
      (try
        (let [conn# (open-connection host-config#)]
-         (eval/binding [state/host-config host-config#
-                        state/connection conn#
-                        state/shell-context {:exec :shell
-                                             :shell-fn identity
-                                             :stdin-fn identity}]
-           (facts/update-facts!)
-           (do ~@body)))
+         (eval/binding* [state/host-config host-config#
+                         state/connection conn#
+                         state/shell-context {:exec :shell
+                                              :shell-fn identity
+                                              :stdin-fn identity}]
+                        (facts/update-facts!)
+                        (do ~@body)))
        (finally
          (close-connection host-config#)))))
 
@@ -116,16 +116,16 @@
               (let [host-config# (ssh/host-description-to-host-config host-string#)]
                 [(:key host-config#)
                  (future
-                   (eval/binding [state/host-config host-config#
-                                  state/connection (get-connection
-                                                    (ssh/host-config-to-connection-key
-                                                     host-config#))
-                                  state/shell-context {:exec :shell
-                                                       :shell-fn identity
-                                                       :stdin-fn identity}]
-                     (facts/update-facts!)
-                     (let [result# (do ~@body)]
-                       result#)))])))]
+                   (eval/binding* [state/host-config host-config#
+                                   state/connection (get-connection
+                                                     (ssh/host-config-to-connection-key
+                                                      host-config#))
+                                   state/shell-context {:exec :shell
+                                                        :shell-fn identity
+                                                        :stdin-fn identity}]
+                                  (facts/update-facts!)
+                                  (let [result# (do ~@body)]
+                                    result#)))])))]
        (into {} (map (fn [[host-name# fut#]] [host-name# (safe-deref fut#)]) threads#)))
      (finally
        (doseq [host-string# ~host-strings]

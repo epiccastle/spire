@@ -194,9 +194,9 @@
 
    'spire.eval {'context eval/context
                 'binding-sym eval/binding-sym
-                'binding (with-meta @#'eval/binding {:sci/macro true})
+                'binding* (with-meta @#'eval/binding* {:sci/macro true})
                 'deref-sym eval/deref-sym
-                'deref (with-meta @#'eval/deref {:sci/macro true})}
+                'deref* (with-meta @#'eval/deref* {:sci/macro true})}
 
    'spire.output.core {
                   'print-form output/print-form

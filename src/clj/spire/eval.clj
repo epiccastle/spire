@@ -9,7 +9,7 @@
     'binding
     'sci.core/binding))
 
-(defmacro binding [binding-pairs & body]
+(defmacro binding* [binding-pairs & body]
   (concat [(binding-sym) binding-pairs] body))
 
 #_ (macroexpand-1 '(binding [a 1 b 2] (foo) (bar)))
@@ -19,5 +19,5 @@
     'identity
     'deref))
 
-(defmacro deref [& body]
+(defmacro deref* [& body]
   (concat [(deref-sym)] body))
