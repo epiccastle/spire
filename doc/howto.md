@@ -340,11 +340,30 @@ The `shell` module provides all you need
 
 ## Debug a blueprint by printing a result and then continuing
 
-**This is not presently implemented**
-
 Use `debug` to probe the return values of a module and print them on the output.
 
 ```clojure
 (ssh "root@localhost"
   (debug (shell {:cmd "ps aux"})))
+```
+
+## Run modules as root under passwordless sudo
+
+Use the `sudo` macro to enclose some modules
+
+```clojure
+(ssh "user@localhost"
+  (sudo
+    (shell {:cmd "whoami"})))
+```
+
+## Run the modules as another user using sudo
+
+Using the `sudo-user` macro allows you to specify the user and password
+
+```clojure
+(ssh "user@localhost"
+  (sudo-user {:username "root"
+              :password "my-sudo-password"}
+    (shell {:cmd "whoami"})))
 ```
