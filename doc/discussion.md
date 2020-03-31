@@ -164,6 +164,45 @@ You can also nest more deely, if you wish. This is useful if there was some resu
 
 ### Agent Forwarding
 
+## Escalating priviledges
+
+### Sudo
+
+The user used to execute module commands can be changed with `sudo` or `sudo-user`.
+
+#### sudo-user macro
+
+`sudo-user` takes a configuration hashmap whose keys and values configure the execution of the sudo command. The body can be one or more forms.
+
+```clojure
+(sudo-user config body...)
+```
+
+The config form is a hashmap with a subset of the following keys:
+
+ - :username
+ - :uid
+ - :group
+ - :gid
+ - :password
+
+For example:
+
+```clojure
+(ssh "user@host"
+  (sudo-user {:username "root"
+              :password "my-sudo-password"}
+    (do-something ... )))
+```
+
+#### sudo macro
+
+`sudo` executes the body of the macro using the plain sudo command on the remote host.
+
+```clojure
+(sudo body...)
+```
+
 ## Output
 
 ## Threading Model
