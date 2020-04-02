@@ -156,7 +156,7 @@
                                 (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
           ]
       (doseq [[host-config progress] copy-progress]
-        (println (utils/progress-bar-from-stats (:key host-config) max-host-key-length max-filename-length progress)))))
+        (println (utils/progress-bar-from-stats (str (:key host-config)) max-host-key-length max-filename-length progress)))))
 
   (let [just-printed
         (->>
