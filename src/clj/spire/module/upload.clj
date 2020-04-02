@@ -122,7 +122,7 @@
          ;; analyse local and remote paths
          local-file? (when-not content (local/is-file? src))
 
-         remote-writable? (if (or content local-file?)
+         remote-writable? (if (not (string/ends-with? dest "/"))
                             (remote/is-writable? run (utils/containing-folder dest))
                             (remote/is-writable? run dest))]
 
