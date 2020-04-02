@@ -203,6 +203,19 @@ For example:
 (sudo body...)
 ```
 
+#### sudo password caching
+
+When using a password based sudo you only need to specify the password once. Spire will cache the password it has used for a connection, and if prompted for a password again and a new one is not supplied, the last used one will be tried. In this way you do not have to keep supplying the same password over and over. For example:
+
+```clojure
+(ssh "user@host"
+   (sudo-user {:password "my-sudo-password"}
+      (do-stuff-as-root))
+   (do-stuff-as-user)
+   (sudo
+      (do-more-stuff-as-root)))
+```
+
 ## Output
 
 ## Threading Model
