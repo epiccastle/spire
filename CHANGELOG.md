@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.3] - 2020-04-03
+
 ### Fixed
 - connection config bug - #22
 
@@ -45,6 +47,7 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.2...HEAD
-[0.1.0-alpha.2]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha1...v0.1.0-alpha.2
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.3...HEAD
+[0.1.0-alpha.3]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
+[0.1.0-alpha.2]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/epiccastle/spire/tree/v0.1.0-alpha.1
