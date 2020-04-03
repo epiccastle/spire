@@ -3,6 +3,25 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+### Fixed
+- connection config bug - #22
+
+### Removed
+- Removed some excess reflection
+
+### Added
+- sudo support - #12
+- ssh connection debug with --debug-ssh parameter - #23
+- pluggable output controlers
+- quiet output (-o :quiet)
+- support for sash, yash, zsh as default shell
+- sysctl :absent support
+- added `failed?` test
+- added `debug` output macro - #21
+
+### Changed
+- replace clojure synamic vars with sci dynamic vars
+
 ## [0.1.0-alpha.2] - 2020-03-08
 ### Fixed
 - Fact gathering for when default shell is fish - #9
