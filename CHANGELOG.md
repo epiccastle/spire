@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file. This change
 ### Added
 - sudo support - #12
 - ssh connection debug with --debug-ssh parameter - #23
-- pluggable output controlers
+- pluggable output controllers
 - quiet output (-o :quiet)
 - support for sash, yash, zsh as default shell
 - sysctl :absent support
@@ -22,7 +22,7 @@ All notable changes to this project will be documented in this file. This change
 - added `debug` output macro - #21
 
 ### Changed
-- replace clojure synamic vars with sci dynamic vars
+- replace clojure dynamic vars with sci dynamic vars
 
 ## [0.1.0-alpha.2] - 2020-03-08
 ### Fixed
