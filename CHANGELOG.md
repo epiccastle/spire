@@ -26,6 +26,6 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/your-name/spire/compare/v0.1.0-alpha.2...HEAD
-[0.1.0-alpha.2]: https://github.com/your-name/spire/compare/v0.1.0-alpha1...v0.1.0-alpha.2
-[0.1.0-alpha.1]: https://github.com/your-name/spire/tree/v0.1.0-alpha.1
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.2...HEAD
+[0.1.0-alpha.2]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha1...v0.1.0-alpha.2
+[0.1.0-alpha.1]: https://github.com/epiccastle/spire/tree/v0.1.0-alpha.1
