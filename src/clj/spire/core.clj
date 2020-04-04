@@ -7,6 +7,7 @@
             [spire.eval :as eval]
             [spire.state :as state]
             [spire.output.default]
+            [spire.output.events]
             [spire.output.quiet]
             [puget.printer :as puget]
             [sci.core :as sci]
