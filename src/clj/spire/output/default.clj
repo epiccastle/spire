@@ -1,10 +1,8 @@
 (ns spire.output.default
-  (:require [clojure.set :as set]
-            [spire.utils :as utils]
-            [spire.state :as state]
+  (:require [spire.utils :as utils]
             [spire.output.core :as output]
             [puget.printer :as puget]
-            [clojure.core.async :refer [<!! put! go chan thread]]))
+            [clojure.core.async :refer [<!! put! chan thread]]))
 
 
 (set! *warn-on-reflection* true)
