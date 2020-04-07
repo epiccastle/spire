@@ -276,7 +276,7 @@ Use the `on-os` macro:
     :freebsd (pkg :update)))
 ```
 
-## Run some modules on only a specificy linux distribution
+## Run some modules on only a specific linux distribution
 
 Use the `on-distro` macro:
 
