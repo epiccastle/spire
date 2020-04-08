@@ -14,7 +14,7 @@
    "file" "touch" "chacl" "chown" "chgrp"
    "chmod" "cp" "cat" "cut" "printf" "find"
    "head" "tail" "sysctl" "true" "false"
-   "date" "sed" "grep" "awk" "curl"
+   "date" "sed" "grep" "awk" "curl" "mkdir"
    "groupadd" "groupmod" "groupdel"
    "useradd" "usermod" "userdel"
    "wget" "git" "tar" "rsync" "bzip2"
