@@ -16,6 +16,7 @@
             [spire.module.apt-repo :as apt-repo]
             [spire.module.pkg :as pkg]
             [spire.module.group :as group]
+            [spire.module.mkdir :as mkdir]
             [spire.module.shell :as shell]
             [spire.module.sysctl :as sysctl]
             [spire.module.service :as service]
@@ -69,6 +70,9 @@
 
    'get-file* get-file/get-file*
    'get-file (with-meta @#'get-file/get-file {:sci/macro true})
+
+   'mkdir* mkdir/mkdir*
+   'mkdir (with-meta @#'mkdir/mkdir {:sci/macro true})
 
    'sysctl* sysctl/sysctl*
    'sysctl (with-meta @#'sysctl/sysctl {:sci/macro true})
@@ -145,7 +149,7 @@
 (def namespaces
   {
    'spire.transfer {'ssh (with-meta @#'transfer/ssh {:sci/macro true})}
-   'clojure.core {;;'binding (with-meta binding* {:sci/macro true})
+   'clojure.core { ;;'binding (with-meta binding* {:sci/macro true})
                   ;;'push-thread-bindings clojure.core/push-thread-bindings
                   ;;'pop-thread-bindings clojure.core/pop-thread-bindings
                   ;;                  'var (with-meta @#'clojure.core/var {:sci/macro true})
@@ -199,10 +203,10 @@
                 'deref* (with-meta @#'eval/deref* {:sci/macro true})}
 
    'spire.output.core {
-                  'print-form output/print-form
-                  'print-result output/print-result
-                  'debug-result output/debug-result
-                  }
+                       'print-form output/print-form
+                       'print-result output/print-result
+                       'debug-result output/debug-result
+                       }
 
    'clojure.java.io {'file clojure.java.io/file
                      }
@@ -235,6 +239,8 @@
                            'get-file (with-meta @#'get-file/get-file {:sci/macro true})}
    'spire.module.line-in-file {'line-in-file* line-in-file/line-in-file*
                                'line-in-file (with-meta @#'line-in-file/line-in-file {:sci/macro true})}
+   'spire.module.mkdir {'mkdir* mkdir/mkdir*
+                        'mkdir (with-meta @#'mkdir/mkdir {:sci/macro true})}
    'spire.module.pkg {'pkg* pkg/pkg*
                       'pkg (with-meta @#'pkg/pkg {:sci/macro true})}
    'spire.module.service {'service* service/service*
