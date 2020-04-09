@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. This change
 
 ### Added
 - mkdir module
+- source file relative directory for selmer template file paths - #30
 
 ### Fixed
 - uploading with :context and progress bar causes Divide by zero - #29
