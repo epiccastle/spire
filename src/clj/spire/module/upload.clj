@@ -133,18 +133,21 @@
         :out ""}
        (let [remote-file? (remote/is-file? run dest)
 
+             content? content
              content (or content (io/file src))
 
              transfers (compare/compare-full-info (str content) run
-                                                          dest
-                                                          #_(if local-file?
-                                                              dest
-                                                              (io/file dest (.getName (io/file (str content))))))
+                                                  dest
+                                                  #_(if local-file?
+                                                      dest
+                                                      (io/file dest (.getName (io/file (str content))))))
 
              {:keys [local local-to-remote identical-content remote]} transfers
-             total-size (->> local-to-remote
-                             (map (comp :size local))
-                             (apply +))
+             total-size (if content?
+                          (count content)
+                          (->> local-to-remote
+                               (map (comp :size local))
+                               (apply +)))
 
              max-filename-length (->> local-to-remote
                                       (map (comp count #(.getName %) io/file :filename local))
