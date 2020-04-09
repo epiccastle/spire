@@ -13,6 +13,7 @@
             [spire.module.upload :as upload]
             [spire.module.user :as user]
             [spire.module.apt :as apt]
+            [spire.module.attrs :as attrs]
             [spire.module.apt-repo :as apt-repo]
             [spire.module.pkg :as pkg]
             [spire.module.group :as group]
@@ -52,6 +53,8 @@
    'apt (with-meta @#'apt/apt {:sci/macro true})
    'apt-repo* apt-repo/apt-repo*
    'apt-repo (with-meta @#'apt-repo/apt-repo {:sci/macro true})
+   'attrs* attrs/attrs*
+   'attrs (with-meta @#'attrs/attrs {:sci/macro true})
    'pkg* pkg/pkg*
    'pkg (with-meta @#'pkg/pkg {:sci/macro true})
    ;;'hostname system/hostname
@@ -227,6 +230,8 @@
    ;; modules
    'spire.module.apt {'apt* apt/apt*
                       'apt (with-meta @#'apt/apt {:sci/macro true})}
+   'spire.module.attrs {'attrs* attrs/attrs*
+                      'attrs (with-meta @#'attrs/attrs {:sci/macro true})}
    'spire.module.authorized-keys {'authorized-keys* authorized-keys/authorized-keys*
                                   'authorized-keys (with-meta @#'authorized-keys/authorized-keys {:sci/macro true})}
    'spire.module.apt-repo {'apt-repo* apt-repo/apt-repo*
