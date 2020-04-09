@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. This change
 
 ### Added
 - mkdir module
+- attrs module
 - source file relative directory for selmer template file paths - #30
 
 ### Fixed
