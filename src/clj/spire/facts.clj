@@ -10,8 +10,8 @@
   [
    "bash" "ksh" "zsh" "csh" "tcsh" "fish"
    "dash" "sh" "sash" "yash" "zsh"
-   "stat" "ls" "id" "sudo"
-   "file" "touch" "chacl" "chown" "chgrp"
+   "stat" "ls" "id" "sudo" "lsattr"
+   "file" "touch" "chacl" "chown" "chgrp" "chattr"
    "chmod" "cp" "cat" "cut" "printf" "find"
    "head" "tail" "sysctl" "true" "false"
    "date" "sed" "grep" "awk" "curl" "mkdir"
