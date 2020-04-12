@@ -35,8 +35,20 @@
                       (some->> cookies
                                (map (fn [[k v]] (format "%s=%s" (name k) v)))
                                (string/join "; ")))
+        url-val (cond
+                  (string? url)
+                  url
+
+                  (map? url)
+                  (str (URI. ^String (:scheme url)
+                             ^String (:user url)
+                             ^String (:host url)
+                             ^Integer (:port url)
+                             ^String (:path url)
+                             ^String (:query url)
+                             ^String (:fragment url))))
         ]
-    [method-arg header-set form-set cookies-set]))
+    [method-arg header-set form-set cookies-set url-val]))
 
 #_ (command {:method :head
              :headers {:X-First-name "Joe"
