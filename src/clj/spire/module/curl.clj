@@ -20,6 +20,20 @@
   [^String unencoded]
   (URLEncoder/encode unencoded "UTF-8"))
 
+(defn command [{:keys [method]
+                :or {method :GET}
+                :as opts}]
+  (let [method-arg (case method
+                     :head "-I"
+                     (str "-X" (-> method name string/upper-case)))]
+    method-arg))
+
+#_ (command {:method :head})
+
+
+
+
+
 (defn curl-command [opts]
   (let [body (:body opts)
         opts (if body
