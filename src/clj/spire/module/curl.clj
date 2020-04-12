@@ -20,15 +20,33 @@
   [^String unencoded]
   (URLEncoder/encode unencoded "UTF-8"))
 
-(defn command [{:keys [method]
+(defn command [{:keys [method headers form cookies]
                 :or {method :GET}
                 :as opts}]
   (let [method-arg (case method
                      :head "-I"
-                     (str "-X" (-> method name string/upper-case)))]
-    method-arg))
+                     (str "-X" (-> method name string/upper-case)))
+        header-set (some->> headers
+                            (map (fn [[k v]] (format "%s: %s" (name k) v))))
+        form-set (some->> form
+                          (map (fn [[k v]] (format "%s=%s" (name k) v))))
+        cookies-set (if (string? cookies)
+                      cookies
+                      (some->> cookies
+                               (map (fn [[k v]] (format "%s=%s" (name k) v)))
+                               (string/join "; ")))
+        ]
+    [method-arg header-set form-set cookies-set]))
 
-#_ (command {:method :head})
+#_ (command {:method :head
+             :headers {:X-First-name "Joe"
+                       :X-Second-name "Bloggs"}
+             :form {:name "Joe Bloggs"
+                    :upload "@foo.dat"}
+             :cookies {:NAME1 "VALUE1"
+                       :NAME2 "VALUE2"}
+             :cookie-jar "my-cookie-jar-file"
+             })
 
 
 
