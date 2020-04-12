@@ -20,7 +20,7 @@
   [^String unencoded]
   (URLEncoder/encode unencoded "UTF-8"))
 
-(defn command [{:keys [method headers form cookies]
+(defn command [{:keys [method headers form cookies url]
                 :or {method :GET}
                 :as opts}]
   (let [method-arg (case method
@@ -43,7 +43,9 @@
                   (str (URI. ^String (:scheme url)
                              ^String (:user url)
                              ^String (:host url)
-                             ^Integer (:port url)
+                             ^Integer (:port url (case (:scheme url)
+                                                   "https" 443
+                                                   80))
                              ^String (:path url)
                              ^String (:query url)
                              ^String (:fragment url))))
@@ -58,6 +60,10 @@
              :cookies {:NAME1 "VALUE1"
                        :NAME2 "VALUE2"}
              :cookie-jar "my-cookie-jar-file"
+             :url {:host   "epiccastle.io"
+                   :scheme "https"
+                   :path   "/"}
+
              })
 
 
