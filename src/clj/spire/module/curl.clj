@@ -70,7 +70,7 @@
 
 
 
-(defn curl-command [opts]
+#_ (defn curl-command [opts]
   (let [body (:body opts)
         opts (if body
                (cond-> opts
@@ -127,9 +127,10 @@
                      basic-auth)
         basic-auth (when basic-auth
                      ["--user" basic-auth])
-        header-file (.getPath ^File (:header-file opts))
+        ;;header-file (.getPath ^File (:header-file opts))
         stream? (identical? :stream (:as opts))]
-    (conj (reduce into ["curl" "--silent" "--show-error" "--location" "--dump-header" header-file]
+    (conj (reduce into ["curl" "--silent" "--show-error" "--location" "--dump-header" ;;header-file
+                        ]
                   [method headers accept-header data-raw in-file basic-auth
                    form-params
                    ;; tested with SSE server, e.g. https://github.com/enkot/SSE-Fake-Server
@@ -143,10 +144,10 @@
 
 ;;;; Response Parsing
 
-(defn- read-headers [^File header-file]
+#_ (defn- read-headers [^File header-file]
   (line-seq (io/reader header-file)))
 
-(defn- curl-response->map
+#_ (defn- curl-response->map
   "Parses a curl response input stream into a map"
   [opts]
   (let [is ^java.io.InputStream (:out opts)
@@ -176,6 +177,14 @@
     response))
 
 ;;;; End Response Parsing
+#_
+(string/join " " (curl-command {:url      {:host   "epiccastle.io"
+                                           :scheme "http"
+                                           :port   80
+                                           :path   "/"}
+                                :raw-args ["-L"]
+                                :method :get}))
+
 
 (comment
   ;; after running a python server in the source repo with `python3 -m http.server`
@@ -183,7 +192,8 @@
                        :scheme "http"
                        :port   8000
                        :path   "/src/babashka"}
-            :raw-args ["-L"]})
+            :raw-args ["-L"]
+            :method :get})
 
   (request {:url      {:host   "localhost"
                        :scheme "http"
