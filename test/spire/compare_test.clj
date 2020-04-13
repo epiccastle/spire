@@ -1,7 +1,7 @@
 (ns spire.compare-test
   (:require [clojure.test :refer :all]
-            [spire.module.upload :refer :all]
-            [spire.module.attrs :refer :all]
+            [spire.module.upload :as upload]
+            [spire.module.attrs :as attrs]
             [spire.compare :as compare]
             [spire.utils :as utils]
             [spire.nio :as nio]
