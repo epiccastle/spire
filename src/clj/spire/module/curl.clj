@@ -20,7 +20,7 @@
   [^String unencoded]
   (URLEncoder/encode unencoded "UTF-8"))
 
-(defn command [{:keys [method headers form cookies url basic-auth]
+(defn command [{:keys [method headers form cookies url auth]
                 :or {method :GET}
                 :as opts}]
   (let [method-arg (case method
@@ -49,11 +49,11 @@
                              ^String (:path url)
                              ^String (:query url)
                              ^String (:fragment url))))
-        basic-auth-val (if (sequential? basic-auth)
-                         (string/join ":" basic-auth)
-                         basic-auth)
+        {:keys [user password method]
+         :or {method :any}} auth
+
         ]
-    [method-arg header-set form-set cookies-set url-val basic-auth-val]))
+    [method-arg header-set form-set cookies-set url-val user password method]))
 
 #_ (command {:method :head
              :headers {:X-First-name "Joe"
@@ -66,11 +66,9 @@
              :url {:host   "epiccastle.io"
                    :scheme "https"
                    :path   "/"}
-             :basic-auth
-             {:username "user"
-              :password "pass"}
-             ;; ["user" "pass"]
-
+             :auth {:user "user"
+                    :password "pass"
+                    :method :basic}
              })
 
 
