@@ -20,7 +20,7 @@
   [^String unencoded]
   (URLEncoder/encode unencoded "UTF-8"))
 
-(defn command [{:keys [method headers form cookies url auth]
+(defn command [{:keys [method headers form cookies url auth query-params]
                 :or {method :GET}
                 :as opts}]
   (let [method-arg (case method
@@ -51,9 +51,14 @@
                              ^String (:fragment url))))
         {:keys [user password method]
          :or {method :any}} auth
+        query-val (some->> query-params
+                           (map (fn [[k v]] (format "%s=%s" (url-encode (name k)) (url-encode (name v)))))
+                           (string/join "&"))
 
         ]
-    [method-arg header-set form-set cookies-set url-val user password method]))
+    [method-arg header-set form-set cookies-set url-val
+     user password method query-val
+     ]))
 
 #_ (command {:method :head
              :headers {:X-First-name "Joe"
@@ -69,6 +74,9 @@
              :auth {:user "user"
                     :password "pass"
                     :method :basic}
+             :query-params {:foo "bar"
+                            "full name" "Joe Bloggs"
+                            }
              })
 
 
