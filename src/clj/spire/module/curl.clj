@@ -190,30 +190,3 @@
                   :body body
                   :process (:proc opts)}]
     response))
-
-;;;; End Response Parsing
-#_
-(string/join " " (curl-command {:url      {:host   "epiccastle.io"
-                                           :scheme "http"
-                                           :port   80
-                                           :path   "/"}
-                                :raw-args ["-L"]
-                                :method :get}))
-
-
-(comment
-  ;; after running a python server in the source repo with `python3 -m http.server`
-  (request {:url      {:host   "localhost"
-                       :scheme "http"
-                       :port   8000
-                       :path   "/src/babashka"}
-            :raw-args ["-L"]
-            :method :get})
-
-  (request {:url      {:host   "localhost"
-                       :scheme "http"
-                       :port   8000
-                       :path   "/src/babashka"}
-            :response true})
-
-  )
