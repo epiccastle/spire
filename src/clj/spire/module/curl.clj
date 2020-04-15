@@ -140,6 +140,21 @@
     :else
     (assoc result
            :result :failed)))
+
+(utils/defmodule curl* [opts]
+  [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]
+  ;;(println "curl*" (make-script command opts))
+  (or
+   (preflight opts)
+   (->>
+    (ssh/ssh-exec session (shell-fn (make-script opts)) (stdin-fn "") "UTF-8" {})
+    (process-result opts))))
+
+(defmacro curl [& args]
+  `(utils/wrap-report ~*file* ~&form (line-in-file* ~@args)))
+
+
+
 ;;;; End utils
 
 ;;;; Response Parsing
