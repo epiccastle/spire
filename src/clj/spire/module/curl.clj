@@ -35,10 +35,10 @@
   [^String unencoded]
   (URLEncoder/encode unencoded "UTF-8"))
 
-(defn command [{:keys [method headers accept dump-header form cookies cookie-jar url auth query-params
-                       data-raw data-binary http2 output user-agent]
-                :or {method :GET}
-                :as opts}]
+(defn make-script [{:keys [method headers accept dump-header form cookies cookie-jar url auth query-params
+                           data-raw data-binary http2 output user-agent]
+                    :or {method :GET}
+                    :as opts}]
   (let [method-arg (case method
                      :head "-I"
                      (str "-X" (-> method name string/upper-case)))
