@@ -128,6 +128,18 @@
                  })
        println)
 
+(defn process-result [{:keys [method headers accept dump-header form cookies cookie-jar url auth query-params
+                               data-raw data-binary http2 output user-agent]
+                        :or {method :GET}
+                       :as opts}
+                      {:keys [out err exit] :as result}]
+  (cond
+    (zero? exit)
+    (assoc result :exit 0 :result :changed)
+
+    :else
+    (assoc result
+           :result :failed)))
 ;;;; End utils
 
 ;;;; Response Parsing
