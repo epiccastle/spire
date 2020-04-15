@@ -9,6 +9,27 @@
 
 (set! *warn-on-reflection* true)
 
+(def failed-result {:exit 1 :out "" :err "" :result :failed})
+
+(defn preflight [{:keys [method headers accept dump-header form cookies cookie-jar url auth query-params
+                         data-raw data-binary http2 output user-agent]
+                  :or {method :GET}
+                  :as opts}]
+  (or
+   (facts/check-bins-present [:curl])
+   (cond
+     (not url)
+     (assoc failed-result :err ":url must be specified")
+
+     (and form data-raw)
+     (assoc failed-result :err "Cannot both POST (:data-raw) and multipart form POST (:form)")
+
+     (and form data-binary)
+     (assoc failed-result :err "Cannot both POST (:data-binary) and multipart form POST (:form)")
+
+     (and data-raw data-binary)
+     (assoc failed-result :err "Cannot both both :data-binary and :data-raw"))))
+
 (defn- url-encode
   "Returns an UTF-8 URL encoded version of the given string."
   [^String unencoded]
