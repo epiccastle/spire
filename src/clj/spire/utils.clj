@@ -298,6 +298,11 @@
       (string/replace "\\" "\\\\")
       path-escape))
 
+(defn string-quote [s]
+  (-> s
+      string-escape
+      double-quote))
+
 (defmacro defmodule [name module-args pipeline-args & body]
   `(defn ~name [& args#]
      (let [~module-args args#
