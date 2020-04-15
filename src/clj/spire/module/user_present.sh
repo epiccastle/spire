@@ -101,6 +101,11 @@ else
     EXIT=-1
   fi
 
+  if [ "$GROUPSET" ]; then
+    ARGS="${ARGS} -G '$GROUPSET'"
+    EXIT=-1
+  fi
+
   if [ "$PASSWORD" ]; then
     ARGS="${ARGS} -p '$PASSWORD'"
     EXIT=-1

@@ -25,7 +25,7 @@
            :USER_ID uid
            :HOME_DIR home
            :GROUP group
-           :GROUPSET groups
+           :GROUPSET (some->> groups (string/join ","))
            :PASSWORD (some->> password utils/var-escape)
            :SHELL shell}))
 
