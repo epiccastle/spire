@@ -7,6 +7,7 @@
             [spire.output.core :as output]
             [spire.facts :as facts]
             [spire.selmer :as selmer]
+            [spire.module.curl :as curl]
             [spire.module.line-in-file :as line-in-file]
             [spire.module.get-file :as get-file]
             [spire.module.download :as download]
@@ -55,6 +56,8 @@
    'apt-repo (with-meta @#'apt-repo/apt-repo {:sci/macro true})
    'attrs* attrs/attrs*
    'attrs (with-meta @#'attrs/attrs {:sci/macro true})
+   'curl* curl/curl*
+   'curl (with-meta @#'curl/curl {:sci/macro true})
    'pkg* pkg/pkg*
    'pkg (with-meta @#'pkg/pkg {:sci/macro true})
    ;;'hostname system/hostname
@@ -236,6 +239,8 @@
                                   'authorized-keys (with-meta @#'authorized-keys/authorized-keys {:sci/macro true})}
    'spire.module.apt-repo {'apt-repo* apt-repo/apt-repo*
                            'apt-repo (with-meta @#'apt-repo/apt-repo {:sci/macro true})}
+   'spire.module.curl {'curl* curl/curl*
+                           'curl (with-meta @#'curl/curl {:sci/macro true})}
    'spire.module.download {'download* download/download*
                            'download (with-meta @#'download/download {:sci/macro true})}
    'spire.module.group {'group* group/group*
