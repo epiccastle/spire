@@ -151,7 +151,7 @@
     (process-result opts))))
 
 (defmacro curl [& args]
-  `(utils/wrap-report ~*file* ~&form (line-in-file* ~@args)))
+  `(utils/wrap-report ~*file* ~&form (curl* ~@args)))
 
 
 
