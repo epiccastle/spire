@@ -17,6 +17,7 @@
             [spire.module.attrs :as attrs]
             [spire.module.apt-repo :as apt-repo]
             [spire.module.pkg :as pkg]
+            [spire.module.rm :as rm]
             [spire.module.group :as group]
             [spire.module.mkdir :as mkdir]
             [spire.module.shell :as shell]
@@ -60,6 +61,8 @@
    'curl (with-meta @#'curl/curl {:sci/macro true})
    'pkg* pkg/pkg*
    'pkg (with-meta @#'pkg/pkg {:sci/macro true})
+   'rm* rm/rm*
+   'rm (with-meta @#'rm/rm {:sci/macro true})
    ;;'hostname system/hostname
    'line-in-file* line-in-file/line-in-file*
    'line-in-file (with-meta @#'line-in-file/line-in-file {:sci/macro true})
@@ -253,6 +256,8 @@
                         'mkdir (with-meta @#'mkdir/mkdir {:sci/macro true})}
    'spire.module.pkg {'pkg* pkg/pkg*
                       'pkg (with-meta @#'pkg/pkg {:sci/macro true})}
+   'spire.module.rm {'rm* rm/rm*
+                      'rm (with-meta @#'rm/rm {:sci/macro true})}
    'spire.module.service {'service* service/service*
                           'service (with-meta @#'service/service {:sci/macro true})}
    'spire.module.shell {'shell* shell/shell*
