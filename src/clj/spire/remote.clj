@@ -145,3 +145,17 @@
                  (string/trim out)
                  "")))]
    (path-full-info run "/root")))
+
+(defn make-temp-filename
+  "makes a temporary filename that is correct for the present remote host"
+  [& [{:keys [prefix extension directory]}]]
+  (let [rand-string (string/join "" (map (fn [_] (rand-nth "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")) (range 16)))]
+    (format "%s/%s%s.%s" (or directory "/tmp") (or prefix "") rand-string (or extension "dat"))))
+
+#_ (make-temp-filename {:prefix "foo-"
+                        :extension "txt"
+                        :directory "/tmp"})
+#_ (make-temp-filename {:prefix "foo-"
+                        :extension "txt"})
+#_ (make-temp-filename {:prefix "foo-"
+                        :directory "/opt"})
