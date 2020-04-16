@@ -2,8 +2,15 @@
   (:require [spire.ssh :as ssh]
             [spire.facts :as facts]
             [spire.utils :as utils]
+            [spire.remote :as remote]
+            [spire.module.get-file :as get-file]
+            [spire.module.rm :as rm]
             [clojure.string :as string]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [clojure.data.json :as json]
+            [cognitect.transit :as transit]
+            )
+
   (:import [java.net URLEncoder URI]
            [java.io File SequenceInputStream ByteArrayInputStream]))
 
@@ -11,7 +18,7 @@
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
-(defn preflight [{:keys [method headers accept dump-header form cookies cookie-jar url auth query-params
+(defn preflight [{:keys [method headers accept form cookies cookie-jar url auth query-params
                          data-raw data-binary http2 output user-agent]
                   :or {method :GET}
                   :as opts}]
@@ -38,7 +45,8 @@
 (defn make-script [{:keys [method headers accept dump-header form cookies cookie-jar url auth query-params
                            data-raw data-binary http2 output user-agent]
                     :or {method :GET}
-                    :as opts}]
+                    :as opts}
+                   header-file]
   (let [method-arg (case method
                      :head "-I"
                      (str "-X" (-> method name string/upper-case)))
@@ -84,7 +92,7 @@
           (when accept ["-H" (str "Accept: " (case accept
                                                :json "application/json"
                                                accept))])
-          (when dump-header ["-D" dump-header])
+          ["-D" header-file]
           (for [f form-set] ["-F" f])
           (when cookies-set ["-b" cookies-set])
           (when cookie-jar ["-c" cookie-jar])
@@ -128,14 +136,54 @@
                  })
        println)
 
+(defn parse-body [result {:keys [content-type]}]
+  (let [[content-type extension] (string/split content-type #";")]
+    (case content-type
+      "application/json" (json/read-str result :key-fn keyword)
+      "application/transit+json" (-> result
+                                     .toByteArray
+                                     ByteArrayInputStream.
+                                     (transit/reader :json)
+                                     transit/read)
+      "application/transit+msgpack" (-> result
+                                     .toByteArray
+                                     ByteArrayInputStream.
+                                     (transit/reader :msgpack)
+                                     transit/read)
+      result)))
+
+(defn- curl-response->map
+  "Parses a curl response input stream into a map"
+  [result headers]
+  (let [[status headers]
+        (reduce (fn [[status parsed-headers :as acc] header-line]
+                    (if (string/starts-with? header-line "HTTP/")
+                      [(Integer/parseInt (second (string/split header-line  #" "))) parsed-headers]
+                      (let [[k v] (string/split header-line #":" 2)]
+                        (if (and k v)
+                          [status (assoc parsed-headers (keyword (string/lower-case k)) (string/trim v))]
+                          acc))))
+                  [nil {}]
+                  headers)
+        decoded (parse-body result headers)
+        response {:status status
+                  :headers headers
+                  :decoded decoded
+                  :body result}]
+    response))
+
 (defn process-result [{:keys [method headers accept dump-header form cookies cookie-jar url auth query-params
                                data-raw data-binary http2 output user-agent]
                         :or {method :GET}
                        :as opts}
-                      {:keys [out err exit] :as result}]
+                      {:keys [out err exit] :as result}
+                      get-file-result
+                      rm-result]
   (cond
     (zero? exit)
-    (assoc result :exit 0 :result :changed)
+    (-> (curl-response->map out (:out-lines get-file-result))
+        (assoc :exit 0
+               :result :changed))
 
     :else
     (assoc result
@@ -146,9 +194,16 @@
   ;;(println "curl*" (make-script command opts))
   (or
    (preflight opts)
-   (->>
-    (ssh/ssh-exec session (shell-fn (make-script opts)) (stdin-fn "") "UTF-8" {})
-    (process-result opts))))
+   (let [header-file (remote/make-temp-filename {:prefix "spire-curl-headers-"
+                                                 :extension "txt"})]
+     (let [{:keys [out err exit] :as result}
+           (ssh/ssh-exec session (shell-fn (make-script opts header-file)) (stdin-fn "") "UTF-8" {})]
+       (if (zero? exit)
+         (let [get-file-result (get-file/get-file* header-file)
+               rm-result (rm/rm* header-file)]
+           (process-result opts result get-file-result rm-result))
+
+         (process-result opts result nil nil))))))
 
 (defmacro curl [& args]
   `(utils/wrap-report ~*file* ~&form (curl* ~@args)))
@@ -161,32 +216,3 @@
 
 #_ (defn- read-headers [^File header-file]
   (line-seq (io/reader header-file)))
-
-#_ (defn- curl-response->map
-  "Parses a curl response input stream into a map"
-  [opts]
-  (let [is ^java.io.InputStream (:out opts)
-        c (.read is)
-        bais (when-not (= -1 c)
-               (ByteArrayInputStream. (byte-array [c])))
-        is (if bais (SequenceInputStream. bais is)
-               is)
-        body (if (identical? :stream (:as opts))
-               is
-               (slurp is))
-        headers (read-headers (:header-file opts))
-        [status headers]
-        (reduce (fn [[status parsed-headers :as acc] header-line]
-                    (if (string/starts-with? header-line "HTTP/")
-                      [(Integer/parseInt (second (string/split header-line  #" "))) parsed-headers]
-                      (let [[k v] (string/split header-line #":" 2)]
-                        (if (and k v)
-                          [status (assoc parsed-headers (string/lower-case k) (string/trim v))]
-                          acc))))
-                  [nil {}]
-                  headers)
-        response {:status status
-                  :headers headers
-                  :body body
-                  :process (:proc opts)}]
-    response))

@@ -17,7 +17,7 @@
                  [io.forward/yaml "1.0.9"
                   :exclusions [[org.yaml/snakeyaml]]]
                  [org.yaml/snakeyaml "1.25"]
-
+                 [com.cognitect/transit-clj "1.0.324"]
 
                  ;; dev
                  [nrepl "0.6.0"]
