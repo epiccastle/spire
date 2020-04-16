@@ -1,6 +1,7 @@
 (ns spire.module.get-file
   (:require [spire.ssh :as ssh]
-            [spire.utils :as utils]))
+            [spire.utils :as utils]
+            [clojure.string :as string]))
 
 (utils/defmodule get-file* [file-path]
   [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]
@@ -10,6 +11,8 @@
                       (stdin-fn "")
                       "UTF-8" {})]
     (assoc result
+           :out-lines (string/split-lines out)
+           :err-lines (string/split-lines err)
            :result (if (zero? exit) :ok :failed))))
 
 (defmacro get-file [& args]
