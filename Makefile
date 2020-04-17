@@ -7,7 +7,7 @@ endif
 VERSION = $(shell cat .meta/VERSION)
 UNAME = $(shell uname)
 
-all: build/spire
+all: sci-reflector-install build/spire
 
 analyse:
 	$(GRAALVM)/bin/java -agentlib:native-image-agent=config-output-dir=config-dir \
@@ -26,6 +26,8 @@ build/spire: target/uberjar/spire-$(VERSION)-standalone.jar
 		--initialize-at-run-time=com.jcraft.jsch.PortWatcher \
 		-H:Log=registerResource: \
 		-H:EnableURLProtocols=http,https \
+		--enable-all-security-services \
+		-H:+JNI \
 		--report-unsupported-elements-at-runtime \
 		--verbose \
 		--allow-incomplete-classpath \
@@ -57,6 +59,9 @@ else ifeq ($(UNAME),FreeBSD)
 else ifeq ($(UNAME),Darwin)
 	LIB_FILE=$(DYLIB_FILE)
 endif
+
+sci-reflector-install:
+	cd sci-reflector && lein install
 
 run: $(LIB_FILE) $(JAR_FILE)
 	java -jar $(JAR_FILE)
