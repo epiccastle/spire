@@ -3,13 +3,21 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.4] - 2020-04-17
+
 ### Added
+- :event printing output module
 - mkdir module
 - attrs module
+- rm module
 - source file relative directory for selmer template file paths - #30
 
 ### Fixed
 - uploading with :context and progress bar causes Divide by zero - #29
+- System/getenv reflection fix
+
+### Changed
+- selmer file path now relative to executing clj file
 
 ## [0.1.0-alpha.3] - 2020-04-03
 
@@ -55,7 +63,8 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.3...HEAD
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.4...HEAD
+[0.1.0-alpha.4]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.3...v0.1.0-alpha.4
 [0.1.0-alpha.3]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/epiccastle/spire/tree/v0.1.0-alpha.1
