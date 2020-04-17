@@ -136,25 +136,31 @@
                  })
        println)
 
-(defn parse-body [result {:keys [content-type]}]
-  (let [[content-type extension] (string/split content-type #";")]
-    (case content-type
-      "application/json" (json/read-str result :key-fn keyword)
-      "application/transit+json" (-> result
-                                     .toByteArray
-                                     ByteArrayInputStream.
-                                     (transit/reader :json)
-                                     transit/read)
-      "application/transit+msgpack" (-> result
-                                     .toByteArray
-                                     ByteArrayInputStream.
-                                     (transit/reader :msgpack)
-                                     transit/read)
-      result)))
+(defmulti decode-body
+  (fn [headers body opts]
+    (-> headers
+        (get :content-type)
+        (string/split #";")
+        first)))
+
+(defmethod decode-body "application/json" [_ body opts]
+  (apply json/read-str body (flatten (seq opts))))
+
+(defmethod decode-body "application/transit+json" [_ body opts]
+  (-> (.getBytes ^String body)
+      ByteArrayInputStream.
+      (transit/reader :json opts)
+      transit/read))
+
+(defmethod decode-body "application/transit+msgpack" [_ body opts]
+  (-> (.getBytes ^String body)
+      ByteArrayInputStream.
+      (transit/reader :msgpack opts)
+      transit/read))
 
 (defn- curl-response->map
   "Parses a curl response input stream into a map"
-  [result headers]
+  [result headers decode? decode-opts]
   (let [[status headers]
         (reduce (fn [[status parsed-headers :as acc] header-line]
                     (if (string/starts-with? header-line "HTTP/")
@@ -165,7 +171,7 @@
                           acc))))
                   [nil {}]
                   headers)
-        decoded (parse-body result headers)
+        decoded (when decode? (decode-body headers result decode-opts))
         response {:status status
                   :headers headers
                   :decoded decoded
@@ -173,15 +179,16 @@
     response))
 
 (defn process-result [{:keys [method headers accept dump-header form cookies cookie-jar url auth query-params
-                               data-raw data-binary http2 output user-agent]
-                        :or {method :GET}
+                               data-raw data-binary http2 output user-agent decode? decode-opts]
+                       :or {method :GET
+                            decode? true}
                        :as opts}
                       {:keys [out err exit] :as result}
                       get-file-result
                       rm-result]
   (cond
     (zero? exit)
-    (-> (curl-response->map out (:out-lines get-file-result))
+    (-> (curl-response->map out (:out-lines get-file-result) decode? decode-opts)
         (assoc :exit 0
                :result :changed))
 
