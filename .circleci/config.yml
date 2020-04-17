@@ -143,7 +143,7 @@ jobs:
           command: |
             cd ~
             ls -la
-            if ! [ -d graalvm-ce-java11-20.1.0-dev ]; then
+            #if ! [ -d graalvm-ce-java11-20.1.0-dev ]; then
               curl -O -sL https://epiccastle.io/graalvm/20200324_0554/graalvm-ce-java11-darwin-amd64-20.1.0-dev.tar.gz
               curl -O -sL https://epiccastle.io/graalvm/20200324_0554/native-image-installable-svm-java11-darwin-amd64-20.1.0-dev.jar
 
@@ -155,7 +155,7 @@ jobs:
               tar xzf graalvm-ce-java11-darwin-amd64-20.1.0-dev.tar.gz
               # tar xzf graalvm-ce-java8-darwin-amd64-19.3.1.tar.gz
               #tar xzf graalvm-ce-java11-darwin-amd64-19.3.1.tar.gz
-            fi
+            #fi
             #$GRAALVM_HOME/bin/gu install native-image
             $GRAALVM_HOME/bin/gu -L install native-image-installable-svm-java11-darwin-amd64-20.1.0-dev.jar
           no_output_timeout: 30m
