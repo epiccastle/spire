@@ -157,6 +157,7 @@ jobs:
               #tar xzf graalvm-ce-java11-darwin-amd64-19.3.1.tar.gz
             fi
             $GRAALVM_HOME/bin/gu install native-image
+            #$GRAALVM_HOME/bin/gu -L install native-image-installable-svm-java11-darwin-amd64-20.1.0-dev.jar
           no_output_timeout: 30m
       # - run:
       #     name: MacOS java info
