@@ -206,7 +206,8 @@
 (defn process-id [id-out]
   (let [{:keys [gid uid groups]}
         (-> id-out first string/trim (string/split #"\s+")
-            (->> (map (fn [line]
+            (->> (take 3)
+                 (map (fn [line]
                         (let [[type val] (string/split line #"=" 2)
                               vals (->> (string/split val #",")
                                         (mapv process-id-name-substring))]
