@@ -117,6 +117,18 @@ Parent: Debian
                      (into {})))))))
 
 
+(defn process-debian-distro-info [csv]
+  (let [versions (->> csv
+                      process-csv
+                      (filter (comp not empty? :version))
+                      (map (juxt :version :series)))
+        order (->> versions
+                   (sort-by (comp read-string first))
+                   (map second))
+        lookup (into {} versions)
+        ]
+    order))
+
 #_ (process-debian-distro-info "version,codename,series,created,release,eol,eol-server,eol-esm
 4.10,Warty Warthog,warty,2004-03-05,2004-10-20,2006-04-30
 5.04,Hoary Hedgehog,hoary,2004-10-20,2005-04-08,2006-10-31
@@ -152,7 +164,7 @@ Parent: Debian
 20.04 LTS,Focal Fossa,focal,2019-10-17,2020-04-23,2025-04-23,2025-04-23,2030-04-23
 ")
 
-#_ (process-csv
+#_ (process-debian-distro-info
     "version,codename,series,created,release,eol
 1.1,Buzz,buzz,1993-08-16,1996-06-17,1997-06-05
 1.2,Rex,rex,1996-06-17,1996-12-12,1998-06-05
@@ -174,3 +186,65 @@ Parent: Debian
 ,Sid,sid,1993-08-16
 ,Experimental,experimental,1993-08-16
 ")
+
+
+(defn process-lsb-release [contents]
+  (->> contents
+       string/split-lines
+       (filter (comp not empty?))
+       (filter #(.contains % "="))
+       (filter #(string/starts-with? % "DISTRIB_"))
+       (map #(subs % 8))
+       (map #(string/split % #"=" 2))
+       (map (fn [[k v]]
+              [(keyword (string/lower-case k))
+               (if (and (string/starts-with? v "\"")
+                        (string/ends-with? v "\""))
+                 (subs v 1 (-> v count (- 2)))
+                 v)]))
+       (into {})))
+
+#_ (process-lsb-release "DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=16.04
+DISTRIB_CODENAME=xenial
+DISTRIB_DESCRIPTION=\"Ubuntu 16.04.6 LTS\"
+")
+
+(defn process-origins
+  "returns the vendor (lsb id)"
+  [contents]
+  (->> contents
+       string/split-lines
+       (map #(string/split % #":" 2))
+       (filter #(-> % first string/lower-case (= "vendor")))
+       first
+       second
+       string/trim))
+
+#_ (process-origins "Vendor: Ubuntu
+Vendor-URL: http://www.ubuntu.com/
+Bugs: https://bugs.launchpad.net/ubuntu/+filebug
+Parent: Debian
+")
+
+(defn uname-s->os [uname-s]
+  (cond
+    (#{"Linux" "Hurd" "NetBSD"} uname-s)
+    (str "GNU/" uname-s)
+
+    (= "FreeBSD" uname-s)
+    "GNU/kFreeBSD"
+
+    (#{"GNU/Linux" "GNU/kFreeBSD"} uname-s)
+    uname-s
+
+    :else
+    "GNU"))
+
+
+
+
+
+(defn guess-debian-release []
+
+  )
