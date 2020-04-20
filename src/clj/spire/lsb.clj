@@ -241,10 +241,221 @@ Parent: Debian
     :else
     "GNU"))
 
+(defn get-codename-lookup [_ _]  "buster")
+
+(defn lookup-codename [release unknown]
+  (let [m (re-matches #"(\d+)\.(\d+)(r(\d+))?" release)]
+    (if (not m)
+      unknown
+      (let [[_ major minor] m]
+        (if (< (Integer/parseInt major) 7)
+          (get-codename-lookup (format "%s.%s" major minor) unknown)
+          (get-codename-lookup major unknown))))))
 
 
 
 
-(defn guess-debian-release []
 
+
+#_ (lookup-codename "stretch/sid" "n/a")
+#_ (lookup-codename "5.2r7" "n/a")
+
+(defn process-debian-version []
+  (let [debian-version "stretch/sid\n"
+        debian-version (string/trim debian-version)
+        is-alpha? (re-matches #"[a-zA-Z]" (str (first debian-version)))]
+    (cond
+      (not is-alpha?)
+      {:release debian-version
+       :codename (lookup-codename debian-version "n/a")}
+
+      (string/ends-with? debian-version "/sid")
+      ;; TODO: testing_codename?
+      {:release "testing/unstable"}
+
+      :else
+      {:release debian-version}
+      ))
+
+
+  )
+
+(def longnames {"v" :version
+                "o" :origin
+                "a" :suite
+                "c" :component
+                "l" :label})
+
+(defn parse-apt-policy-line [data]
+  (-> data
+      (string/split #",")
+      (->>
+       (map #(let [[k v] (string/split % #"=" 2)]
+               (when (longnames k) [(longnames k) v])))
+       (filter identity)
+       (into {}))))
+
+#_ (parse-apt-policy-line "v=16.04,o=Ubuntu,a=xenial,n=xenial,l=Ubuntu,c=main,b=i386")
+
+(defn parse-apt-policy [policy]
+  (->> policy
+       string/split-lines
+       (map string/trim)
+       (partition-by #(boolean (re-find #"^-?\d+" %)) )
+       (drop-while #(not (re-find #"^-?\d+" (first %))))
+       (partition 2)
+       (map flatten)
+       (map (fn [[header & lines]]
+              (let [priority (-> header (string/split #" " 2) first Integer/parseInt)
+                    release-line (->> lines
+                                      (filter #(string/starts-with? % "release"))
+                                      first)
+                    policy (-> release-line
+                               (string/split #"\s+" 2)
+                               second
+                               parse-apt-policy-line)
+                    ]
+                (assoc policy :priority priority))))))
+
+#_ (parse-apt-policy "Package files:
+ 100 /var/lib/dpkg/status
+     release a=now
+ 500 http://ppa.launchpad.net/wireguard/wireguard/ubuntu xenial/main i386 Packages
+     release v=16.04,o=LP-PPA-wireguard-wireguard,a=xenial,n=xenial,l=WireGuard,c=main,b=i386
+     origin ppa.launchpad.net
+ 500 http://ppa.launchpad.net/wireguard/wireguard/ubuntu xenial/main amd64 Packages
+     release v=16.04,o=LP-PPA-wireguard-wireguard,a=xenial,n=xenial,l=WireGuard,c=main,b=amd64
+     origin ppa.launchpad.net
+ 500 http://ppa.launchpad.net/ubuntu-audio-dev/alsa-daily/ubuntu xenial/main i386 Packages
+     release v=16.04,o=LP-PPA-ubuntu-audio-dev-alsa-daily,a=xenial,n=xenial,l=ALSA daily build snapshots,c=main,b=i386
+     origin ppa.launchpad.net
+ 500 http://ppa.launchpad.net/ubuntu-audio-dev/alsa-daily/ubuntu xenial/main amd64 Packages
+     release v=16.04,o=LP-PPA-ubuntu-audio-dev-alsa-daily,a=xenial,n=xenial,l=ALSA daily build snapshots,c=main,b=amd64
+     origin ppa.launchpad.net
+ 500 http://repo.steampowered.com/steam precise/steam i386 Packages
+     release o=Valve Software LLC,n=precise,l=Steam,c=steam,b=i386
+     origin repo.steampowered.com
+ 500 http://repo.steampowered.com/steam precise/steam amd64 Packages
+     release o=Valve Software LLC,n=precise,l=Steam,c=steam,b=amd64
+     origin repo.steampowered.com
+ 500 http://ppa.launchpad.net/peek-developers/stable/ubuntu xenial/main i386 Packages
+     release v=16.04,o=LP-PPA-peek-developers-stable,a=xenial,n=xenial,l=Peek stable releases,c=main,b=i386
+     origin ppa.launchpad.net
+ 500 http://ppa.launchpad.net/peek-developers/stable/ubuntu xenial/main amd64 Packages
+     release v=16.04,o=LP-PPA-peek-developers-stable,a=xenial,n=xenial,l=Peek stable releases,c=main,b=amd64
+     origin ppa.launchpad.net
+ 500 http://ppa.launchpad.net/openjdk-r/ppa/ubuntu xenial/main i386 Packages
+     release v=16.04,o=LP-PPA-openjdk-r,a=xenial,n=xenial,l=OpenJDK builds (all archs),c=main,b=i386
+     origin ppa.launchpad.net
+ 500 http://ppa.launchpad.net/openjdk-r/ppa/ubuntu xenial/main amd64 Packages
+     release v=16.04,o=LP-PPA-openjdk-r,a=xenial,n=xenial,l=OpenJDK builds (all archs),c=main,b=amd64
+     origin ppa.launchpad.net
+ 500 http://ppa.launchpad.net/obsproject/obs-studio/ubuntu xenial/main i386 Packages
+     release v=16.04,o=LP-PPA-obsproject-obs-studio,a=xenial,n=xenial,l=OBS Studio,c=main,b=i386
+     origin ppa.launchpad.net
+ 500 http://ppa.launchpad.net/obsproject/obs-studio/ubuntu xenial/main amd64 Packages
+     release v=16.04,o=LP-PPA-obsproject-obs-studio,a=xenial,n=xenial,l=OBS Studio,c=main,b=amd64
+     origin ppa.launchpad.net
+ 500 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu xenial/main i386 Packages
+     release v=16.04,o=LP-PPA-deadsnakes,a=xenial,n=xenial,l=New Python Versions,c=main,b=i386
+     origin ppa.launchpad.net
+ 500 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu xenial/main amd64 Packages
+     release v=16.04,o=LP-PPA-deadsnakes,a=xenial,n=xenial,l=New Python Versions,c=main,b=amd64
+     origin ppa.launchpad.net
+ 500 http://security.ubuntu.com/ubuntu xenial-security/multiverse i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=multiverse,b=i386
+     origin security.ubuntu.com
+ 500 http://security.ubuntu.com/ubuntu xenial-security/multiverse amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=multiverse,b=amd64
+     origin security.ubuntu.com
+ 500 http://security.ubuntu.com/ubuntu xenial-security/universe i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=universe,b=i386
+     origin security.ubuntu.com
+ 500 http://security.ubuntu.com/ubuntu xenial-security/universe amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=universe,b=amd64
+     origin security.ubuntu.com
+ 500 http://security.ubuntu.com/ubuntu xenial-security/restricted i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=restricted,b=i386
+     origin security.ubuntu.com
+ 500 http://security.ubuntu.com/ubuntu xenial-security/restricted amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=restricted,b=amd64
+     origin security.ubuntu.com
+ 500 http://security.ubuntu.com/ubuntu xenial-security/main i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=main,b=i386
+     origin security.ubuntu.com
+ 500 http://security.ubuntu.com/ubuntu xenial-security/main amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-security,n=xenial,l=Ubuntu,c=main,b=amd64
+     origin security.ubuntu.com
+ 100 http://au.archive.ubuntu.com/ubuntu xenial-backports/universe i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-backports,n=xenial,l=Ubuntu,c=universe,b=i386
+     origin au.archive.ubuntu.com
+ 100 http://au.archive.ubuntu.com/ubuntu xenial-backports/universe amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-backports,n=xenial,l=Ubuntu,c=universe,b=amd64
+     origin au.archive.ubuntu.com
+ 100 http://au.archive.ubuntu.com/ubuntu xenial-backports/main i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-backports,n=xenial,l=Ubuntu,c=main,b=i386
+     origin au.archive.ubuntu.com
+ 100 http://au.archive.ubuntu.com/ubuntu xenial-backports/main amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-backports,n=xenial,l=Ubuntu,c=main,b=amd64
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial-updates/multiverse i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=multiverse,b=i386
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial-updates/multiverse amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=multiverse,b=amd64
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial-updates/universe i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=universe,b=i386
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial-updates/universe amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=universe,b=amd64
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial-updates/restricted i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=restricted,b=i386
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial-updates/restricted amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=restricted,b=amd64
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial-updates/main i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=main,b=i386
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial-updates/main amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial-updates,n=xenial,l=Ubuntu,c=main,b=amd64
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial/multiverse i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial,n=xenial,l=Ubuntu,c=multiverse,b=i386
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial/multiverse amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial,n=xenial,l=Ubuntu,c=multiverse,b=amd64
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial/universe i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial,n=xenial,l=Ubuntu,c=universe,b=i386
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial/universe amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial,n=xenial,l=Ubuntu,c=universe,b=amd64
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial/restricted i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial,n=xenial,l=Ubuntu,c=restricted,b=i386
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial/restricted amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial,n=xenial,l=Ubuntu,c=restricted,b=amd64
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial/main i386 Packages
+     release v=16.04,o=Ubuntu,a=xenial,n=xenial,l=Ubuntu,c=main,b=i386
+     origin au.archive.ubuntu.com
+ 500 http://au.archive.ubuntu.com/ubuntu xenial/main amd64 Packages
+     release v=16.04,o=Ubuntu,a=xenial,n=xenial,l=Ubuntu,c=main,b=amd64
+     origin au.archive.ubuntu.com
+Pinned packages:
+")
+
+
+(defn guess-debian-release-from-apt []
+  (let [origin "Debian"
+        component "main"
+        ignoresuites #{"experimental"}
+        label "Debain"
+        alternate-olabels {"Debian Ports" "ftp.debian-ports.org"}]
+    (parse-apt-policy)
+    )
   )
