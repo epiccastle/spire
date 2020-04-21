@@ -129,7 +129,7 @@ Parent: Debian
         ]
     order))
 
-#_ (process-debian-distro-info "version,codename,series,created,release,eol,eol-server,eol-esm
+#_ (def ubuntu-csv "version,codename,series,created,release,eol,eol-server,eol-esm
 4.10,Warty Warthog,warty,2004-03-05,2004-10-20,2006-04-30
 5.04,Hoary Hedgehog,hoary,2004-10-20,2005-04-08,2006-10-31
 5.10,Breezy Badger,breezy,2005-04-08,2005-10-12,2007-04-13
@@ -163,6 +163,8 @@ Parent: Debian
 19.10,Eoan Ermine,eoan,2019-04-18,2019-10-17,2020-07-17
 20.04 LTS,Focal Fossa,focal,2019-10-17,2020-04-23,2025-04-23,2025-04-23,2030-04-23
 ")
+
+#_ (process-debian-distro-info ubuntu-csv)
 
 #_ (process-debian-distro-info
     "version,codename,series,created,release,eol
@@ -275,16 +277,14 @@ Parent: Debian
 
       :else
       {:release debian-version}
-      ))
+      )))
 
-
-  )
-
-(def longnames {"v" :version
-                "o" :origin
-                "a" :suite
-                "c" :component
-                "l" :label})
+(def longnames
+  {"v" :version
+   "o" :origin
+   "a" :suite
+   "c" :component
+   "l" :label})
 
 (defn parse-apt-policy-line [data]
   (-> data
@@ -317,7 +317,7 @@ Parent: Debian
                     ]
                 (assoc policy :priority priority))))))
 
-#_ (parse-apt-policy "Package files:
+(def apt-policy-text "Package files:
  100 /var/lib/dpkg/status
      release a=now
  500 http://ppa.launchpad.net/wireguard/wireguard/ubuntu xenial/main i386 Packages
@@ -451,11 +451,36 @@ Pinned packages:
 
 
 (defn guess-debian-release-from-apt []
-  (let [origin "Debian"
-        component "main"
+  (let [-origin "Ubuntu" #_ "Debian"
+        -component "main"
         ignoresuites #{"experimental"}
-        label "Debain"
+        -label "Ubuntu" #_ "Debain"
         alternate-olabels {"Debian Ports" "ftp.debian-ports.org"}]
-    (parse-apt-policy)
-    )
+    (let [releases (parse-apt-policy apt-policy-text)
+          order  (process-debian-distro-info ubuntu-csv)
+          order-set (into #{} order)
+          order-lookup (into {} (map vector order (range)))
+          matching (->> releases
+                        (filter
+                         (fn [{:keys [origin suite component label origin label]}]
+                           (or
+                            (and (= origin -origin)
+                                 (not (ignoresuites suite))
+                                 (= component -component)
+                                 (= label -label))
+                            (and (alternate-olabels origin)
+                                 (= label (alternate-olabels origin))))))
+                        (sort-by :priority)
+                        reverse)
+          highest-priority (:priority (first matching))
+          matching-priority (->> matching
+                                 (filter #(= highest-priority (:priority %)))
+                                 (map :suite)
+                                 (filter order-set)
+                                 (sort-by order-lookup)
+                                 first
+                                 )
+
+          ]
+      matching-priority))
   )
