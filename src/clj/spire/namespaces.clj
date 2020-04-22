@@ -1,6 +1,7 @@
 (ns spire.namespaces
   (:require [spire.ssh :as ssh]
             [spire.utils :as utils]
+            [spire.context :as context]
             [spire.transfer :as transfer]
             [spire.transport :as transport]
             [spire.state :as state]
@@ -26,7 +27,6 @@
             [spire.module.authorized-keys :as authorized-keys]
             [spire.module.stat :as stat]
             [spire.module.sudo :as sudo]
-            [spire.eval :as eval]
             [clojure.tools.cli]
             [clojure.java.shell]
             [clojure.edn]
@@ -205,11 +205,11 @@
                  'get-output-module state/get-output-module
                  }
 
-   'spire.eval {'context eval/context
-                'binding-sym eval/binding-sym
-                'binding* (with-meta @#'eval/binding* {:sci/macro true})
-                'deref-sym eval/deref-sym
-                'deref* (with-meta @#'eval/deref* {:sci/macro true})}
+   'spire.context {'context context/context
+                   'binding-sym context/binding-sym
+                   'binding* (with-meta @#'context/binding* {:sci/macro true})
+                   'deref-sym context/deref-sym
+                   'deref* (with-meta @#'context/deref* {:sci/macro true})}
 
    'spire.output.core {
                        'print-form output/print-form

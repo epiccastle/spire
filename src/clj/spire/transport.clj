@@ -4,7 +4,7 @@
             [spire.ssh-agent :as ssh-agent]
             [spire.facts :as facts]
             [spire.known-hosts :as known-hosts]
-            [spire.eval :as eval]
+            [spire.context :as context]
             [clojure.string :as string]
             [clojure.stacktrace])
   (:import [com.jcraft.jsch JSch]))
@@ -94,7 +94,7 @@
   `(let [host-config# (ssh/host-description-to-host-config ~host-string)]
      (try
        (let [conn# (open-connection host-config#)]
-         (eval/binding* [state/host-config host-config#
+         (context/binding* [state/host-config host-config#
                          state/connection conn#
                          state/shell-context {:exec :shell
                                               :shell-fn identity
@@ -116,7 +116,7 @@
               (let [host-config# (ssh/host-description-to-host-config host-string#)]
                 [(:key host-config#)
                  (future
-                   (eval/binding* [state/host-config host-config#
+                   (context/binding* [state/host-config host-config#
                                    state/connection (get-connection
                                                      (ssh/host-config-to-connection-key
                                                       host-config#))

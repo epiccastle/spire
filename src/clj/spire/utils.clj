@@ -1,6 +1,6 @@
 (ns spire.utils
   (:require [spire.state :as state]
-            [spire.eval :as eval]
+            [spire.context :as context]
             [clj-time.core :as time]
             [clojure.string :as string]
             [clojure.java.io :as io]
@@ -306,7 +306,7 @@
 (defmacro defmodule [name module-args pipeline-args & body]
   `(defn ~name [& args#]
      (let [~module-args args#
-           ~pipeline-args [(eval/deref* spire.state/host-config) (eval/deref* spire.state/connection) (eval/deref* spire.state/shell-context)]
+           ~pipeline-args [(context/deref* spire.state/host-config) (context/deref* spire.state/connection) (context/deref* spire.state/shell-context)]
            result# (do ~@body)
            result-code# (:result result#)]
        (if (#{:ok :changed} result-code#)
@@ -315,13 +315,13 @@
 
 (defmacro wrap-report [file form & body]
   `(do
-     (spire.output.core/print-form (eval/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
+     (spire.output.core/print-form (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
      (try
        (let [result# (do ~@body)]
-         (spire.output.core/print-result (eval/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) result#)
+         (spire.output.core/print-result (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) result#)
          result#)
        (catch clojure.lang.ExceptionInfo e#
-         (spire.output.core/print-result (eval/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) (ex-data e#))
+         (spire.output.core/print-result (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) (ex-data e#))
          (throw e#)))))
 
 #_ (content-size (byte-array [1 2]))
@@ -342,5 +342,5 @@
 
 (defmacro debug [& body]
   `(let [result# (do ~@body)]
-     (spire.output.core/debug-result (eval/deref* spire.state/output-module) ~*file* (quote ~&form) ~(meta &form) (spire.state/get-host-config) result#)
+     (spire.output.core/debug-result (context/deref* spire.state/output-module) ~*file* (quote ~&form) ~(meta &form) (spire.state/get-host-config) result#)
      result#))
