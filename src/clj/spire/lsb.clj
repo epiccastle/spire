@@ -450,7 +450,7 @@ Pinned packages:
 ")
 
 
-(defn guess-debian-release-from-apt []
+(defn guess-debian-release-from-apt [ubuntu-csv]
   (let [-origin "Ubuntu" #_ "Debian"
         -component "main"
         ignoresuites #{"experimental"}
