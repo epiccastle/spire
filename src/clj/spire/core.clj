@@ -2,7 +2,6 @@
   (:require [spire.state]
             [spire.config :as config]
             [spire.output.core :as output]
-            [spire.namespaces :as namespaces]
             [spire.utils :as utils]
             [spire.eval :as eval]
             [spire.state :as state]
@@ -47,22 +46,6 @@
         options-summary]
        (string/join \newline)))
 
-(defn remove-shebang [script]
-  (if (string/starts-with? script "#!")
-    (str "\n" (second (string/split script #"\n" 2)))
-    script))
-
-(defn evaluate [args script]
-  (sci/binding [eval/context :sci]
-    (sci/eval-string
-     (remove-shebang script)
-     {:namespaces namespaces/namespaces
-      :bindings (assoc namespaces/bindings
-                       '*command-line-args* (sci/new-dynamic-var '*command-line-args* *command-line-args*))
-      :imports {'System 'java.lang.System
-                'Thread 'java.lang.Thread}
-      :classes namespaces/classes})))
-
 (defn delay-print
   "Wait for output module to finish printing, then print the value"
   [val]
@@ -72,30 +55,29 @@
 
 (defn -main
   [& args]
-  (binding [*command-line-args* args]
-    (try
-      (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
+  (try
+    (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
 
-        (sci/binding [state/output-module (clojure.edn/read-string (get options :output ":default"))]
-          (initialise options)
-          (output/print-thread @state/output-module)
+      (sci/binding [state/output-module (clojure.edn/read-string (get options :output ":default"))]
+        (initialise options)
+        (output/print-thread @state/output-module)
 
-          (cond
-            (:help options)
-            (println (usage summary))
+        (cond
+          (:help options)
+          (println (usage summary))
 
-            (:version options)
-            (println "Version:" version)
+          (:version options)
+          (println "Version:" version)
 
-            (:evaluate options)
-            (binding [*file* ""]
-              (->> options :evaluate (evaluate args) delay-print))
+          (:evaluate options)
+          (binding [*file* ""]
+            (->> options :evaluate (eval/evaluate args) delay-print))
 
-            (pos? (count arguments))
-            (binding [*file* (first arguments)]
-              (-> arguments first slurp (->> (evaluate args)) delay-print))
+          (pos? (count arguments))
+          (binding [*file* (first arguments)]
+            (-> arguments first slurp (->> (eval/evaluate args)) delay-print))
 
-            :else
-            (println (usage summary)))))
-      (finally
-        (shutdown-agents)))))
+          :else
+          (println (usage summary)))))
+    (finally
+      (shutdown-agents))))
