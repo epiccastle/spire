@@ -358,7 +358,11 @@
     'with-sh-env (with-meta @#'clojure.java.shell/with-sh-env {:sci/macro true})
     'sh clojure.java.shell/sh}
 
-   })
+
+
+   'sci.impl.vars
+   {'current-file sci.impl.vars/current-file}}
+  )
 
 (def classes
   {'java.lang.System System
