@@ -237,13 +237,13 @@
    'spire.module.apt {'apt* apt/apt*
                       'apt (with-meta @#'apt/apt {:sci/macro true})}
    'spire.module.attrs {'attrs* attrs/attrs*
-                      'attrs (with-meta @#'attrs/attrs {:sci/macro true})}
+                        'attrs (with-meta @#'attrs/attrs {:sci/macro true})}
    'spire.module.authorized-keys {'authorized-keys* authorized-keys/authorized-keys*
                                   'authorized-keys (with-meta @#'authorized-keys/authorized-keys {:sci/macro true})}
    'spire.module.apt-repo {'apt-repo* apt-repo/apt-repo*
                            'apt-repo (with-meta @#'apt-repo/apt-repo {:sci/macro true})}
    'spire.module.curl {'curl* curl/curl*
-                           'curl (with-meta @#'curl/curl {:sci/macro true})}
+                       'curl (with-meta @#'curl/curl {:sci/macro true})}
    'spire.module.download {'download* download/download*
                            'download (with-meta @#'download/download {:sci/macro true})}
    'spire.module.group {'group* group/group*
@@ -257,7 +257,7 @@
    'spire.module.pkg {'pkg* pkg/pkg*
                       'pkg (with-meta @#'pkg/pkg {:sci/macro true})}
    'spire.module.rm {'rm* rm/rm*
-                      'rm (with-meta @#'rm/rm {:sci/macro true})}
+                     'rm (with-meta @#'rm/rm {:sci/macro true})}
    'spire.module.service {'service* service/service*
                           'service (with-meta @#'service/service {:sci/macro true})}
    'spire.module.shell {'shell* shell/shell*
