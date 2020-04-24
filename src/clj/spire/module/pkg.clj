@@ -136,7 +136,7 @@
      result)))
 
 (defmacro pkg [& args]
-  `(utils/wrap-report ~*file* ~&form (pkg* ~@args)))
+  `(utils/wrap-report ~&form (pkg* ~@args)))
 
 (def documentation
   {

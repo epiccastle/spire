@@ -88,7 +88,7 @@
     (process-result command opts))))
 
 (defmacro sysctl [& args]
-  `(utils/wrap-report ~*file* ~&form (sysctl* ~@args)))
+  `(utils/wrap-report ~&form (sysctl* ~@args)))
 
 (def documentation
   {

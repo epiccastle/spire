@@ -213,7 +213,7 @@
          (process-result opts result nil nil))))))
 
 (defmacro curl [& args]
-  `(utils/wrap-report ~*file* ~&form (curl* ~@args)))
+  `(utils/wrap-report ~&form (curl* ~@args)))
 
 
 

@@ -193,7 +193,7 @@
      result)))
 
 (defmacro apt [& args]
-  `(utils/wrap-report ~*file* ~&form (apt* ~@args)))
+  `(utils/wrap-report ~&form (apt* ~@args)))
 
 (def documentation
   {

@@ -122,7 +122,7 @@
   )
 
 (defmacro attrs [& args]
-  `(utils/wrap-report ~*file* ~&form (attrs* ~@args)))
+  `(utils/wrap-report ~&form (attrs* ~@args)))
 
 (def documentation
   {

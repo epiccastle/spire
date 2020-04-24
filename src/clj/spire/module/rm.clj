@@ -13,7 +13,7 @@
            :result (if (zero? exit) :ok :failed))))
 
 (defmacro rm [& args]
-  `(utils/wrap-report ~*file* ~&form (rm* ~@args)))
+  `(utils/wrap-report ~&form (rm* ~@args)))
 
 (def documentation
   {

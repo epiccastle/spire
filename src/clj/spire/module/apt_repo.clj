@@ -165,7 +165,7 @@
     (process-result command opts))))
 
 (defmacro apt-repo [& args]
-  `(utils/wrap-report ~*file* ~&form (apt-repo* ~@args)))
+  `(utils/wrap-report ~&form (apt-repo* ~@args)))
 
 (def documentation
   {

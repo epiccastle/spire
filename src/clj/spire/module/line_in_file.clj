@@ -227,7 +227,7 @@
     (process-result command opts))))
 
 (defmacro line-in-file [& args]
-  `(utils/wrap-report ~*file* ~&form (line-in-file* ~@args)))
+  `(utils/wrap-report ~&form (line-in-file* ~@args)))
 
 
 (def documentation

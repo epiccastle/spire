@@ -87,7 +87,7 @@
      result)))
 
 (defmacro user [& args]
-  `(utils/wrap-report ~*file* ~&form (user* ~@args)))
+  `(utils/wrap-report ~&form (user* ~@args)))
 
 (defn gecos [{:keys [fullname room office home info]}]
   (str fullname "," room "," office "," home "," info))

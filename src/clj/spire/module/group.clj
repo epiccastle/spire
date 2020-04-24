@@ -79,7 +79,7 @@
     (process-result command opts))))
 
 (defmacro group [& args]
-  `(utils/wrap-report ~*file* ~&form (group* ~@args)))
+  `(utils/wrap-report ~&form (group* ~@args)))
 
 (def documentation
   {:module "group"

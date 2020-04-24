@@ -70,11 +70,10 @@
           (println "Version:" version)
 
           (:evaluate options)
-          (binding [*file* ""]
-            (->> options :evaluate (eval/evaluate args) delay-print))
+          (->> options :evaluate (eval/evaluate args) delay-print)
 
           (pos? (count arguments))
-          (binding [*file* (first arguments)]
+          (sci/binding [sci/file (first arguments)]
             (-> arguments first slurp (->> (eval/evaluate args)) delay-print))
 
           :else

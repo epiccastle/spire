@@ -48,7 +48,7 @@
   )
 
 (defmacro mkdir [& args]
-  `(utils/wrap-report ~*file* ~&form (mkdir* ~@args)))
+  `(utils/wrap-report ~&form (mkdir* ~@args)))
 
 (def documentation
   {

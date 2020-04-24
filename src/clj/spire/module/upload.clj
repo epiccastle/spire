@@ -277,7 +277,7 @@
      )))
 
 (defmacro upload [& args]
-  `(utils/wrap-report ~*file* ~&form (upload* ~*file* (quote ~&form) ~(meta &form) ~@args)))
+  `(utils/wrap-report ~&form (upload* ~*file* (quote ~&form) ~(meta &form) ~@args)))
 
 (def documentation
   {

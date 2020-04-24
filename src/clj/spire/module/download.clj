@@ -216,7 +216,7 @@
           {:result (if attrs? :changed :ok)}))))))
 
 (defmacro download [& args]
-  `(utils/wrap-report ~*file* ~&form (download* ~*file* (quote ~&form) ~(meta &form) ~@args)))
+  `(utils/wrap-report ~&form (download* ~*file* (quote ~&form) ~(meta &form) ~@args)))
 
 (def documentation
   {

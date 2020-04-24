@@ -64,7 +64,7 @@
                  :else :failed)))))
 
 (defmacro shell [& args]
-  `(utils/wrap-report ~*file* ~&form (shell* ~@args)))
+  `(utils/wrap-report ~&form (shell* ~@args)))
 
 
 (def documentation

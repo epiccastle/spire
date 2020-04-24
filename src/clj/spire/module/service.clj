@@ -113,7 +113,7 @@
   )
 
 (defmacro service [& args]
-  `(utils/wrap-report ~*file* ~&form (service* ~@args)))
+  `(utils/wrap-report ~&form (service* ~@args)))
 
 (def documentation
   {

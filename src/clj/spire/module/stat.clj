@@ -190,7 +190,7 @@
           (process-result path)))))
 
 (defmacro stat [& args]
-  `(utils/wrap-report ~*file* ~&form (stat* ~@args)))
+  `(utils/wrap-report ~&form (stat* ~@args)))
 
 ;;
 ;; Test mode flags

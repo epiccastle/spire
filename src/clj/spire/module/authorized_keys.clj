@@ -117,7 +117,7 @@
     (process-result command opts))))
 
 (defmacro authorized-keys [& args]
-  `(utils/wrap-report ~*file* ~&form (authorized-keys* ~@args)))
+  `(utils/wrap-report ~&form (authorized-keys* ~@args)))
 
 (def documentation
   {

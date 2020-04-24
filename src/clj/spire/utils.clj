@@ -4,7 +4,8 @@
             [clj-time.core :as time]
             [clojure.string :as string]
             [clojure.java.io :as io]
-            [clojure.java.shell :as shell]))
+            [clojure.java.shell :as shell]
+            [sci.impl.vars :as sci-vars]))
 
 (set! *warn-on-reflection* true)
 
@@ -313,16 +314,17 @@
          result#
          (throw (ex-info "module failed" result#))))))
 
-(defmacro wrap-report [file form & body]
-  `(do
-     (spire.output.core/print-form (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
-     (try
-       (let [result# (do ~@body)]
-         (spire.output.core/print-result (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) result#)
-         result#)
-       (catch clojure.lang.ExceptionInfo e#
-         (spire.output.core/print-result (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) (ex-data e#))
-         (throw e#)))))
+(defmacro wrap-report [form & body]
+  (let [file (or @sci-vars/current-file "")]
+    `(do
+       (spire.output.core/print-form (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
+       (try
+         (let [result# (do ~@body)]
+           (spire.output.core/print-result (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) result#)
+           result#)
+         (catch clojure.lang.ExceptionInfo e#
+           (spire.output.core/print-result (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) (ex-data e#))
+           (throw e#))))))
 
 #_ (content-size (byte-array [1 2]))
 #_ (content-file? (io/file "./spire"))
