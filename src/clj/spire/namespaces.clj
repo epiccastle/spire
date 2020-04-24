@@ -31,6 +31,7 @@
             [clojure.java.shell]
             [clojure.edn]
             [sci.core :as sci]
+            [sci.impl.vars :as sci-vars]
             [clj-http.lite.core]
             [clj-http.lite.client]
             [clj-http.lite.links]
