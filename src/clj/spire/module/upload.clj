@@ -11,7 +11,8 @@
             [spire.module.attrs :as attrs]
             [digest :as digest]
             [clojure.java.io :as io]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [sci.impl.vars :as sci-vars]))
 
 (def debug false)
 
@@ -277,7 +278,8 @@
      )))
 
 (defmacro upload [& args]
-  `(utils/wrap-report ~&form (upload* ~*file* (quote ~&form) ~(meta &form) ~@args)))
+  (let [file (or @sci-vars/current-file "")]
+    `(utils/wrap-report ~&form (upload* ~file (quote ~&form) ~(meta &form) ~@args))))
 
 (def documentation
   {

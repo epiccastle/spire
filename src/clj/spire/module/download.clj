@@ -13,7 +13,8 @@
             [digest :as digest]
             [puget.printer :as puget]
             [clojure.java.io :as io]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [sci.impl.vars :as sci-vars]))
 
 (def debug false)
 
@@ -216,7 +217,8 @@
           {:result (if attrs? :changed :ok)}))))))
 
 (defmacro download [& args]
-  `(utils/wrap-report ~&form (download* ~*file* (quote ~&form) ~(meta &form) ~@args)))
+  (let [file (or @sci-vars/current-file "")]
+    `(utils/wrap-report ~&form (download* ~file (quote ~&form) ~(meta &form) ~@args))))
 
 (def documentation
   {
