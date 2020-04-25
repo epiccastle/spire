@@ -37,7 +37,7 @@
             [clj-http.lite.util]
             [edamame.core]))
 
-(def bindings
+(def all-modules
   {'apt* apt/apt*
    'apt (with-meta @#'apt/apt {:sci/macro true})
    'apt-repo* apt-repo/apt-repo*
@@ -126,11 +126,10 @@
    'failed? (with-meta @#'utils/failed? {:sci/macro true})
    'debug (with-meta @#'utils/debug {:sci/macro true})
 
-   ;; '*command-line-args* (sci/new-dynamic-var '*command-line-args* *command-line-args*)
-   '*in* (sci/new-dynamic-var '*in* *in*)
-   '*out* (sci/new-dynamic-var '*out* *out*)
-   '*err* (sci/new-dynamic-var '*err* *err*)
-   })
+   }
+  )
+
+(def bindings all-modules)
 
 (def namespaces
   {
@@ -141,6 +140,9 @@
                   'slurp slurp
                   'future (with-meta @#'clojure.core/future {:sci/macro true})
                   'future-call clojure.core/future-call
+                  '*in* (sci/new-dynamic-var '*in* *in*)
+                  '*out* (sci/new-dynamic-var '*out* *out*)
+                  '*err* (sci/new-dynamic-var '*err* *err*)
                   }
    'clojure.set {'intersection clojure.set/intersection
                  }
@@ -207,6 +209,7 @@
                     }
 
    ;; modules
+   'spire.modules all-modules
    'spire.module.apt {'apt* apt/apt*
                       'apt (with-meta @#'apt/apt {:sci/macro true})}
    'spire.module.attrs {'attrs* attrs/attrs*
