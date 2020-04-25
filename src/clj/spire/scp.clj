@@ -228,7 +228,11 @@
       (debug "Receive initial ACK")
       (scp-receive-ack recv)
       (doseq [file-or-data local-paths]
-        (debugf "scp-to: from %s name: %s" (.getPath file-or-data) (.getName file-or-data))
+        (if (string? file-or-data)
+          (debugf "scp-to: from %d bytes" (count file-or-data))
+          (debugf "scp-to: from %s name: %s"
+                  (.getPath file-or-data)
+                  (.getName file-or-data)))
         (cond
           (utils/content-recursive? file-or-data)
           (scp-copy-dir send recv file-or-data opts
