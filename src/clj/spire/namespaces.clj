@@ -188,7 +188,8 @@
    'spire.utils {'colour utils/colour
                  'defmodule (with-meta @#'utils/defmodule {:sci/macro true})
                  'wrap-report (with-meta @#'utils/wrap-report {:sci/macro true})
-
+                 'current-file 'utils/current-file
+                 'current-file-parent 'utils/current-file-parent
                  }
    'spire.facts {'get-fact facts/get-fact
                  'replace-facts-user! facts/replace-facts-user!

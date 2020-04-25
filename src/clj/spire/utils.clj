@@ -304,6 +304,12 @@
       string-escape
       double-quote))
 
+(defn current-file []
+  (or @sci-vars/current-file ""))
+
+(defn current-file-parent []
+  (or (some-> (utils/current-file) io/file .getParent) "."))
+
 (defmacro defmodule [name module-args pipeline-args & body]
   `(defn ~name [& args#]
      (let [~module-args args#
@@ -315,7 +321,7 @@
          (throw (ex-info "module failed" result#))))))
 
 (defmacro wrap-report [form & body]
-  (let [file (or @sci-vars/current-file "")]
+  (let [file (current-file)]
     `(do
        (spire.output.core/print-form (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
        (try
