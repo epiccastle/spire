@@ -288,6 +288,118 @@ supplying the same password over and over. For example:
       (do-more-stuff-as-root)))
 ```
 
+## Requiring External Code
+
+Code defined in external files can be referenced in your mainline
+by using clojures standard `require` semantics. This can be done as
+a plain require. For example:
+
+```clojure
+(require '[roles.nginx :as nginx])
+```
+
+Or in a namespace declaration such as:
+
+```clojure
+(ns infra
+  (:require [roles.nginx :as nginx]))
+```
+
+The file to be included `nginx.clj` whereever it is found should begin
+with a matching `ns` declaration:
+
+```clojure
+(ns roles.nginx)
+...
+```
+
+### External Code Search Path
+
+Required code will be loaded from a standard namespace directory
+structure. For example, `roles.nginx` will be loaded from a file
+`roles/nginx.clj`.
+
+This path will be used relative to the containing folder of the
+executing script, if spire is invoked with a code file path, or the
+present directory, if spire is invoked with `-e` to evaluate a string.
+
+So, for example: If spire was invoked `spire path/to/script.clj` then
+the above required file would be loaded from
+`path/to/roles/nginx.clj`. Alternatively if spire was invoked `spire
+-e "(require '[roles.nginx])"` then the file would be loaded from
+`roles/nginx.clj`
+
+#### Altering the Search Path
+
+More complex library layouts can be facilitated via the environment
+variable `SPIREPATH`. If this environment variable is set, it should
+contain a colon `:` seperated list of paths to search for the library
+code. For example in the following case:
+
+```shell
+SPIREPATH=a/b:c/d/e:../f:. spire -e "(require '[role.nginx])"
+```
+
+The file `nginx.clj` would be looked for in the following order
+
+```
+a/b/role/nginx.clj
+c/d/e/role/nginx.clj
+../f/role/nginx.clj
+./role/nginx.clj
+```
+
+If spire path is set and the present directory is not included, then
+it will not be searched. In this way settings `SPIREPATH` overrides
+the default search location behaviour completely.
+
+#### Module Interning
+
+By default the complete set of available modules are present to be
+used without a namespace qualifier in the scripts default
+namespace. So for example `spire -e '(ssh "localhost" (get-fact))'`
+works without any namespaces specified for `ssh` or `get-fact`.
+
+These names are actually interned in the `user` namespace, and the
+default namespace for code evaluation is `user`. Thus, if you specify
+another namespace for execution via a `ns` declaration you will
+discover that you will need to require each module function from each
+namespace. For example:
+
+```clojure
+(ns infra
+  (:require [spire.module.apt :as apt]
+            [spire.module.download :as download]))
+
+...
+
+(apt/apt ...)
+(download/download ...)
+```
+
+This can become very tiresome so a namespace `spire.modules` is
+provided that contains every default module function in a single
+namespace. Thus you can restore the default root script behavoir in
+any namespace as follows:
+
+```clojure
+(ns infra
+  (:require [spire.modules :refer :all]))
+```
+
+### Loading External Code
+
+An alternative method to bringing in external code is with
+`load-file`.  This loads the code from an external clojure file and
+evaluates it in the present namespace context. For example:
+
+```shell
+$ cat test.clj
+(* 10 n)
+$ spire -e '(def n 5) (load-file "test.clj")'
+50
+```
+
 ## Output
 
 Output printing is controlled by the `-o` flag. You can specify a
