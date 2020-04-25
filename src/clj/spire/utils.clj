@@ -308,7 +308,7 @@
   (or @sci-vars/current-file ""))
 
 (defn current-file-parent []
-  (or (some-> (utils/current-file) io/file .getParent) "."))
+  (or (some-> (current-file) io/file .getParent) "."))
 
 (defmacro defmodule [name module-args pipeline-args & body]
   `(defn ~name [& args#]
