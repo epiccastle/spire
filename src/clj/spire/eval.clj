@@ -49,7 +49,6 @@
                     (slurp source-file))})))
 
 (defn evaluate [args script]
-  (prn 'evaluate script)
   (sci/binding [context/context :sci]
     (sci/eval-string
      (remove-shebang script)
