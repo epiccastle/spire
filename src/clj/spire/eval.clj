@@ -27,7 +27,7 @@
          first)))
 
 (defn make-search-path [spire-path]
-  (let [cwd (or (some-> *file* io/file .getParent) ".")]
+  (let [cwd (utils/current-file-parent)]
     (if spire-path
       (concat (string/split spire-path #":") [cwd])
       [cwd])))
