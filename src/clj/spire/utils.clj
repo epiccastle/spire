@@ -84,7 +84,7 @@
 
 (defmulti content-size type)
 (defmethod content-size java.io.File [f] (.length ^java.io.File f))
-(defmethod content-size java.lang.String [f] (count f))
+(defmethod content-size java.lang.String [f] (count (.getBytes ^String f)))
 (defmethod content-size (Class/forName "[B") [f] (count f))
 
 (defmulti content-display-name type)
