@@ -134,7 +134,7 @@
        (let [remote-file? (remote/is-file? run dest)
 
              content? content
-             content (or content (io/file src))
+             content (or content (io/file (utils/current-file-parent) src))
 
              transfers (compare/compare-full-info (str content) run
                                                   dest
