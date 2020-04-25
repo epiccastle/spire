@@ -31,25 +31,11 @@
             [clojure.java.shell]
             [clojure.edn]
             [sci.core :as sci]
-            [sci.impl.vars :as sci-vars]
             [clj-http.lite.core]
             [clj-http.lite.client]
             [clj-http.lite.links]
             [clj-http.lite.util]
-            [edamame.core]
-            )
-  )
-
-(defn binding*
-  "This macro only works with symbols that evaluate to vars themselves. See `*in*` and `*out*` below."
-  [_ _ bindings & body]
-  `(do
-     (let []
-       (push-thread-bindings (hash-map ~@bindings))
-       (try
-         ~@body
-         (finally
-           (pop-thread-bindings))))))
+            [edamame.core]))
 
 (def bindings
   {'apt* apt/apt*
@@ -126,18 +112,8 @@
    'regular-file? stat/regular-file?
    'socket? stat/socket?
 
-   'slurp slurp
-
    'shell* shell/shell*
    'shell (with-meta @#'shell/shell {:sci/macro true})
-
-   ;;'ln (system/ln
-   ;;'mkdir system/mkdir
-
-   ;;'git vcs/git
-
-   ;;'copy transfer/copy
-   ;;'template transfer/template
 
    'ssh (with-meta @#'transport/ssh {:sci/macro true})
    'ssh-group (with-meta @#'transport/ssh-group {:sci/macro true})
@@ -159,17 +135,12 @@
 (def namespaces
   {
    'spire.transfer {'ssh (with-meta @#'transfer/ssh {:sci/macro true})}
-   'clojure.core { ;;'binding (with-meta binding* {:sci/macro true})
-                  ;;'push-thread-bindings clojure.core/push-thread-bindings
-                  ;;'pop-thread-bindings clojure.core/pop-thread-bindings
-                  ;;                  'var (with-meta @#'clojure.core/var {:sci/macro true})
-                  'println println
+   'clojure.core {'println println
                   'prn prn
                   'pr pr
-
+                  'slurp slurp
                   'future (with-meta @#'clojure.core/future {:sci/macro true})
                   'future-call clojure.core/future-call
-
                   }
    'clojure.set {'intersection clojure.set/intersection
                  }
@@ -358,12 +329,7 @@
    {
     'with-sh-dir (with-meta @#'clojure.java.shell/with-sh-dir {:sci/macro true})
     'with-sh-env (with-meta @#'clojure.java.shell/with-sh-env {:sci/macro true})
-    'sh clojure.java.shell/sh}
-
-
-
-   'sci.impl.vars
-   {'current-file sci.impl.vars/current-file}}
+    'sh clojure.java.shell/sh}}
   )
 
 (def classes
