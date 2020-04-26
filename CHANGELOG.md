@@ -3,6 +3,13 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+### Added
+- implement external code loading via `require` or `load-file` - #25
+
+### Fixed
+- Fix hanging or breaking file upload when using multibyte unicode `:content` - #38
+- Make `upload` file `:src` path relative to executing script's folder - #39
+
 ## [0.1.0-alpha.5] - 2020-04-19
 
 ### Fixed
