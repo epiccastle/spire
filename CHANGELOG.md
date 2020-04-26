@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.6] - 2020-04-26
+
 ### Added
 - implement external code loading via `require` or `load-file` - #25
 
@@ -75,7 +77,8 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.5...HEAD
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.6...HEAD
+[0.1.0-alpha.6]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
 [0.1.0-alpha.5]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.4...v0.1.0-alpha.5
 [0.1.0-alpha.4]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.3...v0.1.0-alpha.4
 [0.1.0-alpha.3]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
