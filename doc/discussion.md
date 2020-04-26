@@ -353,7 +353,7 @@ If spire path is set and the present directory is not included, then
 it will not be searched. In this way settings `SPIREPATH` overrides
 the default search location behaviour completely.
 
-#### Module Interning
+#### Spire modules and their layout
 
 By default the complete set of available modules are present to be
 used without a namespace qualifier in the scripts default
