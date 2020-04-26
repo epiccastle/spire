@@ -1,4 +1,4 @@
-(ns test-require-import)
+(ns test_require_import)
 
 (def val 10)
 
