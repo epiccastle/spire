@@ -1,6 +1,5 @@
 (ns spire.eval
   (:require [sci.core :as sci]
-            [sci.impl.interpreter :refer [eval-string*]]
             [spire.namespaces :as namespaces]
             [spire.context :as context]
             [spire.utils :as utils]
@@ -57,7 +56,7 @@
         source (slurp file-path)]
     (sci/with-bindings {sci/ns @sci/ns
                         sci/file file-path}
-      (eval-string* sci-opts source))))
+      (sci/eval-string source sci-opts))))
 
 (defn evaluate [args script]
   (let [env (atom {})
