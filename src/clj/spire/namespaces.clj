@@ -30,12 +30,16 @@
             [clojure.tools.cli]
             [clojure.java.shell]
             [clojure.edn]
+            [clojure.string]
+            [clojure.set]
+            [clojure.java.io]
             [sci.core :as sci]
             [clj-http.lite.core]
             [clj-http.lite.client]
             [clj-http.lite.links]
             [clj-http.lite.util]
-            [edamame.core]))
+            [edamame.core]
+            [spire.sci :refer [make-sci-bindings]]))
 
 (def all-modules
   {'apt* apt/apt*
@@ -133,7 +137,6 @@
 
 (def namespaces
   {
-   'spire.transfer {'ssh (with-meta @#'transfer/ssh {:sci/macro true})}
    'clojure.core {'println println
                   'prn prn
                   'pr pr
@@ -144,195 +147,49 @@
                   '*out* (sci/new-dynamic-var '*out* *out*)
                   '*err* (sci/new-dynamic-var '*err* *err*)
                   }
-   'clojure.set {'intersection clojure.set/intersection
-                 }
-   'spire.transport {'connect transport/connect
-                     'disconnect transport/disconnect
-                     'open-connection transport/open-connection
-                     'close-connection transport/close-connection
-                     'get-connection transport/get-connection
-                     'flush-out transport/flush-out
-                     'safe-deref transport/safe-deref
-                     }
-   'spire.ssh {'host-config-to-string ssh/host-config-to-string
-               'host-config-to-connection-key ssh/host-config-to-connection-key
-               'host-description-to-host-config ssh/host-description-to-host-config
-               }
-   'spire.utils {'colour utils/colour
-                 'defmodule (with-meta @#'utils/defmodule {:sci/macro true})
-                 'wrap-report (with-meta @#'utils/wrap-report {:sci/macro true})
-                 'current-file 'utils/current-file
-                 'current-file-parent 'utils/current-file-parent
-                 }
-   'spire.facts {'get-fact facts/get-fact
-                 'replace-facts-user! facts/replace-facts-user!
-                 'update-facts! facts/update-facts!
-                 }
-   'spire.state {
-                 'host-config state/host-config
-                 'connection state/connection
-                 'shell-context state/shell-context
-                 'ssh-connections state/ssh-connections
-                 'output-module state/output-module
-                 'get-host-config state/get-host-config
-                 'get-connection state/get-connection
-                 'get-shell-context state/get-shell-context
-                 'get-output-module state/get-output-module
-                 }
+   'spire.transport (make-sci-bindings spire.transport)
+   'spire.ssh (make-sci-bindings spire.ssh)
+   'spire.utils (make-sci-bindings spire.utils)
+   'spire.facts (make-sci-bindings spire.facts)
+   'spire.state (make-sci-bindings spire.state)
+   'spire.context (make-sci-bindings spire.context)
+   'spire.output.core (make-sci-bindings spire.output.core)
 
-   'spire.context {'context context/context
-                   'binding-sym context/binding-sym
-                   'binding* (with-meta @#'context/binding* {:sci/macro true})
-                   'deref-sym context/deref-sym
-                   'deref* (with-meta @#'context/deref* {:sci/macro true})}
-
-   'spire.output.core {
-                       'print-form output/print-form
-                       'print-result output/print-result
-                       'debug-result output/debug-result
-                       }
-
-   'clojure.java.io {'file clojure.java.io/file
-                     }
-
-   'clojure.tools.cli {
-                       'cli clojure.tools.cli/cli
-                       'make-summary-part clojure.tools.cli/make-summary-part
-                       'format-lines clojure.tools.cli/format-lines
-                       'summarize clojure.tools.cli/summarize
-                       'get-default-options clojure.tools.cli/get-default-options
-                       'parse-opts clojure.tools.cli/parse-opts
-                       }
-
-   'clojure.string {
-                    'trim clojure.string/trim
-                    }
+   'clojure.java.io (make-sci-bindings clojure.java.io)
+   'clojure.tools.cli (make-sci-bindings clojure.tools.cli)
+   'clojure.set (make-sci-bindings clojure.set)
+   'clojure.string (make-sci-bindings clojure.string)
 
    ;; modules
    'spire.modules all-modules
-   'spire.module.apt {'apt* apt/apt*
-                      'apt (with-meta @#'apt/apt {:sci/macro true})}
-   'spire.module.attrs {'attrs* attrs/attrs*
-                        'attrs (with-meta @#'attrs/attrs {:sci/macro true})}
-   'spire.module.authorized-keys {'authorized-keys* authorized-keys/authorized-keys*
-                                  'authorized-keys (with-meta @#'authorized-keys/authorized-keys {:sci/macro true})}
-   'spire.module.apt-repo {'apt-repo* apt-repo/apt-repo*
-                           'apt-repo (with-meta @#'apt-repo/apt-repo {:sci/macro true})}
-   'spire.module.curl {'curl* curl/curl*
-                       'curl (with-meta @#'curl/curl {:sci/macro true})}
-   'spire.module.download {'download* download/download*
-                           'download (with-meta @#'download/download {:sci/macro true})}
-   'spire.module.group {'group* group/group*
-                        'group (with-meta @#'group/group {:sci/macro true})}
-   'spire.module.get-file {'get-file* get-file/get-file*
-                           'get-file (with-meta @#'get-file/get-file {:sci/macro true})}
-   'spire.module.line-in-file {'line-in-file* line-in-file/line-in-file*
-                               'line-in-file (with-meta @#'line-in-file/line-in-file {:sci/macro true})}
-   'spire.module.mkdir {'mkdir* mkdir/mkdir*
-                        'mkdir (with-meta @#'mkdir/mkdir {:sci/macro true})}
-   'spire.module.pkg {'pkg* pkg/pkg*
-                      'pkg (with-meta @#'pkg/pkg {:sci/macro true})}
-   'spire.module.rm {'rm* rm/rm*
-                     'rm (with-meta @#'rm/rm {:sci/macro true})}
-   'spire.module.service {'service* service/service*
-                          'service (with-meta @#'service/service {:sci/macro true})}
-   'spire.module.shell {'shell* shell/shell*
-                        'shell (with-meta @#'shell/shell {:sci/macro true})}
-   'spire.module.stat {'stat* stat/stat*
-                       'stat (with-meta @#'stat/stat {:sci/macro true})}
+   'spire.module.apt (make-sci-bindings spire.module.apt)
+   'spire.module.attrs (make-sci-bindings spire.module.attrs)
+   'spire.module.authorized-keys (make-sci-bindings spire.module.authorized-keys)
+   'spire.module.apt-repo (make-sci-bindings spire.module.apt-repo)
+   'spire.module.curl (make-sci-bindings spire.module.curl)
+   'spire.module.download (make-sci-bindings spire.module.download)
+   'spire.module.group (make-sci-bindings spire.module.group)
+   'spire.module.get-file (make-sci-bindings spire.module.get-file)
+   'spire.module.line-in-file (make-sci-bindings spire.module.line-in-file)
+   'spire.module.mkdir (make-sci-bindings spire.module.mkdir)
+   'spire.module.pkg (make-sci-bindings spire.module.pkg)
+   'spire.module.rm (make-sci-bindings spire.module.rm)
+   'spire.module.service (make-sci-bindings spire.module.service)
+   'spire.module.shell (make-sci-bindings spire.module.shell)
+   'spire.module.stat (make-sci-bindings spire.module.stat)
+   'spire.module.sudo (make-sci-bindings spire.module.sudo)
+   'spire.module.sysctl (make-sci-bindings spire.module.sysctl)
+   'spire.module.upload (make-sci-bindings spire.module.upload)
+   'spire.module.user (make-sci-bindings spire.module.user)
 
-   'spire.module.sudo {'requires-password? sudo/requires-password?
-                       'prefix-sudo-stdin sudo/prefix-sudo-stdin
-                       'make-sudo-command sudo/make-sudo-command
-                       'passwords sudo/passwords
-                       'sudo-id sudo/sudo-id
-                       'sudo-user (with-meta @#'sudo/sudo-user {:sci/macro true})
-                       'sudo (with-meta @#'sudo/sudo {:sci/macro true})
-                       }
-   'spire.module.sysctl {'sysctl* sysctl/sysctl*
-                         'sysctl (with-meta @#'sysctl/sysctl {:sci/macro true})}
-   'spire.module.upload {'upload* upload/upload*
-                         'upload (with-meta @#'upload/upload {:sci/macro true})}
-   'spire.module.user {'user* user/user*
-                       'user (with-meta @#'user/user {:sci/macro true})}
+   'clj-http.lite.client (make-sci-bindings clj-http.lite.client {:exclusions #{with-connection-pool}})
+   'clj-http.lite.core (make-sci-bindings clj-http.lite.core)
+   'clj-http.lite.links (make-sci-bindings clj-http.lite.links)
+   'clj-http.lite.util (make-sci-bindings clj-http.lite.links {:exclusions #{base64-encode}})
 
-   'clj-http.lite.client
-   {
-    'update clj-http.lite.client/update
-    'when-pos clj-http.lite.client/when-pos
-    'parse-url clj-http.lite.client/parse-url
-    'unexceptional-status? clj-http.lite.client/unexceptional-status?
-    'wrap-exceptions clj-http.lite.client/wrap-exceptions
-    'wrap-redirects clj-http.lite.client/wrap-redirects
-    'follow-redirect clj-http.lite.client/follow-redirect
-    'wrap-decompression clj-http.lite.client/wrap-decompression
-    'wrap-output-coercion clj-http.lite.client/wrap-output-coercion
-    'wrap-input-coercion clj-http.lite.client/wrap-input-coercion
-    'content-type-value clj-http.lite.client/content-type-value
-    'wrap-content-type clj-http.lite.client/wrap-content-type
-    'wrap-accept clj-http.lite.client/wrap-accept
-    'accept-encoding-value clj-http.lite.client/accept-encoding-value
-    'wrap-accept-encoding clj-http.lite.client/wrap-accept-encoding
-    'generate-query-string clj-http.lite.client/generate-query-string
-    'wrap-query-params clj-http.lite.client/wrap-query-params
-    'basic-auth-value clj-http.lite.client/basic-auth-value
-    'wrap-basic-auth clj-http.lite.client/wrap-basic-auth
-    'parse-user-info clj-http.lite.client/parse-user-info
-    'wrap-user-info clj-http.lite.client/wrap-user-info
-    'wrap-method clj-http.lite.client/wrap-method
-    'wrap-form-params clj-http.lite.client/wrap-form-params
-    'wrap-url clj-http.lite.client/wrap-url
-    'wrap-unknown-host clj-http.lite.client/wrap-unknown-host
-    'wrap-request clj-http.lite.client/wrap-request
-    'request clj-http.lite.client/request
-    'get clj-http.lite.client/get
-    'head clj-http.lite.client/head
-    'post clj-http.lite.client/post
-    'put clj-http.lite.client/put
-    'delete clj-http.lite.client/delete}
-
-   'clj-http.lite.core
-   {
-    'parse-headers clj-http.lite.core/parse-headers
-    'request clj-http.lite.core/request}
-
-   'clj-http.lite.links
-   {
-    'read-link-params clj-http.lite.links/read-link-params
-    'read-link-value clj-http.lite.links/read-link-value
-    'read-link-headers clj-http.lite.links/read-link-headers
-    'wrap-links clj-http.lite.links/wrap-links
-    }
-
-   'clj-http.lite.util
-   {
-    'utf8-bytes clj-http.lite.util/utf8-bytes
-    'utf8-string clj-http.lite.util/utf8-string
-    'url-decode clj-http.lite.util/url-decode
-    'url-encode clj-http.lite.util/url-encode
-    'to-byte-array clj-http.lite.util/to-byte-array
-    'gunzip clj-http.lite.util/gunzip
-    'gzip clj-http.lite.util/gzip
-    'inflate clj-http.lite.util/inflate
-    'deflate clj-http.lite.util/deflate}
-
-   'edamame.core
-   {
-    'parse-string edamame.core/parse-string
-    'parse-string-all edamame.core/parse-string-all
-    }
-
-   'clojure.edn
-   {
-    'read clojure.edn/read
-    'read-string clojure.edn/read-string
-    }
-
-   'clojure.java.shell
-   {
-    'with-sh-dir (with-meta @#'clojure.java.shell/with-sh-dir {:sci/macro true})
-    'with-sh-env (with-meta @#'clojure.java.shell/with-sh-env {:sci/macro true})
-    'sh clojure.java.shell/sh}}
+   'edamame.core (make-sci-bindings edamame.core)
+   'clojure.edn (make-sci-bindings clojure.edn)
+   'clojure.java.shell (make-sci-bindings clojure.java.shell)}
   )
 
 (def classes
