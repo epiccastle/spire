@@ -118,14 +118,16 @@ linux-package:
 	-mkdir -p build/linux-package
 	cp spire build/linux-package
 	cd build/linux-package && GZIP=-9 tar cvzf ../spire-$(VERSION)-linux-amd64.tgz spire
-	du -sh spire build/spire-$(VERSION)-linux-amd64.tgz
+	cp target/uberjar/spire-$(VERSION)-standalone.jar build/spire-$(VERSION)-linux-standalone.jar
+	du -sh spire build/spire-$(VERSION)-linux-amd64.tgz build/spire-$(VERSION)-linux-standalone.jar
 
 macos-package:
 	-rm -rf build/macos-package
 	-mkdir -p build/macos-package
 	cp spire build/macos-package
 	cd build/macos-package && zip ../spire-$(VERSION)-macos-amd64.zip spire
-	du -sh spire build/spire-$(VERSION)-macos-amd64.zip
+	cp target/uberjar/spire-$(VERSION)-standalone.jar build/spire-$(VERSION)-macos-standalone.jar
+	du -sh spire build/spire-$(VERSION)-macos-amd64.zip build/spire-$(VERSION)-macos-standalone.jar
 
 jar-package:
 	-rm -rf build/jar-package
