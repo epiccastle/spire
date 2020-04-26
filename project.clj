@@ -32,6 +32,8 @@
   :plugins [[cider/cider-nrepl "0.21.1"]]
   :source-paths ["src/clj"]
   :java-source-paths ["src/c" "src/java"]
+  :test-paths ["test/clojure"]
+  ;;:javac-options ["-Xlint:unchecked"]
 
   :jvm-opts ["-Djava.library.path=./"]
   ;;:native-path "./"
