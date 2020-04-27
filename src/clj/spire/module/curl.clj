@@ -197,14 +197,14 @@
            :result :failed)))
 
 (utils/defmodule curl* [opts]
-  [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]
+  [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   ;;(println "curl*" (make-script command opts))
   (or
    (preflight opts)
    (let [header-file (remote/make-temp-filename {:prefix "spire-curl-headers-"
                                                  :extension "txt"})]
      (let [{:keys [out err exit] :as result}
-           (ssh/ssh-exec session (shell-fn (make-script opts header-file)) (stdin-fn "") "UTF-8" {})]
+           (exec-fn session (shell-fn (make-script opts header-file)) (stdin-fn "") "UTF-8" {})]
        (if (zero? exit)
          (let [get-file-result (get-file/get-file* header-file)
                rm-result (rm/rm* header-file)]
