@@ -1,7 +1,9 @@
 (ns spire.local
   (:require [spire.nio :as nio]
             [digest :as digest]
-            [clojure.java.io :as io]))
+            [clojure.string :as string]
+            [clojure.java.io :as io]
+            [clojure.java.shell :as shell]))
 
 (set! *warn-on-reflection* true)
 
@@ -51,3 +53,8 @@
        (into {})))
 
 #_ (path-full-info "/tmp/bashrc")
+
+(defn local-exec [_ cmd in out opts]
+  (apply shell/sh (concat (string/split cmd #"\s+") [:in in :in-enc "UTF-8" :out-enc out])))
+
+#_ (local-exec nil "sh" "echo $SHELL" "UTF-8" {})
