@@ -102,12 +102,12 @@
                                   owner group mode attrs
                                   dir-mode preserve recurse force]
                            :as opts}]
-  [host-config session {:keys [shell-fn stdin-fn] :as shell-context}]
+  [host-config session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight opts)
    (let [run (fn [command]
                (let [{:keys [out exit err]}
-                     (ssh/ssh-exec session (shell-fn "bash") (stdin-fn command) "UTF-8" {})]
+                     (exec-fn session (shell-fn "bash") (stdin-fn command) "UTF-8" {})]
                  (when debug
                    (println "-------")
                    (prn 'shell (shell-fn "bash"))
