@@ -62,7 +62,7 @@ jobs:
     environment:
       LEIN_ROOT: "true"
       #GRAALVM_HOME: /home/circleci/graalvm-ce-java8-19.3.1
-      GRAALVM_HOME: /home/circleci/graalvm-ce-java11-20.1.0-dev
+      GRAALVM_HOME: /home/circleci/graalvm-ce-java11-20.2.0-dev
     steps:
       - checkout
       - restore_cache:
