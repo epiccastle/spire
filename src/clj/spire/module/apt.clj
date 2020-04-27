@@ -183,11 +183,11 @@
 
 
 (utils/defmodule apt* [command & [opts]]
-  [host-config session {:keys [shell-fn stdin-fn] :as shell-context}]
+  [host-config session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight command opts)
    (let [result (->>
-                 (ssh/ssh-exec session (shell-fn (make-script command opts)) (stdin-fn "") "UTF-8" {})
+                 (exec-fn session (shell-fn (make-script command opts)) (stdin-fn "") "UTF-8" {})
                  (process-result command opts))]
      (facts/update-facts-paths!)
      result)))
