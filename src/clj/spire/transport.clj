@@ -3,6 +3,7 @@
             [spire.state :as state]
             [spire.ssh-agent :as ssh-agent]
             [spire.facts :as facts]
+            [spire.local :as local]
             [spire.known-hosts :as known-hosts]
             [spire.context :as context]
             [clojure.string :as string]
@@ -95,12 +96,13 @@
      (try
        (let [conn# (open-connection host-config#)]
          (context/binding* [state/host-config host-config#
-                         state/connection conn#
-                         state/shell-context {:exec :shell
-                                              :shell-fn identity
-                                              :stdin-fn identity}]
-                        (facts/update-facts!)
-                        (do ~@body)))
+                            state/connection conn#
+                            state/shell-context {:exec :shell
+                                                 :exec-fn ssh/ssh-exec
+                                                 :shell-fn identity
+                                                 :stdin-fn identity}]
+                           (facts/update-facts!)
+                           (do ~@body)))
        (finally
          (close-connection host-config#)))))
 
@@ -117,15 +119,16 @@
                 [(:key host-config#)
                  (future
                    (context/binding* [state/host-config host-config#
-                                   state/connection (get-connection
-                                                     (ssh/host-config-to-connection-key
-                                                      host-config#))
-                                   state/shell-context {:exec :shell
-                                                        :shell-fn identity
-                                                        :stdin-fn identity}]
-                                  (facts/update-facts!)
-                                  (let [result# (do ~@body)]
-                                    result#)))])))]
+                                      state/connection (get-connection
+                                                        (ssh/host-config-to-connection-key
+                                                         host-config#))
+                                      state/shell-context {:exec :shell
+                                                           :exec-fn ssh/ssh-exec
+                                                           :shell-fn identity
+                                                           :stdin-fn identity}]
+                                     (facts/update-facts!)
+                                     (let [result# (do ~@body)]
+                                       result#)))])))]
        (into {} (map (fn [[host-name# fut#]] [host-name# (safe-deref fut#)]) threads#)))
      (finally
        (doseq [host-string# ~host-strings]
