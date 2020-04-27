@@ -37,12 +37,12 @@
              :result :failed))))
 
 (utils/defmodule mkdir* [{:keys [path owner group mode] :as opts}]
-  [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]
+  [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight opts)
    (let [result
          (->>
-          (ssh/ssh-exec session (shell-fn "bash") (stdin-fn (make-script opts)) "UTF-8" {})
+          (exec-fn session (shell-fn "bash") (stdin-fn (make-script opts)) "UTF-8" {})
           (process-result opts))]
      result))
   )
