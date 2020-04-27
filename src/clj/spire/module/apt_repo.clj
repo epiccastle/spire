@@ -157,11 +157,11 @@
 
 
 (utils/defmodule apt-repo* [command opts]
-  [host-config session {:keys [shell-fn stdin-fn] :as shell-context}]
+  [host-config session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight command opts)
    (->>
-    (ssh/ssh-exec session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
+    (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
     (process-result command opts))))
 
 (defmacro apt-repo [& args]
