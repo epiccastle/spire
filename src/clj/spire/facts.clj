@@ -157,10 +157,15 @@
     )
   )
 
-(defn fetch-shell []
+(defn runner [script]
   (let [session @state/connection
-        script "echo $SHELL"
-        {:keys [exit out err] :as result} (ssh/ssh-exec session script "" "UTF-8" {})
+        {:keys [exec-fn exec]} @state/shell-context]
+    (if (= :local exec)
+      (exec-fn nil "sh" script "UTF-8" {})
+      (exec-fn session script "" "UTF-8" {}))))
+
+(defn fetch-shell []
+  (let [{:keys [exit out err] :as result} (runner "echo $SHELL")
         shell-path (string/trim out)]
     (assert (zero? exit) (format "Initial shell check `echo $SHELL` failed: %s" err))
     (keyword (last (string/split shell-path #"/" -1)))))
@@ -171,24 +176,18 @@
   (fetch-shell-facts (fetch-shell)))
 
 (defn run-and-return-lines [session script assert-format]
-  (let [{:keys [out err exit]} (ssh/ssh-exec session script "" "UTF-8" {})]
+  (let [{:keys [out err exit]} (runner script)]
     (assert (zero? exit) (format assert-format exit err))
     (string/split-lines out)))
 
 (defn run-lsb-release [session]
   (some->
-   (ssh/ssh-exec
-    session
-    "lsb_release -a"
-    "" "UTF-8" {})
+   (runner "lsb_release -a")
    process-lsb-release))
 
 (defn run-system-profiler [session]
   (some->
-   (ssh/ssh-exec
-    session
-    "system_profiler SPSoftwareDataType"
-    "" "UTF-8" {})
+   (runner "system_profiler SPSoftwareDataType")
    process-system-profiler))
 
 (defn process-release-info [{:keys [os]} session]
