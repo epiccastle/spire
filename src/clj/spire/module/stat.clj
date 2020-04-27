@@ -168,7 +168,7 @@
            :err-lines (string/split err #"\n"))))
 
 (utils/defmodule stat* [path]
-  [host-config session {:keys [shell-fn stdin-fn] :as shell-context}]
+  [host-config session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (let [script (facts/on-os :linux (make-script path)
                             :else (make-script-bsd path))]
     (or
@@ -179,7 +179,7 @@
      ;; foo
      ;; 0
      ;; so we invoke bash in this case as a work around
-     (->> (ssh/ssh-exec session
+     (->> (exec-fn session
                         (shell-fn (facts/on-shell
                                    :sh "bash"
                                    :else script))
