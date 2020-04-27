@@ -78,12 +78,12 @@
 (utils/defmodule download* [source-code-file form form-meta
                             {:keys [src dest recurse preserve flat
                                     dir-mode mode owner group attrs] :as opts}]
-  [host-config session {:keys [shell-fn stdin-fn] :as shell-context}]
+  [host-config session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight opts)
    (let [run (fn [command]
                (let [{:keys [out err exit]}
-                     (ssh/ssh-exec session (shell-fn "bash") (stdin-fn command) "UTF-8" {})]
+                     (exec-fn session (shell-fn "bash") (stdin-fn command) "UTF-8" {})]
                  (when debug
                    (println "-------")
                    (prn 'shell (shell-fn "bash"))
