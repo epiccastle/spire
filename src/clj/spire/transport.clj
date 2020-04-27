@@ -137,3 +137,12 @@
 
 #_(clojure.lang.RT/loadLibrary "spire")
 #_(ssh "localhost" (spire.facts/get-fact))
+
+(defmacro local [& body]
+  `(context/binding* [state/host-config {:key "local"}
+                      state/connection nil
+                      state/shell-context {:exec :local
+                                           :exec-fn local/local-exec
+                                           :shell-fn identity
+                                           :stdin-fn identity}]
+                     (do ~@body)))
