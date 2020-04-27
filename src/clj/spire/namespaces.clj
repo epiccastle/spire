@@ -27,6 +27,8 @@
             [spire.module.authorized-keys :as authorized-keys]
             [spire.module.stat :as stat]
             [spire.module.sudo :as sudo]
+            [spire.local]
+            [spire.remote]
             [clojure.tools.cli]
             [clojure.java.shell]
             [clojure.edn]
@@ -119,6 +121,7 @@
    'shell* shell/shell*
    'shell (with-meta @#'shell/shell {:sci/macro true})
 
+   'local (with-meta @#'transport/local {:sci/macro true})
    'ssh (with-meta @#'transport/ssh {:sci/macro true})
    'ssh-group (with-meta @#'transport/ssh-group {:sci/macro true})
 
@@ -153,6 +156,8 @@
    'spire.facts (make-sci-bindings spire.facts)
    'spire.state (make-sci-bindings spire.state)
    'spire.context (make-sci-bindings spire.context)
+   'spire.local (make-sci-bindings spire.local)
+   'spire.remote (make-sci-bindings spire.remote)
    'spire.output.core (make-sci-bindings spire.output.core)
 
    'clojure.java.io (make-sci-bindings clojure.java.io)
