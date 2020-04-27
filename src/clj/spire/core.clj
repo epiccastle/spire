@@ -20,7 +20,7 @@
 (def cli-options
   [
    ["-h" "--help" "Print the command line help"]
-   ["-e" "--evaluate CODE" "Evaluate a snipped of code instead of loading code from file"]
+   ["-e" "--evaluate CODE" "Evaluate a snippet of code instead of loading code from file"]
    ["-o" "--output MODULE" "Use the specified output module to print programme progress"]
    ["-v" "--version" "Print the version string and exit"]
    [nil "--debug-ssh" "Debug ssh connections printing to stderr"]])
