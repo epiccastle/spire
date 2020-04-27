@@ -1,6 +1,7 @@
 (ns spire.module.sudo
   (:require [spire.state :as state]
             [spire.ssh :as ssh]
+            [spire.context :as context]
             [spire.facts :as facts]
             [clojure.string :as string])
   (:import [java.io PipedInputStream PipedOutputStream]))
@@ -87,9 +88,14 @@
   required to change user, or if it is passwordless. The result of
   this alters the way subsequent calls to sudo are initiated."
   [opts]
-  (let [session @state/connection
+  (let [
+        {:keys [exec-fn exec]} @state/shell-context
+        session @state/connection
         cmd (make-sudo-command opts "password required" "id")
-        {:keys [out err exit]} (ssh/ssh-exec session cmd "" "UTF-8" {})]
+        {:keys [out err exit]}
+        (if (= :local exec)
+          (exec-fn nil "sh" cmd "UTF-8" {})
+          (exec-fn session cmd "" "UTF-8" {}))]
     (cond
       (and (= 1 exit) (string/starts-with? err "password required") (= "" out))
       true
@@ -109,9 +115,13 @@
   and gathers user/group data for the escallated session that is then
   used to update system facts while in the body of the sudo macro."
   [opts]
-  (let [session @state/connection
+  (let [{:keys [exec-fn exec]} @state/shell-context
+        session @state/connection
         cmd (make-sudo-command opts "" "id")
-        {:keys [err out exit]} (ssh/ssh-exec session cmd (prefix-sudo-stdin opts "") "UTF-8" {})]
+        {:keys [err out exit]}
+        (if (= :local exec)
+          (exec-fn nil "sh" (prefix-sudo-stdin opts cmd) "UTF-8" {})
+          (exec-fn session cmd (prefix-sudo-stdin opts "") "UTF-8" {}))]
     (cond
       (and (= 1 exit) (.contains err "incorrect password") (= "" out))
       (throw (ex-info "sudo: incorrect password" {:module :sudo :cause :incorrect-password}))
@@ -145,13 +155,14 @@
      (let [original-facts# (facts/get-fact)]
        (sudo-id full-conf#)
 
-       (binding [state/shell-context
-                 {:exec :sudo
-                  :shell-fn (partial make-sudo-command full-conf# "")
-                  :stdin-fn (partial prefix-sudo-stdin full-conf#)}]
-         (let [result# (do ~@body)]
-           (facts/replace-facts-user! (:user original-facts#))
-           result#)))))
+       (context/binding* [state/shell-context
+                          {:exec :sudo
+                           :exec-fn (:exec-fn (context/deref* state/shell-context))
+                           :shell-fn (partial make-sudo-command full-conf# "")
+                           :stdin-fn (partial prefix-sudo-stdin full-conf#)}]
+                         (let [result# (do ~@body)]
+                           (facts/replace-facts-user! (:user original-facts#))
+                           result#)))))
 
 (defmacro sudo [& body]
   `(sudo-user {} ~@body))
