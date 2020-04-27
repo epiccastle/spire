@@ -3,12 +3,12 @@
             [spire.utils :as utils]))
 
 (utils/defmodule rm* [file-path]
-  [host-string session {:keys [shell-fn stdin-fn] :as shell-context}]
+  [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (let [{:keys [exit out err] :as result}
-        (ssh/ssh-exec session
-                      (shell-fn (format "rm %s" (utils/path-quote file-path)))
-                      (stdin-fn "")
-                      "UTF-8" {})]
+        (exec-fn session
+                 (shell-fn (format "rm %s" (utils/path-quote file-path)))
+                 (stdin-fn "")
+                 "UTF-8" {})]
     (assoc result
            :result (if (zero? exit) :ok :failed))))
 
