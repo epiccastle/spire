@@ -36,3 +36,70 @@
   "Feed the process some data from a string."
   [process s & args]
   (apply feed-from process (java.io.StringReader. s) args))
+
+(def
+  ^{:dynamic true
+    :doc "The buffer size (in bytes) for the piped stream used to implement
+    the :stream option for :out. If your ssh commands generate a high volume of
+    output, then this buffer size can become a bottleneck. You might also
+    increase the frequency with which you read the output stream if this is an
+    issue."}
+  *piped-stream-buffer-size* (* 1024 10))
+
+(defn- streams-for-out
+  [out]
+  (if (= :stream out)
+    (let [os (PipedOutputStream.)]
+      [os (PipedInputStream. os (int *piped-stream-buffer-size*))])
+    [(ByteArrayOutputStream.) nil]))
+
+(defn streams-for-in
+  []
+  (let [os (PipedInputStream. (int *piped-stream-buffer-size*))]
+    [os (PipedOutputStream. os)]))
+
+(defn exec [cmd in out opts]
+  (let [{:keys [out-reader
+                out-stream
+                in-writer
+                in-stream
+                err-reader
+                err-stream
+                process] :as result} (proc (shlex/parse cmd))]
+    (if (string? in)
+      (do
+        (feed-from-string result in)
+        (.close in-stream))
+      ;; java.io.PipedInputStream
+      (do
+        ;;(.connect ^java.io.PipedInputStream in ^java.io.PipedOutputStream in-stream)
+        ;;(.transferTo in in-stream)
+        )
+      )
+    (let [output
+          (cond
+            (= :stream out) out-stream
+            (= :bytes out) (.readAllBytes out-stream)
+            (string? out) (slurp out-reader))
+
+          error
+          (cond
+            (= :stream out) out-stream
+            (= :bytes out) (.readAllBytes err-stream)
+            (string? out) (slurp err-reader))
+          ]
+      (if (= :stream out)
+        {:channel nil
+         :out-stream output
+         :err-stream error}
+        {:exit (.waitFor process)
+         :out output
+         :err error}))))
+
+#_ (exec "ls -alF" "" "UTF-8" {})
+#_ (exec "ls -alF" "" :stream {})
+#_ (exec "ls -alF" "" :bytes {})
+#_ (exec "bash" "hostname" "UTF-8" {})
+#_ (exec "bash -c 'umask 0000'" "" "UTF-8" {})
+
+#_ (shlex/parse "ls -alF")
