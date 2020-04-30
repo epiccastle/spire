@@ -5,6 +5,7 @@
 ;; strings.
 
 (def whitespace-chars (into #{} " \t\r\n"))
+(def newline-chars #{\n})
 
 (defn read-char [input]
   [(first input) (rest input)])
