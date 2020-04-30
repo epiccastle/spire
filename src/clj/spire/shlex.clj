@@ -110,16 +110,13 @@
         ;;(prn output)
         (cond
           (whitespace-chars c)
-          (do ;;(println 1 c remain)
-              (recur (second (read-while-whitespace remain)) output))
+          (recur (second (read-while-whitespace remain)) output)
 
           (nil? c) ;; end of line
           output
 
-          :else
-          (do
-            ;;(println 2 c remain)
-            (let [[qoutput qremain] (read-until-whitespace (cons c remain))]
-              (recur qremain (conj output qoutput)))))))))
+          :elseg
+          (let [[qoutput qremain] (read-until-whitespace (cons c remain))]
+            (recur qremain (conj output qoutput))))))))
 
 #_ (parse "ls -alF")
