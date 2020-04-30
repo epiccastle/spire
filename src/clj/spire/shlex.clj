@@ -107,7 +107,6 @@
     (if (empty? remain)
       output
       (let [[c remain] (read-char remain)]
-        ;;(prn output)
         (cond
           (whitespace-chars c)
           (recur (second (read-while-whitespace remain)) output)
