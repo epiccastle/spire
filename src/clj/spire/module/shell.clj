@@ -34,6 +34,13 @@
   [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (or (preflight opts)
       (let [{:keys [agent-forwarding]} (state/get-host-config)
+            shell-path (facts/get-fact [:paths (keyword shell)])
+            default-env (if shell-path
+                          {:SHELL shell-path}
+                          {})
+            env-string (->> env
+                            (merge default-env)
+                            make-env-string)
             {:keys [exit out err] :as result}
             (exec-fn session
                      ;; command
@@ -42,10 +49,10 @@
                      ;; stdin
                      (stdin-fn
                       (if creates
-                        (format "cd \"%s\"\nif [ %s ]; then\nexit 0\nelse\n%s %s\nexit -1\nfi\n"
+                        (format "cd \"%s\"\nif [ %s ]; then\nexit 0\nelse\nexport %s; %s\nexit -1\nfi\n"
                                 dir (make-exists-string creates)
-                                (make-env-string env) cmd)
-                        (format "cd \"%s\"; %s %s" dir (make-env-string env) cmd)))
+                                env-string cmd)
+                        (format "cd \"%s\"; export %s; %s" dir env-string cmd)))
 
                      ;; output format
                      (or out "UTF-8")
