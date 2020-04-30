@@ -210,7 +210,7 @@
 
 (defn scp-to
   "Copy local path(s) to remote path via scp"
-  [session local-paths remote-path & {:keys [recurse shell-fn stdin-fn]
+  [session local-paths remote-path & {:keys [recurse shell-fn stdin-fn exec exec-fn]
                                       :as opts
                                       :or {shell-fn identity
                                            stdin-fn identity}}]
@@ -222,7 +222,12 @@
           cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
           _ (debugf "scp-to: %s" cmd)
           {:keys [^PipedInputStream out-stream]}
-          (ssh/ssh-exec session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts)
+          (if (= exec :local)
+            (do
+              (prn in)
+              (println "\n\n\n")
+              (exec-fn nil (str "sh -c 'umask 0000;" (shell-fn cmd) "'") (stdin-fn in) :stream opts))
+            (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts))
           recv out-stream]
       (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)
       (debug "Receive initial ACK")
@@ -390,7 +395,7 @@
 (defn scp-from
   "Copy remote path(s) to local path via scp."
   [session remote-path ^String local-path
-   & {:keys [username password port mode dir-mode recurse preserve shell-fn stdin-fn]
+   & {:keys [username password port mode dir-mode recurse preserve shell-fn stdin-fn exec-fn]
       :as opts
       :or {shell-fn identity
            stdin-fn identity}}]
@@ -413,7 +418,7 @@
         _ (debugf "scp-from: %s" cmd)
         {:keys [^ChannelExec channel
                 ^PipedInputStream out-stream]}
-        (ssh/ssh-exec session (shell-fn cmd) (stdin-fn in) :stream opts)
+        (exec-fn session (shell-fn cmd) (stdin-fn in) :stream opts)
         exec channel
         recv out-stream]
     (debugf
