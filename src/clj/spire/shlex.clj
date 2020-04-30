@@ -13,7 +13,7 @@
 
 (defn skip-until [input pred]
   (loop [[c remain] (read-char input)]
-    (if (newline-chars c)
+    (if (pred c)
       remain
       (recur (read-char remain)))))
 
