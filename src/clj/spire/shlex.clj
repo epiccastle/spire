@@ -114,7 +114,7 @@
           (nil? c) ;; end of line
           output
 
-          :elseg
+          :else
           (let [[qoutput qremain] (read-until-whitespace (cons c remain))]
             (recur qremain (conj output qoutput))))))))
 
