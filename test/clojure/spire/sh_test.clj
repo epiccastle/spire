@@ -15,64 +15,135 @@
             :out "in\n"
             :err ""}))
 
-    (is (= (let [{:keys [channel out-stream err-stream]}
-                 (sh/exec " echo foo " "" :stream {})
-                 out (io/reader out-stream)
-                 err (io/reader err-stream)
-                 ]
-             [(slurp out) (slurp err)])
-           ["foo\n" ""]))
+    (let [{:keys [channel out-stream err-stream]}
+          (sh/exec " echo foo " "" :stream {})
+          out (io/reader out-stream)
+          err (io/reader err-stream)
+          ]
+      (is (= (slurp out) "foo\n"))
+      (is (= (slurp err) ""))
+      (is (= 0 (.waitFor channel)))
+      )
 
-    (is (= (let [{:keys [channel out-stream err-stream]}
-                 (sh/exec "cat" "in\n" :stream {})
-                 out (io/reader out-stream)
-                 err (io/reader err-stream)
-                 ]
-             [(slurp out) (slurp err)])
-           ["in\n" ""]))
 
-    (is (= (let [prev-out (java.io.PipedOutputStream.)
-                 in-stream (java.io.PipedInputStream. prev-out)
+    (let [{:keys [channel out-stream err-stream]}
+          (sh/exec "cat" "in\n" :stream {})
+          out (io/reader out-stream)
+          err (io/reader err-stream)
+          ]
+      (is (= (slurp out) "in\n"))
+      (is (= (slurp err) ""))
+      (is (= 0 (.waitFor channel)))
+      )
 
-                 {:keys [channel out-stream err-stream]}
-                 (sh/exec "cat" in-stream :stream {})
-                 out (io/reader out-stream)
-                 err (io/reader err-stream)
-                 ]
-             (.write prev-out (int \i))
-             (.write prev-out (int \n))
-             (.write prev-out (int \newline))
-             (.flush prev-out)
-             (.close prev-out)
-             ;;(.flush in-stream)
-             ;;(Thread/sleep 1000)
-             ;;(.close in-stream)
-             ;;(.read out)
-             [(slurp out) (slurp err)]
-             )
-           ["in\n" ""]))
 
-    (is (= (let [prev-out (java.io.PipedOutputStream.)
-                 in-stream (java.io.PipedInputStream. prev-out)
+    (let [prev-out (java.io.PipedOutputStream.)
+          in-stream (java.io.PipedInputStream. prev-out)
 
-                 {:keys [channel out-stream err-stream]}
-                 (sh/exec "cat" in-stream :stream {})
-                 out (io/reader out-stream)
-                 err (io/reader err-stream)
-                 ]
-             (.write prev-out (int \i))
-             (Thread/sleep 1000)
-             (.write prev-out (int \n))
-             (Thread/sleep 1000)
-             (.write prev-out (int \newline))
-             (Thread/sleep 1000)
-             (.flush prev-out)
-             (.close prev-out)
-             ;;(.flush in-stream)
-             ;;(Thread/sleep 1000)
-             ;;(.close in-stream)
-             ;;(.read out)
-             [(slurp out) (slurp err)]
-             )
-           ["in\n" ""]))
+          {:keys [channel out-stream err-stream]}
+          (sh/exec "cat" in-stream :stream {})
+          out (io/reader out-stream)
+          err (io/reader err-stream)
+          ]
+      (.write prev-out (int \i))
+      (.write prev-out (int \n))
+      (.write prev-out (int \newline))
+      (.flush prev-out)
+      (.close prev-out)
+      ;;(.flush in-stream)
+      ;;(Thread/sleep 1000)
+      ;;(.close in-stream)
+      ;;(.read out)
+      (is (= (slurp out) "in\n"))
+      (is (= (slurp err) ""))
+      (is (= 0 (.waitFor channel)))
+      )
+
+    (let [prev-out (java.io.PipedOutputStream.)
+          in-stream (java.io.PipedInputStream. prev-out)
+
+          {:keys [channel out-stream err-stream]}
+          (sh/exec "cat" in-stream :stream {})
+          out (io/reader out-stream)
+          err (io/reader err-stream)
+          ]
+      (.write prev-out (int \i))
+      (Thread/sleep 1000)
+      (.write prev-out (int \n))
+      (Thread/sleep 1000)
+      (.write prev-out (int \newline))
+      (Thread/sleep 1000)
+      (.flush prev-out)
+      (.close prev-out)
+      ;;(.flush in-stream)
+      ;;(Thread/sleep 1000)
+      ;;(.close in-stream)
+      ;;(.read out)
+      (is (= (slurp out) "in\n"))
+      (is (= (slurp err) ""))
+      (is (= 0 (.waitFor channel))))
+
+    (let [data (apply str (for [n (range 100)] (slurp "project.clj")))]
+      (let [prev-out (java.io.PipedOutputStream.)
+            in-stream (java.io.PipedInputStream. prev-out)
+
+            {:keys [channel out-stream err-stream]}
+            (sh/exec "cat" in-stream :stream {})
+            out (io/reader out-stream)
+            err (io/reader err-stream)
+            ]
+        (future (.write prev-out (.getBytes data) 0 (count (.getBytes ^String data)))
+                (.flush prev-out)
+                (.close prev-out))
+        (is (= (slurp out) data))
+        (is (= (slurp err) ""))
+        (is (= 0 (.waitFor channel)))))
+
+
+    ;; bytes
+    (let [{:keys [channel out err]}
+          (sh/exec " echo foo " "" :bytes {})
+
+          out-check (.getBytes "foo\n")
+          err-check(.getBytes "")]
+      (is (= (count out) (count out-check)))
+      (is (= (seq out) (seq out-check)))
+      (is (= (count err) (count err-check)))
+      (is (= (seq err) (seq err-check))))
+
+    (let [{:keys [channel out err]}
+          (sh/exec "cat" "in\n" :bytes {})
+
+          out-check (.getBytes "in\n")
+          err-check(.getBytes "")]
+      (is (= (count out) (count out-check)))
+      (is (= (seq out) (seq out-check)))
+      (is (= (count err) (count err-check)))
+      (is (= (seq err) (seq err-check))))
+
+    (let [data (apply str (for [n (range 100)] (slurp "project.clj")))]
+      (let [prev-out (java.io.PipedOutputStream.)
+            in-stream (java.io.PipedInputStream. prev-out)
+
+            ;; have to trigger future feed first, or else sh/exec will block
+            ;; building its outputs
+            fut (future (.write prev-out (.getBytes data) 0 (count (.getBytes ^String data)))
+                        (.flush prev-out)
+                        (.close prev-out))
+
+            {:keys [exit out err]}
+            (sh/exec "cat" in-stream :bytes {})
+
+            out-check (.getBytes data)
+            err-check(.getBytes "")
+            ]
+        (is (= (count out) (count out-check)))
+        (is (= (seq out) (seq out-check)))
+        (is (= (count err) (count err-check)))
+        (is (= (seq err) (seq err-check)))
+
+        (is (= 0 exit))
+
+        )
+      )
     ))

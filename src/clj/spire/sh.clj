@@ -1,8 +1,9 @@
 (ns spire.sh
-  "A clojure.java.sh replacement that support streaming"
   (:require [spire.shlex :as shlex]
             [clojure.java.io :as io])
-  (:import [java.util.concurrent]))
+  (:import [java.io PipedInputStream PipedOutputStream ByteArrayOutputStream]))
+
+"A clojure.java.sh replacement that support streaming"
 
 (set! *warn-on-reflection* false)
 
@@ -58,6 +59,15 @@
   (let [os (PipedInputStream. (int *piped-stream-buffer-size*))]
     [os (PipedOutputStream. os)]))
 
+(defn read-all-bytes [input-stream]
+  (byte-array
+   (loop [output []]
+     (let [c (.read input-stream)]
+       ;;(println "read:" c)
+       (if (= -1 c)
+         output
+         (recur (conj output c)))))))
+
 (defn exec [cmd in out opts]
   (let [{:keys [out-reader
                 out-stream
@@ -74,22 +84,80 @@
       (do
         ;;(.connect ^java.io.PipedInputStream in ^java.io.PipedOutputStream in-stream)
         ;;(.transferTo in in-stream)
+        #_(.connect ^java.io.PipedInputStream in in-stream)
+
+        #_(future (io/copy in in-stream))
+
+
+        #_(future
+          (println "feed-from" in "to" in-stream)
+
+          (println "begin loop")
+          (loop [n 1
+                 c (.read in)]
+            (when (not= -1 c)
+              (println "in:" n c (char c))
+              (.write in-stream c)
+              (recur (inc n) (.read in))))
+
+          (println "fed.")
+          (.close in-stream)
+
+
+          #_(try (loop [n 1
+                        c (.read in)]
+                   (when c
+                     (do
+                       (println "in:" n c (char c))
+                       (.write in-stream c)
+                       (recur (inc n) (.read in)))))
+                 (finally
+                   (println "fed:")
+                   (.close in-stream))))
+
+        #_ (future
+             (println "feed-from" in "to" in-stream)
+             ;;(feed-from result in)
+
+             (println "begin loop")
+             (try
+               (io/copy in in-stream)
+               (finally
+                 (println "fed:")
+                 (.close in-stream))))
+
+        (future
+             ;;(println "feed-from" in "to" in-stream)
+             ;;(feed-from result in)
+             (io/copy in in-stream)
+             (.close in-stream))
         )
       )
+    #_ (when (= :stream out)
+         (future
+           (println "ERROR PROC")
+           (try (loop [c (.read err-stream)]
+                  (when c
+                    (println "err:" c (char c))
+                    (recur (.read err-stream))))
+                (finally
+                  (print "done")
+                  (.close err-stream))))
+         )
     (let [output
           (cond
             (= :stream out) out-stream
-            (= :bytes out) (.readAllBytes out-stream)
+            (= :bytes out) (read-all-bytes out-stream)
             (string? out) (slurp out-reader))
 
           error
           (cond
-            (= :stream out) out-stream
-            (= :bytes out) (.readAllBytes err-stream)
+            (= :stream out) err-stream
+            (= :bytes out) (read-all-bytes err-stream)
             (string? out) (slurp err-reader))
           ]
       (if (= :stream out)
-        {:channel nil
+        {:channel process
          :out-stream output
          :err-stream error}
         {:exit (.waitFor process)
