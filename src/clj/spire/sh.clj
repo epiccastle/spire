@@ -63,7 +63,6 @@
   (byte-array
    (loop [output []]
      (let [c (.read input-stream)]
-       ;;(println "read:" c)
        (if (= -1 c)
          output
          (recur (conj output c)))))))
@@ -81,69 +80,13 @@
         (feed-from-string result in)
         (.close in-stream))
       ;; java.io.PipedInputStream
-      (do
-        ;;(.connect ^java.io.PipedInputStream in ^java.io.PipedOutputStream in-stream)
-        ;;(.transferTo in in-stream)
-        #_(.connect ^java.io.PipedInputStream in in-stream)
-
-        #_(future (io/copy in in-stream))
-
-
-        #_(future
-          (println "feed-from" in "to" in-stream)
-
-          (println "begin loop")
-          (loop [n 1
-                 c (.read in)]
-            (when (not= -1 c)
-              (println "in:" n c (char c))
-              (.write in-stream c)
-              (recur (inc n) (.read in))))
-
-          (println "fed.")
-          (.close in-stream)
-
-
-          #_(try (loop [n 1
-                        c (.read in)]
-                   (when c
-                     (do
-                       (println "in:" n c (char c))
-                       (.write in-stream c)
-                       (recur (inc n) (.read in)))))
-                 (finally
-                   (println "fed:")
-                   (.close in-stream))))
-
-        #_ (future
-             (println "feed-from" in "to" in-stream)
-             ;;(feed-from result in)
-
-             (println "begin loop")
-             (try
-               (io/copy in in-stream)
-               (finally
-                 (println "fed:")
-                 (.close in-stream))))
-
-        (future
-             ;;(println "feed-from" in "to" in-stream)
-             ;;(feed-from result in)
-             (io/copy in in-stream)
-             (.close in-stream))
-        )
-      )
-    #_ (when (= :stream out)
-         (future
-           (println "ERROR PROC")
-           (try (loop [c (.read err-stream)]
-                  (when c
-                    (println "err:" c (char c))
-                    (recur (.read err-stream))))
-                (finally
-                  (print "done")
-                  (.close err-stream))))
-         )
+      (future
+        (loop [c (.read in)]
+          (when (not= -1 c)
+            (.write in-stream c)
+            (.flush in-stream) ;; have to force it to be unbuffered for chatty protocols like scp
+            (recur (.read in))))
+        (.close in-stream)))
     (let [output
           (cond
             (= :stream out) out-stream

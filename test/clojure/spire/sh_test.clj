@@ -142,8 +142,32 @@
         (is (= (count err) (count err-check)))
         (is (= (seq err) (seq err-check)))
 
-        (is (= 0 exit))
+        (is (= 0 exit))))))
 
-        )
-      )
-    ))
+(deftest chat-test
+  (testing "chatting back and forth"
+    (let [prev-out (java.io.PipedOutputStream.)
+          in-stream (java.io.PipedInputStream. prev-out)
+
+          {:keys [channel out-stream err-stream]}
+          (sh/exec "cat" in-stream :stream {})
+          out (io/reader out-stream)
+          err (io/reader err-stream)
+          ]
+      (.write prev-out (int \i))
+      (.write prev-out (int \n))
+      (.write prev-out (int \newline))
+      (.flush prev-out)
+
+      (is (= "in" (.readLine out)))
+
+      (.write prev-out (int \i))
+      (.write prev-out (int \2))
+      (.write prev-out (int \newline))
+      (.flush prev-out)
+
+      (is (= "i2" (.readLine out)))
+
+      (.close prev-out)
+      (is (= (slurp err) ""))
+      (is (= 0 (.waitFor channel))))))

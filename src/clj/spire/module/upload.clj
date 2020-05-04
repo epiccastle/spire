@@ -102,7 +102,7 @@
                                   owner group mode attrs
                                   dir-mode preserve recurse force]
                            :as opts}]
-  [host-config session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-config session {:keys [exec exec-fn shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight opts)
    (let [run (fn [command]
@@ -191,6 +191,8 @@
                                   :mode (or mode 0644)
                                   :recurse true
                                   :skip-files #{}
+                                  :exec exec
+                                  :exec-fn exec-fn
                                   :shell-fn shell-fn
                                   :stdin-fn stdin-fn
                                   )))
@@ -208,6 +210,8 @@
                                   :mode (or mode 0644)
                                   :recurse true
                                   :skip-files identical-content
+                                  :exec exec
+                                  :exec-fn exec-fn
                                   :shell-fn shell-fn
                                   :stdin-fn stdin-fn
                                   )))))
@@ -231,6 +235,8 @@
                                 :preserve preserve
                                 :dir-mode (or dir-mode 0755)
                                 :mode (or mode 0644)
+                                :exec exec
+                                :exec-fn exec-fn
                                 :shell-fn shell-fn
                                 :stdin-fn stdin-fn
                                 )))))
