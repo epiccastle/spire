@@ -5,7 +5,7 @@
 
 "A clojure.java.sh replacement that support streaming"
 
-(set! *warn-on-reflection* false)
+(set! *warn-on-reflection* true)
 
 (defn proc
   "Spin off another process.
@@ -62,7 +62,7 @@
 (defn read-all-bytes [input-stream]
   (byte-array
    (loop [output []]
-     (let [c (.read input-stream)]
+     (let [c (.read ^java.io.InputStream input-stream)]
        (if (= -1 c)
          output
          (recur (conj output c)))))))
@@ -78,15 +78,15 @@
     (if (string? in)
       (do
         (feed-from-string result in)
-        (.close in-stream))
+        (.close ^java.io.OutputStream in-stream))
       ;; java.io.PipedInputStream
       (future
-        (loop [c (.read in)]
+        (loop [c (.read ^java.io.InputStream in)]
           (when (not= -1 c)
-            (.write in-stream c)
-            (.flush in-stream) ;; have to force it to be unbuffered for chatty protocols like scp
-            (recur (.read in))))
-        (.close in-stream)))
+            (.write ^java.io.OutputStream in-stream c)
+            (.flush ^java.io.OutputStream in-stream) ;; have to force it to be unbuffered for chatty protocols like scp
+            (recur (.read ^java.io.InputStream in))))
+        (.close ^java.io.OutputStream in-stream)))
     (let [output
           (cond
             (= :stream out) out-stream
@@ -103,7 +103,7 @@
         {:channel process
          :out-stream output
          :err-stream error}
-        {:exit (.waitFor process)
+        {:exit (.waitFor ^java.lang.Process process)
          :out output
          :err error}))))
 
