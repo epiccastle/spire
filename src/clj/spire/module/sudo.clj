@@ -80,7 +80,11 @@
                    :else
                    -1)))))
           (receive [this b]
-            (.receive stdin b)))))
+            (.receive stdin b))))
+
+      :else
+      (assert false (str "Unknown stdin format passed to sudo: " (type stdin))))
+
     stdin))
 
 (defn requires-password?
@@ -156,7 +160,8 @@
        (sudo-id full-conf#)
 
        (context/binding* [state/shell-context
-                          {:exec :sudo
+                          {:priveleges :sudo
+                           :exec (:exec (context/deref* state/shell-context))
                            :exec-fn (:exec-fn (context/deref* state/shell-context))
                            :shell-fn (partial make-sudo-command full-conf# "")
                            :stdin-fn (partial prefix-sudo-stdin full-conf#)}]

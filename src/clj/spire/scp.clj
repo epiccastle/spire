@@ -145,7 +145,8 @@
 
 (defn- scp-copy-dir
   "Send acknowledgement to the specified output stream"
-  [send recv ^File dir {:keys [dir-mode skip-files preserve] :or {dir-mode 0755} :as options} & [progress-context]]
+  [send recv ^File dir {:keys [dir-mode skip-files preserve] :or {dir-mode 0755} :as options}
+   & [progress-context]]
   (debug "scp-copy-dir progress-context:" progress-context)
   (debugf "Sending directory %s" (.getAbsolutePath dir))
   (when preserve
@@ -220,10 +221,10 @@
     (let [[^PipedInputStream in
            ^PipedOutputStream send] (ssh/streams-for-in)
           cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
-          _ (debugf "scp-to: %s" cmd)
+          _ (debugf "scp-to: %s using executor %s" cmd (str exec))
           {:keys [out-stream]}
           (if (= exec :local)
-            (exec-fn nil (str "sh -c 'umask 0000;" (shell-fn cmd) "'") (stdin-fn in) :stream opts)
+            (exec-fn nil (shell-fn cmd) (stdin-fn in) :stream opts)
             (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts))
           recv out-stream]
       (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)

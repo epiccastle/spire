@@ -18,6 +18,7 @@
 (def shell-context (sci/new-dynamic-var
                     'shell-context
                     {:exec :local
+                     :priveleges :normal
                      :exec-fn local/local-exec
                      :shell-fn identity
                      :stdin-fn identity}))
