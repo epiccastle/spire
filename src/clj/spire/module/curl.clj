@@ -182,7 +182,8 @@
                               data-raw data-binary http2 output user-agent decode? decode-opts success-test]
                        :or {method :GET
                             decode? true
-                            success-test (constantly true)}
+                            success-test (fn [{:keys [status]}]
+                                           (<= status 399))}
                        :as opts}
                       {:keys [out err exit] :as result}
                       get-file-result
