@@ -179,18 +179,21 @@
     response))
 
 (defn process-result [{:keys [method headers accept dump-header form cookies cookie-jar url auth query-params
-                               data-raw data-binary http2 output user-agent decode? decode-opts]
+                              data-raw data-binary http2 output user-agent decode? decode-opts success-test]
                        :or {method :GET
-                            decode? true}
+                            decode? true
+                            success-test (constantly true)}
                        :as opts}
                       {:keys [out err exit] :as result}
                       get-file-result
                       rm-result]
   (cond
     (zero? exit)
-    (-> (curl-response->map out (:out-lines get-file-result) decode? decode-opts)
-        (assoc :exit 0
-               :result :changed))
+    (let [response-map (curl-response->map out (:out-lines get-file-result) decode? decode-opts)
+          result (success-test response-map)]
+      (-> response-map
+          (assoc :exit 0
+                 :result (if result :changed :failed))))
 
     :else
     (assoc result
