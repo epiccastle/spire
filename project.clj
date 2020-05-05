@@ -18,6 +18,7 @@
                   :exclusions [[org.yaml/snakeyaml]]]
                  [org.yaml/snakeyaml "1.25"]
                  [com.cognitect/transit-clj "1.0.324"]
+                 [org.clojure/data.json "1.0.0"]
 
                  ;; dev
                  [nrepl "0.6.0"]

@@ -35,6 +35,7 @@
             [clojure.string]
             [clojure.set]
             [clojure.java.io]
+            [clojure.data.json]
             [sci.core :as sci]
             [clj-http.lite.core]
             [clj-http.lite.client]
@@ -164,6 +165,7 @@
    'clojure.tools.cli (make-sci-bindings clojure.tools.cli)
    'clojure.set (make-sci-bindings clojure.set)
    'clojure.string (make-sci-bindings clojure.string)
+   'clojure.data.json (make-sci-bindings clojure.data.json)
 
    ;; modules
    'spire.modules all-modules
