@@ -221,12 +221,9 @@
            ^PipedOutputStream send] (ssh/streams-for-in)
           cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
           _ (debugf "scp-to: %s" cmd)
-          {:keys [^PipedInputStream out-stream]}
+          {:keys [out-stream]}
           (if (= exec :local)
-            (do
-              (prn in)
-              (println "\n\n\n")
-              (exec-fn nil (str "sh -c 'umask 0000;" (shell-fn cmd) "'") (stdin-fn in) :stream opts))
+            (exec-fn nil (str "sh -c 'umask 0000;" (shell-fn cmd) "'") (stdin-fn in) :stream opts)
             (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts))
           recv out-stream]
       (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)
@@ -255,6 +252,7 @@
       (debug "Closing streams")
       (.close send)
       (.close recv)
+      (debug "streams closed")
 
       ;; files copied?
       true)))

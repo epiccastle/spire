@@ -58,5 +58,3 @@
 ;; support out = :stream...
 (defn local-exec [_ cmd in out opts]
   (sh/exec cmd in out opts))
-
-#_ (local-exec nil "sh" "echo $SHELL" "UTF-8" {})
