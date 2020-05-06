@@ -400,19 +400,6 @@
         "allDeclaredMethods": true,
         "allPublicMethods": true
     },
-
-
-
-
-
-
-
-
-
-
-
-
-
     {
         "name": "com.jcraft.jsch.UserAuth",
         "allDeclaredConstructors": true,
