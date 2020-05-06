@@ -44,6 +44,11 @@
         "allPublicMethods": true
     },
     {
+        "name": "java.lang.ProcessImpl$ProcessPipeInputStream",
+        "allPublicConstructors": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "com.jcraft.jsch.jce.Random",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
