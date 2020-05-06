@@ -165,7 +165,9 @@
    'clojure.tools.cli (make-sci-bindings clojure.tools.cli)
    'clojure.set (make-sci-bindings clojure.set)
    'clojure.string (make-sci-bindings clojure.string)
-   'clojure.data.json (make-sci-bindings clojure.data.json)
+   'clojure.data.json (make-sci-bindings clojure.data.json
+                                         {:only #{read-json read-str read
+                                                  write-json write-str write}})
 
    ;; modules
    'spire.modules all-modules
