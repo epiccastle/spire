@@ -3,10 +3,19 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.8] - 2020-05-6
+
+### Changed
+- Updated sci to 0.0.13-alpha.19
+
+### Fixed
+- reflection error when using `upload` from local execution context.
+
 ## [0.1.0-alpha.7] - 2020-05-6
 
 ### Added
 - implement local execution context - #37
+- clojure.data.json namespace
 
 ### Fixed
 - extend shell module environment - #45
@@ -85,7 +94,8 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.7...HEAD
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.8...HEAD
+[0.1.0-alpha.8]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.7...v0.1.0-alpha.8
 [0.1.0-alpha.7]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.6...v0.1.0-alpha.7
 [0.1.0-alpha.6]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
 [0.1.0-alpha.5]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.4...v0.1.0-alpha.5
