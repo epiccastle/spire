@@ -52,10 +52,9 @@
              :result :failed))))
 
 (defn set-attrs [session opts]
-  (let [bash-script (make-script opts)]
-    (facts/on-shell
-     :bash (ssh/ssh-exec session bash-script "" "UTF-8" {})
-     :else (ssh/ssh-exec session "bash" bash-script "UTF-8" {}))))
+  (let [bash-script (make-script opts)
+        {:keys [exec-fn shell-fn stdin-fn]} @state/shell-context]
+    (exec-fn session (shell-fn "bash") (stdin-fn bash-script) "UTF-8" {})))
 
 
 
@@ -101,14 +100,9 @@
     (str header "\n" script-string)))
 
 (defn set-attrs-preserve [session src dest]
-  (let [script (make-preserve-script (create-attribute-list src) dest)]
-    ;;(prn 'set-attrs-preserve session src dest)
-    ;;(println script)
-    (ssh/ssh-exec
-     session
-     script
-     "" "UTF-8" {}))
-  )
+  (let [script (make-preserve-script (create-attribute-list src) dest)
+        {:keys [exec-fn shell-fn stdin-fn]} @state/shell-context]
+    (exec-fn session (shell-fn "bash") (stdin-fn script) "UTF-8" {})))
 
 (utils/defmodule attrs* [{:keys [path owner group mode dir-mode attrs recurse] :as opts}]
   [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
