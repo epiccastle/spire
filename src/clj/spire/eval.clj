@@ -15,11 +15,19 @@
   (let [path (butlast clj-path)
         filename (str (last clj-path) ".clj")
         full-path (concat path [filename])]
-    (apply io/file full-path)))
+    (.getPath (apply io/file full-path))))
+
+(defn make-target-file-possiblities [target-file]
+  (if (.contains target-file "-")
+    [target-file (string/replace target-file #"-" "_")]
+    [target-file]))
 
 (defn find-file [target-file search-path]
-  (let [searches (->> search-path
-                      (map #(io/file % target-file)))]
+  (let [target-files (make-target-file-possiblities target-file)
+        searches (->> search-path
+                      (map (fn [path]
+                             (map #(io/file path %) target-files)))
+                      (apply concat))]
     (->> searches
          (map (fn [f] (when (.isFile f) f)))
          (filter identity)
