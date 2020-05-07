@@ -171,7 +171,8 @@
                           acc))))
                   [nil {}]
                   headers)
-        decoded (when decode? (decode-body headers result decode-opts))
+        decoded (when (and decode? (not (empty? result)))
+                  (decode-body headers result decode-opts))
         response {:status status
                   :headers headers
                   :decoded decoded
