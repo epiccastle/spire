@@ -43,6 +43,15 @@
            :err (format ":insert-at needs to be one of %s"
                         (prn-str #{:bof :eof})))))
 
+(defn escape-leading-spaces [s]
+  (let [[_ space remain] (re-matches #"^(\s*)(.+)$" s)
+        escaped (->> space
+                     (map #(case %
+                             \space "\\ "
+                             \tab "\\t"))
+                     (apply str))]
+    (str escaped (utils/string-escape remain))))
+
 (defmethod make-script :present [_ {:keys [path regexp line-num line after before match insert-at]}]
   ;;(prn 'make-script :present (some->> line utils/string-escape))
   ;;(println (some->> line utils/string-escape))
@@ -54,7 +63,7 @@
             :FILE (some->> path utils/path-escape)
             :LINENUM line-num
             :LINE (some->> line utils/string-escape)
-            :SEDLINE (some->> line utils/string-escape utils/string-escape)
+            :SEDLINE (some->> line escape-leading-spaces utils/string-escape)
             :AFTER (some->> after utils/re-pattern-to-sed)
             :BEFORE (some->> before utils/re-pattern-to-sed)
             :SELECTOR (case (or match options-match-default)
