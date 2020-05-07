@@ -104,7 +104,7 @@
       (and (= 1 exit) (string/starts-with? err "password required") (= "" out))
       true
 
-      (and (= 0 exit) (string/starts-with? out "uid=") (= "" err))
+      (and (= 0 exit) (string/starts-with? out "uid="))
       false
 
       :else
