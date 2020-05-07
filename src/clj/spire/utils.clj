@@ -349,6 +349,7 @@
          (= :failed (:result data#))))))
 
 (defmacro debug [& body]
-  `(let [result# (do ~@body)]
-     (spire.output.core/debug-result (context/deref* spire.state/output-module) ~*file* (quote ~&form) ~(meta &form) (spire.state/get-host-config) result#)
-     result#))
+  (let [file (current-file)]
+    `(let [result# (do ~@body)]
+       (spire.output.core/debug-result (context/deref* spire.state/output-module) ~file (quote ~&form) ~(meta &form) (spire.state/get-host-config) result#)
+       result#)))
