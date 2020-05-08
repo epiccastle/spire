@@ -20,7 +20,9 @@
         irepo (ssh-agent/make-identity-repository)
         user-info (ssh/make-user-info host-config)
         ]
-    (when (System/getenv "SSH_AUTH_SOCK")
+    (when (and (not (:identity host-config))
+               (not (:private-key host-config))
+               (System/getenv "SSH_AUTH_SOCK"))
       (.setIdentityRepository session irepo))
     (when debug (prn 'connect 'connecting))
     (doto session
