@@ -3,6 +3,17 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.9] - 2020-05-8
+
+### Fixed
+- Failing ssh explicit key based connections when ssh agent is used but empty - #23 #49
+- line-in-file module does not insert prefix spaces in line - #26
+- sudo not working for attrs - #42
+- require and load-file to support hyphen to underscore mapping in filenames - #43
+- sudo assertion fails when sudo cannot resolve local hostname - #44
+- curl fails with NPE when body empty (eg :method :DELETE) - #46
+- wrong filename printed on debug output - #47
+
 ## [0.1.0-alpha.8] - 2020-05-6
 
 ### Changed
@@ -94,7 +105,8 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.8...HEAD
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.9...HEAD
+[0.1.0-alpha.9]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.8...v0.1.0-alpha.9
 [0.1.0-alpha.8]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.7...v0.1.0-alpha.8
 [0.1.0-alpha.7]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.6...v0.1.0-alpha.7
 [0.1.0-alpha.6]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
