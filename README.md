@@ -80,7 +80,7 @@ $ make clean all
 Or specify a path to the graal directory to build with a different graal:
 
 ```shell-session
-$ make clean all GRAALVM_HOME=/path/to/my/graal
+$ make clean all GRAALVM=/path/to/my/graal
 ```
 
 After a long wait it should write a binary executable `spire`. Test it.
