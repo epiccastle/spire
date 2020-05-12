@@ -41,6 +41,7 @@
             [clj-http.lite.client]
             [clj-http.lite.links]
             [clj-http.lite.util]
+            [fipp.edn]
             [edamame.core]
             [spire.sci :refer [make-sci-bindings]]))
 
@@ -151,6 +152,10 @@
                   '*out* (sci/new-dynamic-var '*out* *out*)
                   '*err* (sci/new-dynamic-var '*err* *err*)
                   }
+   'clojure.main {'repl-requires '[[clojure.repl :refer [dir doc]]
+                                   [clojure.pprint :refer [pprint]]]}
+   'clojure.pprint (make-sci-bindings fipp.edn)
+
    'spire.transport (make-sci-bindings spire.transport)
    'spire.ssh (make-sci-bindings spire.ssh)
    'spire.utils (make-sci-bindings spire.utils)
