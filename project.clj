@@ -7,7 +7,7 @@
                  [org.clojure/core.async "0.6.532"]
                  [org.clojure/tools.cli "0.4.2"]
                  [borkdude/sci "0.0.13-alpha.19"]
-                 [fipp "0.6.21"]
+                 [fipp "0.6.23"]
                  [mvxcvi/puget "1.2.0"]
                  [digest "1.4.9"]
                  [clj-time "0.15.2"]
