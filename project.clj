@@ -21,7 +21,7 @@
                  [org.clojure/data.json "1.0.0"]
 
                  ;; dev
-                 [nrepl "0.6.0"]
+                 [sci-nrepl "0.1.0-SNAPSHOT"]
 
                  [com.jcraft/jsch "0.1.55"]
 
