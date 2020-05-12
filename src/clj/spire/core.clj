@@ -23,6 +23,7 @@
    ["-e" "--evaluate CODE" "Evaluate a snippet of code instead of loading code from file"]
    ["-o" "--output MODULE" "Use the specified output module to print programme progress"]
    ["-v" "--version" "Print the version string and exit"]
+   [nil "--nrepl-server ADDRESS" "Run a spire nrepl server to connect to" ]
    [nil "--debug-ssh" "Debug ssh connections printing to stderr"]])
 
 (defn initialise [{:keys [debug-ssh]}]
@@ -57,6 +58,7 @@
   [& args]
   (try
     (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
+      (println options)
 
       (sci/binding [state/output-module (clojure.edn/read-string (get options :output ":default"))]
         (initialise options)
