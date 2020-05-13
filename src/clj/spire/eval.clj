@@ -1,9 +1,7 @@
 (ns spire.eval
   (:require [sci.core :as sci]
             [sci.addons :as addons]
-            [sci.impl.opts :as sci-opts]
-            [sci-nrepl.server :as sci-nrepl]
-            [sci-nrepl.utils :as sci-nrepl-utils]
+            [babashka.nrepl.server :as nrepl]
             [spire.namespaces :as namespaces]
             [spire.context :as context]
             [spire.utils :as utils]
@@ -70,7 +68,7 @@
                         sci/file file-path}
       (sci/eval-string source sci-opts))))
 
-(defn evaluate [args script]
+(defn setup-sci-context [args]
   (let [env (atom {})
         ctx {:env env
              :namespaces namespaces/namespaces
@@ -80,47 +78,24 @@
              :features #{:bb :clj}
              :classes namespaces/classes
              :load-fn load-fn}]
-    (sci/binding [context/context :sci]
-      (let [ctx (update-in ctx [:namespaces 'clojure.core]
-                  assoc
-                  'load-file #(load-file* ctx %)
-                  '*command-line-args* (sci/new-dynamic-var '*command-line-args* args))
-            ctx (addons/future ctx)
-            ctx (sci-opts/init ctx)
-            ]
-        (-> (sci-nrepl/start-server! ctx {:address "127.0.0.1"
-                                          :port 1667})
-            :future
-            deref)
-        (sci/eval-string
-         (remove-shebang script)
-         ctx)))))
+    (-> ctx
+        (update-in [:namespaces 'clojure.core]
+                   assoc
+                   'load-file #(load-file* ctx %)
+                   '*command-line-args* (sci/new-dynamic-var '*command-line-args* args))
+        addons/future
+        sci/init)))
+
+(defn evaluate [args script]
+  (sci/binding [context/context :sci]
+    (sci/eval-string
+     (remove-shebang script)
+     (setup-sci-context args))))
 
 (defn nrepl-server [args address]
-  (let [nrepl-opts
-        (if (.contains address ":")
-          (let [[ip port] (string/split address #":")
-                port (Integer/parseInt port)]
-            {:address ip
-             :port port})
-          {:port (Integer/parseInt address)})]
-    (let [env (atom {})
-          ctx {:env env
-               :namespaces namespaces/namespaces
-               :bindings namespaces/bindings
-               :imports {'System 'java.lang.System
-                         'Thread 'java.lang.Thread}
-               :features #{:bb :clj}
-               :classes namespaces/classes
-               :load-fn load-fn}]
-      (sci/binding [context/context :sci]
-        (let [ctx (update-in ctx [:namespaces 'clojure.core]
-                             assoc
-                             'load-file #(load-file* ctx %)
-                             '*command-line-args* (sci/new-dynamic-var '*command-line-args* args))
-              ctx (addons/future ctx)
-              ctx (sci-opts/init ctx)
-              ]
-          (-> (sci-nrepl/start-server! ctx nrepl-opts)
-              :future
-              deref))))))
+  (sci/binding [context/context :sci]
+    (-> args
+        setup-sci-context
+        (nrepl/start-server! (nrepl/parse-opt address))
+        :future
+        deref)))
