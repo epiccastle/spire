@@ -9,10 +9,10 @@
 
 (set! *warn-on-reflection* true)
 
-(defn to-camelcase
+(defn to-snakecase
   "convert a space seperated string into a snakecase
 
-  (to-camelcase \"foo Bar baZ\")
+  (to-snakecase \"foo Bar baZ\")
   ;;=> \"foo-bar-baz\"
   "
   [s]
@@ -25,7 +25,7 @@
   (-> out
       (string/split #"\n")
       (->> (map #(string/split % #":\s+"))
-           (map (fn [[k v]] [(-> k to-camelcase keyword) v]))
+           (map (fn [[k v]] [(-> k to-snakecase keyword) v]))
            (into {}))))
 
 (defn escape-code [n]
