@@ -21,17 +21,32 @@
       (->> (map string/lower-case)
            (string/join "-"))))
 
-(defn lsb-process [out]
+(defn lsb-process
+  "take the stdout response from an `lsb_release -a` command
+  line call and turn it into a keywordised, hashmap response"
+  [out]
   (-> out
       (string/split #"\n")
       (->> (map #(string/split % #":\s+"))
            (map (fn [[k v]] [(-> k to-snakecase keyword) v]))
            (into {}))))
 
-(defn escape-code [n]
+(defn escape-code
+  "return the ansi shell char sequence for the passed in escape code
+
+  (escape-code 31)
+  ;;=> \"[31m\"
+  "
+  [n]
   (str "\033[" (or n 0) "m"))
 
-(defn escape-codes [& ns]
+(defn escape-codes
+  "return the ansi shell char sequence for all the passed in escape codes
+
+  (escape-codes 31 32 0)
+  ;;=> \"[31;32;0m\"
+  "
+  [& ns]
   (str "\033[" (string/join ";" ns) "m"))
 
 (def colour-map
@@ -40,16 +55,45 @@
    :yellow 33
    :blue 34})
 
-(defn colour [& [colour-name]]
+(defn colour
+  "return the ansi shell char seqeunce to change the text to the specified
+  colour
+
+  (colour :blue)
+  ;;=> \"[34m\"
+  "
+  [& [colour-name]]
   (escape-code (colour-map colour-name)))
 
-(defn reverse-text [& [state]]
+(defn reverse-text
+  "return the ansi shell char sequence to make the text reverse print.
+  Optionally pass in `true` to turn on and `false` to turn off.
+
+  (reverse-text)
+  ;;=> \"[0m\"
+
+  (str (reverse-text true) \"reversed\" (reverse-text false))
+  ;;=> \"[7mreversed[0m\"
+  "
+  [& [state]]
   (escape-code (when state 7)))
 
-(defn bold [& [state]]
+(defn bold
+  "return the ansi shell char sequence to make the text bold print.
+  Optionally pass in `true` to turn on and `false` to turn off.
+
+  (bold)
+  ;;=> \"[2m\"
+
+  (str (bold true) \"bolded\" (bold false))
+  ;;=> \"[1mbolded[2m\"
+  "
+  [& [state]]
   (escape-code (if state 1 2)))
 
-(defn reset []
+(defn reset
+  "return the ansi special char reset code"
+  []
   (escape-code 0))
 
 
@@ -57,7 +101,23 @@
 (def megabyte (* 1024 kilobyte))
 (def gigabyte (* 1024 megabyte))
 
-(defn speed-string [bps]
+(defn speed-string
+  "take an input in bytes per second `bps`. Returns a string with a
+  human readable speed in the apropriate units
+
+  (speed-string 765)
+  ;;=> \"765 B/s\"
+
+  (speed-string 9876)
+  ;;=> \"9.64 kB/s\"
+
+  (speed-string 2873467)
+  ;;=> \"2.74 MB/s\"
+
+  (speed-string 879384759348)
+  ;;=> \"818.99 GB/s\"
+  "
+  [bps]
   (cond
     (< gigabyte bps)
     (format "%.2f GB/s" (float (/ bps gigabyte)))
