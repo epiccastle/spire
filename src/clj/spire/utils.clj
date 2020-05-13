@@ -9,7 +9,13 @@
 
 (set! *warn-on-reflection* true)
 
-(defn to-camelcase [s]
+(defn to-camelcase
+  "convert a space seperated string into a snakecase
+
+  (to-camelcase \"foo Bar baZ\")
+  ;;=> \"foo-bar-baz\"
+  "
+  [s]
   (-> s
       (string/split #"\s+")
       (->> (map string/lower-case)
@@ -348,7 +354,10 @@
        (let [data# (ex-data exc#)]
          (= :failed (:result data#))))))
 
-(defmacro debug [& body]
+(defmacro debug
+  "Take the output of the body and send it to the output module for
+  printing. Also returns the result so as to be insertable anywhere."
+  [& body]
   (let [file (current-file)]
     `(let [result# (do ~@body)]
        (spire.output.core/debug-result (context/deref* spire.state/output-module) ~file (quote ~&form) ~(meta &form) (spire.state/get-host-config) result#)
