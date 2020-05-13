@@ -1,4 +1,6 @@
-(ns spire.sci)
+(ns spire.sci
+  (:require [sci.core :as sci]
+            [sci.impl.vars :as vars]))
 
 ;; some helper macros for building sci bindings
 
@@ -15,8 +17,21 @@
                  (not (exclusions name)))
             [(list 'quote name)
              (if macro
-               `(with-meta (deref (var ~(symbol var*))) {:sci/macro true})
-               (symbol var*))])))
+               `(with-meta (deref (var ~(symbol var*)))
+                  (-> (meta (var ~(symbol var*)))
+                                 (select-keys [:doc :name :arglists])
+                                 (assoc :sci.impl/built-in true
+                                        :sci/macro true
+                                        :ns (vars/->SciNamespace
+                                             (quote ~ns)
+                                             nil))))
+               `(sci/new-var (quote ~name) ~(symbol var*)
+                             (-> (meta (var ~(symbol var*)))
+                                 (select-keys [:doc :name :arglists])
+                                 (assoc :sci.impl/built-in true
+                                        :ns (vars/->SciNamespace
+                                             (quote ~ns)
+                                             nil)))))])))
        (filter identity)
        (into {})))
 
