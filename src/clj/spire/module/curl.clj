@@ -158,6 +158,9 @@
       (transit/reader :msgpack opts)
       transit/read))
 
+(defmethod decode-body :default [_ body opts]
+  nil)
+
 (defn- curl-response->map
   "Parses a curl response input stream into a map"
   [result headers decode? decode-opts]
