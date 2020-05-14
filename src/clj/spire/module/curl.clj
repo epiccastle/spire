@@ -223,11 +223,95 @@
 (defmacro curl [& args]
   `(utils/wrap-report ~&form (curl* ~@args)))
 
+(def documentation
+  {
+   :module "curl"
+   :blurb "Transfer data from or to a server, using one of the supported curl protocols"
+   :description
+   [
+    "This module wraps the functionality of the curl command line program."
+    "It can be used to perform the actions of a web browser, such as downloading webpages and images, submitting webforms and uploading files."
+    "It can be used to interface with any web based API."]
+   :form "(curl options)"
+   :args
+   [{:arg "options"
+     :desg "A hashmap of options. All available options and their values are described below"}]
 
+   :opts
+   [
+    [:method
+     {:description ["The HTTP method to invoke."
+                    "Can be `:GET`, `:HEAD`, `:POST`, `:PUT`, `:DELETE`, `:TRACE`, `:OPTIONS` or `:PATCH`."
+                    "Values are case insensitive."]
+      :type :keyword
+      :required false
+      :default :GET}]
 
-;;;; End utils
+    [:url
+     {:description ["The url of the remote service to send the request to."]}]
 
-;;;; Response Parsing
+    [:headers
+     {:description ["A hashmap of key/value pairs to send as HTTP headers."]}]
 
-#_ (defn- read-headers [^File header-file]
-  (line-seq (io/reader header-file)))
+    [:accept
+     {:description ["An HTTP accept header setting."]}]
+
+    [:form
+     {:description ["A hashmap of key/value pairs to submit as a form submission."]}]
+
+    [:cookies
+     {:description ["Specify some cookies to send."]}]
+
+    [:cookie-jar
+     {:description ["Specify a file to use as a cookie jar."
+                    "Can be used to keep a session alive between multiple requests."]}]
+
+    [:auth
+     {:description ["Authenticate against a web service with the supplied credentials."]}]
+
+    [:query-params
+     {:description ["Specify a hashmap of key/value pairs to be encoded as GET method query parameters."]}]
+
+    [:data-raw
+     {:description ["Supply some unformatted data to be sent as the body of a request."]}
+     ]
+    [:data-binary
+     {:description ["Supply some binary formatted data to be sent as the body of a request."]}
+     ]
+    [:http2
+     {:description ["Use HTTP/2.0 for transport."]}
+     ]
+    [:output
+     {:description ["Write the received output to the specified file."]}
+     ]
+    [:user-agent
+     {:description ["Supply a custom user agent string for the request."]}
+     ]
+    [:decode?
+     {:description ["Decode the response body according to its mime type."]}
+     ]
+    [:decode-opts
+     {:description ["Specify additional body decoding options."]}
+     ]
+    [:success-test
+     {:description ["Specify a custom function to test the returned data type for success or failure."]}
+     ]]
+
+   :examples
+   [
+    {:description "Gather the contents of a web page"
+     :form "
+(curl {:url \"https://epiccastle.io\"})
+"}
+
+    {:description "Query the Digital Ocean API for a list of droplets"
+     :form "
+(curl {:url \"https://api.digitalocean.com/v2/droplets\"
+       :headers {:authorization (format \"Bearer %s\" (System/getenv \"DO_TOKEN\"))}
+       :decode-opts {:key-fn keyword}})
+"
+     }
+    ]
+
+   }
+  )
