@@ -512,6 +512,21 @@
        (let [data# (ex-data exc#)]
          (= :failed (:result data#))))))
 
+(defmacro succeeded?
+  "when wrapped around the body, captures a result or failure exception.
+  returns `false` if the body failed. Returns the result of the body
+  if the body succeeded. By catching any failure exceptions it can be
+  used to stop failures from propagating."
+  [& body]
+  `(try
+     (do
+       ~@body)
+     (catch clojure.lang.ExceptionInfo exc#
+       (let [data# (ex-data exc#)]
+         (if (= :failed (:result data#))
+           false
+           (throw exc#))))))
+
 (defmacro debug
   "Take the output of the body and send it to the output module for
   printing. Also returns the result so as to be insertable anywhere."
