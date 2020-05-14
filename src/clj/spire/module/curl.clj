@@ -220,7 +220,53 @@
 
          (process-result opts result nil nil))))))
 
-(defmacro curl [& args]
+(defmacro curl
+  "Transfer data from or to a server using one of the supported curl protocols.
+  form: (curl opts)
+
+  `opts`: a hashmap of options with the following keys
+
+  `:method` `:GET`, `:HEAD`, `:POST`, `:PUT`, `:DELETE`, `:TRACE`,
+  `:OPTIONS` or `:PATCH`. default: `:GET`
+
+  `:url` A string containing the request url.
+
+  `:headers` A hashmap of the headers to send in the request
+
+  `:accept` Specify the accept line.
+
+  `:form` Specify a hashmap of key/values to use for a form submission
+
+  `:cookies` Specify some cookies to send.
+
+  `:cookie-jar` Specify a file to use as a cookie jar.
+
+  `:auth` Authenticate against the webserver with the supplied
+  credentials.
+
+  `:query-params` Specify a hashmap of key/value pairs to supply as
+  the GET method query parameters.
+
+  `:data-raw` Supply unformatted data to be sent as the body of the
+  request.
+
+  `:data-binary` Supply binary formatted data to be sent as the body
+  of the request
+
+  `:http2` When set to `true` use HTTP/2.0 for transport
+
+  `:output` Write the received output to the specified file.
+
+  `:user-agent` Supply a custom user agent string
+
+  `:decode?` Set to `false` to disable automatic response body decoding
+
+  `:decode-opts` Specify extra options to be sent to the decoder
+
+  `:success-test` Specify a custom function to test the returned data
+  type for success or failure.
+  "
+  [& args]
   `(utils/wrap-report ~&form (curl* ~@args)))
 
 (def documentation
