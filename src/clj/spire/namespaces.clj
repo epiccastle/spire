@@ -43,7 +43,7 @@
             [clj-http.lite.util]
             [fipp.edn]
             [edamame.core]
-            [spire.sci :refer [make-sci-bindings]]))
+            [spire.sci :refer [make-sci-bindings make-sci-bindings-clean]]))
 
 (def all-modules
   {'apt* apt/apt*
@@ -160,8 +160,8 @@
    'spire.ssh (make-sci-bindings spire.ssh)
    'spire.utils (make-sci-bindings spire.utils)
    'spire.facts (make-sci-bindings spire.facts)
-   'spire.state (make-sci-bindings spire.state)
-   'spire.context (make-sci-bindings spire.context)
+   'spire.state (make-sci-bindings-clean spire.state)
+   'spire.context (make-sci-bindings-clean spire.context)
    'spire.local (make-sci-bindings spire.local)
    'spire.remote (make-sci-bindings spire.remote)
    'spire.output.core (make-sci-bindings spire.output.core)
