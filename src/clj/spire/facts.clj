@@ -157,15 +157,15 @@
     )
   )
 
-(defn runner [script]
+(defn runner [script shell]
   (let [session @state/connection
         {:keys [exec-fn exec]} @state/shell-context]
     (if (= :local exec)
-      (exec-fn nil "sh" script "UTF-8" {})
+      (exec-fn nil (name shell) script "UTF-8" {})
       (exec-fn session script "" "UTF-8" {}))))
 
 (defn fetch-shell []
-  (let [{:keys [exit out err] :as result} (runner "echo $SHELL")
+  (let [{:keys [exit out err] :as result} (runner "echo $SHELL" "sh")
         shell-path (string/trim out)]
     (assert (zero? exit) (format "Initial shell check `echo $SHELL` failed: %s" err))
     (keyword (last (string/split shell-path #"/" -1)))))
@@ -175,25 +175,25 @@
 (defn fetch-facts []
   (fetch-shell-facts (fetch-shell)))
 
-(defn run-and-return-lines [session script assert-format]
-  (let [{:keys [out err exit]} (runner script)]
+(defn run-and-return-lines [shell script assert-format]
+  (let [{:keys [out err exit]} (runner script shell)]
     (assert (zero? exit) (format assert-format exit err))
     (string/split-lines out)))
 
-(defn run-lsb-release [session]
+(defn run-lsb-release [shell]
   (some->
-   (runner "lsb_release -a")
+   (runner "lsb_release -a" shell)
    process-lsb-release))
 
-(defn run-system-profiler [session]
+(defn run-system-profiler [shell]
   (some->
-   (runner "system_profiler SPSoftwareDataType")
+   (runner "system_profiler SPSoftwareDataType" shell)
    process-system-profiler))
 
-(defn process-release-info [{:keys [os]} session]
+(defn process-release-info [{:keys [os]} shell]
   (cond
-    (= :linux os) (run-lsb-release session)
-    (= :darwin os) (run-system-profiler session)
+    (= :linux os) (run-lsb-release shell)
+    (= :darwin os) (run-system-profiler shell)
     ;; what about freebsd?
     :else nil))
 
@@ -219,18 +219,17 @@
      :group-names (into #{} (map :name groups))
      }))
 
-(defmethod fetch-shell-facts :fish [_]
-  (let [session @state/connection
-        base-shell-uname-output (run-and-return-lines
-                                 session
+(defmethod fetch-shell-facts :fish [shell]
+  (let [base-shell-uname-output (run-and-return-lines
+                                 shell
                                  (utils/embed-src "facts_fish.fish")
                                  "facts_fish.fish script exited %d: %s")
-        shell-version-output (run-and-return-lines session
+        shell-version-output (run-and-return-lines shell
                                                    "echo $FISH_VERSION"
                                                    "retrieving fish version script exited %d: %s")
-        paths-output (run-and-return-lines session (make-which :fish)
+        paths-output (run-and-return-lines shell (make-which shell)
                                            "retrieving paths script exited %d: %s")
-        id-out (run-and-return-lines session "id" "running remote `id` command exited %d: %s")
+        id-out (run-and-return-lines shell "id" "running remote `id` command exited %d: %s")
 
         uname-data (process-shell-uname base-shell-uname-output)
         shell-data (process-shell-info base-shell-uname-output)
@@ -239,7 +238,7 @@
         paths (process-paths {:paths paths-output})
         shell-data (assoc shell-data :detect detect :version version)
         system-data (process-system uname-data shell-data)
-        release-info (process-release-info system-data session)
+        release-info (process-release-info system-data shell)
         system-data (into system-data release-info)]
     (->> {:shell shell-data
           :uname uname-data
@@ -249,17 +248,16 @@
           :ssh-config @state/host-config})))
 
 (defmethod fetch-shell-facts :csh [shell]
-  (let [session @state/connection
-        base-shell-uname-output (run-and-return-lines
-                                 session
+  (let [base-shell-uname-output (run-and-return-lines
+                                 shell
                                  (utils/embed-src "facts_shell.csh")
                                  "facts_shell.csh script exited %d: %s")
-        shell-version-output (run-and-return-lines session
+        shell-version-output (run-and-return-lines shell
                                                    (utils/embed-src "facts_id.sh")
                                                    "facts_id.sh exited %d: %s")
-        paths-output (run-and-return-lines session (make-which shell)
+        paths-output (run-and-return-lines shell (make-which shell)
                                            "retrieving paths script exited %d: %s")
-        id-out (run-and-return-lines session "id" "running remote `id` command exited %d: %s")
+        id-out (run-and-return-lines shell "id" "running remote `id` command exited %d: %s")
 
         uname-data (process-shell-uname base-shell-uname-output)
         shell-data (process-shell-info base-shell-uname-output)
@@ -268,7 +266,7 @@
         paths (process-paths {:paths paths-output})
         shell-data (assoc shell-data :detect detect :version version)
         system-data (process-system uname-data shell-data)
-        release-info (process-release-info system-data session)
+        release-info (process-release-info system-data shell)
         system-data (into system-data release-info)]
     (->> {:shell shell-data
           :uname uname-data
@@ -278,17 +276,16 @@
           :ssh-config @state/host-config})))
 
 (defmethod fetch-shell-facts :default [shell]
-  (let [session @state/connection
-        base-shell-uname-output (run-and-return-lines
-                                 session
+  (let [base-shell-uname-output (run-and-return-lines
+                                 shell
                                  (utils/embed-src "facts_shell.sh")
                                  "facts_shell.sh script exited %d: %s")
-        shell-version-output (run-and-return-lines session
+        shell-version-output (run-and-return-lines shell
                                                    (utils/embed-src "facts_id.sh")
                                                    "facts_id.sh exited %d: %s")
-        paths-output (run-and-return-lines session (make-which shell)
+        paths-output (run-and-return-lines shell (make-which shell)
                                            "retrieving paths script exited %d: %s")
-        id-out (run-and-return-lines session "id" "running remote `id` command exited %d: %s")
+        id-out (run-and-return-lines shell "id" "running remote `id` command exited %d: %s")
 
         uname-data (process-shell-uname base-shell-uname-output)
         shell-data (process-shell-info base-shell-uname-output)
@@ -297,7 +294,7 @@
         paths (process-paths {:paths paths-output})
         shell-data (assoc shell-data :detect detect :version version)
         system-data (process-system uname-data shell-data)
-        release-info (process-release-info system-data session)
+        release-info (process-release-info system-data shell)
         system-data (into system-data release-info)]
     (->> {:shell shell-data
           :uname uname-data
@@ -320,7 +317,7 @@
 (defn fetch-facts-paths
   ([shell]
    (process-paths
-    {:paths (run-and-return-lines @state/connection (make-which shell)
+    {:paths (run-and-return-lines shell (make-which shell)
                                   "retrieving paths script exited %d: %s")}))
   ([]
    (fetch-facts-paths (get-fact [:system :shell]))))
