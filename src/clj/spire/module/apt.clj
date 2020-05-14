@@ -180,8 +180,6 @@
            :err-lines (string/split err #"\n")
            )))
 
-
-
 (utils/defmodule apt* [command & [opts]]
   [host-config session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (or
@@ -192,7 +190,19 @@
      (facts/update-facts-paths!)
      result)))
 
-(defmacro apt [& args]
+(defmacro apt
+  "manage packages through the apt package system.
+  (apt command & [package-or-packages])
+
+  given:
+
+  `command`: The command to execute. Should be `:update`, `:upgrade`,
+  `:install` or `:uninstall`
+
+  `package-or-packages`: The name of a single package, or a sequence
+  of package names.
+  "
+  [& args]
   `(utils/wrap-report ~&form (apt* ~@args)))
 
 (def documentation
