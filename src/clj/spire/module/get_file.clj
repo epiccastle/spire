@@ -1,6 +1,5 @@
 (ns spire.module.get-file
-  (:require [spire.ssh :as ssh]
-            [spire.utils :as utils]
+  (:require [spire.utils :as utils]
             [clojure.string :as string]))
 
 (utils/defmodule get-file* [file-path]
@@ -15,7 +14,15 @@
            :err-lines (string/split-lines err)
            :result (if (zero? exit) :ok :failed))))
 
-(defmacro get-file [& args]
+(defmacro get-file
+  "return the contents of a file on the remote machine
+  (get-file file-path)
+
+  given:
+
+  `file-path`: the path of the file on the remote system.
+  "
+  [& args]
   `(utils/wrap-report ~&form (get-file* ~@args)))
 
 (def documentation
