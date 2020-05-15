@@ -116,7 +116,27 @@
     (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
     (process-result command opts))))
 
-(defmacro authorized-keys [& args]
+(defmacro authorized-keys
+  "Add and remove ssh authorized keys to a users accounts.
+  (authorized-keys command opts)
+
+  `command`: The operation to execute. Should be one of `:present`,
+  `:absent` or `:get`
+
+  `opts`: A hashmap of options with the following keys:
+
+  `:user` The username od the user to receive the credential in their
+  authorized_keys file.
+
+  `:key` The public key contents to add or remove from the file.
+
+  `:file` Instead of specifying a user, specify the location of an
+  authorized_keys file to work with.
+
+  `:options` A hashmap containing a set of ssh key options that will
+  be prepended to the key in the authorized_keys file.
+  "
+  [& args]
   `(utils/wrap-report ~&form (authorized-keys* ~@args)))
 
 (def documentation
@@ -143,7 +163,7 @@
    :opts
    [
     [:user
-     {:description ["The username of the user to recieve the credential in their authorized_keys file"]
+     {:description ["The username of the user to receive the credential in their authorized_keys file"]
       :type :string
       :required false}]
 
