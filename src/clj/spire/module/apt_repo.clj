@@ -164,7 +164,23 @@
     (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
     (process-result command opts))))
 
-(defmacro apt-repo [& args]
+(defmacro apt-repo
+  "manage the presence or absence of extra apt repositories.
+  (apt-repo command opts)
+
+  given:
+
+  `command`: Should be one of `:present` or `:absent`
+
+  `opts`: a hashmap of opyions with the following keys:
+
+  `:repo` The repository line as it appears in apt sources file, or a
+  ppa description line.
+
+  `:filename` an optional filename base for the storage of the repo
+  definition inside /etc/apt/sources.d
+  "
+  [& args]
   `(utils/wrap-report ~&form (apt-repo* ~@args)))
 
 (def documentation
