@@ -217,7 +217,41 @@
           copy-result
           {:result (if attrs? :changed :ok)}))))))
 
-(defmacro download [& args]
+(defmacro download
+  "Transfer files and directories from the remote machines to the local client.
+  (download options)
+
+  given:
+
+  `options`: A hashmap of options
+
+  `:src` A path to a file or directory on the remote hosts
+
+  `:dest` A local path to copy the files into
+
+  `:recurse` If the remote path is a directory, recurse through all
+  the file and directories
+
+  `:preserve` Preserve the remote files' modification flags when
+  copying them to the local filesystem
+
+  `:flat` When `false` each remote host's files are written into a
+  subdirectory. When set to true, each host's files are written into
+  the same folder folder (`:dest`) and may overwrite one another.
+
+  `:dir-mode` If `:preserve` is `false`, this specifies the modification
+  parameters created directories will have.
+
+  `:mode` If `:preserve` is `false`, this specifies the modification
+  parameters of copied files.
+
+  `:owner` If specified the local files and directories will be owned
+  by this user.
+
+  `:group` If specified the local files and directories will be owned
+  by this group.
+  "
+  [& args]
   `(utils/wrap-report ~&form (download* ~(utils/current-file) (quote ~&form) ~(meta &form) ~@args)))
 
 (def documentation
