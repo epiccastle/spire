@@ -218,7 +218,8 @@
           {:result (if attrs? :changed :ok)}))))))
 
 (defmacro download
-  "Transfer files and directories from the remote machines to the local client.
+  "Transfer files and directories from the remote machines to the local
+  client.
   (download options)
 
   given:
