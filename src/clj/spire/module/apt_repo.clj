@@ -197,8 +197,21 @@
      :values
      [[:present "Ensure the specified apt repository is present on the machine"]
       [:absent "Ensure the specified apt repository is absent on the machine"]]}
-    {:arg "repository"
-     :desc "A string describing the repository to add"}]
+    {:arg "options"
+     :desc "A hashmap of options"}]
+
+   :opts
+   [
+    [:repo
+     {:description ["The repository line as it appears in an apt source file."
+                    "A ppa description string."]
+      :type :string
+      :required true}]
+    [:filename
+     {:description ["The base filename to use when storing the config."
+                    "Only necessary when `command` is `:present`."
+                    "When `command` is `:absent` the repo lists are searched and all references to the repo are removed."]}]
+    ]
 
    :examples
    [
