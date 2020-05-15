@@ -78,7 +78,25 @@
     (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
     (process-result command opts))))
 
-(defmacro group [& args]
+(defmacro group
+  "ensures a particular group is present on, or absent from, the remote
+  machine.
+  (group command options)
+
+  given:
+
+  `command`: The state the group should be in. Should be one of
+  `:present` or `:absent`.
+
+  `options`: A hashmap of options, where:
+
+  `:name` The name of the group
+
+  `:gid` The group id of the named group
+
+  `:password` A global password for the group
+  "
+  [& args]
   `(utils/wrap-report ~&form (group* ~@args)))
 
 (def documentation
