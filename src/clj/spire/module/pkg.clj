@@ -135,7 +135,19 @@
      (facts/update-facts-paths!)
      result)))
 
-(defmacro pkg [& args]
+(defmacro pkg
+  "manage packages on a FreeBSD system.
+  (pkg command [package-or-packages])
+
+  given:
+
+  `command`: The overall command to execute. Should be `:install`,
+  `:remove` or `:update`.
+
+  `package-or-packages`: either a single package name as a string, or
+  a sequence of package names. Not needed when specifying `:update`
+  "
+  [& args]
   `(utils/wrap-report ~&form (pkg* ~@args)))
 
 (def documentation
@@ -145,12 +157,12 @@
    :description
    [
     "This module manages the installation and removal of FreeBSD packages."]
-   :form "(pkg command opts)"
+   :form "(pkg command & [package-or-packages])"
    :args
    [{:arg "command"
-     :desc "The overall command to execure. Must be one of: `:install` or `:remove`."
+     :desc "The overall command to execute. Must be one of: `:install` or `:remove`."
      :values
      [[:install "Ensure the specied package is installed on the system"]
       [:remove "Ensure the specified package is removed from the syste,"]]}
-    {:arg "opts"
+    {:arg "package-or-packages"
      :desc "A package name or a list of packages"}]})
