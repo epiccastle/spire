@@ -220,7 +220,8 @@
   file. `:blocks` the number of disk blocks it occupies. `:device` the
   device number. `:blksize` the size of blocks on the contianing
   device. `:flags` a list of file flags. `:device-major` the major dev
-  node number. `:rdev` the rdev number.
+  node number. `:rdev` the rdev number. `:link-source` the source of a
+  sumbolic link. `:link-dest` the destination of symbolic link.
   "
   [& args]
   `(utils/wrap-report ~&form (stat* ~@args)))
@@ -307,7 +308,10 @@
    :other-write? (other-write? result)
    :other-exec? (other-exec? result)})
 
-(defn exec? [{{:keys [mode uid gid]} :stat}]
+(defn exec?
+  "When given the result of a `stat` call, return `true` if you can
+  execute the file with your present user and permissions."
+  [{{:keys [mode uid gid]} :stat}]
   (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:user])]
     (if (zero? fact-uid)
       ;; root can execute any file that has any executable bit set
@@ -319,7 +323,10 @@
        (and (group-ids gid) (pos? (bit-and mode 8)))
        (pos? (bit-and mode 1))))))
 
-(defn readable? [{{:keys [mode uid gid]} :stat}]
+(defn readable?
+  "When given the result of a `stat` call, return `true` if you can
+  read from the file with your present user and permissions."
+  [{{:keys [mode uid gid]} :stat}]
   (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:user])]
     (if (zero? fact-uid)
       ;; root can read any file
@@ -331,7 +338,10 @@
        (and (group-ids gid) (pos? (bit-and mode 32)))
        (pos? (bit-and mode 4))))))
 
-(defn writeable? [{{:keys [mode uid gid]} :stat}]
+(defn writeable?
+  "When given the result of a `stat` call, return `true` if you can
+  write to the file with your present user and permissions."
+  [{{:keys [mode uid gid]} :stat}]
   (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:user])]
     (if (zero? fact-uid)
       ;; root can write to any file
@@ -346,25 +356,46 @@
 ;;
 ;; File types
 ;;
-(defn directory? [{{:keys [file-type]} :stat}]
+(defn directory?
+  "When given the result of a `stat` call, return `true` if the path is
+  a directory. "
+  [{{:keys [file-type]} :stat}]
   (= :directory file-type))
 
-(defn block-device? [{{:keys [file-type]} :stat}]
+(defn block-device?
+  "When given the result of a `stat` call, return `true` if the path is
+  a block device. "
+  [{{:keys [file-type]} :stat}]
   (= :block-device file-type))
 
-(defn char-device? [{{:keys [file-type]} :stat}]
+(defn char-device?
+  "When given the result of a `stat` call, return `true` if the path is
+  a character device. "
+  [{{:keys [file-type]} :stat}]
   (= :char-device file-type))
 
-(defn symlink? [{{:keys [file-type]} :stat}]
+(defn symlink?
+  "When given the result of a `stat` call, return `true` if the path is
+  a symlink. "
+  [{{:keys [file-type]} :stat}]
   (= :symlink file-type))
 
-(defn fifo? [{{:keys [file-type]} :stat}]
+(defn fifo?
+  "When given the result of a `stat` call, return `true` if the path is
+  a fifo. "
+  [{{:keys [file-type]} :stat}]
   (= :fifo file-type))
 
-(defn regular-file? [{{:keys [file-type]} :stat}]
+(defn regular-file?
+  "When given the result of a `stat` call, return `true` if the path is
+  a regular file. "
+  [{{:keys [file-type]} :stat}]
   (= :regular file-type))
 
-(defn socket? [{{:keys [file-type]} :stat}]
+(defn socket?
+  "When given the result of a `stat` call, return `true` if the path is
+  a unix domain socket. "
+  [{{:keys [file-type]} :stat}]
   (= :socket file-type))
 
 
