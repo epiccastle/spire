@@ -115,13 +115,40 @@
      result))
   )
 
-(defmacro attrs [& args]
+(defmacro attrs
+  "Ensure a file or directory has the specified ownership and
+  modification parameters.
+  (atts opts)
+
+  given:
+
+  `opts`: a hashmap of options with the following keys:
+
+  `:path` The file or directory location
+
+  `:owner` Who should own the file or directory. Can be username or
+  user id.
+
+  `:group` The group that should own the file or directory. Can be a
+  group name or a group id.
+
+  `:mode` The access mode of ths of this file or files. Can be an
+  octal literal (eg. `0xxx`), a string of the same form (eg `\"0xxx\")
+  or a string of the change form (eg. `\"u+rwx\"`).
+
+  `:dir-mode` The access mode for this directory or subdirectories
+  when issued recursively.
+
+  `:recurse` Recurse into the directory and change the attrs on all
+  sub files and folders.
+  "
+  [& args]
   `(utils/wrap-report ~&form (attrs* ~@args)))
 
 (def documentation
   {
    :module "attrs"
-   :blurb "Ensure a file or directory has the specified ownewship and modification parameters"
+   :blurb "Ensure a file or directory has the specified ownership and modification parameters"
    :description
    [
     "This module ensures that a path has the specified ownership and modification flags."]
@@ -132,15 +159,15 @@
    :opts
    [[:path
      {:description
-      ["The filesystem location to make the directory at."]
+      ["The location of the file or directory to operate on"]
       :type :string}]
     [:owner
      {:description
-      ["The user that should have ownership over the directory. Can be specified as the username or the user id."]
+      ["The user that should have ownership over the file or directory. Can be specified as the username or the user id."]
       :type [:integer :string]}]
     [:group
      {:description
-      ["The group that should have ownership over the directory. Can be specified as the groupname or the group id."]
+      ["The group that should have ownership over the file or directory. Can be specified as the groupname or the group id."]
       :type [:integer :string]}]
     [:mode
      {:description
