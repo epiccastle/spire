@@ -87,7 +87,26 @@
     (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
     (process-result command opts))))
 
-(defmacro sysctl [& args]
+(defmacro sysctl
+  "manage the kernel system control parameters.
+  (service command opts)
+
+  `command`: The overall command to execute. Should be `:present` or
+  `:absent`
+
+  `opts`: a hashmap of options with the following keys:
+
+  `:name` The name of the sysctl parameter. eg \"net.ipv4.ip_forward\"
+
+  `:value` The value to give the parameter.
+
+  `:reload` Should all the values be reloaded after setting
+
+  `:file` Use a custom file to store the settings. Defaults to the
+  operating system's default location.
+
+  "
+  [& args]
   `(utils/wrap-report ~&form (sysctl* ~@args)))
 
 (def documentation
@@ -100,6 +119,6 @@
    :form "(service command opts)"
    :args
    [{:arg "command"
-     :desc "The overall command to execure. Only `:present` is implemented."}
+     :desc "The overall command to execute. Only `:present` is implemented."}
     {:arg "opts"
      :desc "A hashmap of options"}]})
