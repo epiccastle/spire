@@ -172,7 +172,7 @@
 
   `command`: Should be one of `:present` or `:absent`
 
-  `opts`: a hashmap of opyions with the following keys:
+  `opts`: a hashmap of options with the following keys:
 
   `:repo` The repository line as it appears in apt sources file, or a
   ppa description line.
