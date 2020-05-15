@@ -282,7 +282,48 @@
              :out out}))))
      )))
 
-(defmacro upload [& args]
+(defmacro upload
+  "transfer files and directories from the local client to the remote
+  machines.
+  (upload options)
+
+  given:
+
+  `options`: A hashmap of options
+
+  `:src` A path to a file or directory on the local machine
+
+  `:content` Alternatively specify content to upload. Can be a string,
+  a `java.io.File` instance or a `byte-array`
+
+  `:dest` A remote path to copy the files into
+
+  `:recurse` If the local path is a directory, recurse through all
+  the file and directories
+
+  `:preserve` Preserve the local files' modification flags when
+  copying them to the remote filesystem
+
+  `:dir-mode` If `:preserve` is `false`, this specifies the modification
+  parameters created directories will have.
+
+  `:mode` If `:preserve` is `false`, this specifies the modification
+  parameters of copied files.
+
+  `:owner` If specified the local files and directories will be owned
+  by this user.
+
+  `:group` If specified the local files and directories will be owned
+  by this group.
+
+  `:force` Force the copy operation to overwrite incompatible
+  content. Such as a file upload overwriting a directory or a
+  directory copy overwriting a file.
+
+  `:attrs` Set the file or files special attributes. Provided as a
+  string that is accepted to the chattr shell command.
+  "
+  [& args]
   `(utils/wrap-report ~&form (upload* ~(utils/current-file) (quote ~&form) ~(meta &form) ~@args)))
 
 (def documentation
