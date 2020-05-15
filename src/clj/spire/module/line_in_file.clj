@@ -235,9 +235,44 @@
     (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
     (process-result command opts))))
 
-(defmacro line-in-file [& args]
-  `(utils/wrap-report ~&form (line-in-file* ~@args)))
+(defmacro line-in-file
+  "Ensures a particular line is in a text file, or can replace an
+  existing line using a regular expression. Or ensure a particular
+  line is absent from a file. Or gather a line or lines from a file
+  that match a regular expression or by linenum.
+  (line-in-file command options)
 
+  given:
+
+  `command`: Should be `:get`, `:present` or `:absent`
+
+  `options`: A hashmap of options, where:
+
+  `:path` The path to a file
+
+  `:regexp` The regular expression to look for in every line of the
+  file. The line that matches will be replaced.
+
+  `:line-num` Specify the line to match by line number instead of
+  regular expression.
+
+  `:line` The contents of the line to insert into the file
+
+  `:after` A regular expression to insert the line after, if the
+  `:regexp` match is not found.
+
+  `:before` A regular expression to insert the line before, if the
+  `:regexp` match is not found.
+
+  `:match` How to landle files with multiple lines that match. Should
+  be `:first`, `:last` or `:all`
+
+  `:insert-at` If no line matches and no `:after` or `:before`
+  matches, where to insert the line. Should be `:eof` for end of file,
+  or `:bof` for beginning of file.
+  "
+  [& args]
+  `(utils/wrap-report ~&form (line-in-file* ~@args)))
 
 (def documentation
   {
@@ -245,7 +280,7 @@
    :blurb "Manage lines in text files"
    :description
    [
-    "This module ensures a particular line is in a text file, or can replace an existing line using a regular excpression."
+    "This module ensures a particular line is in a text file, or can replace an existing line using a regular expression."
     "It can ensure a particular line is absent from a file."
     "It can gather a line or lines that match a regular expression from a file for further processing."
     "This is most useful when only a few lines need changing. Often it is better to template the entire file with the `template` module."]
