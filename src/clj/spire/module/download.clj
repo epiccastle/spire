@@ -1,6 +1,5 @@
 (ns spire.module.download
   (:require [spire.output.core :as output]
-            [spire.ssh :as ssh]
             [spire.scp :as scp]
             [spire.facts :as facts]
             [spire.utils :as utils]
@@ -8,10 +7,7 @@
             [spire.state :as state]
             [spire.nio :as nio]
             [spire.remote :as remote]
-            [spire.module.attrs :as attrs]
             [spire.compare :as compare]
-            [digest :as digest]
-            [puget.printer :as puget]
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
