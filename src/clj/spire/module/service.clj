@@ -112,7 +112,21 @@
 
   )
 
-(defmacro service [& args]
+(defmacro service
+  "manage the running of system services. Start, stop, restart and
+  reload services.
+  (service command opts)
+
+  given:
+
+  `command`: Overall command to execute. Should be `:started`,
+  `:stopped` or `:restarted`.
+
+  `opts`: A hashmap of options, where:
+
+  `:name` the name of the service.
+  "
+  [& args]
   `(utils/wrap-report ~&form (service* ~@args)))
 
 (def documentation
@@ -127,7 +141,7 @@
    :form "(service command opts)"
    :args
    [{:arg "command"
-     :desc "The overall command to execure. Use `:started`, `:stopped` or `:restarted`"}
+     :desc "The overall command to execute. Use `:started`, `:stopped` or `:restarted`"}
     {:arg "opts"
      :desc "A hashmap of options"}]
 
