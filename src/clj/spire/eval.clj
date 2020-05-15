@@ -73,8 +73,7 @@
         ctx {:env env
              :namespaces namespaces/namespaces
              :bindings namespaces/bindings
-             :imports {'System 'java.lang.System
-                       'Thread 'java.lang.Thread}
+             :imports namespaces/imports
              :features #{:bb :clj}
              :classes namespaces/classes
              :load-fn load-fn}]
@@ -84,7 +83,10 @@
                    'load-file #(load-file* ctx %)
                    '*command-line-args* (sci/new-dynamic-var '*command-line-args* args))
         addons/future
-        sci/init)))
+        sci/init
+        (assoc :classes namespaces/classes
+               :imports namespaces/imports)
+        )))
 
 (defn evaluate [args script]
   (sci/binding [context/context :sci]

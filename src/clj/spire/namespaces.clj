@@ -232,3 +232,7 @@
    'java.time.format.DateTimeFormatterBuilder java.time.format.DateTimeFormatterBuilder
    }
   )
+
+(def imports
+  {'System 'java.lang.System
+   'Thread 'java.lang.Thread})
