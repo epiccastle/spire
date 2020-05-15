@@ -189,40 +189,114 @@
                         "UTF-8" {})
           (process-result path)))))
 
-(defmacro stat [& args]
+(defmacro stat
+  "runs the stat command on files or directories.
+  (stat path)
+
+  given:
+
+  `path`: The path of the file or directory
+
+  returns:
+
+  a hashmap with keys:
+
+  `:result` the execution result. `:ok` or `:failed`
+
+  `:exit` the exit code of the stat call
+
+  `:err` The content of standard error from the execution
+
+  `:stat` A result hashmap with the keys (not every field supported on
+  every platform): `:user` the username of the owner of the file or
+  directory. `:group` the group name owning the file or
+  directory. `:uid` the user id of the owner. `:gid` the group id of
+  ownership. `:atime` the last access time. `:ctime` the creation
+  time. `:mtime` the modification time. `:btime` the BSD
+  btime. `:mode` the file access permission mode. `:inode` the disk
+  inode number. `:size` the size of the file in bytes. `:device-minor`
+  the minor device number for device nodes. `:nlink` the number of
+  hard links pointing to the file. `:file-type` the type of
+  file. `:blocks` the number of disk blocks it occupies. `:device` the
+  device number. `:blksize` the size of blocks on the contianing
+  device. `:flags` a list of file flags. `:device-major` the major dev
+  node number. `:rdev` the rdev number.
+  "
+  [& args]
   `(utils/wrap-report ~&form (stat* ~@args)))
 
 ;;
 ;; Test mode flags
 ;;
-(defn other-exec? [{{:keys [mode]} :stat}]
+(defn other-exec?
+  "When passed the result of a `stat` call, returns `true` if others can
+  execute the file."
+  [{{:keys [mode]} :stat}]
   (pos? (bit-and mode 1)))
 
-(defn other-write? [{{:keys [mode]} :stat}]
+(defn other-write?
+  "When passed the result of a `stat` call, returns `true` if others can
+  write to the file."
+  [{{:keys [mode]} :stat}]
   (pos? (bit-and mode 2)))
 
-(defn other-read? [{{:keys [mode]} :stat}]
+(defn other-read?
+  "When passed the result of a `stat` call, returns `true` if others can
+  read from the file."
+  [{{:keys [mode]} :stat}]
   (pos? (bit-and mode 4)))
 
-(defn group-exec? [{{:keys [mode]} :stat}]
+(defn group-exec?
+  "When passed the result of a `stat` call, returns `true` if members of
+  the file's group can execute the file."
+  [{{:keys [mode]} :stat}]
   (pos? (bit-and mode 8)))
 
-(defn group-write? [{{:keys [mode]} :stat}]
+(defn group-write?
+  "When passed the result of a `stat` call, returns `true` if members of
+  the file's group can write to the file."
+  [{{:keys [mode]} :stat}]
   (pos? (bit-and mode 16)))
 
-(defn group-read? [{{:keys [mode]} :stat}]
+(defn group-read?
+  "When passed the result of a `stat` call, returns `true` if members of
+  the file's group can read from the file."
+  [{{:keys [mode]} :stat}]
   (pos? (bit-and mode 32)))
 
-(defn user-exec? [{{:keys [mode]} :stat}]
+(defn user-exec?
+  "When passed the result of a `stat` call, returns `true` if the owner
+  can execute the file."
+  [{{:keys [mode]} :stat}]
   (pos? (bit-and mode 64)))
 
-(defn user-write? [{{:keys [mode]} :stat}]
+(defn user-write?
+  "When passed the result of a `stat` call, returns `true` if the owner
+  can write to the file."
+  [{{:keys [mode]} :stat}]
   (pos? (bit-and mode 128)))
 
-(defn user-read? [{{:keys [mode]} :stat}]
+(defn user-read?
+  "When passed the result of a `stat` call, returns `true` if the owner
+  can read from the file."
+  [{{:keys [mode]} :stat}]
   (pos? (bit-and mode 256)))
 
-(defn mode-flags [result]
+(defn mode-flags
+  "When passed the result of a `stat` call, returns a hashmap with the
+  following keys:
+
+  `:user-read` can the owner read from the file.
+  `:user-write` can the owner write to the file.
+  `:user-exec?` can the owner execute the file.
+  `:group-read` can members of the file's group read from the file.
+  `:group-write` can members of the file's group write to the file.
+  `:group-exec?` can members of the file's group execute the file.
+  `:other-read` can others read from the file.
+  `:other-write` can others write to the file.
+  `:other-exec?` can others execute the file.
+  "
+  [result]
   {:user-read? (user-read? result)
    :user-write? (user-write? result)
    :user-exec? (user-exec? result)
