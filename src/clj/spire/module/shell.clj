@@ -70,7 +70,34 @@
                  (= 255 exit) :changed
                  :else :failed)))))
 
-(defmacro shell [& args]
+(defmacro shell
+  "run commands and shell snippets on the remote hosts.
+  (shell options)
+
+  given:
+
+  `options`: a hashmap of options, where:
+
+  `:cmd` the command string to execute.
+
+  `:shell` the shell to use to run the command. The default is `bash`
+
+  `:dir` the working directory to run the command within. If a
+  relative path, is relative to the users home directory when running
+  on a remote system, and relative to the execution that was the
+  current working directory when spire was executed.
+
+  `:env` a hashmap of environment variables to set before executing
+  the command. Environment variable names (the hashmap keys) can be
+  keywords or strings.
+
+  `:out` the encoding of the commands output. Default is \"UTF-8\"
+
+  `:creates` a list of filenames that the command will create. If
+  these files exist on the machine, the command will not be executed
+  and the job result will be reported as `:ok`
+  "
+  [& args]
   `(utils/wrap-report ~&form (shell* ~@args)))
 
 
@@ -93,7 +120,7 @@
       :required true}]
 
     [:shell
-     {:description ["Specify the shell to use to run the command. Deafult is `bash`."]
+     {:description ["Specify the shell to use to run the command. Default is `bash`."]
       :type :string
       :required false}]
 
