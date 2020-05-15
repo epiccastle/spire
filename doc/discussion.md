@@ -423,25 +423,25 @@ $ spire -e '(def n 5) (load-file "test.clj")'
 
 ## Output
 
-Output printing is controlled by the `-o` flag. You can specify a
+Output printing is controlled by the `--output` flag. You can specify a
 snippet of edn as a value. (This value will be used as the dispatch
 value `driver` when calling the output functions).
 
 ### :default
 
-The default output driver is selected with `-o :default`. This driver
+The default output driver is selected with `--output :default`. This driver
 tries to collate the output of the state together in a minimal way. It
 uses colour. It prints errors inline. It prints `upload` and
 `download` copy progress bars.
 
 ### :quiet
 
-The quiet output driver is selected with `-o :quiet`. This driver
+The quiet output driver is selected with `--output :quiet`. This driver
 prints nothing.
 
 ### :events
 
-The events output driver is selected with `-o :events`. This prints a
+The events output driver is selected with `--output :events`. This prints a
 coloured, pretty printed vector for every called output function. The
 format of the vector printed is `[type filename form meta host-config
 & arguments]`

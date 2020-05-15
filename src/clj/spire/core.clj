@@ -19,10 +19,10 @@
 
 (def cli-options
   [
-   ["-h" "--help" "Print the command line help"]
+   [nil "--help" "Print the command line help"]
    ["-e" "--evaluate CODE" "Evaluate a snippet of code instead of loading code from file"]
-   ["-o" "--output MODULE" "Use the specified output module to print programme progress"]
-   ["-v" "--version" "Print the version string and exit"]
+   [nil "--output MODULE" "Use the specified output module to print programme progress"]
+   [nil "--version" "Print the version string and exit"]
    [nil "--nrepl-server ADDRESS" "Run a spire nrepl server to connect to. Format: IP:PORT or just PORT" ]
    [nil "--debug-ssh" "Debug ssh connections printing to stderr"]])
 

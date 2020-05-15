@@ -86,14 +86,14 @@ $ make clean all GRAALVM=/path/to/my/graal
 After a long wait it should write a binary executable `spire`. Test it.
 
 ```shell-session
-$ ./spire -h
+$ ./spire --help
 ```
 
 Install it.
 
 ```shell-session
 $ mv spire ~/bin/
-$ spire -h
+$ spire --help
 ```
 
 **Note:**  graalvm-ce-java8-20.1.0-dev should also work. Earlier versions of graalvm, up to and including 20.0.0 *do not work*.
@@ -110,7 +110,7 @@ $ java -jar spire-0.1.0-standalone.jar FILE
 Use trampoline to run with leiningen so libspire.so can read the correct terminal settings:
 
 ```shell-session
-$ lein trampoline run -- -h
+$ lein trampoline run -- --help
 ```
 
 ## Running tests
