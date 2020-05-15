@@ -47,7 +47,29 @@
      result))
   )
 
-(defmacro mkdir [& args]
+(defmacro mkdir
+  "ensure a directory is present at the specified path and that it has
+  the specified ownership and modification flags. If parent
+  directories are not present, they are also created.
+  (mkdir options)
+
+  given:
+
+  `options`: a hashmap of options, where:
+
+  `:path` the filesystem location to make the directory at.
+
+  `:owner` the user that should have ownership over the directory. Can
+  be specified as a username or as a user id.
+
+  `:group` the group that should ohave ownership over the
+  directory. Can be specified as a group name or as a group id.
+
+  `:mode` the access mode of this directory. Can be an octal
+  literal (eg. `0xxx`), a string of the same form (eg `\"0xxx\"`) or a
+  string of the change form (eg. `\"u+rwx\"`).
+  "
+  [& args]
   `(utils/wrap-report ~&form (mkdir* ~@args)))
 
 (def documentation
@@ -76,7 +98,7 @@
       :type [:integer :string]}]
     [:mode
      {:description
-      ["Set the access mode of this file or files."
+      ["Set the access mode of this directory."
        "Can be specified as an octal value of the form 0xxx, as a decimal value, or as a change string as is accepted by the system chmod command (eg. \"u+rwx\")."]
       :type [:integer :string]}]]
    :examples
