@@ -70,23 +70,23 @@
 
 (defn setup-sci-context [args]
   (let [env (atom {})
-        ctx {:env env
-             :namespaces namespaces/namespaces
-             :bindings namespaces/bindings
-             :imports namespaces/imports
-             :features #{:bb :clj}
-             :classes namespaces/classes
-             :load-fn load-fn}]
-    (-> ctx
-        (update-in [:namespaces 'clojure.core]
-                   assoc
-                   'load-file #(load-file* ctx %)
-                   '*command-line-args* (sci/new-dynamic-var '*command-line-args* args))
-        addons/future
-        sci/init
-        (assoc :classes namespaces/classes
-               :imports namespaces/imports)
-        )))
+        ctx-ref (atom nil)
+        namespaces (update namespaces/namespaces
+                           'clojure.core
+                           assoc
+                           '*command-line-args* (sci/new-dynamic-var '*command-line-args* args)
+                           'load-file #(load-file* @ctx-ref %))
+        opts (-> {:env env
+                  :namespaces namespaces
+                  :bindings namespaces/bindings
+                  :imports namespaces/imports
+                  :features #{:bb :clj}
+                  :classes namespaces/classes
+                  :load-fn load-fn}
+                 addons/future)
+        sci-ctx (sci/init opts)]
+    (reset! ctx-ref sci-ctx)
+    sci-ctx))
 
 (defn evaluate [args script]
   (sci/binding [context/context :sci]
