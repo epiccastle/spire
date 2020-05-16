@@ -93,8 +93,8 @@
   this alters the way subsequent calls to sudo are initiated."
   [opts]
   (let [
-        {:keys [exec-fn exec]} @state/shell-context
-        session @state/connection
+        {:keys [exec-fn exec]} (state/get-shell-context)
+        session (state/get-connection)
         cmd (make-sudo-command opts "password required" "id")
         {:keys [out err exit]}
         (if (= :local exec)
@@ -119,8 +119,8 @@
   and gathers user/group data for the escallated session that is then
   used to update system facts while in the body of the sudo macro."
   [opts]
-  (let [{:keys [exec-fn exec]} @state/shell-context
-        session @state/connection
+  (let [{:keys [exec-fn exec]} (state/get-shell-context)
+        session (state/get-connection)
         cmd (make-sudo-command opts "" "id")
         {:keys [err out exit]}
         (if (= :local exec)

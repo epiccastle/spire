@@ -53,7 +53,7 @@
 
 (defn set-attrs [session opts]
   (let [bash-script (make-script opts)
-        {:keys [exec-fn shell-fn stdin-fn]} @state/shell-context]
+        {:keys [exec-fn shell-fn stdin-fn]} (state/get-shell-context)]
     (exec-fn session (shell-fn "bash") (stdin-fn bash-script) "UTF-8" {})))
 
 
@@ -101,7 +101,7 @@
 
 (defn set-attrs-preserve [session src dest]
   (let [script (make-preserve-script (create-attribute-list src) dest)
-        {:keys [exec-fn shell-fn stdin-fn]} @state/shell-context]
+        {:keys [exec-fn shell-fn stdin-fn]} (state/get-shell-context)]
     (exec-fn session (shell-fn "bash") (stdin-fn script) "UTF-8" {})))
 
 (utils/defmodule attrs* [{:keys [path owner group mode dir-mode attrs recurse] :as opts}]

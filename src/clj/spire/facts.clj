@@ -158,8 +158,8 @@
   )
 
 (defn runner [script shell]
-  (let [session @state/connection
-        {:keys [exec-fn exec]} @state/shell-context]
+  (let [session (state/get-connection)
+        {:keys [exec-fn exec]} (state/get-shell-context)]
     (if (= :local exec)
       (exec-fn nil (name shell) script "UTF-8" {})
       (exec-fn session script "" "UTF-8" {}))))
