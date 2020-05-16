@@ -245,7 +245,7 @@
           :system system-data
           :user (process-id id-out)
           :paths paths
-          :ssh-config @state/host-config})))
+          :ssh-config (state/get-host-config)})))
 
 (defmethod fetch-shell-facts :csh [shell]
   (let [base-shell-uname-output (run-and-return-lines
@@ -273,7 +273,7 @@
           :system system-data
           :user (process-id id-out)
           :paths paths
-          :ssh-config @state/host-config})))
+          :ssh-config (state/get-host-config)})))
 
 (defmethod fetch-shell-facts :default [shell]
   (let [base-shell-uname-output (run-and-return-lines
@@ -301,14 +301,14 @@
           :system system-data
           :user (process-id id-out)
           :paths paths
-          :ssh-config @state/host-config})))
+          :ssh-config (state/get-host-config)})))
 
 (defn update-facts! []
   (let [facts (fetch-facts)]
-    (swap! state update (:host-string @state/host-config) merge facts)))
+    (swap! state update (:host-string (state/get-host-config)) merge facts)))
 
 (defn get-fact [& [path default]]
-  (let [host-string (:host-string @state/host-config)]
+  (let [host-string (:host-string (state/get-host-config))]
     (if (@state host-string)
       (get-in @state (concat [host-string] path default))
       (get-in (update-facts!) (concat [host-string] path default))))
@@ -324,13 +324,13 @@
 
 (defn update-facts-paths! []
   (let [paths (fetch-facts-paths)]
-    (swap! state assoc-in [(:host-string @state/host-config) :paths] paths)))
+    (swap! state assoc-in [(:host-string (state/get-host-config)) :paths] paths)))
 
 (defn update-facts-user! [id-out]
-  (swap! state assoc-in [(:host-string @state/host-config) :user] (process-id id-out)))
+  (swap! state assoc-in [(:host-string (state/get-host-config)) :user] (process-id id-out)))
 
 (defn replace-facts-user! [user-facts]
-  (swap! state assoc-in [(:host-string @state/host-config) :user] user-facts))
+  (swap! state assoc-in [(:host-string (state/get-host-config)) :user] user-facts))
 
 #_
 (transport/ssh "localhost"
