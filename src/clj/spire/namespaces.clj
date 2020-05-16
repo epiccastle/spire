@@ -29,6 +29,7 @@
             [spire.module.sudo :as sudo]
             [spire.local]
             [spire.remote]
+            [spire.repl]
             [clojure.tools.cli]
             [clojure.java.shell]
             [clojure.edn]
@@ -164,6 +165,7 @@
    'spire.context (make-sci-bindings-clean spire.context)
    'spire.local (make-sci-bindings spire.local)
    'spire.remote (make-sci-bindings spire.remote)
+   'spire.repl (make-sci-bindings spire.repl)
    'spire.output.core (make-sci-bindings spire.output.core)
 
    'clojure.java.io (make-sci-bindings clojure.java.io)
