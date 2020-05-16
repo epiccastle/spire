@@ -9,24 +9,37 @@
   (atom {}))
 
 ;; the host config hashmap for the present executing context
-(def host-config (sci/new-dynamic-var 'host-config {:key "local"}))
+(def host-config (sci/new-dynamic-var 'host-config nil))
 
 ;; the ssh session
 (def connection (sci/new-dynamic-var 'connection nil))
 
 ;; the execution context. Used for priviledge escalation currently
-(def shell-context (sci/new-dynamic-var
-                    'shell-context
-                    {:exec :local
-                     :priveleges :normal
-                     :exec-fn local/local-exec
-                     :shell-fn identity
-                     :stdin-fn identity}))
+(def shell-context (sci/new-dynamic-var 'shell-context nil))
 
 ;; the output module
 (def output-module (sci/new-dynamic-var 'output-module nil))
 
-(defn get-host-config [] @host-config)
-(defn get-connection [] @connection)
-(defn get-shell-context [] @shell-context)
-(defn get-output-module [] @output-module)
+(defn get-host-config []
+  (if-let [conf @host-config]
+    conf
+    {:key "local"}))
+
+(defn get-connection []
+  (if-let [conn @connection]
+    conn
+    nil))
+
+(defn get-shell-context []
+  (if-let [conf @shell-context]
+    conf
+    {:exec :local
+     :priveleges :normal
+     :exec-fn local/local-exec
+     :shell-fn identity
+     :stdin-fn identity}))
+
+(defn get-output-module []
+  (if-let [out @output-module]
+    out
+    nil))
