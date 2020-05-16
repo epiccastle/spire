@@ -464,7 +464,7 @@
 (defmacro defmodule [name module-args pipeline-args & body]
   `(defn ~name [& args#]
      (let [~module-args args#
-           ~pipeline-args [(context/deref* spire.state/host-config) (context/deref* spire.state/connection) (context/deref* spire.state/shell-context)]
+           ~pipeline-args [(spire.state/get-host-config) (spire.state/get-connection) (spire.state/get-shell-context)]
            result# (do ~@body)
            result-code# (:result result#)]
        (if (#{:ok :changed} result-code#)
