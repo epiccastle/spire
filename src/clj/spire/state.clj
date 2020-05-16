@@ -20,24 +20,48 @@
 ;; the output module
 (def output-module (sci/new-dynamic-var 'output-module nil))
 
+;; When nothing else is set in the dynamic thread locals, we use
+;; the default context settings.
+(def default-context (atom nil))
+
+(defn set-default-context! [host-config connection shell-context]
+  (reset! default-context
+          {:host-config host-config
+           :connection connection
+           :shell-context shell-context}))
+
+
+
+(defn get-default-context []
+  @default-context)
+
 (defn get-host-config []
   (if-let [conf @host-config]
     conf
-    {:key "local"}))
+    (let [{:keys [host-config]} @default-context]
+      (if host-config
+        host-config
+        {:key "local"}))))
 
 (defn get-connection []
   (if-let [conn @connection]
     conn
-    nil))
+    (let [{:keys [connection]} @default-context]
+      (if connection
+        connection
+        nil))))
 
 (defn get-shell-context []
   (if-let [conf @shell-context]
     conf
-    {:exec :local
-     :priveleges :normal
-     :exec-fn local/local-exec
-     :shell-fn identity
-     :stdin-fn identity}))
+    (let [{:keys [shell-context]} @default-context]
+      (if shell-context
+        shell-context
+        {:exec :local
+         :priveleges :normal
+         :exec-fn local/local-exec
+         :shell-fn identity
+         :stdin-fn identity}))))
 
 (defn get-output-module []
   (if-let [out @output-module]
