@@ -6,7 +6,9 @@
             [spire.context :as context]
             [spire.utils :as utils]
             [clojure.string :as string]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io])
+  (:import [java.net ServerSocket])
+  )
 
 (defn remove-shebang [script]
   (if (string/starts-with? script "#!")
@@ -94,10 +96,23 @@
      (remove-shebang script)
      (setup-sci-context args))))
 
+(defn start-server! [ctx & [{:keys [host port quiet]
+                             :or {host "0.0.0.0"
+                                  port 1667}
+                             :as opts}]]
+  (let [ctx (assoc ctx :sessions (atom #{}))
+        inet-address (java.net.InetAddress/getByName host)
+        socket-server (new ServerSocket port 0 inet-address)]
+    (when-not quiet
+      (println (format "Started nREPL server at %s:%d" (.getHostAddress inet-address) port)))
+    {:socket socket-server
+     :future (sci/future
+               (babashka.nrepl.impl.server/listen ctx socket-server opts))}))
+
 (defn nrepl-server [args address]
   (sci/binding [context/context :sci]
     (-> args
         setup-sci-context
-        (nrepl/start-server! (nrepl/parse-opt address))
+        (start-server! (nrepl/parse-opt address))
         :future
         deref)))
