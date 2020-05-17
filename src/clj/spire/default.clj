@@ -1,5 +1,5 @@
 (ns spire.default
-  (:refer-clojure :exclude [pop empty])
+  (:refer-clojure :exclude [pop!])
   (:require [spire.state :as state]
             [spire.ssh :as ssh]
             [spire.transport :as transport]))
@@ -9,43 +9,15 @@
 
 (def connection-stack (atom []))
 
-(defn ssh
-  "adds a new ssh connection context to the default connection stack.
-  (ssh host-config)
-
-  given:
-
-  `host-config`: a host-string or host config hashmap"
-  [host-string-or-config]
-  (let [host-config (ssh/host-description-to-host-config host-string-or-config)]
-    (let [conn (transport/open-connection host-config)]
-      (swap! connection-stack conj host-config)
-      (state/set-default-context!
-       host-config
-       conn
-       {:priveleges :normal
-        :exec :ssh
-        :exec-fn ssh/ssh-exec
-        :shell-fn identity
-        :stdin-fn identity})
-      true)))
-
-(defn local
-  "adds a new local connection context to the default connection stack
-  (local)
-  "
-  []
-  (swap! connection-stack conj nil)
-  (state/set-default-context! nil nil nil)
-  true)
-
-(defn pop
+(defn pop!
   "Pop the default connection context stack and return to the previous
   context.
-  (pop)
+  (pop!)
   "
   []
-  (let [[old new] (swap-vals! connection-stack clojure.core/pop)]
+  (let [[old new] (swap-vals! connection-stack
+                              (fn [s]
+                                (if (empty? s) s (clojure.core/pop s))))]
     (when (last old)
       (transport/close-connection (last old)))
     (if (empty? new)
@@ -65,8 +37,60 @@
             :stdin-fn identity}))
         true))))
 
-(defn empty
+(defn empty!
   "Empty the context stack and return to a local connection context as
-  default."
+  default.
+  (empty!)
+  "
   []
-  (while (pop)))
+  (while (pop!)))
+
+
+(defn push-ssh!
+  "adds a new ssh connection context to the default connection stack.
+  (push-ssh! host-config)
+
+  given:
+
+  `host-config`: a host-string or host config hashmap"
+  [host-string-or-config]
+  (let [host-config (ssh/host-description-to-host-config host-string-or-config)
+        conn (transport/open-connection host-config)]
+    (swap! connection-stack conj host-config)
+    (state/set-default-context!
+     host-config
+     conn
+     {:priveleges :normal
+      :exec :ssh
+      :exec-fn ssh/ssh-exec
+      :shell-fn identity
+      :stdin-fn identity})
+    true))
+
+(defn set-ssh!
+  "sets the current default connection context to the specified ssh
+  connection
+  (set-ssh! host-config)
+
+  given:
+
+  `host-config`: a host-string or host config hashmap"
+  [host-string-or-config]
+  (pop!)
+  (push-ssh! host-string-or-config))
+
+(defn push-local!
+  "adds a new local connection context to the default connection stack
+  (push-local!)
+  "
+  []
+  (swap! connection-stack conj nil)
+  (state/set-default-context! nil nil nil)
+  true)
+
+(defn set-local!
+  "sets the current default connection context to the local context.
+  (set-local!)"
+  []
+  (pop!)
+  (push-local!))
