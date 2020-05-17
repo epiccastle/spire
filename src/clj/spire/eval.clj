@@ -10,11 +10,6 @@
   (:import [java.net ServerSocket])
   )
 
-(defn remove-shebang [script]
-  (if (string/starts-with? script "#!")
-    (str "\n" (second (string/split script #"\n" 2)))
-    script))
-
 (defn make-target [clj-path]
   (let [path (butlast clj-path)
         filename (str (last clj-path) ".clj")
@@ -68,7 +63,7 @@
         source (slurp file-path)]
     (sci/with-bindings {sci/ns @sci/ns
                         sci/file file-path}
-      (sci/eval-string source sci-opts))))
+      (sci/eval-string* sci-opts source))))
 
 (defn setup-sci-context [args]
   (let [env (atom {})
@@ -94,25 +89,12 @@
   (sci/binding [context/context :sci]
     (sci/eval-string*
      (setup-sci-context args)
-     (remove-shebang script))))
-
-(defn start-server! [ctx & [{:keys [host port quiet]
-                             :or {host "0.0.0.0"
-                                  port 1667}
-                             :as opts}]]
-  (let [ctx (assoc ctx :sessions (atom #{}))
-        inet-address (java.net.InetAddress/getByName host)
-        socket-server (new ServerSocket port 0 inet-address)]
-    (when-not quiet
-      (println (format "Started nREPL server at %s:%d" (.getHostAddress inet-address) port)))
-    {:socket socket-server
-     :future (sci/future
-               (babashka.nrepl.impl.server/listen ctx socket-server opts))}))
+     script)))
 
 (defn nrepl-server [args address]
   (sci/binding [context/context :sci]
     (-> args
         setup-sci-context
-        (start-server! (nrepl/parse-opt address))
+        (nrepl/start-server! (nrepl/parse-opt address))
         :future
         deref)))
