@@ -186,7 +186,7 @@ host-string by default, but you can override this return value key by
 specifying a custome `:key` in the `connection-conf` hashmap passed in
 to `ssh-group`.
 
-#### Nested Connections
+#### Reconnection Issues
 
 Both `ssh` and `ssh-group`, when used in isolation, will open a
 connection when the call is entered, and close a connection when the
@@ -208,7 +208,14 @@ Thus the connection to `host-1` is performed *twice*, including all
 the connection negotiation and authentication. This approach is
 perfectly valid, but with a larger and more complex script, this
 connection overhead may become a substantial performance
-bottleneck. To mitigate this issue you can nest connections.
+bottleneck.
+
+There are two ways to mitigate this issue. Nested connections and
+pre-connecting.
+
+#### Nested Connections
+
+To mitigate this issue you can nest connections.
 
 If `ssh` or `ssh-group` is called, and a connection to the host is
 already established, spire will use that existing connection but use a
@@ -250,7 +257,33 @@ through.
             (do-something-wth data))))
 ```
 
+#### Pre-connection
+
+Another way to mitigate excessive reconnections is to pre-connect to
+your machines.
+
+```clojure
+(spire.default/ssh "host-1") ;; connects to host-1
+(spire.default/ssh "host-2") ;; connects to host-2
+(ssh "host-1" ... ) ;; reuses host-1 connection
+(ssh "host-2" ... ) ;; reuses host-2 connection
+(spire.default/empty) ;; disconnects from both host-1 and host-2
+```
+
 #### Agent Forwarding
+
+To activate ssh authentication agent forwarding on a connection, set
+`:auth-forward` to `true` in the host config:
+
+```clojure
+(ssh {:username "root"
+      :hostname "remote-host"
+      :agent-forwarding true}
+  (shell {:cmd "ssh -T git@github.com"}))
+```
+
+Note: ssh agent forwarding requires running a ssh-agent on your local
+computer to work.
 
 ## Escalating priviledges
 
