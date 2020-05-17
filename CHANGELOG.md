@@ -3,11 +3,16 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.10] - 2020-05-18
+
 ### Fixed
 - Remove -h, -o, -v flags for less surface area to conflict with user flags - #55
 - local execution under a user running fish shell fails to gather facts - #52
 - Add nrepl support - #50
 - add documentation on using spire from cider - #31
+
+### Added
+- lots of docstrings.
 
 ## [0.1.0-alpha.9] - 2020-05-8
 
@@ -111,7 +116,8 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.9...HEAD
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.10...HEAD
+[0.1.0-alpha.10]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.9...v0.1.0-alpha.10
 [0.1.0-alpha.9]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.8...v0.1.0-alpha.9
 [0.1.0-alpha.8]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.7...v0.1.0-alpha.8
 [0.1.0-alpha.7]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.6...v0.1.0-alpha.7
