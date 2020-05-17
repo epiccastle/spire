@@ -6,9 +6,7 @@
             [spire.context :as context]
             [spire.utils :as utils]
             [clojure.string :as string]
-            [clojure.java.io :as io])
-  (:import [java.net ServerSocket])
-  )
+            [clojure.java.io :as io]))
 
 (defn make-target [clj-path]
   (let [path (butlast clj-path)
