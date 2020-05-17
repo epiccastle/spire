@@ -4,10 +4,13 @@
 
 Spire can execute modules locally or on a remote machine. Each type is
 called an execution context. The default execution context is to
-execute locally. Contexts are invoked by the `local`, `ssh` or
-`ssh-group` macro. The forms in the body of the macro are evaluated in
-that context, and at the end of the macro the old context is
-returned. Thus contexts are lexically scoped.
+execute locally. You can change this default context to be a remote
+context. This is most useful for work involving the REPL.
+
+Contexts are generally invoked by the `local`, `ssh` or `ssh-group`
+macro. The forms in the body of the macro are evaluated in that
+context, and at the end of the macro the old context is returned. Thus
+contexts are lexically scoped.
 
 ### Local Context
 
@@ -308,6 +311,50 @@ supplying the same password over and over. For example:
    (sudo
       (do-more-stuff-as-root)))
 ```
+
+## nREPL Connections
+
+Spire can be started with the `--nrepl-server` flag to launch an nREPL
+service. For example:
+
+```shell-session
+$ spire --nrepl-server 6543
+Started nREPL server at 127.0.0.1:6543
+```
+
+Now in an editor that supports a clojure nREPL, connect to this address.
+
+### Setting the default context for the nREPL
+
+By default, if the code executed is not in the body of a context macro
+such as `local`, `ssh` or `ssh-group`, then the code is executed in a
+local context. This can be changed by the functions in the
+`spire.repl` namespace.
+
+Note: The macros `local`, `ssh` and `ssh-group` _always_ override any
+default context setting.
+
+When there is no execution context macro body in play, spire falls
+back to the default context. This context is the most recent value on
+a _context stack_ that you can change with the following functions.
+
+#### spire.repl/ssh
+
+This pushes a new ssh connection context onto the default context stack.
+
+#### spire.repl/local
+
+This pushes a new local connection context onto the default context stack.
+
+#### spire.repl/pop
+
+This pops the top connection context off the stack and returns the
+present default connection context to its previous setting.
+
+#### spire.repl/empty
+
+This pops all the connection contexts off and clears the stack. It
+returns the default connection context to a local one.
 
 ## Requiring External Code
 
