@@ -153,9 +153,12 @@
                   '*out* (sci/new-dynamic-var '*out* *out*)
                   '*err* (sci/new-dynamic-var '*err* *err*)
                   }
-   'clojure.main {'repl-requires '[[clojure.repl :refer [dir doc]]
-                                   [clojure.pprint :refer [pprint]]
-                                   ]}
+   'clojure.main {'repl-requires
+                  '[[clojure.repl :refer [dir doc]]
+                    [clojure.pprint :refer [pprint]]
+                    [spire.default :refer [push-ssh! set-ssh!
+                                           push-local! set-local!
+                                           pop! empty!]]]}
    'clojure.pprint (make-sci-bindings fipp.edn)
 
    'spire.transport (make-sci-bindings spire.transport)
