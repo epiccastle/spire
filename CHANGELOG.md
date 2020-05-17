@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+### Fixed
+- Remove -h, -o, -v flags for less surface area to conflict with user flags - #55
+- local execution under a user running fish shell fails to gather facts - #52
+- Add nrepl support - #50
+- add documentation on using spire from cider - #31
+
 ## [0.1.0-alpha.9] - 2020-05-8
 
 ### Fixed
