@@ -1,5 +1,5 @@
 (ns spire.default
-  (:refer-clojure :exclude [pop])
+  (:refer-clojure :exclude [pop empty])
   (:require [spire.state :as state]
             [spire.ssh :as ssh]
             [spire.transport :as transport]))
