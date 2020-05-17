@@ -88,15 +88,13 @@
                  addons/future)
         sci-ctx (sci/init opts)]
     (reset! ctx-ref sci-ctx)
-    (assoc sci-ctx
-           :imports namespaces/imports
-           :classes namespaces/classes)))
+    sci-ctx))
 
 (defn evaluate [args script]
   (sci/binding [context/context :sci]
-    (sci/eval-string
-     (remove-shebang script)
-     (setup-sci-context args))))
+    (sci/eval-string*
+     (setup-sci-context args)
+     (remove-shebang script))))
 
 (defn start-server! [ctx & [{:keys [host port quiet]
                              :or {host "0.0.0.0"
