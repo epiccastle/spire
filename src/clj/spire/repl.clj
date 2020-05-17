@@ -9,7 +9,14 @@
 
 (def connection-stack (atom []))
 
-(defn ssh [host-string-or-config]
+(defn ssh
+  "adds a new ssh connection context to the default connection stack.
+  (ssh host-config)
+
+  given:
+
+  `host-config`: a host-string or host config hashmap"
+  [host-string-or-config]
   (let [host-config (ssh/host-description-to-host-config host-string-or-config)]
     (let [conn (transport/open-connection host-config)]
       (swap! connection-stack conj host-config)
@@ -23,12 +30,21 @@
         :stdin-fn identity})
       true)))
 
-(defn local []
+(defn local
+  "adds a new local connection context to the default connection stack
+  (local)
+  "
+  []
   (swap! connection-stack conj nil)
   (state/set-default-context! nil nil nil)
   true)
 
-(defn pop []
+(defn pop
+  "Pop the default connection context stack and return to the previous
+  context.
+  (pop)
+  "
+  []
   (let [[old new] (swap-vals! connection-stack clojure.core/pop)]
     (when (last old)
       (transport/close-connection (last old)))
@@ -49,5 +65,8 @@
             :stdin-fn identity}))
         true))))
 
-(defn pop-all []
+(defn empty
+  "Empty the context stack and return to a local connection context as
+  default."
+  []
   (while (pop)))
