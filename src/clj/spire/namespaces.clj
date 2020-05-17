@@ -29,7 +29,7 @@
             [spire.module.sudo :as sudo]
             [spire.local]
             [spire.remote]
-            [spire.repl]
+            [spire.default]
             [clojure.tools.cli]
             [clojure.java.shell]
             [clojure.edn]
@@ -154,7 +154,8 @@
                   '*err* (sci/new-dynamic-var '*err* *err*)
                   }
    'clojure.main {'repl-requires '[[clojure.repl :refer [dir doc]]
-                                   [clojure.pprint :refer [pprint]]]}
+                                   [clojure.pprint :refer [pprint]]
+                                   ]}
    'clojure.pprint (make-sci-bindings fipp.edn)
 
    'spire.transport (make-sci-bindings spire.transport)
@@ -165,7 +166,7 @@
    'spire.context (make-sci-bindings-clean spire.context)
    'spire.local (make-sci-bindings spire.local)
    'spire.remote (make-sci-bindings spire.remote)
-   'spire.repl (make-sci-bindings spire.repl)
+   'spire.default (make-sci-bindings spire.default)
    'spire.output.core (make-sci-bindings spire.output.core)
 
    'clojure.java.io (make-sci-bindings clojure.java.io)

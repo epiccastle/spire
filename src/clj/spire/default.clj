@@ -1,4 +1,4 @@
-(ns spire.repl
+(ns spire.default
   (:refer-clojure :exclude [pop])
   (:require [spire.state :as state]
             [spire.ssh :as ssh]

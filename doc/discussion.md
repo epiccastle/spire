@@ -329,7 +329,7 @@ Now in an editor that supports a clojure nREPL, connect to this address.
 By default, if the code executed is not in the body of a context macro
 such as `local`, `ssh` or `ssh-group`, then the code is executed in a
 local context. This can be changed by the functions in the
-`spire.repl` namespace.
+`spire.default` namespace.
 
 Note: The macros `local`, `ssh` and `ssh-group` _always_ override any
 default context setting.
@@ -338,20 +338,20 @@ When there is no execution context macro body in play, spire falls
 back to the default context. This context is the most recent value on
 a _context stack_ that you can change with the following functions.
 
-#### spire.repl/ssh
+#### spire.default/ssh
 
 This pushes a new ssh connection context onto the default context stack.
 
-#### spire.repl/local
+#### spire.default/local
 
 This pushes a new local connection context onto the default context stack.
 
-#### spire.repl/pop
+#### spire.default/pop
 
 This pops the top connection context off the stack and returns the
 present default connection context to its previous setting.
 
-#### spire.repl/empty
+#### spire.default/empty
 
 This pops all the connection contexts off and clears the stack. It
 returns the default connection context to a local one.
