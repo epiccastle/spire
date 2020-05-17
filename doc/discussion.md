@@ -342,19 +342,57 @@ a _context stack_ that you can change with the following functions.
 
 This pushes a new ssh connection context onto the default context stack.
 
+example (1):
+
+```
+user> (spire.default/ssh "epiccastle.io")
+true
+user> (shell {:cmd "hostname"})
+{:exit 0, :out "epiccastle\n", :err "", :out-lines ["epiccastle"], :result :ok}
+```
+
 #### spire.default/local
 
 This pushes a new local connection context onto the default context stack.
+
+example (2):
+
+```
+user> (spire.default/local)
+true
+user> (shell {:cmd "hostname"})
+{:exit 0, :out "vash\n", :err "", :out-lines ["vash"], :result :ok}
+```
 
 #### spire.default/pop
 
 This pops the top connection context off the stack and returns the
 present default connection context to its previous setting.
 
+For example, after doing (1) and (2) above,
+
+then example (3):
+
+```
+user> (spire.default/pop)
+true
+user> (shell {:cmd "hostname"})
+{:exit 0, :out "epiccastle\n", :err "", :out-lines ["epiccastle"], :result :ok}
+```
+
 #### spire.default/empty
 
 This pops all the connection contexts off and clears the stack. It
 returns the default connection context to a local one.
+
+After doing (1), (2) and (3) above:
+
+```
+user> (spire.default/empty)
+nil
+user> (shell {:cmd "hostname"})
+{:exit 0, :out "vash\n", :err "", :out-lines ["vash"], :result :ok}
+```
 
 ## Requiring External Code
 
