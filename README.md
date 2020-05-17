@@ -45,8 +45,22 @@ $ bash install
 
 ## Usage
 
+Run a spire script from a file:
+
 ```shell-session
 $ spire FILE
+```
+
+Evaluate spire expression on the command line:
+
+```shell-session
+$ spire -e EXPRESSION
+```
+
+Start a spire nREPL:
+
+```shell-session
+$ spire --nrepl-server PORT
 ```
 
 ## Tutorial
