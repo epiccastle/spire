@@ -88,7 +88,9 @@
                  addons/future)
         sci-ctx (sci/init opts)]
     (reset! ctx-ref sci-ctx)
-    sci-ctx))
+    (assoc sci-ctx
+           :imports namespaces/imports
+           :classes namespaces/classes)))
 
 (defn evaluate [args script]
   (sci/binding [context/context :sci]
