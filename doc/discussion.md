@@ -378,7 +378,7 @@ a _default context stack_ that you can change with the following functions.
 Sets the present default connection context to an ssh connection with
 the chosen settings.
 
-```
+```clojure
 user> (set-ssh! "epiccastle.io")
 true
 user> (shell {:cmd "hostname"})
@@ -390,7 +390,7 @@ user> (shell {:cmd "hostname"})
 Sets the present default connection context to an ssh connection with
 the chosen settings.
 
-```
+```clojure
 user> (set-local!)
 true
 user> (shell {:cmd "hostname"})
@@ -403,7 +403,7 @@ This pushes a new ssh connection context onto the default context stack.
 
 example (1):
 
-```
+```clojure
 user> (push-ssh! "epiccastle.io")
 true
 user> (shell {:cmd "hostname"})
@@ -416,7 +416,7 @@ This pushes a new local connection context onto the default context stack.
 
 example (2):
 
-```
+```clojure
 user> (push-local!)
 true
 user> (shell {:cmd "hostname"})
@@ -432,7 +432,7 @@ For example, after doing (1) and (2) above,
 
 then example (3):
 
-```
+```clojure
 user> (pop!)
 true
 user> (shell {:cmd "hostname"})
@@ -446,7 +446,7 @@ returns the default connection context to a local one.
 
 After doing (1), (2) and (3) above:
 
-```
+```clojure
 user> (empty!)
 nil
 user> (shell {:cmd "hostname"})
