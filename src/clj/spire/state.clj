@@ -30,8 +30,6 @@
            :connection connection
            :shell-context shell-context}))
 
-
-
 (defn get-default-context []
   @default-context)
 

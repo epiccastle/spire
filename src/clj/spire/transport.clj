@@ -109,7 +109,6 @@
        (finally
          (close-connection host-config#)))))
 
-
 (defmacro ssh-group [host-strings & body]
   `(try
      (doseq [host-string# ~host-strings]
