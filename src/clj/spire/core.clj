@@ -1,10 +1,10 @@
 (ns spire.core
-  (:require [spire.state]
+  (:require [spire.state :as state]
             [spire.config :as config]
             [spire.output.core :as output]
             [spire.utils :as utils]
             [spire.eval :as eval]
-            [spire.state :as state]
+            [spire.transport :as transport]
             [spire.output.default]
             [spire.output.events]
             [spire.output.quiet]
@@ -82,4 +82,5 @@
           :else
           (println (usage summary)))))
     (finally
+      (transport/disconnect-all!)
       (shutdown-agents))))

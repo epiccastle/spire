@@ -37,6 +37,12 @@
   (when debug (prn 'disconnect connection))
   (.disconnect connection))
 
+(defn disconnect-all! []
+  (let [[connections _] (reset-vals! state/ssh-connections {})]
+    (doall
+     (for [[_ {:keys [connection]}] connections]
+       (disconnect connection)))))
+
 (defn open-connection [host-config]
   (when debug (prn 'open-connection host-config))
   (let [conn-key (ssh/host-config-to-connection-key host-config)
