@@ -161,8 +161,8 @@
 
        (context/binding* [state/shell-context
                           {:priveleges :sudo
-                           :exec (:exec (context/deref* state/shell-context))
-                           :exec-fn (:exec-fn (context/deref* state/shell-context))
+                           :exec (:exec (state/get-shell-context))
+                           :exec-fn (:exec-fn (state/get-shell-context))
                            :shell-fn (partial make-sudo-command full-conf# "")
                            :stdin-fn (partial prefix-sudo-stdin full-conf#)}]
                          (let [result# (do ~@body)]
