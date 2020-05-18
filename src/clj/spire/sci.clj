@@ -55,3 +55,36 @@
                (symbol var*))])))
        (filter identity)
        (into {})))
+
+
+(defn sci-ns-name [^sci.impl.vars.SciNamespace ns]
+  (vars/getName ns))
+
+(defn print-doc
+  [m]
+  (let [arglists (:arglists m)
+        doc (:doc m)
+        macro? (:sci/macro m)]
+    (io/println "-------------------------")
+    (io/println (str (when-let [ns* (:ns m)]
+                       (str (sci-ns-name ns*) "/"))
+                     (:name m)))
+    (when arglists (io/println arglists))
+    (when macro? (io/println "Macro"))
+    (when doc (io/println " " doc))))
+
+(defmacro doc
+  [sym]
+  `(if-let [var# (resolve '~sym)]
+     (~'clojure.repl/print-doc (meta var#))
+     #_(when (var? var#)
+       (~'clojure.repl/print-doc (meta var#)))
+     (if-let [ns# (find-ns '~sym)]
+       (~'clojure.repl/print-doc (assoc (meta ns#)
+                                        :name (ns-name ns#))))))
+
+
+(def clojure-repl
+  (assoc sci.impl.namespaces/clojure-repl
+         'doc (with-meta @#'doc {:sci/macro true})
+         'print-doc print-doc))
