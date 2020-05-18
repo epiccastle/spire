@@ -33,7 +33,6 @@
             [clojure.tools.cli]
             [clojure.java.shell]
             [clojure.edn]
-            [clojure.repl]
             [clojure.stacktrace :as stacktrace]
             [clojure.string]
             [clojure.set]
@@ -164,7 +163,6 @@
                                            push-local! set-local!
                                            pop! empty!]]]}
    'clojure.pprint (make-sci-bindings fipp.edn)
-   'clojure.repl (make-sci-bindings clojure.repl)
    'clojure.stacktrace {'root-cause stacktrace/root-cause
                         'print-trace-element (redirect-out-to-sci stacktrace/print-trace-element)
                         'print-throwable (redirect-out-to-sci stacktrace/print-throwable)
