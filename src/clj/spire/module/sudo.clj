@@ -98,7 +98,7 @@
         cmd (make-sudo-command opts "password required" "id")
         {:keys [out err exit]}
         (if (= :local exec)
-          (exec-fn nil "sh" cmd "UTF-8" {})
+          (exec-fn nil cmd "" "UTF-8" {})
           (exec-fn session cmd "" "UTF-8" {}))]
     (cond
       (and (= 1 exit) (string/starts-with? err "password required") (= "" out))
@@ -124,7 +124,7 @@
         cmd (make-sudo-command opts "" "id")
         {:keys [err out exit]}
         (if (= :local exec)
-          (exec-fn nil "sh" (prefix-sudo-stdin opts cmd) "UTF-8" {})
+          (exec-fn nil cmd (prefix-sudo-stdin opts cmd) "UTF-8" {})
           (exec-fn session cmd (prefix-sudo-stdin opts "") "UTF-8" {}))]
     (cond
       (and (= 1 exit) (.contains err "incorrect password") (= "" out))
