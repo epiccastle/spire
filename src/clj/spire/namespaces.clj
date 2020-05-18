@@ -33,6 +33,7 @@
             [clojure.tools.cli]
             [clojure.java.shell]
             [clojure.edn]
+            [clojure.repl]
             [clojure.string]
             [clojure.set]
             [clojure.java.io]
@@ -160,6 +161,7 @@
                                            push-local! set-local!
                                            pop! empty!]]]}
    'clojure.pprint (make-sci-bindings fipp.edn)
+   'clojure.repl (make-sci-bindings clojure.repl)
 
    'spire.transport (make-sci-bindings spire.transport)
    'spire.ssh (make-sci-bindings spire.ssh)
