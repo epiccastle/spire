@@ -1,6 +1,9 @@
 (ns spire.sci
   (:require [sci.core :as sci]
-            [sci.impl.vars :as vars]))
+            [sci.impl.vars :as vars]
+            [sci.impl.namespaces]
+            [sci.impl.io :as io]
+            ))
 
 ;; some helper macros for building sci bindings
 
@@ -36,6 +39,16 @@
        ~mapping)))
 
 #_ (macroexpand-1 '(make-sci-bindings spire.utils))
+
+(defmacro sci-bind-macro [sym ns-sym]
+  `(with-meta (deref (var ~sym))
+    (-> (meta (var ~sym))
+        (select-keys [:doc :name :arglists])
+        (assoc :sci.impl/built-in true
+               :sci/macro true
+               :ns ~ns-sym))))
+
+
 
 
 (defmacro make-sci-bindings-clean [namespace & [{:keys [exclusions only]

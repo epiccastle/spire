@@ -45,102 +45,113 @@
             [clj-http.lite.util]
             [fipp.edn]
             [edamame.core]
-            [spire.sci :refer [make-sci-bindings make-sci-bindings-clean]]))
+            [spire.sci :refer [make-sci-bindings
+                               make-sci-bindings-clean
+                               sci-bind-macro
+                               clojure-repl]]
+            [sci.impl.namespaces :refer [copy-var]]
+            [sci.impl.vars :as vars]))
 
-(def all-modules
-  {'apt* apt/apt*
-   'apt (with-meta @#'apt/apt {:sci/macro true})
-   'apt-repo* apt-repo/apt-repo*
-   'apt-repo (with-meta @#'apt-repo/apt-repo {:sci/macro true})
-   'attrs* attrs/attrs*
-   'attrs (with-meta @#'attrs/attrs {:sci/macro true})
-   'curl* curl/curl*
-   'curl (with-meta @#'curl/curl {:sci/macro true})
-   'pkg* pkg/pkg*
-   'pkg (with-meta @#'pkg/pkg {:sci/macro true})
-   'rm* rm/rm*
-   'rm (with-meta @#'rm/rm {:sci/macro true})
-   ;;'hostname system/hostname
-   'line-in-file* line-in-file/line-in-file*
-   'line-in-file (with-meta @#'line-in-file/line-in-file {:sci/macro true})
-   ;;'copy copy/copy
-   'upload* upload/upload*
-   'upload (with-meta @#'upload/upload {:sci/macro true})
 
-   'user* user/user*
-   'user (with-meta @#'user/user {:sci/macro true})
-   'gecos user/gecos
+(defmacro all-modules [ns]
+  (let [ns-sym (gensym "ns-")]
+    `(let  [~ns-sym (vars/->SciNamespace (quote ~ns) nil)]
+       {(quote ~'apt*) (copy-var apt/apt* ~ns-sym)
+        (quote ~'apt) (sci-bind-macro apt/apt ~ns-sym)
+        (quote ~'apt-repo*) (copy-var apt-repo/apt-repo* ~ns-sym)
+        (quote ~'apt-repo) (sci-bind-macro apt-repo/apt-repo ~ns-sym)
+        (quote ~'attrs*) (copy-var attrs/attrs* ~ns-sym)
+        (quote ~'attrs) (sci-bind-macro attrs/attrs ~ns-sym)
+        (quote ~'curl*) (copy-var curl/curl* ~ns-sym)
+        (quote ~'curl) (sci-bind-macro curl/curl ~ns-sym)
+        (quote ~'pkg*) (copy-var pkg/pkg* ~ns-sym)
+        (quote ~'pkg) (sci-bind-macro pkg/pkg ~ns-sym)
+        (quote ~'rm*) (copy-var rm/rm* ~ns-sym)
+        (quote ~'rm) (sci-bind-macro rm/rm ~ns-sym)
+        ;;~'hostname system/hostname
+        (quote ~'line-in-file*) (copy-var line-in-file/line-in-file* ~ns-sym)
+        (quote ~'line-in-file) (sci-bind-macro line-in-file/line-in-file ~ns-sym)
+        ;;~'copy copy/copy
+        (quote ~'upload*) (copy-var upload/upload* ~ns-sym)
+        (quote ~'upload) (sci-bind-macro upload/upload ~ns-sym)
 
-   'get-fact facts/get-fact
-   'fetch-facts facts/fetch-facts
+        (quote ~'user*) (copy-var user/user* ~ns-sym)
+        (quote ~'user) (sci-bind-macro user/user ~ns-sym)
+        (quote ~'gecos) (copy-var user/gecos ~ns-sym)
 
-   'get-file* get-file/get-file*
-   'get-file (with-meta @#'get-file/get-file {:sci/macro true})
+        (quote ~'get-fact) (copy-var facts/get-fact ~ns-sym)
+        (quote ~'fetch-facts) (copy-var facts/fetch-facts ~ns-sym)
 
-   'mkdir* mkdir/mkdir*
-   'mkdir (with-meta @#'mkdir/mkdir {:sci/macro true})
+        (quote ~'get-file*) (copy-var get-file/get-file* ~ns-sym)
+        (quote ~'get-file) (sci-bind-macro get-file/get-file ~ns-sym)
 
-   'sysctl* sysctl/sysctl*
-   'sysctl (with-meta @#'sysctl/sysctl {:sci/macro true})
-   'service* service/service*
-   'service (with-meta @#'service/service {:sci/macro true})
+        (quote ~'mkdir*) (copy-var mkdir/mkdir* ~ns-sym)
+        (quote ~'mkdir) (sci-bind-macro mkdir/mkdir ~ns-sym)
 
-   'group* group/group*
-   'group (with-meta @#'group/group {:sci/macro true})
+        (quote ~'sysctl*) (copy-var sysctl/sysctl* ~ns-sym)
+        (quote ~'sysctl) (sci-bind-macro sysctl/sysctl ~ns-sym)
+        (quote ~'service*) (copy-var service/service* ~ns-sym)
+        (quote ~'service) (sci-bind-macro service/service ~ns-sym)
 
-   ;;'sudo* sudo/sudo*
-   'sudo-user (with-meta @#'sudo/sudo-user {:sci/macro true})
-   'sudo (with-meta @#'sudo/sudo {:sci/macro true})
+        (quote ~'group*) (copy-var group/group* ~ns-sym)
+        (quote ~'group) (sci-bind-macro group/group ~ns-sym)
 
-   'selmer selmer/selmer
+        ;;~'sudo* sudo/sudo*
+        (quote ~'sudo-user) (sci-bind-macro sudo/sudo-user ~ns-sym)
+        (quote ~'sudo) (sci-bind-macro sudo/sudo ~ns-sym)
 
-   'download* download/download*
-   'download (with-meta @#'download/download {:sci/macro true})
-   'authorized-keys* authorized-keys/authorized-keys*
-   'authorized-keys (with-meta @#'authorized-keys/authorized-keys {:sci/macro true})
+        (quote ~'selmer) (copy-var selmer/selmer ~ns-sym)
 
-   'stat* stat/stat*
-   'stat (with-meta @#'stat/stat {:sci/macro true})
-   'other-exec? stat/other-exec?
-   'other-read? stat/other-read?
-   'other-write? stat/other-write?
-   'group-exec? stat/group-exec?
-   'group-read? stat/group-read?
-   'group-write? stat/group-write?
-   'user-exec? stat/user-exec?
-   'user-read? stat/user-read?
-   'user-write? stat/user-write?
-   'mode-flags stat/mode-flags
-   'exec? stat/exec?
-   'readable? stat/readable?
-   'writeable? stat/writeable?
-   'directory? stat/directory?
-   'block-device? stat/block-device?
-   'char-device? stat/char-device?
-   'symlink? stat/symlink?
-   'fifo? stat/fifo?
-   'regular-file? stat/regular-file?
-   'socket? stat/socket?
+        (quote ~'download*) (copy-var download/download* ~ns-sym)
+        (quote ~'download) (sci-bind-macro download/download ~ns-sym)
+        (quote ~'authorized-keys*) (copy-var authorized-keys/authorized-keys* ~ns-sym)
+        (quote ~'authorized-keys) (sci-bind-macro authorized-keys/authorized-keys ~ns-sym)
 
-   'shell* shell/shell*
-   'shell (with-meta @#'shell/shell {:sci/macro true})
+        (quote ~'stat*) (copy-var stat/stat* ~ns-sym)
+        (quote ~'stat) (sci-bind-macro stat/stat ~ns-sym)
+        (quote ~'other-exec?) (copy-var stat/other-exec? ~ns-sym)
+        (quote ~'other-read?) (copy-var stat/other-read? ~ns-sym)
+        (quote ~'other-write?) (copy-var stat/other-write? ~ns-sym)
+        (quote ~'group-exec?) (copy-var stat/group-exec? ~ns-sym)
+        (quote ~'group-read?) (copy-var stat/group-read? ~ns-sym)
+        (quote ~'group-write?) (copy-var stat/group-write? ~ns-sym)
+        (quote ~'user-exec?) (copy-var stat/user-exec? ~ns-sym)
+        (quote ~'user-read?) (copy-var stat/user-read? ~ns-sym)
+        (quote ~'user-write?) (copy-var stat/user-write? ~ns-sym)
+        (quote ~'mode-flags) (copy-var stat/mode-flags ~ns-sym)
+        (quote ~'exec?) (copy-var stat/exec? ~ns-sym)
+        (quote ~'readable?) (copy-var stat/readable? ~ns-sym)
+        (quote ~'writeable?) (copy-var stat/writeable? ~ns-sym)
+        (quote ~'directory?) (copy-var stat/directory? ~ns-sym)
+        (quote ~'block-device?) (copy-var stat/block-device? ~ns-sym)
+        (quote ~'char-device?) (copy-var stat/char-device? ~ns-sym)
+        (quote ~'symlink?) (copy-var stat/symlink? ~ns-sym)
+        (quote ~'fifo?) (copy-var stat/fifo? ~ns-sym)
+        (quote ~'regular-file?) (copy-var stat/regular-file? ~ns-sym)
+        (quote ~'socket?) (copy-var stat/socket? ~ns-sym)
 
-   'local (with-meta @#'transport/local {:sci/macro true})
-   'ssh (with-meta @#'transport/ssh {:sci/macro true})
-   'ssh-group (with-meta @#'transport/ssh-group {:sci/macro true})
+        (quote ~'shell*) (copy-var shell/shell* ~ns-sym)
+        (quote ~'shell) (sci-bind-macro shell/shell ~ns-sym)
 
-   'on-os (with-meta @#'facts/on-os {:sci/macro true})
-   'on-shell (with-meta @#'facts/on-shell {:sci/macro true})
-   'on-distro (with-meta @#'facts/on-distro {:sci/macro true})
+        (quote ~'local) (sci-bind-macro transport/local ~ns-sym)
+        (quote ~'ssh) (sci-bind-macro transport/ssh ~ns-sym)
+        (quote ~'ssh-group) (sci-bind-macro transport/ssh-group ~ns-sym)
 
-   'changed? utils/changed?
-   'failed? (with-meta @#'utils/failed? {:sci/macro true})
-   'debug (with-meta @#'utils/debug {:sci/macro true})
+        (quote ~'on-os) (sci-bind-macro facts/on-os ~ns-sym)
+        (quote ~'on-shell) (sci-bind-macro facts/on-shell ~ns-sym)
+        (quote ~'on-distro) (sci-bind-macro facts/on-distro ~ns-sym)
 
-   }
+        (quote ~'changed?) (copy-var utils/changed? ~ns-sym)
+        (quote ~'failed?) (sci-bind-macro utils/failed? ~ns-sym)
+        (quote ~'debug) (sci-bind-macro utils/debug ~ns-sym)
+
+        }))
   )
 
-(def bindings all-modules)
+#_(macroexpand-1 '(all-modules user))
+
+(def bindings (all-modules user)
+  )
 
 (defmacro redirect-out-to-sci [f]
   `(fn [& ~'args]
@@ -163,6 +174,7 @@
                                            push-local! set-local!
                                            pop! empty!]]]}
    'clojure.pprint (make-sci-bindings fipp.edn)
+   'clojure.repl clojure-repl
    'clojure.stacktrace {'root-cause stacktrace/root-cause
                         'print-trace-element (redirect-out-to-sci stacktrace/print-trace-element)
                         'print-throwable (redirect-out-to-sci stacktrace/print-throwable)
@@ -189,7 +201,7 @@
                                                   write-json write-str write}})
 
    ;; modules
-   'spire.modules all-modules
+   'spire.modules (all-modules spire.modules)
    'spire.module.apt (make-sci-bindings spire.module.apt)
    'spire.module.attrs (make-sci-bindings spire.module.attrs)
    'spire.module.authorized-keys (make-sci-bindings spire.module.authorized-keys)
