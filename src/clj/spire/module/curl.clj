@@ -281,7 +281,7 @@
    :form "(curl options)"
    :args
    [{:arg "options"
-     :desg "A hashmap of options. All available options and their values are described below"}]
+     :desc "A hashmap of options. All available options and their values are described below"}]
 
    :opts
    [
