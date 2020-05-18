@@ -34,6 +34,7 @@
             [clojure.java.shell]
             [clojure.edn]
             [clojure.repl]
+            [clojure.stacktrace :as stacktrace]
             [clojure.string]
             [clojure.set]
             [clojure.java.io]
@@ -142,12 +143,14 @@
 
 (def bindings all-modules)
 
+(defmacro redirect-out-to-sci [f]
+  `(fn [& ~'args]
+     (binding [*out* @sci/out]
+       (apply ~f ~'args))))
+
 (def namespaces
   {
-   'clojure.core {'println println
-                  'prn prn
-                  'pr pr
-                  'slurp slurp
+   'clojure.core {'slurp slurp
                   'future (with-meta @#'clojure.core/future {:sci/macro true})
                   'future-call clojure.core/future-call
                   '*in* (sci/new-dynamic-var '*in* *in*)
@@ -162,6 +165,11 @@
                                            pop! empty!]]]}
    'clojure.pprint (make-sci-bindings fipp.edn)
    'clojure.repl (make-sci-bindings clojure.repl)
+   'clojure.stacktrace {'root-cause stacktrace/root-cause
+                        'print-trace-element (redirect-out-to-sci stacktrace/print-trace-element)
+                        'print-throwable (redirect-out-to-sci stacktrace/print-throwable)
+                        'print-stack-trace (redirect-out-to-sci stacktrace/print-stack-trace)
+                        'print-cause-trace (redirect-out-to-sci stacktrace/print-cause-trace)}
 
    'spire.transport (make-sci-bindings spire.transport)
    'spire.ssh (make-sci-bindings spire.ssh)
