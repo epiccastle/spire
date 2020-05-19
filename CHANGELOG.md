@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.12] - 2020-05-19
+
+### Fixed
+- fixed missing reflection for PipedInputStream - #62
+
 ## [0.1.0-alpha.11] - 2020-05-19
 
 ### Fixed
@@ -125,7 +130,8 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.11...HEAD
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.12...HEAD
+[0.1.0-alpha.12]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.11...v0.1.0-alpha.12
 [0.1.0-alpha.11]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.10...v0.1.0-alpha.11
 [0.1.0-alpha.10]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.9...v0.1.0-alpha.10
 [0.1.0-alpha.9]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.8...v0.1.0-alpha.9
