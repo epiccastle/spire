@@ -49,6 +49,11 @@
         "allPublicMethods": true
     },
     {
+        "name": "java.io.PipedInputStream",
+        "allPublicConstructors": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "com.jcraft.jsch.jce.Random",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
