@@ -190,6 +190,7 @@
    'spire.local (make-sci-bindings spire.local)
    'spire.remote (make-sci-bindings spire.remote)
    'spire.default (make-sci-bindings spire.default)
+   'spire.selmer (make-sci-bindings spire.selmer)
    'spire.output.core (make-sci-bindings spire.output.core)
 
    'clojure.java.io (make-sci-bindings clojure.java.io)
