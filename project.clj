@@ -40,7 +40,11 @@
 
   :main ^:skip-aot spire.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}
+  :profiles {:uberjar {:aot :all
+                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"
+                                  "-Dclojure.spec.skip-macros=true"
+                                  "-Djava.library.path=./"
+                                  ] }
              :native-image
              {:dependencies
               [#_[borkdude/clj-reflector-graal-java11-fix "0.0.1-graalvm-20.0.0-alpha.2"]]}})
