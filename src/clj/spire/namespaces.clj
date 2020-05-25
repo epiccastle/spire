@@ -314,7 +314,7 @@
    'java.net.Socket java.net.Socket
    'java.net.UnknownHostException java.net.UnknownHostException
    'java.net.URI java.net.URI
-   'java.net.URL java.net.URL
+   ;;'java.net.URL java.net.URL
    'java.net.URLEncoder java.net.URLEncoder
    'java.net.URLDecoder java.net.URLDecoder
    'java.nio.file.OpenOption java.nio.file.OpenOption
