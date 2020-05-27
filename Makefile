@@ -33,7 +33,7 @@ build/spire: target/uberjar/spire-$(VERSION)-standalone.jar
 		--allow-incomplete-classpath \
 		--no-fallback \
 		--no-server \
-		"-J-Xmx7g"
+		"-J-Xmx4500m"
 	cp build/spire spire
 
 JNI_DIR=target/jni
