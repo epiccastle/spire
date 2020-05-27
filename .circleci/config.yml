@@ -60,8 +60,7 @@ jobs:
     working_directory: ~/repo
     environment:
       LEIN_ROOT: "true"
-      #GRAALVM_HOME: /home/circleci/graalvm-ce-java8-19.3.1
-      GRAALVM_HOME: /home/circleci/graalvm-ce-java11-20.1.0-dev
+      GRAALVM_HOME: /home/circleci/graalvm-ce-java11-20.1.0
     steps:
       - checkout
       - restore_cache:
@@ -82,10 +81,9 @@ jobs:
           name: Download GraalVM
           command: |
             cd ~
-            if ! [ -d graalvm-ce-java11-20.1.0-dev ]; then
-              # curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java8-linux-amd64-19.3.1.tar.gz
-              curl -O -sL https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/20.1.0-dev-20200414_0225/graalvm-ce-java11-linux-amd64-20.1.0-dev.tar.gz
-              tar xzf graalvm-ce-java11-linux-amd64-20.1.0-dev.tar.gz
+            if ! [ -d graalvm-ce-java11-20.1.0 ]; then
+              curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-20.1.0/graalvm-ce-java11-linux-amd64-20.1.0.tar.gz
+              tar xzf graalvm-ce-java11-linux-amd64-20.1.0.tar.gz
             fi
             $GRAALVM_HOME/bin/gu install native-image
       - run:
@@ -138,20 +136,11 @@ jobs:
           name: Download GraalVM
           command: |
             cd ~
-            ls -la
-            #if ! [ -d graalvm-ce-java11-20.1.0-dev ]; then
-              curl -O -sL https://epiccastle.io/graalvm/20200324_0554/graalvm-ce-java11-darwin-amd64-20.1.0-dev.tar.gz
-              curl -O -sL https://epiccastle.io/graalvm/20200324_0554/native-image-installable-svm-java11-darwin-amd64-20.1.0-dev.jar
-              #curl -O -sL https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/20.1.0-dev-20200414_0225/graalvm-ce-java11-darwin-amd64-20.1.0-dev.tar.gz
-              # curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java8-darwin-amd64-19.3.1.tar.gz
-              #curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-19.3.1/graalvm-ce-java11-darwin-amd64-19.3.1.tar.gz
-              ls -alF
-              tar xzf graalvm-ce-java11-darwin-amd64-20.1.0-dev.tar.gz
-              # tar xzf graalvm-ce-java8-darwin-amd64-19.3.1.tar.gz
-              #tar xzf graalvm-ce-java11-darwin-amd64-19.3.1.tar.gz
-            #fi
-            #$GRAALVM_HOME/bin/gu install native-image
-            $GRAALVM_HOME/bin/gu -L install native-image-installable-svm-java11-darwin-amd64-20.1.0-dev.jar
+            if ! [ -d graalvm-ce-java11-20.1.0 ]; then
+              curl -O -sL https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-20.1.0/graalvm-ce-java11-darwin-amd64-20.1.0.tar.gz
+              tar xzf graalvm-ce-java11-darwin-amd64-20.1.0.tar.gz
+            fi
+            $GRAALVM_HOME/bin/gu install native-image
           no_output_timeout: 30m
       # - run:
       #     name: MacOS java info
