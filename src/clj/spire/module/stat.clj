@@ -80,7 +80,7 @@
             (recur r (str acc c))
             [acc nil])
       (assert false
-              (apply str "a non valid character was found outside a quoted region: " c r))
+              (apply str "a non valid character was found outside a quoted region: " c " : " r))
       )))
 
 (defn process-quoted-symlink-line [quoted-line]
