@@ -91,20 +91,17 @@ jobs:
       - run:
           name: Build binary
           command: |
-            make copy-libs-to-resource clean all package-linux GRAALVM=$GRAALVM_HOME
+            make copy-libs-to-resource clean all linux-package GRAALVM=$GRAALVM_HOME
           no_output_timeout: 40m
-      - run:
-          name: Copy artifacts
-          command: |
-            cp *.tgz /tmp/release
       - save_cache:
           paths:
             - ~/.m2
             - ~/graalvm-ce-java11-20.1.0-dev
           key: linux-{{ checksum "project.clj" }}-{{ checksum ".circleci/config.yml" }}
       - store_artifacts:
-          path: /tmp/release
-          destination: release
+          path: build
+          destination: build
+
   mac:
     macos:
       xcode: "10.0"
@@ -205,9 +202,9 @@ jobs:
       - store_artifacts:
           path: build
           destination: build
-      - store_artifacts:
-          path: target/uberjar
-          destination: target/uberjar
+      # - store_artifacts:
+      #     path: target/uberjar
+      #     destination: target/uberjar
 
 
 workflows:
@@ -225,4 +222,7 @@ workflows:
 
       # build on free circleci account runs out of ram
       # Error: Image build request failed with exit status 137
-      # - linux
+      - linux:
+          filters:
+            branches:
+              only: master
