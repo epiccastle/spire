@@ -46,6 +46,14 @@
             [clj-http.lite.client]
             [clj-http.lite.links]
             [clj-http.lite.util]
+            [cheshire.core]
+            [cheshire.custom]
+            [cheshire.exact]
+            [cheshire.experimental]
+            [cheshire.factory]
+            [cheshire.generate]
+            [cheshire.generate-seq]
+            [cheshire.parse]
             [fipp.edn]
             [edamame.core]
             [spire.sci :refer [make-sci-bindings
@@ -237,7 +245,17 @@
 
    'edamame.core (make-sci-bindings edamame.core)
    'clojure.edn (make-sci-bindings clojure.edn)
-   'clojure.java.shell (make-sci-bindings clojure.java.shell)}
+   'clojure.java.shell (make-sci-bindings clojure.java.shell)
+
+   'cheshire.core (make-sci-bindings cheshire.core)
+   'cheshire.custom (make-sci-bindings cheshire.custom)
+   'cheshire.exact (make-sci-bindings cheshire.exact)
+   'cheshire.experimental (make-sci-bindings cheshire.experimental)
+   'cheshire.factory (make-sci-bindings cheshire.factory)
+   'cheshire.generate (make-sci-bindings cheshire.generate)
+   'cheshire.generate-seq (make-sci-bindings cheshire.generate-seq)
+   'cheshire.parse (make-sci-bindings cheshire.parse)
+   }
   )
 
 (def classes
