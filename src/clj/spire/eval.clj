@@ -84,7 +84,8 @@
     sci-ctx))
 
 (defn evaluate [args script]
-  (sci/binding [context/context :sci]
+  (sci/binding [context/context :sci
+                sci/out *out*]
     (sci/eval-string*
      (setup-sci-context args)
      script)))
