@@ -8,7 +8,7 @@ jobs:
   jvm:
     docker:
       # specify the version you desire here
-      - image: circleci/clojure:openjdk-11-lein-2.9.0
+      - image: circleci/clojure:openjdk-11-lein-2.9.1
     working_directory: ~/repo
     environment:
       LEIN_ROOT: "true"
@@ -23,7 +23,6 @@ jobs:
           name: Install native dev tools
           command: |
             sudo apt-get update
-            sudo apt-get -y upgrade
             sudo apt-get -y install gcc zlib1g-dev make lsb-release file
       - run:
           name: Install Clojure
