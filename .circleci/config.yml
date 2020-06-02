@@ -148,7 +148,10 @@ jobs:
       - run:
           name: Run MacOS tests
           command: |
-            make clean lib JAVA_HOME=$GRAALVM_HOME GRAALVM=$GRAALVM_HOME PATH=$PATH:$GRAALVM_HOME/bin
+            export JAVA_HOME=$GRAALVM_HOME
+            export GRAALVM=$GRAALVM_HOME
+            export PATH=$PATH:$GRAALVM_HOME/bin
+            make clean lib
             ls -alF
             make jar jar-help
             sudo grep -v ^# /etc/ssh/sshd_config|grep -v ^$
