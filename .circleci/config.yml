@@ -174,11 +174,17 @@ jobs:
       - run:
           name: Client tests
           command: |
+            export JAVA_HOME=$GRAALVM_HOME
+            export GRAALVM=$GRAALVM_HOME
+            export PATH=$PATH:$GRAALVM_HOME/bin
             make macos-client-test-jvm
           no_output_timeout: 1m
       - run:
           name: Client tests
           command: |
+            export JAVA_HOME=$GRAALVM_HOME
+            export GRAALVM=$GRAALVM_HOME
+            export PATH=$PATH:$GRAALVM_HOME/bin
             make macos-client-test
           no_output_timeout: 1m
 
