@@ -161,6 +161,9 @@ jobs:
       - run:
           name: Build binary
           command: |
+            export JAVA_HOME=$GRAALVM_HOME
+            export GRAALVM=$GRAALVM_HOME
+            export PATH=$PATH:$GRAALVM_HOME/bin
             make all macos-package GRAALVM=$GRAALVM_HOME
           no_output_timeout: 60m
       - run:
