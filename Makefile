@@ -1,6 +1,4 @@
 GRAALVM = $(HOME)/graalvm-ce-java11-20.1.0
-JAVA_HOME = $(GRAALVM)
-PATH = $(GRAALVM)/bin:$(shell echo $$PATH)
 ifneq (,$(findstring java11,$(GRAALVM)))
 	JAVA_VERSION = 11
 else
