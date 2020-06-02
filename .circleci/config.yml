@@ -169,7 +169,7 @@ jobs:
       - run:
           name: Test running binary
           command: |
-            ./spire -h
+            ./spire --help
           no_output_timeout: 1m
       - run:
           name: Client tests
