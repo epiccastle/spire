@@ -106,6 +106,9 @@ jobs:
       xcode: "10.0"
     environment:
       GRAALVM_HOME: /Users/distiller/graalvm-ce-java11-20.1.0/Contents/Home
+      GRAALVM: /Users/distiller/graalvm-ce-java11-20.1.0/Contents/Home
+      JAVA_HOME: /Users/distiller/graalvm-ce-java11-20.1.0/Contents/Home
+      PATH: /Users/distiller/graalvm-ce-java11-20.1.0/Contents/Home/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - checkout
       - restore_cache:
@@ -148,9 +151,6 @@ jobs:
       - run:
           name: Run MacOS tests
           command: |
-            export JAVA_HOME=$GRAALVM_HOME
-            export GRAALVM=$GRAALVM_HOME
-            export PATH=$PATH:$GRAALVM_HOME/bin
             make clean lib
             ls -alF
             make jar jar-help
@@ -161,9 +161,6 @@ jobs:
       - run:
           name: Build binary
           command: |
-            export JAVA_HOME=$GRAALVM_HOME
-            export GRAALVM=$GRAALVM_HOME
-            export PATH=$PATH:$GRAALVM_HOME/bin
             make all macos-package GRAALVM=$GRAALVM_HOME
           no_output_timeout: 60m
       - run:
@@ -174,17 +171,11 @@ jobs:
       - run:
           name: Client tests
           command: |
-            export JAVA_HOME=$GRAALVM_HOME
-            export GRAALVM=$GRAALVM_HOME
-            export PATH=$PATH:$GRAALVM_HOME/bin
             make macos-client-test-jvm
           no_output_timeout: 1m
       - run:
           name: Client tests
           command: |
-            export JAVA_HOME=$GRAALVM_HOME
-            export GRAALVM=$GRAALVM_HOME
-            export PATH=$PATH:$GRAALVM_HOME/bin
             make macos-client-test
           no_output_timeout: 1m
 
