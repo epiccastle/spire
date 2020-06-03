@@ -142,10 +142,13 @@
              {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
              ))
       (is (= (test-utils/run (format "cd '%s'; find ." path-a))
-             (test-utils/run (format "cd '%s'; find ." path-b))))
-      )
+             (test-utils/run (format "cd '%s'; find ." path-b)))))))
 
-
-
-    )
-  )
+(deftest upload-content
+  (testing "upload :content works"
+    (let [dest "/tmp/spire-upload-test-content"
+          content "this is a test"]
+      (test-utils/remove-file dest)
+      (is (= (upload/upload {:dest dest :content content})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= content (slurp dest))))))

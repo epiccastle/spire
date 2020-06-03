@@ -230,20 +230,10 @@
                                   )))))
 
                ;; straight single copy
-               (let [local-md5 (digest/md5 content)
-                     remote-md5 (some-> (facts/on-shell
-                                         :csh (run (format "%s \"%s\"" (facts/md5) dest))
-                                         :else (run (format "%s \"%s\"" (facts/md5) dest)))
-                                        process-md5-out
-                                        first)
-                     ;; _ (println "l:" local-md5 "r:" remote-md5)
-                     ;; _ (do (println "\n\n\n"))
-                     ]
-                 (comment (prn "local-md5:" local-md5)
-                          (prn "remote-md5:" remote-md5))
+               (if content?
+                 ;; content upload
                  (scp-result
-                  (when (not= local-md5 remote-md5)
-                    (scp/scp-to session content dest
+                    (scp/scp-content-to session content dest
                                 :progress-fn progress-fn
                                 :preserve preserve
                                 :dir-mode (or dir-mode 0755)
@@ -252,7 +242,32 @@
                                 :exec-fn exec-fn
                                 :shell-fn shell-fn
                                 :stdin-fn stdin-fn
-                                )))))
+                                ))
+
+                 ;; file upload
+                 (let [local-md5 (digest/md5 content)
+                       remote-md5 (some-> (facts/on-shell
+                                           :csh (run (format "%s \"%s\"" (facts/md5) dest))
+                                           :else (run (format "%s \"%s\"" (facts/md5) dest)))
+                                          process-md5-out
+                                          first)
+                       ;; _ (println "l:" local-md5 "r:" remote-md5)
+                       ;; _ (do (println "\n\n\n"))
+                       ]
+                   (comment (prn "local-md5:" local-md5)
+                            (prn "remote-md5:" remote-md5))
+                   (scp-result
+                    (when (not= local-md5 remote-md5)
+                      (scp/scp-to session content dest
+                                  :progress-fn progress-fn
+                                  :preserve preserve
+                                  :dir-mode (or dir-mode 0755)
+                                  :mode (or mode 0644)
+                                  :exec exec
+                                  :exec-fn exec-fn
+                                  :shell-fn shell-fn
+                                  :stdin-fn stdin-fn
+                                  ))))))
 
              passed-attrs? (or owner group dir-mode mode attrs)
 
