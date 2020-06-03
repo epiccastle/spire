@@ -102,15 +102,15 @@
 (defn set-attrs-preserve [session src dest]
   (let [script (make-preserve-script (create-attribute-list src) dest)
         {:keys [exec-fn shell-fn stdin-fn]} (state/get-shell-context)]
-    (prn 'set-attrs-preserve src dest)
-    (println "---------------")
-    (println script)
-    (println "---------------")
+    ;; (prn 'set-attrs-preserve src dest)
+    ;; (println "---------------")
+    ;; (println script)
+    ;; (println "---------------")
     (let [result (exec-fn session (shell-fn "bash") (stdin-fn script) "UTF-8" {})]
-      (prn 'result (:exit result))
-      (println "---------------")
-      (println (:out result))
-      (println "---------------")
+      ;; (prn 'result (:exit result))
+      ;; (println "---------------")
+      ;; (println (:out result))
+      ;; (println "---------------")
 
       result
       )))
