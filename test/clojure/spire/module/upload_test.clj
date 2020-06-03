@@ -80,8 +80,7 @@
            (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
               result)
            (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
-              result)
-           )))
+              result))))
 
        (is (test-utils/recurse-file-size-type-name-mode-match? "test/files" tf2))
        ;; (is (test-utils/recurse-access-modified-match? "test/files" tf2))
@@ -215,3 +214,27 @@
 
 
   )
+
+(deftest upload-errors
+  (testing ":src is not found"
+    (is (thrown? java.io.FileNotFoundException
+                 (upload/upload {:src "jgtwojgtwtowprvow" :dest "/tmp/spire-upload-src-not-found"}))))
+  (testing ":src is a folder but no recurse"
+    (let [path "/tmp/spire-upload-src-directory-not-recursive"]
+      (test-utils/remove-file path)
+      (test-utils/makedirs path)
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"module failed"
+                            (upload/upload {:src path :dest (str path "-dest")})))
+      (try
+        (upload/upload {:src path :dest (str path "-dest")})
+        (catch clojure.lang.ExceptionInfo e
+          (is (= ":recurse must be true when :src specifies a directory." (:err (ex-data e))))))))
+  (testing ":dest does not exist"
+    (let [path "/tmp/spire-upload-dest-not-exist"]
+      (spit path "foo")
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"module failed"
+                            (upload/upload {:src path :dest "/tmp/foo/bar/baz"})))
+      (try
+        (upload/upload {:src path :dest "/tmp/foo/bar/baz"})
+        (catch clojure.lang.ExceptionInfo e
+          (is (= "destination path unwritable" (:err (ex-data e)))))))))
