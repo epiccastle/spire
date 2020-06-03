@@ -144,6 +144,16 @@
       (is (= (test-utils/run (format "cd '%s'; find ." path-a))
              (test-utils/run (format "cd '%s'; find ." path-b)))))))
 
+(deftest upload-absolute-path
+  (testing "no permissions to write to :dest"
+    (let [src-path "/tmp/spire-upload-abs-src"
+          dest-path "/tmp/spire-upload-abs-dest"]
+      (spit src-path "foo")
+      (test-utils/remove-file dest-path)
+      (is (= (upload/upload {:src src-path :dest dest-path})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= (slurp dest-path) "foo")))))
+
 (deftest upload-content
   (testing "upload :content works"
     (let [dest "/tmp/spire-upload-test-content"
