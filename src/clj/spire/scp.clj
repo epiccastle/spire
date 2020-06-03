@@ -225,7 +225,10 @@
           _ (debugf "scp-to: %s using executor %s" cmd (str exec))
           {:keys [out-stream]}
           (if (= exec :local)
-            (exec-fn nil (shell-fn cmd) (stdin-fn in) :stream opts)
+            (exec-fn nil
+                     (shell-fn
+                      (format "bash -c 'umask 0000; %s'" cmd))
+                     (stdin-fn in) :stream opts)
             (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts))
           recv out-stream]
       (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)
@@ -261,16 +264,19 @@
 (defn scp-content-to
   "Copy local path(s) to remote path via scp"
   [session content remote-path & {:keys [recurse shell-fn stdin-fn exec exec-fn]
-                                      :as opts
-                                      :or {shell-fn identity
-                                           stdin-fn identity}}]
+                                  :as opts
+                                  :or {shell-fn identity
+                                       stdin-fn identity}}]
   (let [[^PipedInputStream in
          ^PipedOutputStream send] (ssh/streams-for-in)
         cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
         _ (debugf "scp-to: %s using executor %s" cmd (str exec))
         {:keys [out-stream]}
         (if (= exec :local)
-          (exec-fn nil (shell-fn cmd) (stdin-fn in) :stream opts)
+          (exec-fn nil
+                   (shell-fn
+                    (format "bash -c 'umask 0000; %s'" cmd))
+                   (stdin-fn in) :stream opts)
           (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts))
         recv out-stream]
     (debugf "scp-to %d bytes of content to %s" (utils/content-size content) remote-path)
