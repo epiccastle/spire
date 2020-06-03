@@ -239,6 +239,7 @@
         (upload/upload {:src path :dest (str path "-dest")})
         (catch clojure.lang.ExceptionInfo e
           (is (= ":recurse must be true when :src specifies a directory." (:err (ex-data e))))))))
+
   (testing ":dest does not exist"
     (let [path "/tmp/spire-upload-dest-not-exist"]
       (spit path "foo")
@@ -246,5 +247,21 @@
                             (upload/upload {:src path :dest "/tmp/foo/bar/baz"})))
       (try
         (upload/upload {:src path :dest "/tmp/foo/bar/baz"})
+        (catch clojure.lang.ExceptionInfo e
+          (is (= "destination path unwritable" (:err (ex-data e))))))))
+
+  (testing "no permissions to write to :dest"
+    (let [src-path "/tmp/spire-upload-dest-perms-src"
+          dest-path "/tmp/spire-upload-dest-perms-dest"]
+      (spit src-path "foo")
+      (test-utils/remove-file dest-path)
+      (test-utils/makedirs dest-path)
+      (test-utils/run (format "chmod a-w '%s'" dest-path))
+
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"module failed"
+                            (upload/upload {:src src-path :dest (str dest-path "/")})))
+
+      (try
+        (upload/upload {:src src-path :dest (str dest-path "/")})
         (catch clojure.lang.ExceptionInfo e
           (is (= "destination path unwritable" (:err (ex-data e)))))))))
