@@ -10,7 +10,8 @@
             [spire.state :as state]
             [spire.config :as config]
             [clojure.java.io :as io]
-            [spire.test-utils :as test-utils]))
+            [spire.test-utils :as test-utils]
+            [spire.output.default]))
 
 (clojure.lang.RT/loadLibrary "spire")
 
@@ -113,5 +114,38 @@
         ;; the with-temp-file-names macro wont be able to delete this, so lets do it now while we are root
         ;; TODO: when implementing testing on another target system, the with-temp-file-names could
         ;; be made to do remote deletion
-        (test-utils/ssh-run (format "rm -rf \"%s\"" tf4))))))
+        (test-utils/ssh-run (format "rm -rf \"%s\"" tf4)))))))
+
+(deftest upload-idempotent-test
+  (testing "uploads are idempotent - #74"
+    (let [path-a "/tmp/spire-upload-test-recv-a"
+          path-b "/tmp/spire-upload-test-recv-b"]
+      (test-utils/remove-file path-a)
+      (is (= (upload/upload {:dest path-a :src "test" :recurse true :preserve true})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+             ))
+
+      (test-utils/remove-file path-b)
+      (test-utils/makedirs path-b)
+      (is (= (upload/upload {:dest path-b :src "test" :recurse true :preserve true})
+             ;; attr result should be OK TODO
+             {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
+             ))
+
+      (is (= (test-utils/run (format "cd '%s'; find ." path-a))
+             (test-utils/run (format "cd '%s'; find ." path-b))))
+
+      ;; remove one file from path-b and recopy
+      (test-utils/remove-file (str path-b "/config/sshd_config"))
+      (is (= (upload/upload {:dest path-b :src "test" :recurse true :preserve true})
+             ;; attr result should be OK TODO
+             {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
+             ))
+      (is (= (test-utils/run (format "cd '%s'; find ." path-a))
+             (test-utils/run (format "cd '%s'; find ." path-b))))
+      )
+
+
+
+    )
   )

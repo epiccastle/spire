@@ -169,7 +169,10 @@
              (if recurse
                (let [identical-content (->> identical-content
                                             (map #(.getPath (io/file src %)))
-                                            (into #{}))]
+                                            (into #{}))
+                     remote-folder-exists? (and (remote "")
+                                                (= :dir (:type (remote ""))))
+                     ]
                  (comment
                    (prn "identical:" identical-content)
                    (prn "local:" local)
@@ -203,7 +206,13 @@
                            (count identical-content)
                            (count (filter #(= :file (:type (second %))) local))
                            )
-                      (scp/scp-to session content dest
+                      (scp/scp-to session
+                                  (if remote-folder-exists?
+                                    (mapv #(.getPath %) (.listFiles (io/file content)))
+                                    content
+                                    )
+
+                                  dest
                                   :progress-fn progress-fn
                                   :preserve preserve
                                   :dir-mode (or dir-mode 0755)
@@ -214,6 +223,10 @@
                                   :exec-fn exec-fn
                                   :shell-fn shell-fn
                                   :stdin-fn stdin-fn
+
+                                  #_:remote-folder-exists
+                                  #_(and (remote "")
+                                         (= :dir (:type (remote ""))))
                                   )))))
 
                ;; straight single copy
