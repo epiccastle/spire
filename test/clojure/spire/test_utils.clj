@@ -296,3 +296,16 @@
   `(try ~@body
         (catch clojure.lang.ExceptionInfo e#
           (is (= ~data (ex-data e#))))))
+
+(defn slurp-bytes
+  "Slurp the bytes from a slurpable thing"
+  [x]
+  (with-open [out (java.io.ByteArrayOutputStream.)]
+    (clojure.java.io/copy (clojure.java.io/input-stream x) out)
+    (.toByteArray out)))
+
+(defn spit-bytes
+  "binary spit"
+  [file bytes]
+  (with-open [out (io/output-stream (io/file file))]
+    (.write out bytes)))
