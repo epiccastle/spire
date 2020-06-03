@@ -14,6 +14,7 @@
   (testing "path-full-info"
     (test-utils/with-temp-file-names [tf]
       (spit tf "This is a test file")
+      (test-utils/run (format "chmod 0644 '%s'" tf))
       (transport/ssh
        {:hostname "localhost"
         :port (-> (System/getenv "SSH_TEST_PORT") (or "22") Integer/parseInt)
@@ -41,11 +42,4 @@
                      :md5sum "0b26e313ed4a7ca6904b0e9369e5b957"
                      :mode-string "644"
                      :mode 420
-                     :size 19}))
-
-             )
-           )
-         )
-       )
-      )
-    ))
+                     :size 19})))))))))
