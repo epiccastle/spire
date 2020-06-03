@@ -148,8 +148,70 @@
 (deftest upload-content
   (testing "upload :content works"
     (let [dest "/tmp/spire-upload-test-content"
-          content "this is a test"]
+          content "this is a test"
+          content-2 "new content"]
       (test-utils/remove-file dest)
       (is (= (upload/upload {:dest dest :content content})
              {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
-      (is (= content (slurp dest))))))
+      (is (= content (slurp dest)))
+      (is (= (upload/upload {:dest dest :content content})
+             {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}))
+      (is (= content (slurp dest)))
+      (is (= (upload/upload {:dest dest :content content-2})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= content-2 (slurp dest)))))
+
+  (testing "upload :content io/file works"
+    (let [dest "/tmp/spire-upload-test-content"
+          src "/tmp/spire-upload-test-content-src"
+          content "this is a test"
+          content-2 "new content"]
+      (test-utils/remove-file dest)
+      (spit src content)
+      (is (= (upload/upload {:dest dest :content (io/file src)})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= content (slurp dest)))
+      (is (= (upload/upload {:dest dest :content (io/file src)})
+             {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}))
+      (is (= content (slurp dest)))
+      (spit src content-2)
+      (is (= (upload/upload {:dest dest :content (io/file src)})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= content-2 (slurp dest)))))
+
+  (testing "upload :content byte array works"
+    (let [dest "/tmp/spire-upload-test-content"
+          content (byte-array (range 255))
+          content-2 (byte-array (range 255 0 -1))]
+      (test-utils/remove-file dest)
+      (is (= (upload/upload {:dest dest :content content})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= (seq content) (seq (test-utils/slurp-bytes dest))))
+      (is (= (upload/upload {:dest dest :content content})
+             {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}))
+      (is (= (seq content) (seq (test-utils/slurp-bytes dest))))
+      (is (= (upload/upload {:dest dest :content content-2})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= (seq content-2) (seq (test-utils/slurp-bytes dest))))
+      ))
+
+  (testing "upload :content binary io/file works"
+    (let [dest "/tmp/spire-upload-test-content"
+          src "/tmp/spire-upload-test-content-src"
+          content (byte-array (range 255))
+          content-2 (byte-array (range 255 0 -1))]
+      (test-utils/remove-file dest)
+      (test-utils/spit-bytes src content)
+      (is (= (upload/upload {:dest dest :content (io/file src)})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= (seq content) (seq (test-utils/slurp-bytes dest))))
+      (is (= (upload/upload {:dest dest :content (io/file src)})
+             {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}))
+      (is (= (seq content) (seq (test-utils/slurp-bytes dest))))
+      (test-utils/spit-bytes src content-2)
+      (is (= (upload/upload {:dest dest :content (io/file src)})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= (seq content-2) (seq (test-utils/slurp-bytes dest))))))
+
+
+  )
