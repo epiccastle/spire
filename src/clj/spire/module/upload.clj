@@ -144,7 +144,7 @@
 
              {:keys [local local-to-remote identical-content remote]} transfers
              total-size (if content?
-                          (count content)
+                          (utils/content-size content)
                           (->> local-to-remote
                                (map (comp :size local))
                                (apply +)))
