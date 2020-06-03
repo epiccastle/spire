@@ -215,7 +215,8 @@
                                       :as opts
                                       :or {shell-fn identity
                                            stdin-fn identity}}]
-  (let [local-paths (if (sequential? local-paths) local-paths [local-paths])
+  (let [local-paths? (sequential? local-paths)
+        local-paths (if local-paths? local-paths [local-paths])
         ;;files (scp-files local-paths recurse)
         ]
     (let [[^PipedInputStream in
@@ -230,26 +231,24 @@
       (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)
       (debug "Receive initial ACK")
       (scp-receive-ack recv)
-      (doseq [file-or-data local-paths]
-        (if (string? file-or-data)
-          (debugf "scp-to: from %d bytes" (count file-or-data))
-          (debugf "scp-to: from %s name: %s"
-                  (.getPath file-or-data)
-                  (.getName file-or-data)))
-        (cond
-          (utils/content-recursive? file-or-data)
-          (scp-copy-dir send recv file-or-data opts
-                        {:fileset-file-start 0})
+      (doseq [file local-paths]
+        (let [file (io/file file)]
+          (if (string? file)
+            (debugf "scp-to: from %d bytes" (count file))
+            (debugf "scp-to: from %s name: %s"
+                    (.getPath file)
+                    (.getName file)))
+          (cond
+            (utils/content-recursive? file)
+            (do
+              (debugf "%s is recursive" file)
+              (scp-copy-dir send recv file opts
+                            {:fileset-file-start 0}))
 
-          (utils/content-file? file-or-data)
-          (scp-copy-file send recv file-or-data opts)
-
-          :else
-          (scp-copy-data send recv
-                         file-or-data (utils/content-size file-or-data) (.getName (io/file remote-path))
-                         opts
-                         )
-          ))
+            (utils/content-file? file)
+            (do
+              (debugf "%s is plain file" file)
+              (scp-copy-file send recv file opts)))))
       (debug "Closing streams")
       (.close send)
       (.close recv)
@@ -257,6 +256,37 @@
 
       ;; files copied?
       true)))
+
+
+(defn scp-content-to
+  "Copy local path(s) to remote path via scp"
+  [session content remote-path & {:keys [recurse shell-fn stdin-fn exec exec-fn]
+                                      :as opts
+                                      :or {shell-fn identity
+                                           stdin-fn identity}}]
+  (let [[^PipedInputStream in
+         ^PipedOutputStream send] (ssh/streams-for-in)
+        cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
+        _ (debugf "scp-to: %s using executor %s" cmd (str exec))
+        {:keys [out-stream]}
+        (if (= exec :local)
+          (exec-fn nil (shell-fn cmd) (stdin-fn in) :stream opts)
+          (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts))
+        recv out-stream]
+    (debugf "scp-to %d bytes of content to %s" (utils/content-size content) remote-path)
+    (debug "Receive initial ACK")
+    (scp-receive-ack recv)
+    (scp-copy-data send recv
+                   content
+                   (utils/content-size content) (.getName (io/file remote-path))
+                   opts)
+    (debug "Closing streams")
+    (.close send)
+    (.close recv)
+    (debug "streams closed")
+
+    ;; files copied?
+    true))
 
 
 (defn scp-parse-times
