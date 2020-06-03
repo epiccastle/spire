@@ -138,8 +138,7 @@
       ;; remove one file from path-b and recopy
       (test-utils/remove-file (str path-b "/config/sshd_config"))
       (is (= (upload/upload {:dest path-b :src "test" :recurse true :preserve true})
-             ;; attr result should be OK TODO
-             {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
              ))
       (is (= (test-utils/run (format "cd '%s'; find ." path-a))
              (test-utils/run (format "cd '%s'; find ." path-b)))))))
