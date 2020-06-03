@@ -232,17 +232,25 @@
                ;; straight single copy
                (if content?
                  ;; content upload
-                 (scp-result
-                    (scp/scp-content-to session content dest
-                                :progress-fn progress-fn
-                                :preserve preserve
-                                :dir-mode (or dir-mode 0755)
-                                :mode (or mode 0644)
-                                :exec exec
-                                :exec-fn exec-fn
-                                :shell-fn shell-fn
-                                :stdin-fn stdin-fn
-                                ))
+                 (let [local-md5 (digest/md5 content)
+                       remote-md5 (some-> (facts/on-shell
+                                           :csh (run (format "%s \"%s\"" (facts/md5) dest))
+                                           :else (run (format "%s \"%s\"" (facts/md5) dest)))
+                                          process-md5-out
+                                          first)
+                       ]
+                   (scp-result
+                    (when (not= local-md5 remote-md5)
+                      (scp/scp-content-to session content dest
+                                          :progress-fn progress-fn
+                                          :preserve preserve
+                                          :dir-mode (or dir-mode 0755)
+                                          :mode (or mode 0644)
+                                          :exec exec
+                                          :exec-fn exec-fn
+                                          :shell-fn shell-fn
+                                          :stdin-fn stdin-fn
+                                          ))))
 
                  ;; file upload
                  (let [local-md5 (digest/md5 content)
