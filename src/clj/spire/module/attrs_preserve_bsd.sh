@@ -19,16 +19,19 @@ function set_file
   FILE_MODIFIED=$(stat -f '%m' "$FILE")
 
   if [ "$MODE" != "$FILE_MODE" ]; then
+    echo "mode $MODE $FILE_MODE"
     chmod "$MODE" "$FILE"
     EXIT=-1
   fi
 
   if [ "$ACCESS" != "$FILE_ACCESS" ]; then
+    echo "access $ACCESS $FILE_ACCESS"
     touch -a -t "$ACCESS_STAMP" "$FILE"
     EXIT=-1
   fi
 
   if [ "$MODIFIED" != "$FILE_MODIFIED" ]; then
+    echo "mod $MODIFIED $FILE_MODIFIED"
     touch -m -t "$MODIFIED_STAMP" "$FILE"
     EXIT=-1
   fi
