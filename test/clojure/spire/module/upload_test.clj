@@ -128,7 +128,8 @@
       (test-utils/remove-file path-b)
       (test-utils/makedirs path-b)
       (is (= (upload/upload {:dest path-b :src "test" :recurse true :preserve true})
-             ;; attr result should be OK TODO
+             ;; attr result is :changed because root dir is not created by copy
+             ;; and needs its attr set
              {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
              ))
 
@@ -138,7 +139,9 @@
       ;; remove one file from path-b and recopy
       (test-utils/remove-file (str path-b "/config/sshd_config"))
       (is (= (upload/upload {:dest path-b :src "test" :recurse true :preserve true})
-             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+             ;; attr result is :changed because root dir will have mtime changed by internal
+             ;; file write and needs its attr reset
+             {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
              ))
       (is (= (test-utils/run (format "cd '%s'; find ." path-a))
              (test-utils/run (format "cd '%s'; find ." path-b)))))))
