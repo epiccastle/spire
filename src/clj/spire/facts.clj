@@ -168,7 +168,9 @@
   (let [{:keys [exit out err] :as result} (runner "echo $SHELL" "sh")
         shell-path (string/trim out)]
     (assert (zero? exit) (format "Initial shell check `echo $SHELL` failed: %s" err))
-    (keyword (last (string/split shell-path #"/" -1)))))
+    (if-let [shell (last (string/split shell-path #"/" -1))]
+      (keyword shell)
+      :sh)))
 
 (defmulti fetch-shell-facts identity)
 
