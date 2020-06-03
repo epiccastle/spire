@@ -57,5 +57,4 @@
 
 ;; support out = :stream...
 (defn local-exec [_ cmd in out opts]
-  (prn 'local-exec cmd in out opts)
   (sh/exec cmd in out opts))
