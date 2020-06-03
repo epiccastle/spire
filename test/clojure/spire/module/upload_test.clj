@@ -121,8 +121,9 @@
     (let [path-a "/tmp/spire-upload-test-recv-a"
           path-b "/tmp/spire-upload-test-recv-b"]
       (test-utils/remove-file path-a)
-      (is (= (upload/upload {:dest path-a :src "test" :recurse true :preserve true})
-             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+      (is (= (-> (upload/upload {:dest path-a :src "test" :recurse true :preserve true})
+                 (select-keys [:result :copy-result]))
+             {:result :changed :copy-result {:result :changed}}
              ))
 
       (test-utils/remove-file path-b)
@@ -138,11 +139,9 @@
 
       ;; remove one file from path-b and recopy
       (test-utils/remove-file (str path-b "/config/sshd_config"))
-      (is (= (upload/upload {:dest path-b :src "test" :recurse true :preserve true})
-             ;; attr result is :changed because root dir will have mtime changed by internal
-             ;; file write and needs its attr reset
-             {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
-             ))
+      (is (= (-> (upload/upload {:dest path-b :src "test" :recurse true :preserve true})
+                 (select-keys [:result :copy-result]))
+             {:result :changed :copy-result {:result :changed}}))
       (is (= (test-utils/run (format "cd '%s'; find ." path-a))
              (test-utils/run (format "cd '%s'; find ." path-b)))))))
 
