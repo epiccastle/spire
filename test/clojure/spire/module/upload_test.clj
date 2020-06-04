@@ -370,7 +370,7 @@
 
       (test-utils/run (format "chmod a+x '%s'" (str dest-path "/a")))
 
-      (is (= (upload/upload {:src src-path :dest dest-path :recurse true :mode 0644})
+      (is (= (upload/upload {:src src-path :dest dest-path :recurse true :mode 0644 :dir-mode 0755})
              {:result :changed :attr-result {:result :changed} :copy-result {:result :ok}}))
 
       (is (= (slurp (str dest-path "/a")) "a"))
