@@ -322,9 +322,20 @@
              {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
 
       (is (= "a" (slurp (str dest-path "/a"))))
-      (is (= "b" (slurp (str dest-path "/b"))))
+      (is (= "b" (slurp (str dest-path "/b"))))))
 
+  (testing "copying tree over existing copy with no permission for one file"
+    (let [src-path "/tmp/spire-upload-sync-src"
+          dest-path "/tmp/spire-upload-sync-dest"]
+      (doseq [path [src-path dest-path]]
+        (test-utils/remove-file path)
+        (test-utils/makedirs path)
+        (spit (str path "/a") "a")
+        (spit (str path "/b") "b"))
+      (spit (str dest-path "/b") "changed")
+      (test-utils/run (format "chmod a-w '%s'" (str dest-path "/b")))
 
+      (is (= 0 (upload/upload {:src src-path :dest dest-path :recurse true})))
       ))
 
 
