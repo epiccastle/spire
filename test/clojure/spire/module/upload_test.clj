@@ -69,7 +69,7 @@
        ;; recopy dir but with :preserve
        (with-redefs [spire.scp/scp-to no-scp]
          (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
-                (upload/upload {:src "test/files" :dest tf :recurse true :force true :preserve true})))
+                (upload/upload {:src "test/files" :dest tf :recurse true :preserve true})))
          (is (test-utils/recurse-file-size-type-name-mode-match? "test/files" tf))
          ;; (is (test-utils/recurse-access-modified-match? "test/files" tf))
          )
