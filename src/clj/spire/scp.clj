@@ -37,7 +37,7 @@
                   (if (#{10 13 -1 0} c)
                     s
                     (recur (.read in) (str s (char c)))))]
-        (throw (ex-info "scp protocol error" {:code code
+        (throw (ex-info "scp error" {:code code
                                               :msg msg}))))))
 
 (defn- scp-send-command
