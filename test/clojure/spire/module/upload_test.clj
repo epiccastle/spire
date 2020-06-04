@@ -338,7 +338,7 @@
       (test-utils/run (format "chmod a-w '%s'" (str dest-path "/a")))
 
       (is (thrown-with-msg? clojure.lang.ExceptionInfo #"scp error"
-                   (upload/upload {:src src-path :dest dest-path :recurse true})))
+                            (upload/upload {:src src-path :dest dest-path :recurse true})))
 
       (try
         (upload/upload {:src src-path :dest dest-path :recurse true})
