@@ -119,27 +119,37 @@
                    (string/trim out)
                    "")))
 
+         content? content
+
          ;; analyse local and remote paths
          local-file? (when-not content (local/is-file? src))
+         remote-file? (remote/is-file? run dest)
+         remote-dir? (remote/is-dir? run dest)
 
          remote-writable? (if (not (string/ends-with? dest "/"))
                             (remote/is-writable? run (utils/containing-folder dest))
-                            (remote/is-writable? run dest))]
+                            (remote/is-writable? run dest))
+         content (or content
+                     (let [src-file (io/file src)]
+                       (if (.isAbsolute src-file)
+                         src-file
+                         (io/file (utils/current-file-parent) src))))
+         ]
+     (cond
+       (and (or local-file? content?)
+            (not (string/ends-with? dest "/"))
+            remote-dir?)
+       {:result :failed
+        :err ":src is a single file while :dest is a folder. Append '/' to dest to write into directory or set :force to true to delete destination folder and write as file."}
 
-     (if-not remote-writable?
+       (not remote-writable?)
        {:result :failed
         :err "destination path unwritable"
         :exit 1
         :out ""}
+
+       :else
        (let [remote-file? (remote/is-file? run dest)
-
-             content? content
-             content (or content
-                         (let [src-file (io/file src)]
-                           (if (.isAbsolute src-file)
-                             src-file
-                             (io/file (utils/current-file-parent) src))))
-
              transfers (compare/compare-full-info (str content) run
                                                   dest
                                                   #_(if local-file?

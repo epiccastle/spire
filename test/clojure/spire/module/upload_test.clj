@@ -264,4 +264,23 @@
       (try
         (upload/upload {:src src-path :dest (str dest-path "/")})
         (catch clojure.lang.ExceptionInfo e
-          (is (= "destination path unwritable" (:err (ex-data e)))))))))
+          (is (= "destination path unwritable" (:err (ex-data e))))))))
+
+  (testing "directoy :dest trying to become file :src"
+    (let [src-path "/tmp/spire-upload-dest-dir-becomes-file-src"
+          dest-path "/tmp/spire-upload-dest-dir-becomes-file-dest"]
+      (spit src-path "foo")
+      (test-utils/remove-file dest-path)
+      (test-utils/makedirs dest-path)
+      (test-utils/run (format "chmod a-w '%s'" dest-path))
+
+      (is (thrown? clojure.lang.ExceptionInfo
+                   (upload/upload {:src src-path :dest dest-path})))
+
+      (try
+        (upload/upload {:src src-path :dest dest-path})
+        (catch clojure.lang.ExceptionInfo e
+          (is (= (:err (ex-data e))
+                 ":src is a single file while :dest is a folder. Append '/' to dest to write into directory or set :force to true to delete destination folder and write as file."))))
+
+)))

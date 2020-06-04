@@ -21,10 +21,24 @@
 
 (defn is-file? [run path]
   (->> (facts/on-os
-        :freebsd (run (format "if ( -f \"%s\" ) then\necho file\nelse\necho dir\nendif\n" path))
-        :else (run (format "if [ -f \"%s\" ]; then echo file; else echo dir; fi" path)))
+        :freebsd (run (format "if ( -f \"%s\" ) then\necho file\nelse\necho not\nendif\n" path))
+        :else (run (format "if [ -f \"%s\" ]; then echo file; else echo not; fi" path)))
        string/trim
        (= "file")))
+
+(defn is-dir? [run path]
+  (->> (facts/on-os
+        :freebsd (run (format "if ( -d \"%s\" ) then\necho dir\nelse\necho not\nendif\n" path))
+        :else (run (format "if [ -d \"%s\" ]; then echo dir; else echo not; fi" path)))
+       string/trim
+       (= "dir")))
+
+(defn exists? [run path]
+  (->> (facts/on-os
+        :freebsd (run (format "if ( -e \"%s\" ) then\necho exists\nelse\necho not\nendif\n" path))
+        :else (run (format "if [ -e \"%s\" ]; then echo exists; else echo not; fi" path)))
+       string/trim
+       (= "exists")))
 
 (defn process-md5-out
   ([line]
