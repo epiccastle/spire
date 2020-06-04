@@ -374,13 +374,23 @@
              {:result :changed :attr-result {:result :changed} :copy-result {:result :ok}}))
 
       (is (= (slurp (str dest-path "/a")) "a"))
-      (is (= (slurp (str dest-path "/b")) "b"))
+      (is (= (slurp (str dest-path "/b")) "b"))))
 
+  (testing "copying tree over without dir-mode breaks"
+    (let [src-path "/tmp/spire-upload-sync3-src"
+          dest-path "/tmp/spire-upload-sync3-dest"]
+      (doseq [path [src-path dest-path]]
+        (test-utils/remove-file path)
+        (test-utils/makedirs path)
+        (spit (str path "/a") "a")
+        (spit (str path "/b") "b"))
 
+      (test-utils/run (format "chmod a+x '%s'" (str dest-path "/a")))
 
-      )
+      (is (= (upload/upload {:src src-path :dest dest-path :recurse true :mode 0644})
+             {:result :changed :attr-result {:result :changed} :copy-result {:result :ok}}))
 
-
-
+      (is (= (slurp (str dest-path "/a")) "a"))
+      (is (= (slurp (str dest-path "/b")) "b")))
     )
   )

@@ -306,8 +306,8 @@
                                        {:path dest
                                         :owner owner
                                         :group group
-                                        :mode mode
-                                        :dir-mode dir-mode
+                                        :mode (or mode 0644)
+                                        :dir-mode (or dir-mode 0755)
                                         :attrs attrs
                                         :recurse recurse})
 
