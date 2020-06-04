@@ -205,9 +205,9 @@
                    (prn "lkeys:" (keys local)))
 
                  (cond
-                   (and remote-file? force)
+                   force
                    (do
-                     (run (format "rm -f \"%s\"" dest))
+                     (run (format "rm -rf \"%s\"" dest))
                      (scp-result
                       (scp/scp-to session content dest
                                   :progress-fn progress-fn

@@ -345,8 +345,9 @@
         (catch clojure.lang.ExceptionInfo e
           (is (re-find #"[pP]ermission denied" (:msg (ex-data e))))))
 
-      ;;(is (= 0 (upload/upload {:src src-path :dest dest-path :recurse true :force true})))
+      (is (= (upload/upload {:src src-path :dest dest-path :recurse true :force true})
+             {:result :changed :attr-result {:result :ok} :copy-result {:result :changed}}))
 
-      ;;(is (= (slurp (str dest-path "/a")) "a"))
+      (is (= (slurp (str dest-path "/a")) "a"))
       (is (= (slurp (str dest-path "/b")) "b"))
       )))
