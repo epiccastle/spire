@@ -30,6 +30,8 @@
   [^InputStream in]
   (let [code (.read in)]
     (when-not (zero? code)
+      ;; TODO: error should be read over stderr. we have bundled
+      ;; stderr on stdout. Not elegant.
       (let [msg (loop [c (.read in)
                        s ""]
                   (if (#{10 13} c)
