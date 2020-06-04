@@ -335,7 +335,11 @@
         (spit (str path "/a") "a")
         (spit (str path "/b") "b"))
       (spit (str dest-path "/b") "changed")
-      (test-utils/run (format "chmod a-w '%s'" (str dest-path "/b")))
+      ;;(test-utils/run (format "chmod a-w '%s'" (str dest-path "/b")))
 
-      (is (= 0 (upload/upload {:src src-path :dest dest-path :recurse true})))
+      (is (= (upload/upload {:src src-path :dest dest-path :recurse true})
+             {:result :changed :attr-result {:result :ok} :copy-result {:result :changed}}
+             ))
+
+      (is (= (slurp (str dest-path "/b")) "b"))
       )))
