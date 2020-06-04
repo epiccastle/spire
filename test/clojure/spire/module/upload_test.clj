@@ -343,8 +343,7 @@
       (try
         (upload/upload {:src src-path :dest dest-path :recurse true})
         (catch clojure.lang.ExceptionInfo e
-          (is (.contains (:msg (ex-data e))
-                 "ermission denied"))))
+          (is (re-find #"[pP]ermission denied" (:msg (ex-data e))))))
 
       ;;(is (= 0 (upload/upload {:src src-path :dest dest-path :recurse true :force true})))
 
