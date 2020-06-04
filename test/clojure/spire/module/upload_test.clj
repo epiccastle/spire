@@ -360,7 +360,7 @@
         (spit (str path "/a") "a")
         (spit (str path "/b") "b"))
 
-      (test-utils/run (format "chmod a-r '%s'" (str dest-path "/a")))
+      (test-utils/run (format "chmod a+x '%s'" (str dest-path "/a")))
 
       (is (= (upload/upload {:src src-path :dest dest-path :recurse true})
              {:result :changed :attr-result {:result :changed} :copy-result {:result :ok}}))
