@@ -30,7 +30,13 @@
   [^InputStream in]
   (let [code (.read in)]
     (when-not (zero? code)
-      (throw (ex-info "scp protocol error" {:code code})))))
+      (let [msg (loop [c (.read in)
+                       s ""]
+                  (if (#{10 13} c)
+                    s
+                    (recur (.read in) (str s (char c)))))]
+        (throw (ex-info "scp protocol error" {:code code
+                                              :msg msg}))))))
 
 (defn- scp-send-command
   "Send command to the specified output stream"
