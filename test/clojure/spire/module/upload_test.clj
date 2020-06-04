@@ -55,11 +55,9 @@
        ;; try and copy directory over existing file without :force
        (test-utils/should-ex-data
         {:result :failed
-         :attr-result {:result :ok}
-         :copy-result {:result :failed
-                       :out ""
-                       :exit 1
-                       :err "Cannot copy :src directory over :dest. Destination is a file. Use :force to delete destination file and replace."}}
+         :out ""
+         :exit 1
+         :err "Cannot copy :src directory over :dest. Destination is a file. Use :force to delete destination file and replace."}
         (upload/upload {:src "test/files" :dest tf :recurse true}))
 
        ;; force copy dir over file
@@ -317,7 +315,7 @@
       (try
         (upload/upload {:src src-path :dest dest-path :recurse true})
         (catch clojure.lang.ExceptionInfo e
-          (is (= (:err (:copy-result (ex-data e)))
+          (is (= (:err (ex-data e))
                  "Cannot copy :src directory over :dest. Destination is a file. Use :force to delete destination file and replace."))))
 
       (is (= (upload/upload {:src src-path :dest dest-path :recurse true :force true})

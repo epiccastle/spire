@@ -145,6 +145,14 @@
         :exit 1
         :out ""}
 
+       (and recurse
+            remote-file?
+            (not force))
+       {:result :failed
+        :err "Cannot copy :src directory over :dest. Destination is a file. Use :force to delete destination file and replace."
+        :exit 1
+        :out ""}
+
        (not remote-writable?)
        {:result :failed
         :err "destination path unwritable"
@@ -197,12 +205,6 @@
                    (prn "lkeys:" (keys local)))
 
                  (cond
-                   (and remote-file? (not force))
-                   {:result :failed
-                    :err "Cannot copy :src directory over :dest. Destination is a file. Use :force to delete destination file and replace."
-                    :exit 1
-                    :out ""}
-
                    (and remote-file? force)
                    (do
                      (run (format "rm -f \"%s\"" dest))
