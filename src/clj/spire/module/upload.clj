@@ -245,10 +245,6 @@
                                   :exec-fn exec-fn
                                   :shell-fn shell-fn
                                   :stdin-fn stdin-fn
-
-                                  #_:remote-folder-exists
-                                  #_(and (remote "")
-                                         (= :dir (:type (remote ""))))
                                   )))))
 
                ;; straight single copy
