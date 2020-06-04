@@ -198,7 +198,10 @@
 
                  (cond
                    (and remote-file? (not force))
-                   {:result :failed :err "Cannot copy `content` directory over `dest`: destination is a file. Use :force to delete destination file and replace."}
+                   {:result :failed
+                    :err "Cannot copy :src directory over :dest. Destination is a file. Use :force to delete destination file and replace."
+                    :exit 1
+                    :out ""}
 
                    (and remote-file? force)
                    (do

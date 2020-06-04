@@ -54,9 +54,12 @@
 
        ;; try and copy directory over existing file without :force
        (test-utils/should-ex-data
-        {:result :failed,
-                  :attr-result {:result :ok},
-                  :copy-result {:result :failed, :err "Cannot copy `content` directory over `dest`: destination is a file. Use :force to delete destination file and replace."}}
+        {:result :failed
+         :attr-result {:result :ok}
+         :copy-result {:result :failed
+                       :out ""
+                       :exit 1
+                       :err "Cannot copy :src directory over :dest. Destination is a file. Use :force to delete destination file and replace."}}
         (upload/upload {:src "test/files" :dest tf :recurse true}))
 
        ;; force copy dir over file
@@ -266,7 +269,7 @@
         (catch clojure.lang.ExceptionInfo e
           (is (= "destination path unwritable" (:err (ex-data e))))))))
 
-  (testing "directoy :dest trying to become file :src"
+  (testing "directory :dest trying to become file :src"
     (let [src-path "/tmp/spire-upload-dest-dir-becomes-file-src"
           dest-path "/tmp/spire-upload-dest-dir-becomes-file-dest"]
       (spit src-path "foo")
@@ -285,8 +288,46 @@
 
       (is (= (upload/upload {:src src-path :dest dest-path :force true})
              {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
-             ))
+             ))))
+
+  (testing "directory :src trying to overwrite file :dest"
+    (let [src-path "/tmp/spire-upload-src-dir-becomes-file-src"
+          dest-path "/tmp/spire-upload-src-dir-becomes-file-dest"]
+      (test-utils/remove-file dest-path)
+      (spit dest-path "foo")
+      (test-utils/remove-file src-path)
+      (test-utils/makedirs src-path)
+      (spit (str src-path "/a") "a")
+      (spit (str src-path "/b") "b")
+
+      ;;(test-utils/run (format "chmod a-w '%s'" dest-path))
+
+      (is (thrown? clojure.lang.ExceptionInfo
+                   (upload/upload {:src src-path :dest dest-path})))
+
+      (try
+        (upload/upload {:src src-path :dest dest-path})
+        (catch clojure.lang.ExceptionInfo e
+          (is (= (:err (ex-data e))
+                 ":recurse must be true when :src specifies a directory."))))
+
+      (is (thrown? clojure.lang.ExceptionInfo
+                   (upload/upload {:src src-path :dest dest-path :recurse true})))
+
+      (try
+        (upload/upload {:src src-path :dest dest-path :recurse true})
+        (catch clojure.lang.ExceptionInfo e
+          (is (= (:err (:copy-result (ex-data e)))
+                 "Cannot copy :src directory over :dest. Destination is a file. Use :force to delete destination file and replace."))))
+
+      (is (= (upload/upload {:src src-path :dest dest-path :recurse true :force true})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+
+      (is (= "a" (slurp (str dest-path "/a"))))
+      (is (= "b" (slurp (str dest-path "/b"))))
 
 
+      ))
 
-)))
+
+  )
