@@ -366,6 +366,21 @@
              {:result :changed :attr-result {:result :changed} :copy-result {:result :ok}}))
 
       (is (= (slurp (str dest-path "/a")) "a"))
-      (is (= (slurp (str dest-path "/b")) "b")))
+      (is (= (slurp (str dest-path "/b")) "b"))
+
+      (test-utils/run (format "chmod a+x '%s'" (str dest-path "/a")))
+
+      (is (= (upload/upload {:src src-path :dest dest-path :recurse true :mode 0644})
+             {:result :changed :attr-result {:result :changed} :copy-result {:result :ok}}))
+
+      (is (= (slurp (str dest-path "/a")) "a"))
+      (is (= (slurp (str dest-path "/b")) "b"))
+
+
+
+      )
+
+
+
     )
   )
