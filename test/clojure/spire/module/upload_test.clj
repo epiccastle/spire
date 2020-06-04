@@ -334,12 +334,20 @@
         (test-utils/makedirs path)
         (spit (str path "/a") "a")
         (spit (str path "/b") "b"))
-      (spit (str dest-path "/b") "changed")
-      ;;(test-utils/run (format "chmod a-w '%s'" (str dest-path "/b")))
+      (spit (str dest-path "/a") "changed")
+      (test-utils/run (format "chmod a-w '%s'" (str dest-path "/a")))
 
-      (is (= (upload/upload {:src src-path :dest dest-path :recurse true})
-             {:result :changed :attr-result {:result :ok} :copy-result {:result :changed}}
-             ))
+      (is (thrown? clojure.lang.ExceptionInfo
+                   (upload/upload {:src src-path :dest dest-path :recurse true})))
 
+      (try
+        (upload/upload {:src src-path :dest dest-path :recurse true})
+        (catch clojure.lang.ExceptionInfo e
+          (is (.contains (:msg (ex-data e))
+                 "ermission denied"))))
+
+      ;;(is (= 0 (upload/upload {:src src-path :dest dest-path :recurse true :force true})))
+
+      ;;(is (= (slurp (str dest-path "/a")) "a"))
       (is (= (slurp (str dest-path "/b")) "b"))
       )))
