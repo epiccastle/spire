@@ -272,7 +272,7 @@
       (spit src-path "foo")
       (test-utils/remove-file dest-path)
       (test-utils/makedirs dest-path)
-      (test-utils/run (format "chmod a-w '%s'" dest-path))
+      ;;(test-utils/run (format "chmod a-w '%s'" dest-path))
 
       (is (thrown? clojure.lang.ExceptionInfo
                    (upload/upload {:src src-path :dest dest-path})))
@@ -282,5 +282,11 @@
         (catch clojure.lang.ExceptionInfo e
           (is (= (:err (ex-data e))
                  ":src is a single file while :dest is a folder. Append '/' to dest to write into directory or set :force to true to delete destination folder and write as file."))))
+
+      (is (= (upload/upload {:src src-path :dest dest-path :force true})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+             ))
+
+
 
 )))

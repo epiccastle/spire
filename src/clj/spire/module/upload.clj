@@ -136,11 +136,14 @@
                          (io/file (utils/current-file-parent) src))))
          ]
      (cond
-       (and (or local-file? content?)
+       (and (not force)
+            (or local-file? content?)
             (not (string/ends-with? dest "/"))
             remote-dir?)
        {:result :failed
-        :err ":src is a single file while :dest is a folder. Append '/' to dest to write into directory or set :force to true to delete destination folder and write as file."}
+        :err ":src is a single file while :dest is a folder. Append '/' to dest to write into directory or set :force to true to delete destination folder and write as file."
+        :exit 1
+        :out ""}
 
        (not remote-writable?)
        {:result :failed
