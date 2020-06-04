@@ -34,7 +34,7 @@
       ;; stderr on stdout. Not elegant.
       (let [msg (loop [c (.read in)
                        s ""]
-                  (if (#{10 13} c)
+                  (if (#{10 13 -1 0} c)
                     s
                     (recur (.read in) (str s (char c)))))]
         (throw (ex-info "scp protocol error" {:code code
