@@ -349,5 +349,23 @@
              {:result :changed :attr-result {:result :ok} :copy-result {:result :changed}}))
 
       (is (= (slurp (str dest-path "/a")) "a"))
-      (is (= (slurp (str dest-path "/b")) "b"))
-      )))
+      (is (= (slurp (str dest-path "/b")) "b"))))
+
+  (testing "copying tree over existing copy with changed perms only changes attrs"
+    (let [src-path "/tmp/spire-upload-sync2-src"
+          dest-path "/tmp/spire-upload-sync2-dest"]
+      (doseq [path [src-path dest-path]]
+        (test-utils/remove-file path)
+        (test-utils/makedirs path)
+        (spit (str path "/a") "a")
+        (spit (str path "/b") "b"))
+
+      (test-utils/run (format "chmod a-r '%s'" (str dest-path "/a")))
+
+      (is (= (upload/upload {:src src-path :dest dest-path :recurse true})
+             {:result :changed :attr-result {:result :changed} :copy-result {:result :ok}}))
+
+      (is (= (slurp (str dest-path "/a")) "a"))
+      (is (= (slurp (str dest-path "/b")) "b")))
+    )
+  )
