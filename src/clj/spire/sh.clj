@@ -60,12 +60,20 @@
     [os (PipedOutputStream. os)]))
 
 (defn read-all-bytes [input-stream]
-  (byte-array
-   (loop [output []]
-     (let [c (.read ^java.io.InputStream input-stream)]
-       (if (= -1 c)
-         output
-         (recur (conj output c)))))))
+  (->>
+   (loop [out []]
+     (let [avail (.available ^java.io.InputStream input-stream)]
+       (if (pos? avail)
+         (let [out-array (byte-array avail)]
+           (.read ^java.io.InputStream input-stream out-array 0 avail)
+           (recur (conj out out-array)))
+         ;; might be at end of stream. try and read.
+         (let [res (.read ^java.io.InputStream input-stream)]
+           (if-not (= -1 res)
+             (recur (conj out (byte-array [res])))
+             ;;end of stream
+             out)))))
+   (apply concat)))
 
 (defn exec [cmd in out opts]
   (let [{:keys [out-reader
@@ -81,11 +89,21 @@
         (.close ^java.io.OutputStream in-stream))
       ;; java.io.PipedInputStream
       (future
-        (loop [c (.read ^java.io.InputStream in)]
-          (when (not= -1 c)
-            (.write ^java.io.OutputStream in-stream c)
-            (.flush ^java.io.OutputStream in-stream) ;; have to force it to be unbuffered for chatty protocols like scp
-            (recur (.read ^java.io.InputStream in))))
+        (loop []
+          (let [avail (.available ^java.io.InputStream in)]
+            (if (pos? avail)
+              (let [out-array (byte-array avail)
+                    res (.read ^java.io.InputStream in out-array 0 avail)]
+                (when-not (= -1 res)
+                  (.write ^java.io.OutputStream in-stream out-array 0 avail)
+                  (.flush ^java.io.OutputStream in-stream) ;; have to force it to be unbuffered for chatty protocols like scp
+                  (recur)))
+              ;; maybe we are at end of stream. try and read
+              (let [res (.read ^java.io.InputStream in)]
+                (when-not (= -1 res)
+                  (.write ^java.io.OutputStream in-stream res)
+                  (.flush ^java.io.OutputStream in-stream) ;; have to force it to be unbuffered for chatty protocols like scp
+                  (recur))))))
         (.close ^java.io.OutputStream in-stream)))
     (let [output
           (cond
