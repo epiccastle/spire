@@ -30,7 +30,7 @@
                   [filename
                    {
                     :type :file
-                    :filename filename
+                    :filename (if (empty? filename) (.getName ^java.io.File f) filename)
                     :md5sum (digest/md5 f)
                     :mode mode
                     :mode-string (format "%o" mode)
@@ -45,7 +45,7 @@
                   [filename
                    {
                     :type :dir
-                    :filename filename
+                    :filename (if (empty? filename) (.getName ^java.io.File f) filename)
                     :mode mode
                     :mode-string (format "%o" mode)
                     :last-access (nio/last-access-time f)
