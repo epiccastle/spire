@@ -168,15 +168,18 @@
                                                       (io/file dest (.getName (io/file (str content))))))
 
              {:keys [local local-to-remote identical-content remote]} transfers
+
              total-size (if content?
                           (utils/content-size content)
                           (->> local-to-remote
                                (map (comp :size local))
                                (apply +)))
 
-             max-filename-length (->> local-to-remote
-                                      (map (comp count #(.getName %) io/file :filename local))
-                                      (apply max 0))
+             max-filename-length (if content?
+                                   (count (utils/content-display-name content))
+                                   (->> local-to-remote
+                                        (map (comp count #(.getName %) io/file :filename local))
+                                        (apply max 0)))
 
              progress-fn (fn [file bytes total frac context]
                            (output/print-progress
