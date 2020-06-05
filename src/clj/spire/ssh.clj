@@ -233,7 +233,7 @@ keys.  All other option key pairs will be passed as SSH config options."
     output, then this buffer size can become a bottleneck. You might also
     increase the frequency with which you read the output stream if this is an
     issue."}
-  *piped-stream-buffer-size* (* 1024 10))
+  *piped-stream-buffer-size* (* 1024 256))
 
 (defn- streams-for-out
   [out]

@@ -54,7 +54,7 @@
   "Send acknowledgement to the specified output stream"
   [^OutputStream send ^InputStream recv ^File file
    {:keys [mode buffer-size preserve progress-fn]
-    :or {mode 0644 buffer-size (* 32 1024) preserve false}}
+    :or {mode 0644 buffer-size (* 256 1024) preserve false}}
    & [progress-context]]
   (debug "scp-copy-file:" progress-context)
   (when preserve
@@ -117,7 +117,7 @@
   "Send acknowledgement to the specified output stream"
   [^OutputStream send ^InputStream recv data size dest-name
    {:keys [mode buffer-size progress-fn]
-    :or {mode 0644 buffer-size (* 32 1024) preserve false}}]
+    :or {mode 0644 buffer-size (* 256 1024) preserve false}}]
   (let [size size #_(count data)]
     (scp-send-command
      send recv
@@ -345,7 +345,7 @@
 (defn scp-sink-file
   "Sink a file"
   [^OutputStream send ^InputStream recv
-   ^File file mode length {:keys [buffer-size progress-fn] :or {buffer-size (* 32 1024)}} & [progress-context]]
+   ^File file mode length {:keys [buffer-size progress-fn] :or {buffer-size (* 256 1024)}} & [progress-context]]
   (debugf "Sinking %d bytes to file %s" length (.getPath file))
   (let [buffer (byte-array buffer-size)
         final-progress-context
