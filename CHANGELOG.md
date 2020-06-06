@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file. This change
 - fixed a number of problems with upload - #69 #70 #74
 - fixed a problem with java.time.Instant - #71
 - fixed slow local process uploads - #73
+- fixed unhygenic context macros - #75
+- fixed shell module snaffling command exit code when using :creates - #76
 
 ### Added
 - added a big list of java classes - #63
