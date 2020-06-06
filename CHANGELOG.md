@@ -3,6 +3,17 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+### Fixed
+- fixed missing spire.selmer namespace mount - #64
+- fixed broken stdout during evaluation - #67
+- fixed a number of problems with upload - #69 #70 #74
+- fixed a problem with java.time.Instant - #71
+- fixed slow local process uploads - #73
+
+### Added
+- added a big list of java classes - #63
+- added cheshire javascript library - #68
+
 ## [0.1.0-alpha.12] - 2020-05-19
 
 ### Fixed
