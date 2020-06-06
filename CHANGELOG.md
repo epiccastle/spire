@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file. This change
 
 ### Added
 - added a big list of java classes - #63
-- added cheshire javascript library - #68
+- added cheshire json library - #68
 
 ## [0.1.0-alpha.12] - 2020-05-19
 
