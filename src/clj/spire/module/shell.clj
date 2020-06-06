@@ -49,7 +49,7 @@
                      ;; stdin
                      (stdin-fn
                       (if creates
-                        (format "cd \"%s\"\nif [ %s ]; then\nexit 0\nelse\nexport %s; %s\nexit -1\nfi\n"
+                        (format "cd \"%s\"\nif [ %s ]; then\nexit 0\nelse\nexport %s; set -e; %s\nexit -1\nfi\n"
                                 dir (make-exists-string creates)
                                 env-string cmd)
                         (format "cd \"%s\"; export %s; %s" dir env-string cmd)))
