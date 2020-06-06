@@ -6,7 +6,7 @@
 
 (defn binding-sym []
   (if (= :sci @context)
-    'binding
+    'clojure.core/binding
     'sci.core/binding))
 
 (defmacro binding* [binding-pairs & body]
@@ -16,8 +16,8 @@
 
 (defn deref-sym []
   (if (= :sci @context)
-    'identity
-    'deref))
+    'clojure.core/identity
+    'clojure.core/deref))
 
 (defmacro deref* [& body]
   (concat [(deref-sym)] body))
