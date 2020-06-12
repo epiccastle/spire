@@ -460,7 +460,7 @@
              #_(string/join " " remote-paths))
         _ (debugf "scp-from: %s" cmd)
         {:keys [^ChannelExec channel
-                ^PipedInputStream out-stream]}
+                out-stream]}
         (exec-fn session (shell-fn cmd) (stdin-fn in) :stream opts)
         exec channel
         recv out-stream]
@@ -472,4 +472,5 @@
     (debug "Closing streams")
     (.close send)
     (.close recv)
+    (debug "closed")
     true))
