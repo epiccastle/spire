@@ -324,6 +324,7 @@
    'java.lang.Throwable java.lang.Throwable
    'java.math.BigDecimal java.math.BigDecimal
    'java.math.BigInteger java.math.BigInteger
+   'java.net.ConnectException java.net.ConnectException
    'java.net.DatagramSocket java.net.DatagramSocket
    'java.net.DatagramPacket java.net.DatagramPacket
    'java.net.HttpURLConnection java.net.HttpURLConnection
