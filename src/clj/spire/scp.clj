@@ -332,7 +332,8 @@
     (let [cmd (loop [offset 0]
                 (let [n (.read in buffer offset (- buffer-size offset))]
                   (debugf
-                   "scp-receive-command: %s"
+                   "scp-receive-command: %d %s"
+                   (first buffer)
                    (String. buffer (int 0) (int (+ offset n))))
                   (if (= \newline (char (aget buffer (+ offset n -1))))
                     (String. buffer (int 0) (int (+ offset n)))
@@ -432,45 +433,59 @@
            (debug "\\E")
            (let [new-depth (dec depth)]
              (when (pos? new-depth)
-               (recur (scp-receive-command send recv) (io/file (.getParent file)) nil new-depth context)))))))
+               (recur (scp-receive-command send recv) (io/file (.getParent file)) nil new-depth context))))
+
+      (when cmd
+        (when (= 1 (int (first cmd)))
+          ;; TODO: what to do with the error message?
+          (let [[error next-cmd] (string/split (subs cmd 1) #"\n")]
+            (println "WARNING:" error)
+            (recur next-cmd file nil depth context)))))))
 
 
 (defn scp-from
   "Copy remote path(s) to local path via scp."
-  [session remote-path ^String local-path
+  [session remote-paths ^String local-path
    & {:keys [username password port mode dir-mode recurse preserve shell-fn stdin-fn exec-fn]
       :as opts
       :or {shell-fn identity
            stdin-fn identity}}]
-  (let [file (File. local-path)
-        [^PipedInputStream in
-         ^PipedOutputStream send] (ssh/streams-for-in)
-        flags {:recurse "-r" :preserve "-p"}
-        cmd (format
-             "scp %s -f %s"
-             (:remote-flags
-              opts
-              (string/join
-               " "
-               (->>
-                (select-keys opts [:recurse :preserve])
-                (filter val)
-                (map (comp flags key)))))
-             remote-path
-             #_(string/join " " remote-paths))
-        _ (debugf "scp-from: %s" cmd)
-        {:keys [^ChannelExec channel
-                out-stream]}
-        (exec-fn session (shell-fn cmd) (stdin-fn in) :stream opts)
-        exec channel
-        recv out-stream]
-    (debugf
-     "scp-from %s %s" remote-path local-path)
-    (scp-send-ack send)
-    (debug "Sent initial ACK")
-    (scp-sink send recv file nil opts {:fileset-file-start 0})
-    (debug "Closing streams")
-    (.close send)
-    (.close recv)
-    (debug "closed")
-    true))
+  (let [remote-paths? (sequential? remote-paths)
+        remote-paths (if remote-paths? remote-paths [remote-paths])
+        ;;files (scp-files local-paths recurse)
+        results
+        (for [remote-path remote-paths]
+          (let [file (File. local-path)
+                [^PipedInputStream in
+                 ^PipedOutputStream send] (ssh/streams-for-in)
+                flags {:recurse "-r" :preserve "-p"}
+                cmd (format
+                     "scp %s -f %s"
+                     (:remote-flags
+                      opts
+                      (string/join
+                       " "
+                       (->>
+                        (select-keys opts [:recurse :preserve])
+                        (filter val)
+                        (map (comp flags key)))))
+                     remote-path
+                     #_(string/join " " remote-paths))
+                _ (debugf "scp-from: %s" cmd)
+                {:keys [^ChannelExec channel
+                        out-stream]}
+                (exec-fn session (shell-fn cmd) (stdin-fn in) :stream opts)
+                exec channel
+                recv out-stream]
+            (debugf
+             "scp-from %s %s" remote-path local-path)
+            (scp-send-ack send)
+            (debug "Sent initial ACK")
+            (scp-sink send recv file nil opts {:fileset-file-start 0})
+            (debug "Closing streams")
+            (.close send)
+            (.close recv)
+            (debug "closed")
+            true))]
+    (some identity results)
+    ))
