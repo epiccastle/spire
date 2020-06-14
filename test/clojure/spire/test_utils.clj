@@ -4,8 +4,8 @@
    [clojure.java.shell :as shell]
    [clojure.java.io :as io]
    [clojure.string :as string]
-   [spire.ssh :as ssh]
-   ))
+   [spire.ssh :as ssh])
+  (:import [java.nio.file Files]))
 
 
 
@@ -83,11 +83,13 @@
     (if-not remain
       `(let [~sym (create-temp-file-name)]
          (try ~@body
-              (finally (remove-file ~sym))))
+              (finally (remove-file ~sym))
+              ))
       `(let [~sym (create-temp-file-name)]
          (try
            (with-temp-file-names ~(subvec syms 1) ~@body)
-           (finally (remove-file ~sym)))))))
+           (finally (remove-file ~sym))
+           )))))
 
 (defn is-root? []
   (= "root" (System/getProperty "user.name")))
@@ -156,6 +158,9 @@
 
 (defn makedirs [path]
   (.mkdirs (io/file path)))
+
+(defn ln-s [dest src]
+  (run (format "ln -s '%s' '%s'" dest src)))
 
 (def stat-linux->bsd
   {
@@ -309,3 +314,6 @@
   [file bytes]
   (with-open [out (io/output-stream (io/file file))]
     (.write out bytes)))
+
+(defn sym-link? [f]
+  (Files/isSymbolicLink (.toPath f)))
