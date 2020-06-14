@@ -34,10 +34,7 @@
             :exit 3
             :err "when providing :preverse you cannot also specify :mode or :dir-mode")
 
-     (and src (utils/content-recursive? (io/file src)) (not recurse))
-     (assoc failed-result
-            :exit 3
-            :err ":recurse must be true when :src specifies a directory."))))
+     )))
 
 (defn process-result [opts copy-result attr-result]
   (let [result {:result :failed
@@ -92,14 +89,81 @@
 
          ;; analyse local and remote paths
          local-file? (local/is-file? dest)
-         remote-readable? (remote/is-readable? run src)]
+         local-dir? (local/is-dir? dest)
+         local-writable? (local/is-writable? dest)
+         local-exists? (.exists (io/file dest))
+         local-parent (.getParent (io/file dest))
+         local-parent-readable? (local/is-readable? local-parent)
+         dest-ends-with-slash? (string/ends-with? dest "/")
 
-     (if-not remote-readable?
+         remote-readable? (remote/is-readable? run src)
+         remote-dir? (remote/is-dir? run src)
+         src-ends-with-slash? (string/ends-with? src "/")
+
+         ]
+
+     (cond
+       (not remote-readable?)
        {:result :failed
-        :err "destination path unreadable"
+        :err ":src path is unreadable on remote. Check path exists and is readable by user."
         :exit 1
         :out ""
         }
+
+       (and src
+            remote-dir?
+            (not recurse))
+       (assoc failed-result
+              :exit 3
+              :err ":recurse must be true when :src specifies a directory.")
+
+       (and
+        remote-dir?
+        (not local-exists?))
+       {:result :failed
+        :err ":dest path does not exist."
+        :exit 1
+        :out ""
+        }
+
+       (and
+        (not force)
+        remote-readable?
+        (not remote-dir?)
+        flat)
+       {:result :failed
+        :err ":src is a single file while :dest is a folder. Append '/' to dest to write into directory or set :force to true to delete destination folder and write as file."
+        :exit 1
+        :out ""
+        }
+
+       (and recurse
+            remote-dir?
+            local-file?
+            (not force))
+       {:result :failed
+        :err "Cannot copy :src directory over :dest. Destination is a file. Use :force to delete destination file and replace."
+        :exit 1
+        :out ""}
+
+       (and
+        (not flat)
+        (not local-writable?))
+        {:result :failed
+        :err "destination path :dest is unwritable"
+        :exit 1
+        :out ""}
+
+       #_(and
+          flat
+          (not (.exists (.getParent (io/file dest)))))
+       #_{:result :failed
+          :err (format ":dest container folder '%s' does not exist." (.getParent (io/file dest)))
+          :exit 1
+          :out ""
+          }
+
+       :else
        (let [remote-file? (remote/is-file? run src)
 
              destination (if flat (io/file dest) (io/file dest (name (:key host-config))))
@@ -109,7 +173,21 @@
               (if remote-file? destination (io/file destination (.getName (io/file src))))
               run src)
 
+             ;;_ (prn comparison)
+
+             ;; files to transfer
              {:keys [sizes total]} (compare/remote-to-local comparison)
+
+             ;; dirs to transfer (preserve empties)
+             dirs-structure-remote (compare/remote-to-local-dirs comparison)
+             dirs-structure-local (->> comparison
+                                       :local
+                                       (filter (fn [[_ {:keys [type]}]] (= :dir type)))
+                                       (map first)
+                                       (into #{})
+                                       )
+
+             ;;_ (prn dirs-structure-remote dirs-structure-local)
 
              max-filename-length (->> remote-to-local
                                       (map count)
@@ -155,21 +233,27 @@
                  (not local-file?)
                  (do
                    (.mkdirs destination)
+                   (doseq [[path {:keys [type mode-string mode last-access last-modified]}]
+                           dirs-structure-remote]
+                     (.mkdirs (io/file destination path)))
                    (scp-result
-                    (when (not=
-                           (count identical-content)
-                           (count (filter #(= :file (:type (second %))) remote)))
-                      (scp/scp-from session src (str destination)
-                                    :progress-fn progress-fn
-                                    :preserve preserve
-                                    :dir-mode (or dir-mode 0755)
-                                    :mode (or mode 0644)
-                                    :recurse true
-                                    :skip-files identical-content
-                                    :exec exec
-                                    :exec-fn exec-fn
-                                    :shell-fn shell-fn
-                                    :stdin-fn stdin-fn)))))
+                    (or (when (not=
+                               (count identical-content)
+                               (count (filter #(= :file (:type (second %))) remote)))
+                          (scp/scp-from session src (str destination)
+                                        :progress-fn progress-fn
+                                        :preserve preserve
+                                        :dir-mode (or dir-mode 0755)
+                                        :mode (or mode 0644)
+                                        :recurse true
+                                        :skip-files identical-content
+                                        :exec exec
+                                        :exec-fn exec-fn
+                                        :shell-fn shell-fn
+                                        :stdin-fn stdin-fn))
+                        (not (empty?
+                              (filter #(not (dirs-structure-local (first %))) dirs-structure-remote)))
+                        ))))
 
                ;; non recursive
                (let [local-md5sum (get-in local [(.getName (io/file src)) :md5sum])
