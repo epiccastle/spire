@@ -241,9 +241,17 @@
         (catch clojure.lang.ExceptionInfo e
           (is (= ":recurse must be true when :src specifies a directory." (:err (ex-data e))))))))
 
+  (testing ":src does not exist"
+    (let [path "/tmp/spire-upload-dest-not-exist"]
+      (spit path "foo")
+      (test-utils/remove-file "/tmp/foo/bar")
+      (is (thrown? java.io.FileNotFoundException
+                   (upload/upload {:dest path :src "/tmp/foo/bar/baz"})))))
+
   (testing ":dest does not exist"
     (let [path "/tmp/spire-upload-dest-not-exist"]
       (spit path "foo")
+      (test-utils/remove-file "/tmp/foo/bar")
       (is (thrown-with-msg? clojure.lang.ExceptionInfo #"module failed"
                             (upload/upload {:src path :dest "/tmp/foo/bar/baz"})))
       (try
