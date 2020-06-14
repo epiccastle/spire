@@ -257,7 +257,7 @@
       (try
         (upload/upload {:src path :dest "/tmp/foo/bar/baz"})
         (catch clojure.lang.ExceptionInfo e
-          (is (= "destination path unwritable" (:err (ex-data e))))))))
+          (is (= "destination path :dest is unwritable" (:err (ex-data e))))))))
 
   (testing "no permissions to write to :dest"
     (let [src-path "/tmp/spire-upload-dest-perms-src"
@@ -273,7 +273,7 @@
       (try
         (upload/upload {:src src-path :dest (str dest-path "/")})
         (catch clojure.lang.ExceptionInfo e
-          (is (= "destination path unwritable" (:err (ex-data e))))))))
+          (is (= "destination path :dest is unwritable" (:err (ex-data e))))))))
 
   (testing "directory :dest trying to become file :src"
     (let [src-path "/tmp/spire-upload-dest-dir-becomes-file-src"
