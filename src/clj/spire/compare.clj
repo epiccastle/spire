@@ -86,3 +86,8 @@
         total (apply + (vals sizes))]
     {:sizes sizes
      :total total}))
+
+(defn remote-to-local-dirs [{:keys [remote-to-local remote]}]
+  (->> remote
+       (filter (fn [[_ {:keys [type]}]] (= :dir type))))
+  )

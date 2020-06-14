@@ -11,6 +11,15 @@
 (defn is-file? [path]
   (.isFile (io/file path)))
 
+(defn is-dir? [path]
+  (.isDirectory (io/file path)))
+
+(defn is-readable? [path]
+  (.canWrite (io/file path)))
+
+(defn is-writable? [path]
+  (.canRead (io/file path)))
+
 (defn path-md5sums [path]
   (->> (file-seq (io/file path))
        (filter #(.isFile ^java.io.File %))
