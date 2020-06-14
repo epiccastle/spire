@@ -155,7 +155,7 @@
 
        (not remote-writable?)
        {:result :failed
-        :err "destination path unwritable"
+        :err "destination path :dest is unwritable"
         :exit 1
         :out ""}
 
