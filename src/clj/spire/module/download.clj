@@ -90,14 +90,16 @@
          ;; analyse local and remote paths
          local-file? (local/is-file? dest)
          local-dir? (local/is-dir? dest)
-         local-writable? (local/is-writable? dest)
          local-exists? (.exists (io/file dest))
          local-parent (.getParent (io/file dest))
          local-parent-readable? (local/is-readable? local-parent)
          dest-ends-with-slash? (string/ends-with? dest "/")
-
+         local-writable? (if (not (string/ends-with? dest "/"))
+                            (local/is-writable? (utils/containing-folder dest))
+                            (local/is-writable? dest))
          remote-readable? (remote/is-readable? run src)
          remote-dir? (remote/is-dir? run src)
+         src-name (.getName (io/file src))
          src-ends-with-slash? (string/ends-with? src "/")
 
          ]
@@ -170,11 +172,14 @@
        :else
        (let [remote-file? (remote/is-file? run src)
 
-             destination (if flat (io/file dest) (io/file dest (name (:key host-config))))
+             destination (if dest-ends-with-slash?
+                           (io/file dest src-name)
+                           (io/file dest))
 
              {:keys [remote-to-local identical-content local remote] :as comparison}
              (compare/compare-full-info
-              (if remote-file? destination (io/file destination (.getName (io/file src))))
+              destination
+              #_(if remote-file? destination (io/file destination (.getName (io/file src))))
               run src)
 
              ;;_ (prn comparison)
@@ -262,7 +267,6 @@
                ;; non recursive
                (let [local-md5sum (get-in local [(.getName (io/file src)) :md5sum])
                      remote-md5sum (get-in remote ["" :md5sum])]
-                 (.mkdirs destination)
                  #_(.mkdirs destination)
                  (scp-result
                   ;; (println "--" local remote)
