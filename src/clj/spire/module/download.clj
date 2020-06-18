@@ -220,7 +220,7 @@
                  (and local-file? force)
                  (do
                    (.delete (io/file dest))
-                   (.mkdirs destination)
+                   #_(.mkdirs destination)
                    (scp-result
                     (scp/scp-from session src (str destination)
                                   :progress-fn progress-fn
@@ -236,7 +236,7 @@
 
                  (not local-file?)
                  (do
-                   (.mkdirs destination)
+                   #_(.mkdirs destination)
                    (doseq [[path {:keys [type mode-string mode last-access last-modified]}]
                            dirs-structure-remote]
                      (.mkdirs (io/file destination path)))
@@ -263,6 +263,7 @@
                (let [local-md5sum (get-in local [(.getName (io/file src)) :md5sum])
                      remote-md5sum (get-in remote ["" :md5sum])]
                  (.mkdirs destination)
+                 #_(.mkdirs destination)
                  (scp-result
                   ;; (println "--" local remote)
                   ;; (println ">>" local-md5sum remote-md5sum)
