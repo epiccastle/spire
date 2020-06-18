@@ -6,6 +6,7 @@
             [spire.ssh :as ssh]
             [spire.state :as state]
             [clojure.string :as string]
+            [clojure.java.io :as io]
             ))
 
 (clojure.lang.RT/loadLibrary "spire")
@@ -38,7 +39,7 @@
                  ]
              (is (= choice
                     {:type :file
-                     :filename ""
+                     :filename (.getName (io/file tf))
                      :md5sum "0b26e313ed4a7ca6904b0e9369e5b957"
                      :mode-string "644"
                      :mode 420
