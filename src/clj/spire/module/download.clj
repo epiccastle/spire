@@ -15,7 +15,7 @@
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
-(defn preflight [{:keys [src dest recurse preserve flat dir-mode mode] :as opts}]
+(defn preflight [{:keys [src dest recurse preserve dir-mode mode] :as opts}]
   (or
    (facts/check-bins-present #{:scp})
    (cond
@@ -69,8 +69,8 @@
        {:result :failed :exception e#})))
 
 (utils/defmodule download* [source-code-file form form-meta
-                            {:keys [src dest recurse preserve flat
-                                    dir-mode mode owner group attrs] :as opts}]
+                            {:keys [src dest recurse preserve
+                                    dir-mode mode owner group attrs force] :as opts}]
   [host-config session {:keys [exec exec-fn shell-fn stdin-fn] :as shell-context}]
   (or
    (preflight opts)
@@ -128,9 +128,14 @@
 
        (and
         (not force)
+        ;; src
         remote-readable?
         (not remote-dir?)
-        flat)
+
+        ;; dest
+        local-dir?
+        (not dest-ends-with-slash?)
+        )
        {:result :failed
         :err ":src is a single file while :dest is a folder. Append '/' to dest to write into directory or set :force to true to delete destination folder and write as file."
         :exit 1
@@ -147,7 +152,6 @@
         :out ""}
 
        (and
-        (not flat)
         (not local-writable?))
         {:result :failed
         :err "destination path :dest is unwritable"
@@ -320,10 +324,6 @@
   `:preserve` Preserve the remote files' modification flags when
   copying them to the local filesystem
 
-  `:flat` When `false` each remote host's files are written into a
-  subdirectory. When set to true, each host's files are written into
-  the same folder folder (`:dest`) and may overwrite one another.
-
   `:dir-mode` If `:preserve` is `false`, this specifies the modification
   parameters created directories will have.
 
@@ -370,12 +370,6 @@
 
     [:preserve
      {:description ["Preserve the remote files' modification flags when copying them to the local filesystem"]
-      :type :boolean
-      :required false}]
-
-    [:flat
-     {:description ["When set to false (the default) each remote host's files are written into a subdirectory on the client `:dest` that is the name of the host."
-                    "When set to true, each host's files are written directly into the destination. Later copies from one host will overwrite earlier copies from another host"]
       :type :boolean
       :required false}]
 
