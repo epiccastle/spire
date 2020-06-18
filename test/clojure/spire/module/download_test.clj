@@ -162,7 +162,39 @@
       (test-utils/remove-file dest-path)
       (is (= (download/download {:src src-path :dest dest-path})
              {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
-      (is (= (slurp (str dest-path "/spire-download-abs-src")) "foo")))
+      (is (= (slurp dest-path) "foo")))
+    ))
+
+(deftest download-file-to-overwrite-folder
+  (testing "download file to overwrite a folder"
+    (let [src-path "/tmp/spire-download-file-to-file-src"
+          dest-path "/tmp/spire-download-file-to-file-dest"]
+      (test-utils/remove-file src-path)
+      (spit src-path "foo")
+      (test-utils/remove-file dest-path)
+      (test-utils/makedirs dest-path)
+      (is (thrown? clojure.lang.ExceptionInfo
+                   (download/download {:src src-path :dest dest-path})))
+      (try (download/download {:src src-path :dest dest-path})
+         (catch clojure.lang.ExceptionInfo e
+           (is (= (:err (ex-data e))
+                  ":src is a single file while :dest is a folder. Append '/' to dest to write into directory or set :force to true to delete destination folder and write as file."))))
+      (is (= (download/download {:src src-path :dest (str dest-path "/")})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= (slurp (str dest-path "/spire-download-file-to-file-src")) "foo"))
+      )
+    ))
+
+(deftest download-file-to-file
+  (testing "download file to a file"
+    (let [src-path "/tmp/spire-download-file-to-file-src"
+          dest-path "/tmp/spire-download-file-to-file-dest"]
+      (test-utils/remove-file src-path)
+      (spit src-path "foo")
+      (test-utils/remove-file dest-path)
+      (is (= (download/download {:src src-path :dest dest-path})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= (slurp dest-path) "foo")))
     ))
 
 (deftest download-errors
