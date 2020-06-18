@@ -25,7 +25,7 @@
     (assert (zero? exit))
     (string/trim out)))
 
-(deftest download-test
+#_(deftest download-test
   (testing "download test"
     (let [test-dir (str (io/file (pwd) "test/files"))]
       (test-utils/with-temp-file-names [tf tf2 tf3]
