@@ -1,7 +1,8 @@
 (ns spire.remote
   (:require [spire.nio :as nio]
             [spire.facts :as facts]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.java.io :as io]))
 
 (set! *warn-on-reflection* true)
 
@@ -112,7 +113,7 @@
                               fname (nio/relativise path filename)
                               mode (process-stat-mode-out mode)]
                           [fname {:type :file
-                                  :filename fname
+                                  :filename (if (empty? fname) (.getName (io/file filename))  fname)
                                   :md5sum md5sum
                                   :mode-string mode
                                   :mode (Integer/parseInt mode 8)
@@ -134,7 +135,7 @@
                               fname (nio/relativise path filename)
                               mode (process-stat-mode-out mode)]
                           [fname {:type :dir
-                                  :filename fname
+                                  :filename (if (empty? fname) (.getName (io/file filename))  fname)
                                   :mode-string mode
                                   :mode (Integer/parseInt mode 8)
                                   :last-access (Integer/parseInt last-access)
