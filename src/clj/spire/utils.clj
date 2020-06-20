@@ -308,7 +308,8 @@
         bytes-since-start (when-not first? (- (+ bytes fileset-file-start) start-bytes))
         bytes-per-second (when (some-> duration pos?) (int (/ bytes-since-start duration)))
         bytes-remaining (- fileset-total fileset-copied-so-far)
-        eta (when (and bytes-remaining bytes-per-second)
+        eta (when (and bytes-remaining (not (zero? bytes-remaining))
+                       bytes-per-second (not (zero? bytes-per-second)))
               (int (/ bytes-remaining bytes-per-second)))
 
         right-side-buffer 32
