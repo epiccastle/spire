@@ -25,7 +25,7 @@
     (assert (zero? exit))
     (string/trim out)))
 
-#_(deftest download-test
+(deftest download-test
   (testing "download test"
     (let [test-dir (str (io/file (pwd) "test/files"))]
       (test-utils/with-temp-file-names [tf tf2 tf3]
@@ -34,23 +34,84 @@
          test-config/localhost
          ;; copy directory recursively
          (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
-                (download/download {:src test-dir :dest tf :recurse true})))
+                (download/download {:src test-dir :dest (str tf "/") :recurse true})))
          (is (test-utils/recurse-file-size-type-name-match? (str tf "/files") test-dir))
          (is (test-utils/find-files-md5-match? (str tf "/files") test-dir))
 
          (with-redefs [spire.scp/scp-from no-scp]
            ;; reset attrs with hard coded mode and dir-mode
            (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
-                  (download/download {:src test-dir :dest tf :recurse true :dir-mode 0777 :mode 0666})))
+                  (download/download {:src test-dir :dest (str tf "/") :recurse true :dir-mode 0777 :mode 0666})))
            (is (test-utils/recurse-file-size-type-name-match? (str tf "/files") test-dir))
            (is (test-utils/find-local-files-mode-is? (str tf "/files") "666"))
            (is (test-utils/find-local-dirs-mode-is? (str tf "/files") "777"))
 
            ;; reset attrs with :preserve
            (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
-                  (download/download {:src test-dir :dest tf :recurse true :preserve true})))
+                  (download/download {:src test-dir :dest (str tf "/") :recurse true :preserve true})))
            (is (test-utils/recurse-file-size-type-name-mode-match? (str tf "/files") test-dir))
-           #_ (is (test-utils/recurse-access-modified-match? (str tf "/localhost/files") test-dir)))
+           ;;#_ (is (test-utils/recurse-access-modified-match? (str tf "/localhost/files") test-dir))
+             )
+
+         ;; copy with preserve to begin with
+         (test-utils/makedirs tf2)
+         (let [result (download/download {:src test-dir :dest (str tf2 "/") :recurse true :preserve true})]
+           (is (or
+                (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+                   result)
+                ;; macos has both changed sometimes. othertimes not???
+                (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
+                   result))))
+
+         (is (test-utils/recurse-file-size-type-name-mode-match? (str tf2 "/files") test-dir))
+         ;;#_ (is (test-utils/recurse-access-modified-match? (str tf2 "/files") test-dir))
+         (is (test-utils/find-files-md5-match? (str tf2 "/files") test-dir))
+
+         ;; download single file into a directory
+         (test-utils/makedirs tf3)
+         (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+                (download/download {:src (io/file test-dir "copy/test.txt") :dest (str tf3 "/")})))
+         (is (test-utils/files-md5-match? (str tf3 "/test.txt") (str test-dir "/copy/test.txt")))
+
+         (with-redefs [spire.scp/scp-from no-scp]
+           (is (= {:result :ok, :attr-result {:result :ok}, :copy-result {:result :ok}}
+                  (download/download {:src (io/file test-dir "copy/test.txt") :dest (str tf3 "/")})))
+           (is (test-utils/files-md5-match? (str tf3 "/test.txt") (str test-dir "/copy/test.txt")))
+
+           (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
+                  (download/download {:src (io/file test-dir "copy/test.txt") :dest (str tf3 "/") :mode 0666})))
+
+           (is (= "43 666"
+                  (test-utils/stat-local (str tf3 "/test.txt") ["%s" "%a"]))))
+         )))))
+
+(deftest download-test-overwrite
+  (testing "download test overwrite"
+    (let [test-dir (str (io/file (pwd) "test/files"))]
+      (test-utils/with-temp-file-names [tf tf2 tf3]
+        (test-utils/makedirs tf)
+        (transport/ssh
+         test-config/localhost
+         ;; copy directory recursively
+         (is (= {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
+                (download/download {:src test-dir :dest tf :recurse true})))
+         (is (test-utils/recurse-file-size-type-name-match? (str tf #_ "/files") test-dir))
+         (is (test-utils/find-files-md5-match? (str tf #_ "/files") test-dir))
+
+         (with-redefs [spire.scp/scp-from no-scp]
+           ;; reset attrs with hard coded mode and dir-mode
+           (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
+                  (download/download {:src test-dir :dest tf :recurse true :dir-mode 0777 :mode 0666})))
+           (is (test-utils/recurse-file-size-type-name-match? (str tf #_"/files") test-dir))
+           (is (test-utils/find-local-files-mode-is? (str tf #_"/files") "666"))
+           (is (test-utils/find-local-dirs-mode-is? (str tf #_"/files") "777"))
+
+           ;; reset attrs with :preserve
+           (is (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :ok}}
+                  (download/download {:src test-dir :dest tf :recurse true :preserve true})))
+           (is (test-utils/recurse-file-size-type-name-mode-match? (str tf #_"/files") test-dir))
+           ;;#_ (is (test-utils/recurse-access-modified-match? (str tf "/localhost/files") test-dir))
+             )
 
          ;; copy with preserve to begin with
          (test-utils/makedirs tf2)
@@ -62,9 +123,9 @@
                 (= {:result :changed, :attr-result {:result :changed}, :copy-result {:result :changed}}
                    result))))
 
-         (is (test-utils/recurse-file-size-type-name-mode-match? (str tf2 "/files") test-dir))
-         #_ (is (test-utils/recurse-access-modified-match? (str tf2 "/files") test-dir))
-         (is (test-utils/find-files-md5-match? (str tf2 "/files") test-dir))
+         (is (test-utils/recurse-file-size-type-name-mode-match? (str tf2 #_"/files") test-dir))
+         ;;#_ (is (test-utils/recurse-access-modified-match? (str tf2 "/files") test-dir))
+         (is (test-utils/find-files-md5-match? (str tf2 #_ "/files") test-dir))
 
          ;; download single file into a directory
          (test-utils/makedirs tf3)
@@ -104,20 +165,14 @@
       (is (= (download/download {:dest path-b :src "test" :recurse true})
              {:result :changed :attr-result {:result :ok} :copy-result {:result :changed}}))
 
-      ;; (println "path-a")
-      ;; (println (test-utils/run (format "cd '%s'; find ." path-a)))
-
-      ;; (println "path-b")
-      ;; (println (test-utils/run (format "cd '%s'; find ." path-b)))
-
-
       (is (= (test-utils/run (format "cd '%s'; find . -type f" path-a))
              (test-utils/run (format "cd '%s'; find . -type f" path-b)))))))
 
 (deftest download-test-3
   (testing "download local tests"
+    ;; with trailing slash
     (let [src "/tmp/spire-download-test-3-src"
-          dest "/tmp/spire-download-test-3-dest"]
+          dest "/tmp/spire-download-test-3-dest/"]
       (test-utils/remove-file src)
       (test-utils/remove-file dest)
       (test-utils/makedirs (str src "/b"))
@@ -126,10 +181,25 @@
       (test-utils/ln-s "non-existent" (str src "/b/broken"))
       (is (= (download/download {:src src :dest dest :recurse true})
              {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
-      (is (= "a" (slurp (str dest "/spire-download-test-3-src/a"))))
-      (is (.exists (io/file (str dest "/spire-download-test-3-src/b"))))
-      (is (.isDirectory (io/file (str dest "/spire-download-test-3-src/b"))))
-      )))
+      (is (= "a" (slurp (str dest "spire-download-test-3-src/a"))))
+      (is (.exists (io/file (str dest "spire-download-test-3-src/b"))))
+      (is (.isDirectory (io/file (str dest "spire-download-test-3-src/b")))))
+    ;; without trailing slash
+    (let [src "/tmp/spire-download-test-3-src2"
+          dest "/tmp/spire-download-test-3-dest2"]
+      (test-utils/remove-file src)
+      (test-utils/remove-file dest)
+      (test-utils/makedirs (str src "/b"))
+      (spit (str src "/a") "a")
+      (test-utils/makedirs dest)
+      (test-utils/ln-s "non-existent" (str src "/b/broken"))
+      (is (= (download/download {:src src :dest dest :recurse true})
+             {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}))
+      (is (= "a" (slurp (str dest "/a"))))
+      (is (.exists (io/file (str dest "/b"))))
+      (is (.isDirectory (io/file (str dest "/b"))))
+      )
+    ))
 
 (deftest download-test-4
   (testing "download local tests"
@@ -245,7 +315,7 @@
           (catch clojure.lang.ExceptionInfo e
             (is (= "destination path unwritable" (:err (ex-data e))))))))
 
-  #_(testing "directory :dest trying to become file :src"
+  (testing "directory :dest trying to become file :src"
       (let [src-path "/tmp/spire-download-dest-dir-becomes-file-src"
             dest-path "/tmp/spire-download-dest-dir-becomes-file-dest"]
         (spit src-path "foo")
@@ -266,7 +336,7 @@
                {:result :changed, :attr-result {:result :ok}, :copy-result {:result :changed}}
                ))))
 
-  #_(testing "directory :src trying to overwrite file :dest"
+  (testing "directory :src trying to overwrite file :dest"
       (let [src-path "/tmp/spire-download-src-dir-becomes-file-src"
             dest-path "/tmp/spire-download-src-dir-becomes-file-dest"]
         (test-utils/remove-file dest-path)

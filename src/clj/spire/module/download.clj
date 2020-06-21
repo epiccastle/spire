@@ -32,9 +32,7 @@
      (and preserve (or mode dir-mode))
      (assoc failed-result
             :exit 3
-            :err "when providing :preverse you cannot also specify :mode or :dir-mode")
-
-     )))
+            :err "when providing :preverse you cannot also specify :mode or :dir-mode"))))
 
 (defn process-result [opts copy-result attr-result]
   (let [result {:result :failed
@@ -56,8 +54,7 @@
       (assoc result :result :ok)
 
       :else
-      (dissoc result :result)
-      )))
+      (dissoc result :result))))
 
 (defmacro scp-result [& body]
   `(try
@@ -95,15 +92,14 @@
          local-parent-readable? (local/is-readable? local-parent)
          dest-ends-with-slash? (string/ends-with? dest "/")
          local-writable? (if (not (string/ends-with? dest "/"))
-                            (local/is-writable? (utils/containing-folder dest))
-                            (local/is-writable? dest))
+                           (local/is-writable? (utils/containing-folder dest))
+                           (local/is-writable? dest))
          remote-readable? (remote/is-readable? run src)
          remote-dir? (remote/is-dir? run src)
          src-name (.getName (io/file src))
          src-ends-with-slash? (string/ends-with? src "/")
 
          ]
-
      (cond
        (not remote-readable?)
        {:result :failed
@@ -155,7 +151,7 @@
 
        (and
         (not local-writable?))
-        {:result :failed
+       {:result :failed
         :err "destination path :dest is unwritable"
         :exit 1
         :out ""}
@@ -169,8 +165,19 @@
           :out ""
           }
 
+       (and recurse local-file? (not force))
+       {:result :failed :err "Cannot copy remote `src` over local `dest`: destination is a file. Use :force to delete destination file and replace."}
+
        :else
        (let [remote-file? (remote/is-file? run src)
+
+             _ (when (and local-file? force)
+                 (do
+
+                   (.delete (io/file dest))
+                   ;;(.mkdirs destination)
+                   )
+                 )
 
              destination (if dest-ends-with-slash?
                            (io/file dest src-name)
@@ -186,6 +193,8 @@
 
              ;; files to transfer
              {:keys [sizes total]} (compare/remote-to-local comparison)
+
+             ;;_ (prn sizes total)
 
              ;; dirs to transfer (preserve empties)
              dirs-structure-remote (compare/remote-to-local-dirs comparison)
@@ -216,32 +225,14 @@
                              context)
                             ))
 
+
+
+
              copy-result
              (if recurse
                (cond
-                 (and local-file? (not force))
-                 {:result :failed :err "Cannot copy remote `src` over local `dest`: destination is a file. Use :force to delete destination file and replace."}
-
-                 (and local-file? force)
+                 (and #_(not local-file?) dest-ends-with-slash?)
                  (do
-                   (.delete (io/file dest))
-                   #_(.mkdirs destination)
-                   (scp-result
-                    (scp/scp-from session src (str destination)
-                                  :progress-fn progress-fn
-                                  :preserve preserve
-                                  :dir-mode (or dir-mode 0755)
-                                  :mode (or mode 0644)
-                                  :recurse true
-                                  :skip-files #{}
-                                  :exec exec
-                                  :exec-fn exec-fn
-                                  :shell-fn shell-fn
-                                  :stdin-fn stdin-fn)))
-
-                 (not local-file?)
-                 (do
-                   #_(.mkdirs destination)
                    (doseq [[path {:keys [type mode-string mode last-access last-modified]}]
                            dirs-structure-remote]
                      (.mkdirs (io/file destination path)))
@@ -249,7 +240,7 @@
                     (or (when (not=
                                (count identical-content)
                                (count (filter #(= :file (:type (second %))) remote)))
-                          (scp/scp-from session src (str destination)
+                          (scp/scp-from session src (str dest)
                                         :progress-fn progress-fn
                                         :preserve preserve
                                         :dir-mode (or dir-mode 0755)
@@ -261,10 +252,9 @@
                                         :shell-fn shell-fn
                                         :stdin-fn stdin-fn))
                         (not (empty?
-                              (filter #(not (dirs-structure-local (first %))) dirs-structure-remote)))
-                        )))
+                              (filter #(not (dirs-structure-local (first %))) dirs-structure-remote))))))
 
-                 (and (not local-file?) (not dest-ends-with-slash?))
+                 (and #_ (not local-file?) (not dest-ends-with-slash?))
                  ;; copy remote folder locally _as_ the destination name
                  ;; ie. the contents of remote folder become the contents of
                  ;; the directory listed in dest.
@@ -272,15 +262,12 @@
                    (doseq [[path {:keys [type mode-string mode last-access last-modified]}]
                            dirs-structure-remote]
                      (.mkdirs (io/file destination path)))
-                   (prn 'comparison 2)
-                   (clojure.pprint/pprint comparison)
                    (let [{:keys [remote-to-local]} comparison
                          base-dir-copy-set
                          (->> remote-to-local
                               (map #(str src "/" (first (string/split % #"/"))))
                               (into #{})
                               (into []))]
-                     (clojure.pprint/pprint base-dir-copy-set)
                      (scp-result
                       (or (when (not (empty? base-dir-copy-set))
                             (scp/scp-from session base-dir-copy-set (str destination)
@@ -295,26 +282,12 @@
                                           :shell-fn shell-fn
                                           :stdin-fn stdin-fn))
                           (not (empty?
-                              (filter #(not (dirs-structure-local (first %))) dirs-structure-remote)))
-
-                          )))
-
-                   )
-
-
-                 )
+                                (filter #(not (dirs-structure-local (first %))) dirs-structure-remote))))))))
 
                ;; non recursive
                (let [local-md5sum (get-in local ["" #_(.getName (io/file src)) :md5sum])
                      remote-md5sum (get-in remote ["" :md5sum])]
-                 (prn 'local local)
-                 (prn 'remote remote)
-                 (prn 'non-recursive-2 (.getName (io/file src)))
-                 (prn 'non-recursive-3 local-md5sum remote-md5sum)
-                 #_(.mkdirs destination)
                  (scp-result
-                  ;; (println "--" local remote)
-                  ;; (println ">>" local-md5sum remote-md5sum)
                   (when (not= local-md5sum remote-md5sum)
                     (scp/scp-from session src (str destination)
                                   :progress-fn progress-fn
@@ -330,8 +303,8 @@
              passed-attrs? (or owner group dir-mode mode attrs)
 
              path (if (or
-                       ;; recursive dir to dir copy ontop of dest folder
-                       (and recurse (not local-file?) (not dest-ends-with-slash?))
+                       ;; recursive dir copy
+                       (and recurse (not local-file?))
 
                        ;;single file into dir
                        (and remote-file? dest-ends-with-slash?)
@@ -345,8 +318,7 @@
                       ;; and modes are correctly setup.
                       (and (= :ok (:result copy-result)) passed-attrs?)
                       (do
-                        #_ (println ">>>" mode remote-file?
-                                    (io/file destination (.getName (io/file src))))
+                        ;;(println ">>>" mode remote-file? path)
                         (nio/set-attrs
                          {:path path
                           :owner owner
