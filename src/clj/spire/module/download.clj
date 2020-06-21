@@ -156,15 +156,6 @@
         :exit 1
         :out ""}
 
-       #_(and
-          flat
-          (not (.exists (.getParent (io/file dest)))))
-       #_{:result :failed
-          :err (format ":dest container folder '%s' does not exist." (.getParent (io/file dest)))
-          :exit 1
-          :out ""
-          }
-
        (and recurse local-file? (not force))
        {:result :failed :err "Cannot copy remote `src` over local `dest`: destination is a file. Use :force to delete destination file and replace."}
 
@@ -172,29 +163,17 @@
        (let [remote-file? (remote/is-file? run src)
 
              _ (when (and local-file? force)
-                 (do
-
-                   (.delete (io/file dest))
-                   ;;(.mkdirs destination)
-                   )
-                 )
+                 (.delete (io/file dest)))
 
              destination (if dest-ends-with-slash?
                            (io/file dest src-name)
                            (io/file dest))
 
              {:keys [remote-to-local identical-content local remote] :as comparison}
-             (compare/compare-full-info
-              destination
-              #_(if remote-file? destination (io/file destination (.getName (io/file src))))
-              run src)
-
-             ;;_ (prn comparison)
+             (compare/compare-full-info destination run src)
 
              ;; files to transfer
              {:keys [sizes total]} (compare/remote-to-local comparison)
-
-             ;;_ (prn sizes total)
 
              ;; dirs to transfer (preserve empties)
              dirs-structure-remote (compare/remote-to-local-dirs comparison)
@@ -202,10 +181,7 @@
                                        :local
                                        (filter (fn [[_ {:keys [type]}]] (= :dir type)))
                                        (map first)
-                                       (into #{})
-                                       )
-
-             ;;_ (prn dirs-structure-remote dirs-structure-local)
+                                       (into #{}))
 
              max-filename-length (->> remote-to-local
                                       (map count)
@@ -222,16 +198,12 @@
                              file bytes total frac
                              all-files-total
                              max-filename-length
-                             context)
-                            ))
-
-
-
+                             context)))
 
              copy-result
              (if recurse
                (cond
-                 (and #_(not local-file?) dest-ends-with-slash?)
+                 dest-ends-with-slash?
                  (do
                    (doseq [[path {:keys [type mode-string mode last-access last-modified]}]
                            dirs-structure-remote]
@@ -254,7 +226,7 @@
                         (not (empty?
                               (filter #(not (dirs-structure-local (first %))) dirs-structure-remote))))))
 
-                 (and #_ (not local-file?) (not dest-ends-with-slash?))
+                 (not dest-ends-with-slash?)
                  ;; copy remote folder locally _as_ the destination name
                  ;; ie. the contents of remote folder become the contents of
                  ;; the directory listed in dest.
@@ -285,7 +257,7 @@
                                 (filter #(not (dirs-structure-local (first %))) dirs-structure-remote))))))))
 
                ;; non recursive
-               (let [local-md5sum (get-in local ["" #_(.getName (io/file src)) :md5sum])
+               (let [local-md5sum (get-in local ["" :md5sum])
                      remote-md5sum (get-in remote ["" :md5sum])]
                  (scp-result
                   (when (not= local-md5sum remote-md5sum)
@@ -297,8 +269,7 @@
                                   :exec exec
                                   :exec-fn exec-fn
                                   :shell-fn shell-fn
-                                  :stdin-fn stdin-fn
-                                  )))))
+                                  :stdin-fn stdin-fn)))))
 
              passed-attrs? (or owner group dir-mode mode attrs)
 
@@ -307,26 +278,22 @@
                        (and recurse (not local-file?))
 
                        ;;single file into dir
-                       (and remote-file? dest-ends-with-slash?)
-                       )
+                       (and remote-file? dest-ends-with-slash?))
                     (io/file destination)
-                    (io/file destination (.getName (io/file src)))
-                    )
+                    (io/file destination (.getName (io/file src))))
 
              attrs? (cond
                       ;; generally we assume that if a copy happened, all attributes
                       ;; and modes are correctly setup.
                       (and (= :ok (:result copy-result)) passed-attrs?)
-                      (do
-                        ;;(println ">>>" mode remote-file? path)
-                        (nio/set-attrs
-                         {:path path
-                          :owner owner
-                          :group group
-                          :mode mode
-                          :dir-mode dir-mode
-                          :attrs attrs
-                          :recurse recurse}))
+                      (nio/set-attrs
+                       {:path path
+                        :owner owner
+                        :group group
+                        :mode mode
+                        :dir-mode dir-mode
+                        :attrs attrs
+                        :recurse recurse})
 
                       preserve
                       (nio/set-attrs-preserve
