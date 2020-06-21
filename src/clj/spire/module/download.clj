@@ -88,18 +88,13 @@
          local-file? (local/is-file? dest)
          local-dir? (local/is-dir? dest)
          local-exists? (.exists (io/file dest))
-         local-parent (.getParent (io/file dest))
-         local-parent-readable? (local/is-readable? local-parent)
          dest-ends-with-slash? (string/ends-with? dest "/")
          local-writable? (if (not (string/ends-with? dest "/"))
                            (local/is-writable? (utils/containing-folder dest))
                            (local/is-writable? dest))
          remote-readable? (remote/is-readable? run src)
          remote-dir? (remote/is-dir? run src)
-         src-name (.getName (io/file src))
-         src-ends-with-slash? (string/ends-with? src "/")
-
-         ]
+         src-name (.getName (io/file src))]
      (cond
        (not remote-readable?)
        {:result :failed
