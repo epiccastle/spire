@@ -348,7 +348,7 @@
                         #_ (println ">>>" mode remote-file?
                                     (io/file destination (.getName (io/file src))))
                         (nio/set-attrs
-                         {:path (io/file destination (.getName (io/file src)))
+                         {:path path
                           :owner owner
                           :group group
                           :mode mode
