@@ -262,11 +262,55 @@
                                         :stdin-fn stdin-fn))
                         (not (empty?
                               (filter #(not (dirs-structure-local (first %))) dirs-structure-remote)))
-                        ))))
+                        )))
+
+                 (and (not local-file?) (not dest-ends-with-slash?))
+                 ;; copy remote folder locally _as_ the destination name
+                 ;; ie. the contents of remote folder become the contents of
+                 ;; the directory listed in dest.
+                 (do
+                   (doseq [[path {:keys [type mode-string mode last-access last-modified]}]
+                           dirs-structure-remote]
+                     (.mkdirs (io/file destination path)))
+                   (prn 'comparison 2)
+                   (clojure.pprint/pprint comparison)
+                   (let [{:keys [remote-to-local]} comparison
+                         base-dir-copy-set
+                         (->> remote-to-local
+                              (map #(str src "/" (first (string/split % #"/"))))
+                              (into #{})
+                              (into []))]
+                     (clojure.pprint/pprint base-dir-copy-set)
+                     (scp-result
+                      (or (when (not (empty? base-dir-copy-set))
+                            (scp/scp-from session base-dir-copy-set (str destination)
+                                          :progress-fn progress-fn
+                                          :preserve preserve
+                                          :dir-mode (or dir-mode 0755)
+                                          :mode (or mode 0644)
+                                          :recurse true
+                                          :skip-files identical-content
+                                          :exec exec
+                                          :exec-fn exec-fn
+                                          :shell-fn shell-fn
+                                          :stdin-fn stdin-fn))
+                          (not (empty?
+                              (filter #(not (dirs-structure-local (first %))) dirs-structure-remote)))
+
+                          )))
+
+                   )
+
+
+                 )
 
                ;; non recursive
-               (let [local-md5sum (get-in local [(.getName (io/file src)) :md5sum])
+               (let [local-md5sum (get-in local ["" #_(.getName (io/file src)) :md5sum])
                      remote-md5sum (get-in remote ["" :md5sum])]
+                 (prn 'local local)
+                 (prn 'remote remote)
+                 (prn 'non-recursive-2 (.getName (io/file src)))
+                 (prn 'non-recursive-3 local-md5sum remote-md5sum)
                  #_(.mkdirs destination)
                  (scp-result
                   ;; (println "--" local remote)
