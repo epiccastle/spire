@@ -359,7 +359,7 @@
                       preserve
                       (nio/set-attrs-preserve
                        remote
-                       (if remote-file? destination (io/file destination (.getName (io/file src))))))]
+                       (if remote-file? destination path)))]
          (process-result
           opts
           copy-result
