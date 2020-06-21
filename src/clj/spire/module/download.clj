@@ -329,6 +329,17 @@
 
              passed-attrs? (or owner group dir-mode mode attrs)
 
+             path (if (or
+                       ;; recursive dir to dir copy ontop of dest folder
+                       (and recurse (not local-file?) (not dest-ends-with-slash?))
+
+                       ;;single file into dir
+                       (and remote-file? dest-ends-with-slash?)
+                       )
+                    (io/file destination)
+                    (io/file destination (.getName (io/file src)))
+                    )
+
              attrs? (cond
                       ;; generally we assume that if a copy happened, all attributes
                       ;; and modes are correctly setup.
