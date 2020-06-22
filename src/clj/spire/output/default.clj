@@ -8,7 +8,10 @@
 (set! *warn-on-reflection* true)
 
 (defonce state
-  (atom []))
+  (atom {:log []
+         :failed #{}
+         :debug #{}
+         }))
 
 ;; remember the state of those that have failed so we don't print twice
 (defonce failed-set
@@ -190,7 +193,9 @@
   )
 
 (defn state-change [[o n]]
-  (let [[_ old-total-height] (calculate-heights o)
+  (let [o (:log o)
+        n (:log n)
+        [_ old-total-height] (calculate-heights o)
         [_ new-total-height] (calculate-heights n)
         completed-head [] #_ (take-while state-line-complete? o)
         completed-count (count completed-head)
@@ -232,6 +237,7 @@
 (defmethod output/print-form :default [_ file form file-meta host-config]
   ;; (prn 'print-form form file file-meta)
   (swap! state
+         update :log
          (fn [s]
            (if-let [match (first (find-forms-matching-index s {:form form :file file :meta file-meta}))]
              ;; already printed
@@ -250,6 +256,7 @@
     (prn 'print-result result host-config)
     (prn (find-forms-matching-index @state {:form form :file file :meta file-meta})))
   (swap! state
+         update :log
          (fn [s]
            (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta file-meta}))]
              ;; already a line output. add to it.
@@ -279,6 +286,7 @@
 (defmethod output/print-progress :default [_ file form form-meta host-string {:keys [progress context] :as data}]
   ;;(prn 'print-progress file form form-meta host-string data)
   (swap! state
+         update :log
          (fn [s]
            (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta form-meta}))]
              (update
