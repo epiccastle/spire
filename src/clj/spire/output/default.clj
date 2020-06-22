@@ -234,13 +234,16 @@
   (swap! state
          (fn [s]
            (if-let [match (first (find-forms-matching-index s {:form form :file file :meta file-meta}))]
-            s
-            (conj s {:form form
-                     :file file
-                     :meta file-meta
-                     :line (count s)
-                     :width (count (pr-str form))
-                     :results []})))))
+             ;; already printed
+             s
+
+             ;; print form
+             (conj s {:form form
+                      :file file
+                      :meta file-meta
+                      :line (count s)
+                      :width (count (pr-str form))
+                      :results []})))))
 
 (defmethod output/print-result :default [_ file form file-meta host-config result]
   (comment
@@ -249,6 +252,7 @@
   (swap! state
          (fn [s]
            (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta file-meta}))]
+             ;; already a line output. add to it.
              (update
               s
               matching-index
