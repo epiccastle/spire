@@ -153,6 +153,20 @@
       (println trimmed)))
   (println "----------"))
 
+(defn print-debug [[file form {:keys [line]} {:keys [key]} result]]
+  (let [str-line (str "--------- " file ":" line " " key " " form " ---------")]
+    (println
+     (str
+      (utils/colour :blue)
+      str-line
+      (utils/reset)))
+    (puget/cprint result)
+    (println
+     (str
+      (utils/colour :blue)
+      (apply str (take (count str-line) (repeat "-")))
+      (utils/reset)))))
+
 (defn print-state [s]
   (doseq [{:keys [form file meta results copy-progress]} s]
     ;;(prn 'doseq form results copy-progress)
