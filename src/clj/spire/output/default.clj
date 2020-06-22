@@ -131,6 +131,28 @@
       (println "----------"))
     new-failed))
 
+(defn print-failure [{:keys [result host-config]}]
+  (println
+   (str
+    (utils/colour :yellow)
+    (utils/escape-codes 40 0 31 1)
+    (format "%s failed!%s %s%s exit:%d%s"
+            (str (:key host-config))
+            (utils/reset)
+            (utils/escape-codes 40 0 31 5)
+            (:host-string host-config)
+            (:exit result)
+            (utils/reset))))
+  (println "--stdout--")
+  (let [trimmed (cut-trailing-blank-line (:out result))]
+    (when-not (empty? trimmed)
+      (println trimmed)))
+  (println "--stderr--")
+  (let [trimmed (cut-trailing-blank-line (:err result))]
+    (when-not (empty? trimmed)
+      (println trimmed)))
+  (println "----------"))
+
 (defn print-state [s]
   (doseq [{:keys [form file meta results copy-progress]} s]
     ;;(prn 'doseq form results copy-progress)
