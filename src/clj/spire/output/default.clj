@@ -195,7 +195,7 @@
       (doseq [[host-config progress] copy-progress]
         (println (utils/progress-bar-from-stats (str (:key host-config)) max-host-key-length max-filename-length progress)))))
 
-  (let [just-printed
+  #_ (let [just-printed
         (->>
          (for [{:keys [results] :as line} s]
            ;; failure reports for this module
@@ -205,30 +205,21 @@
          flatten)]
     (let [debug-entries (first (reset-vals! debug-set #{}))]
       (doall
-       (for [[file form {:keys [line]} {:keys [key]} result] debug-entries]
-         (let [str-line (str "--------- " file ":" line " " key " " form " ---------")]
-           (println
-            (str
-             (utils/colour :blue)
-             str-line
-             (utils/reset)))
-           (puget/cprint result)
-           (println
-            (str
-             (utils/colour :blue)
-             (apply str (take (count str-line) (repeat "-")))
-             (utils/reset))))))
+       (for [entry debug-entries]
+         (print-debug entry)))
 
       ;; reprint all output state at end
-      (when (or (not (empty? just-printed))
-                (not (empty? debug-entries)))
-        (print-state s)
-        #_(reset! state [])
-        )))
+
+
+      #_ (when (or (not (empty? just-printed))
+                   (not (empty? debug-entries)))
+           (print-state s)
+           #_ (reset! state [])
+           )))
 
   )
 
-(defn state-change [[o n]]
+(defn state-change-old [[o n]]
   (let [o (:log o)
         n (:log n)
         [_ old-total-height] (calculate-heights o)
@@ -236,15 +227,195 @@
         completed-head [] #_ (take-while state-line-complete? o)
         completed-count (count completed-head)
         ]
-    (up (- old-total-height completed-count))
-    #_ (println 1)
+    #_ (up (- old-total-height completed-count))
+    (println "old:" old-total-height)
+    (clojure.pprint/pprint o)
+    (println "new:" new-total-height)
+    (clojure.pprint/pprint n)
+    (println "completed:" completed-count)
+    (println "up:" (- old-total-height completed-count))
     (print-state n #_(drop completed-count n))
     #_ (println 2)
     (let [lines-lost (- old-total-height new-total-height )]
       (when (pos? lines-lost)
         (dotimes [n lines-lost]
           (println (utils/erase-line)))
-        (up lines-lost)))))
+        (print "up lines-lost:" lines-lost)
+        #_(up lines-lost)))))
+
+;; which lines are immediately accessible above the cursor position
+;; that we can move the cursor to to rewrite
+(defonce accessible-lines
+  (atom {}))
+
+(defn state-change [[o n]]
+  ;; (println "OLD")
+  ;; (clojure.pprint/pprint o)
+  ;; (println "NEW")
+  ;; (clojure.pprint/pprint n)
+  (println)
+
+  (println "-------")
+  (let [old-log (:log o)
+        new-log (:log n)
+        new-lines (- (count new-log) (count old-log))
+        ]
+    (if (pos? new-lines)
+      (do
+        (prn 'new-lines new-lines)
+
+        ;; new lines to print
+        (print-state (subvec new-log (- (count new-log) new-lines)))
+
+        ;; remember these lines as being accessible
+        (swap! accessible-lines into
+               (for [l (subvec new-log (dec new-lines))]
+                 [(select-keys l [:form :file :meta :line])
+                  {:line-count 1}])))
+
+      (do
+        ;; update lines if they are still just above our cursor position...
+        ;;(println "up:" new-lines)
+        ;;(prn "accessible:" accessible-lines)
+
+        ;; work out what has changed, and if those lines changed are still accessible
+        ;; cursor move and update them
+        (let [accessible @accessible-lines
+              lines-accessible (map :line (keys accessible))
+              max-line-num (apply max 0 lines-accessible)
+
+              diff-log-indices
+              (filter identity
+                      (map (fn [line o n]
+                             (if (or (not= (:results o) (:results n))
+                                     (not= (:copy-progress o) (:copy-progress n)))
+                               line
+                               nil))
+                           (range) old-log new-log))
+
+              diff-log-entries
+              (map new-log diff-log-indices)
+
+              ;; find those diffs in the accessible
+              accessible-info (sort-by :line
+                                       (for [[k v] accessible]
+                                         (into k v)))
+              rows (reductions + (map :line-count accessible-info))
+              accessible-info (map (fn [{:keys [line-count] :as info} last-row]
+                                     (assoc info
+                                            :last-row last-row
+                                            :first-row (- last-row line-count)
+                                            ))
+                                   accessible-info rows)
+              max-row (last rows)
+
+              accessible-by-line (->> (for [acc accessible-info]
+                                        [(:line acc) acc])
+                                      (into {}))
+
+              accessibles-found (filter identity
+                                        (for [{:keys [form file meta line] :as d} diff-log-entries]
+                                          (when (accessible-by-line line)
+                                            (into (accessible-by-line line) d))))
+
+              non-accessibles-found (filter identity
+                                            (for [{:keys [form file meta line] :as d} diff-log-entries]
+                                              (when-not (accessible-by-line line)
+                                                d)))
+
+
+              ]
+
+          ;; (prn 'diff diff-log-entries)
+          ;; (prn 'info accessible-info)
+          ;; (prn 'rows rows)
+          ;; (prn 'found accessibles-found)
+
+          ;; update those that are accessible
+          (when (not (empty? accessibles-found))
+            ;;(prn accessibles-found)
+            (doseq [{:keys [first-row copy-progress
+                            form file meta line
+                            ] :as acc} accessibles-found]
+              (prn 'up (- max-row first-row))
+              ;;(prn acc)
+              (print-state [acc])
+              (swap! accessible-lines assoc
+                     {:form form
+                      :file file
+                      :meta meta
+                      :line line}
+                     {:line-count (inc (count copy-progress))})))
+
+
+          #_(when (not (empty? diff-log-indices))
+              (let [highest-update (apply min (map :line diff-log-entries))]
+
+                (prn diff-log-entries)
+                (prn max-line-num)
+                (prn highest-update)
+
+                ;; TODO: deal with multilines
+                (prn "up:" (inc (- max-line-num highest-update)))
+                (print-state (into [] diff-log-entries))))
+
+          ;; then for inaccessible changes... print new lines.
+          (when (not (empty? non-accessibles-found))
+            (prn 'non-acc (count non-accessibles-found))
+
+            ;; new lines to print
+            (print-state non-accessibles-found)
+
+            ;; remember these lines as being accessible
+            (swap! accessible-lines into
+                   (for [l non-accessibles-found]
+                     [(select-keys l [:form :file :meta :line])
+                      {:line-count 1}]))
+            ))
+
+        ;;(print-state (subvec new-log 0))
+
+        )
+      )
+    )
+  ;;(println "-------")
+
+  (let [new-debug (:debug n)
+        old-debug (:debug o)
+        entries (clojure.set/difference new-debug old-debug)
+        ]
+    (doseq [item entries] (print-debug item))
+    (when-not (empty? entries) (reset! accessible-lines {}))
+    )
+
+  ;;(println "-------")
+
+  ;; find new failures
+  (let [old-log-results (mapv :results (:log o))
+        new-log-results (mapv :results (:log n))
+        new-failures
+        (->>
+         (map (fn [o n]
+                (if (not= o n)
+                  (filter #(= :failed (:result (:result %))) n)
+                  nil)) old-log-results new-log-results)
+         (filter identity)
+         (apply concat))]
+    (doseq [failure new-failures]
+      (print-failure failure)
+      )
+    (when-not (empty? new-failures) (reset! accessible-lines {}))
+    )
+
+  (println "-------")
+
+
+
+
+  (println)
+
+  )
+
 
 (defmethod output/print-thread :default [_]
   (thread
@@ -288,6 +459,7 @@
                       :results []})))))
 
 (defmethod output/print-result :default [_ file form file-meta host-config result]
+  ;;(prn 'print-result file form file-meta host-config result)
   (comment
     (prn 'print-result result host-config)
     (prn (find-forms-matching-index @state {:form form :file file :meta file-meta})))
@@ -296,20 +468,25 @@
          (fn [s]
            (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta file-meta}))]
              ;; already a line output. add to it.
-             (update
-              s
-              matching-index
-              (fn [{:keys [width results] :as data}]
-                (-> data
-                    (update :copy-progress dissoc (:host-string host-config))
-                    (assoc
-                     :width (+ width (count (:host-string host-config)) 1)
-                     :results (conj results
-                                    {:result result
-                                     :host-config host-config
-                                     :pos width
-                                     }
-                                    )))))
+             (do
+
+               #_(prn 'MATCH matching-index
+                    )
+               (update
+                s
+                matching-index
+                (fn [{:keys [width results] :as data}]
+                  #_(prn 'UPDATE results result)
+                  (-> data
+                      (update :copy-progress dissoc (:host-string host-config))
+                      (assoc
+                       :width (+ width (count (:host-string host-config)) 1)
+                       :results (conj results
+                                      {:result result
+                                       :host-config host-config
+                                       :pos width
+                                       }
+                                      ))))))
 
              ;; TODO: this check shouldnt be done here
              ;; in test output handler no key will exist because nothing is stored
@@ -317,10 +494,13 @@
              ))))
 
 (defmethod output/debug-result :default [_ file form file-meta host-config result]
-  (swap! debug-set conj [file form file-meta host-config result]))
+  ;;(prn 'debug-result file form file-meta host-config result)
+  (swap! state
+         update :debug
+         conj [file form file-meta host-config result]))
 
 (defmethod output/print-progress :default [_ file form form-meta host-string {:keys [progress context] :as data}]
-  ;;(prn 'print-progress file form form-meta host-string data)
+  #_(prn 'print-progress file form form-meta host-string data)
   (swap! state
          update :log
          (fn [s]
