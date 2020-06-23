@@ -50,10 +50,37 @@ if [ "$PWD_LINE" ]; then
 
   if [ "$HOME_DIR" ] && [ "$HOME_DIR" != "$OHOME_DIR" ]; then
     ARGS="${ARGS} -d '$HOME_DIR'"
-    if [ "$OPTS_MOVE_HOME" ]; then
+    if [ "$MOVE_HOME" ]; then
       ARGS="${ARGS} -m"
+      MOVING_HOME=true
     fi
     EXIT=-1
+  fi
+
+  if [ "$CREATE_HOME" ] && [ ! "$MOVING_HOME" ]; then
+    # user already exists and we are being asked to create one
+    eval $(useradd -D | grep SKEL)
+    if [ "$HOME_DIR" ]; then
+      SET_HOME_DIR="$HOME_DIR"
+    else
+      SET_HOME_DIR="$OHOME_DIR"
+    fi
+    if [ ! -d "$SET_HOME_DIR" ]; then
+      # but they have no home dir
+      if [ "$USER_ID" ]; then
+        SET_USER_ID="$USER_ID"
+      else
+        SET_USER_ID="$OUSER_ID"
+      fi
+      if [ "$GROUP" ]; then
+        SET_GID="$GROUP"
+      else
+        SET_GID="$OGID"
+      fi
+      cp -r "$SKEL" "$SET_HOME_DIR"
+      chown -R "$SET_USER_ID:$SET_GID" "$SET_HOME_DIR"
+      EXIT=-1
+    fi
   fi
 
   if [ "$GROUP" ] && [ "$GROUP" != "$OGROUP" ]; then
@@ -113,6 +140,11 @@ else
 
   if [ "$SHELL" ]; then
     ARGS="${ARGS} -s '$SHELL'"
+    EXIT=-1
+  fi
+
+  if [ "$CREATE_HOME" ]; then
+    ARGS="${ARGS} -m"
     EXIT=-1
   fi
 

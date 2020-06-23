@@ -17,7 +17,10 @@
 
 (defmethod make-script :present [_ {:keys [name comment uid home
                                            group groups password shell
-                                           ] :as opts}]
+                                           create-home move-home
+                                           ]
+                                    :or {create-home true}
+                                    :as opts}]
   (utils/make-script
           "user_present.sh"
           {:NAME name
@@ -27,7 +30,10 @@
            :GROUP group
            :GROUPSET (some->> groups (string/join ","))
            :PASSWORD (some->> password utils/var-escape)
-           :SHELL shell}))
+           :SHELL shell
+           :CREATE_HOME (when create-home "true")
+           :MOVE_HOME (when move-home "true")
+           }))
 
 (defmethod process-result :present
   [_ {:keys [user] :as opts} {:keys [out err exit] :as result}]
@@ -48,10 +54,8 @@
       (assoc result
              :result :failed))))
 
-
 (defmethod preflight :absent [_ {:keys [name] :as opts}]
-  (facts/check-bins-present [:grep :true :userdel])
-  )
+  (facts/check-bins-present [:grep :true :userdel]))
 
 (defmethod make-script :absent [_ {:keys [name] :as opts}]
   (utils/make-script
@@ -123,6 +127,16 @@
     [:home
      {:description ["The user's home directory path"]
       :type :string
+      :required false}]
+    [:create-home
+     {:description ["If the user's home directory does not exist, create it."]
+      :type :boolean
+      :default true
+      :required false}]
+    [:move-home
+     {:description ["Move the user's home directory to the new location. Only effective when modifying an existing user."]
+      :type :boolean
+      :default false
       :required false}]
     [:group
      {:description ["The user's primary group."]
