@@ -390,7 +390,17 @@
                     ;; we reprint all subsequent state
                     ;; state is inside accessibles, after out point
                     (let [after (->> accessible-info
-                                     (drop-while #(<= (:first-row %) first-row)))]
+                                     (drop-while #(<= (:first-row %) first-row))
+                                     (map
+                                      (fn [{:keys [form file meta line] :as data}]
+                                        (first
+                                         (filter identity
+                                                 (for [l new-log]
+                                                   (when (and (= form (:form l))
+                                                              (= file (:file l))
+                                                              (= meta (:meta l))
+                                                              (= line (:line l)))
+                                                     l)))))))]
                       (doseq [a after]
                         (print-state a))))
 
