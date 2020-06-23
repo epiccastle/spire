@@ -263,14 +263,12 @@
                                      (drop-while #(<= (:first-row %) first-row))
                                      (map
                                       (fn [{:keys [form file meta line] :as data}]
-                                        (first
-                                         (filter identity
-                                                 (for [l new-log]
-                                                   (when (and (= form (:form l))
-                                                              (= file (:file l))
-                                                              (= meta (:meta l))
-                                                              (= line (:line l)))
-                                                     l)))))))]
+                                        ;; find new-log that matches and return that
+                                        (->> new-log
+                                             (filter
+                                              #(= (select-keys % [:form :file :meta :line])
+                                                  (select-keys data [:form :file :meta :line])))
+                                             first))))]
                       (doseq [a after]
                         (print-state a))))
 
