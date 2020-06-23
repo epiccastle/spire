@@ -102,11 +102,10 @@
    (str
     (utils/colour :yellow)
     (utils/escape-codes 40 0 31 1)
-    (format "%s failed!%s %s%s exit:%d%s"
+    (format "%s failed!%s %sexit:%d%s"
             (str (:key host-config))
             (utils/reset)
-            (utils/escape-codes 40 0 31 5)
-            (:host-string host-config)
+            (utils/escape-codes 40 0 31 22)
             (:exit result)
             (utils/reset))))
   (println "--stdout--")
