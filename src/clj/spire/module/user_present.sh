@@ -88,6 +88,10 @@ if [ "$PWD_LINE" ]; then
     EXIT=-1
   fi
 
+  if [ "$GROUPSET" ]; then
+    ARGS="${ARGS} -G '$GROUPSET'"
+  fi
+
   if [ "$PASSWORD" ] && [ "$PASSWORD" != "$OPASSWORD" ]; then
     ARGS="${ARGS} -p '$PASSWORD'"
     EXIT=-1
@@ -153,5 +157,10 @@ fi
 
 # echo "command:"
 # echo "$COMMAND"
+PRE_GROUPS=$(groups "$NAME")
 eval $COMMAND
+POST_GROUPS=$(groups "$NAME")
+if [ "$PRE_GROUPS" != "$POST_GROUPS" ]; then
+  EXIT=-1
+fi
 exit $EXIT
