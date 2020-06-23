@@ -167,7 +167,7 @@
       (apply str (take (count str-line) (repeat "-")))
       (utils/reset)))))
 
-(defn print-state [s]
+(defn print-state [o s]
   (doseq [{:keys [form file meta results copy-progress]} s]
     ;;(prn 'doseq form results copy-progress)
     (let [completed (for [{:keys [host-config result]} results]
@@ -246,7 +246,25 @@
 ;; which lines are immediately accessible above the cursor position
 ;; that we can move the cursor to to rewrite
 (defonce accessible-lines
-  (atom {}))
+  (atom []))
+
+(defn update-accessible-line-count [s uform ufile umeta uline line-count]
+  (let [before s
+        after
+        (->> s
+             (mapv (fn [{:keys [form file meta line] :as data}]
+                     (if (and (= form uform)
+                              (= file ufile)
+                              (= meta umeta)
+                              (= line uline))
+                       (assoc data :line-count line-count)
+                       data))))]
+    ;; (prn 'update-accessible-line-count 'before)
+    ;; (clojure.pprint/pprint before)
+    ;; (prn 'update-accessible-line-count 'after)
+    ;; (clojure.pprint/pprint after)
+    after
+    ))
 
 (defn state-change [[o n]]
   ;; (println "OLD")
@@ -265,13 +283,14 @@
         (prn 'new-lines new-lines)
 
         ;; new lines to print
-        (print-state (subvec new-log (- (count new-log) new-lines)))
+        (print-state [] (subvec new-log (- (count new-log) new-lines)))
 
         ;; remember these lines as being accessible
         (swap! accessible-lines into
-               (for [l (subvec new-log (dec new-lines))]
-                 [(select-keys l [:form :file :meta :line])
-                  {:line-count 1}])))
+               (for [l (subvec new-log (- (count new-log) new-lines))]
+                 (do ;;(println "adding!" l)
+                     (assoc (select-keys l [:form :file :meta :line])
+                            :line-count 1)))))
 
       (do
         ;; update lines if they are still just above our cursor position...
@@ -281,7 +300,7 @@
         ;; work out what has changed, and if those lines changed are still accessible
         ;; cursor move and update them
         (let [accessible @accessible-lines
-              lines-accessible (map :line (keys accessible))
+              lines-accessible (map :line accessible)
               max-line-num (apply max 0 lines-accessible)
 
               diff-log-indices
@@ -296,8 +315,10 @@
               diff-log-entries
               (map new-log diff-log-indices)
 
+              ;;_ (clojure.pprint/pprint accessible)
+
               ;; find those diffs in the accessible
-              accessible-info (sort-by :line
+              accessible-info accessible #_(sort-by :line
                                        (for [[k v] accessible]
                                          (into k v)))
               rows (reductions + (map :line-count accessible-info))
@@ -334,18 +355,16 @@
           ;; update those that are accessible
           (when (not (empty? accessibles-found))
             ;;(prn accessibles-found)
-            (doseq [{:keys [first-row copy-progress
+            (doseq [{:keys [first-row last-row copy-progress
                             form file meta line
                             ] :as acc} accessibles-found]
-              (prn 'up (- max-row first-row))
+              (prn 'up (- max-row first-row) ;;acc
+                   )
               ;;(prn acc)
-              (print-state [acc])
-              (swap! accessible-lines assoc
-                     {:form form
-                      :file file
-                      :meta meta
-                      :line line}
-                     {:line-count (inc (count copy-progress))})))
+              (print-state [(old-log line)] [acc])
+              (prn 'down (- max-row last-row))
+              (swap! accessible-lines update-accessible-line-count
+                     form file meta line (inc (count copy-progress)))))
 
 
           #_(when (not (empty? diff-log-indices))
@@ -364,13 +383,13 @@
             (prn 'non-acc (count non-accessibles-found))
 
             ;; new lines to print
-            (print-state non-accessibles-found)
+            (print-state []  non-accessibles-found)
 
             ;; remember these lines as being accessible
             (swap! accessible-lines into
                    (for [l non-accessibles-found]
-                     [(select-keys l [:form :file :meta :line])
-                      {:line-count 1}]))
+                     (assoc (select-keys l [:form :file :meta :line])
+                            :line-count 1)))
             ))
 
         ;;(print-state (subvec new-log 0))
@@ -385,7 +404,7 @@
         entries (clojure.set/difference new-debug old-debug)
         ]
     (doseq [item entries] (print-debug item))
-    (when-not (empty? entries) (reset! accessible-lines {}))
+    (when-not (empty? entries) (reset! accessible-lines []))
     )
 
   ;;(println "-------")
@@ -404,7 +423,7 @@
     (doseq [failure new-failures]
       (print-failure failure)
       )
-    (when-not (empty? new-failures) (reset! accessible-lines {}))
+    (when-not (empty? new-failures) (reset! accessible-lines []))
     )
 
   (println "-------")
