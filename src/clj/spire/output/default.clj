@@ -167,33 +167,32 @@
       (apply str (take (count str-line) (repeat "-")))
       (utils/reset)))))
 
-(defn print-state [o s]
-  (doseq [{:keys [form file meta results copy-progress]} s]
-    ;;(prn 'doseq form results copy-progress)
-    (let [completed (for [{:keys [host-config result]} results]
-                      (str " "
-                           (utils/colour
-                            (case (:result result)
-                              :ok :green
-                              :changed :yellow
-                              :failed :red
-                              :blue))
-                           (str (:key host-config))
-                           (utils/colour)))
-          line (str (format "%s:%d " file (:line meta))
-                    (pr-str form)
-                    (apply str completed))
-          ]
-      (println (utils/append-erasure-to-line line)))
+(defn print-state [o {:keys [form file meta results copy-progress] :as s}]
+  (let [completed (for [{:keys [host-config result]} results]
+                    (str " "
+                         (utils/colour
+                          (case (:result result)
+                            :ok :green
+                            :changed :yellow
+                            :failed :red
+                            :blue))
+                         (str (:key host-config))
+                         (utils/colour)))
+        line (str (format "%s:%d " file (:line meta))
+                  (pr-str form)
+                  (apply str completed))
+        ]
+    (println (utils/append-erasure-to-line line)))
 
     ;; progress bars for this module
-    (let [max-host-key-length (when-not (empty? copy-progress)
-                                (apply max (map (fn [[h _]] (count (str (:key h)))) copy-progress)))
-          max-filename-length (when-not (empty? copy-progress)
-                                (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
-          ]
-      (doseq [[host-config progress] copy-progress]
-        (println (utils/progress-bar-from-stats (str (:key host-config)) max-host-key-length max-filename-length progress)))))
+
+  (let [max-host-key-length (when-not (empty? copy-progress)
+                              (apply max (map (fn [[h _]] (count (str (:key h)))) copy-progress)))
+        max-filename-length (when-not (empty? copy-progress)
+                              (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
+        ]
+    (doseq [[host-config progress] copy-progress]
+      (println (utils/progress-bar-from-stats (str (:key host-config)) max-host-key-length max-filename-length progress))))
 
   #_ (let [just-printed
         (->>
@@ -283,14 +282,15 @@
         (prn 'new-lines new-lines)
 
         ;; new lines to print
-        (print-state [] (subvec new-log (- (count new-log) new-lines)))
+        (for [n (subvec new-log (- (count new-log) new-lines))]
+          (print-state nil n))
 
         ;; remember these lines as being accessible
         (swap! accessible-lines into
                (for [l (subvec new-log (- (count new-log) new-lines))]
                  (do ;;(println "adding!" l)
-                     (assoc (select-keys l [:form :file :meta :line])
-                            :line-count 1)))))
+                   (assoc (select-keys l [:form :file :meta :line])
+                          :line-count 1)))))
 
       (do
         ;; update lines if they are still just above our cursor position...
@@ -319,8 +319,8 @@
 
               ;; find those diffs in the accessible
               accessible-info accessible #_(sort-by :line
-                                       (for [[k v] accessible]
-                                         (into k v)))
+                                                    (for [[k v] accessible]
+                                                      (into k v)))
               rows (reductions + (map :line-count accessible-info))
               accessible-info (map (fn [{:keys [line-count] :as info} last-row]
                                      (assoc info
@@ -361,7 +361,7 @@
               (prn 'up (- max-row first-row) ;;acc
                    )
               ;;(prn acc)
-              (print-state [(old-log line)] [acc])
+              (print-state (old-log line) acc)
               (prn 'down (- max-row last-row))
               (swap! accessible-lines update-accessible-line-count
                      form file meta line (inc (count copy-progress)))))
@@ -383,7 +383,8 @@
             (prn 'non-acc (count non-accessibles-found))
 
             ;; new lines to print
-            (print-state []  non-accessibles-found)
+            (doseq [n non-accessibles-found]
+              (print-state nil n))
 
             ;; remember these lines as being accessible
             (swap! accessible-lines into
@@ -416,13 +417,12 @@
         (->>
          (map (fn [o n]
                 (if (not= o n)
-                  (filter #(= :failed (:result (:result %))) n)
+                  (filter #(= :failed (:result (:result %))) (subvec n (count o)))
                   nil)) old-log-results new-log-results)
          (filter identity)
          (apply concat))]
     (doseq [failure new-failures]
-      (print-failure failure)
-      )
+      (print-failure failure))
     (when-not (empty? new-failures) (reset! accessible-lines []))
     )
 
