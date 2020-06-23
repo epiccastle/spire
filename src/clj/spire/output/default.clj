@@ -356,15 +356,28 @@
           (when (not (empty? accessibles-found))
             ;;(prn accessibles-found)
             (doseq [{:keys [first-row last-row copy-progress
-                            form file meta line
+                            form file meta line line-count
                             ] :as acc} accessibles-found]
               (prn 'up (- max-row first-row) ;;acc
                    )
               ;;(prn acc)
-              (print-state (old-log line) acc)
-              (prn 'down (- max-row last-row))
-              (swap! accessible-lines update-accessible-line-count
-                     form file meta line (inc (count copy-progress)))))
+              (print-state acc)
+
+              (let [old-size line-count
+                    new-size (inc (count copy-progress))]
+
+                (cond
+                  (> new-size old-size)
+                  (prn 'expanded)
+
+                  (< new-size old-size)
+                  (prn 'collapsed)
+
+                  :else
+                  (prn 'down (- max-row last-row)))
+
+                (swap! accessible-lines update-accessible-line-count
+                       form file meta line new-size))))
 
 
           #_(when (not (empty? diff-log-indices))
