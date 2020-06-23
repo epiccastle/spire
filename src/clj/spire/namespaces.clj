@@ -2,7 +2,6 @@
   (:require [spire.ssh :as ssh]
             [spire.utils :as utils]
             [spire.context :as context]
-            [spire.transfer :as transfer]
             [spire.transport :as transport]
             [spire.state :as state]
             [spire.output.core]
