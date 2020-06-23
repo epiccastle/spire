@@ -44,6 +44,13 @@
 (defn left [n]
   (right (- n)))
 
+(defn clear-line []
+  (print (str "\033[2K"))
+  )
+
+(defn clear-screen-from-cursor-down []
+  (print (str "\033[J")))
+
 (defn find-forms [s form]
   (filter #(= form (:form %)) s))
 
