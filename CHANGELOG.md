@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file. This change
 ### Changed
 - rewrote :default output module - #77 #72
 - remove download module :flat. module should always be flat downloads - #89
+- remove old spire.transfer namespace #91
 
 ## [0.1.0-alpha.13] - 2020-06-06
 
