@@ -149,67 +149,17 @@
                          (utils/colour)))
         line (str (format "%s:%d " file (:line meta))
                   (pr-str form)
-                  (apply str completed))
-        ]
+                  (apply str completed))]
     (println (utils/append-erasure-to-line line)))
 
-    ;; progress bars for this module
-
+  ;; progress bars for this module
   (let [max-host-key-length (when-not (empty? copy-progress)
                               (apply max (map (fn [[h _]] (count (str (:key h)))) copy-progress)))
         max-filename-length (when-not (empty? copy-progress)
                               (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
         ]
     (doseq [[host-config progress] copy-progress]
-      (println (utils/progress-bar-from-stats (str (:key host-config)) max-host-key-length max-filename-length progress))))
-
-  #_ (let [just-printed
-        (->>
-         (for [{:keys [results] :as line} s]
-           ;; failure reports for this module
-           (print-new-failures results))
-         doall
-         (filter identity)
-         flatten)]
-    (let [debug-entries (first (reset-vals! debug-set #{}))]
-      (doall
-       (for [entry debug-entries]
-         (print-debug entry)))
-
-      ;; reprint all output state at end
-
-
-      #_ (when (or (not (empty? just-printed))
-                   (not (empty? debug-entries)))
-           (print-state s)
-           #_ (reset! state [])
-           )))
-
-  )
-
-(defn state-change-old [[o n]]
-  (let [o (:log o)
-        n (:log n)
-        [_ old-total-height] (calculate-heights o)
-        [_ new-total-height] (calculate-heights n)
-        completed-head [] #_ (take-while state-line-complete? o)
-        completed-count (count completed-head)
-        ]
-    #_ (up (- old-total-height completed-count))
-    (println "old:" old-total-height)
-    (clojure.pprint/pprint o)
-    (println "new:" new-total-height)
-    (clojure.pprint/pprint n)
-    (println "completed:" completed-count)
-    (println "up:" (- old-total-height completed-count))
-    (print-state n #_(drop completed-count n))
-    #_ (println 2)
-    (let [lines-lost (- old-total-height new-total-height )]
-      (when (pos? lines-lost)
-        (dotimes [n lines-lost]
-          (println (utils/erase-line)))
-        (print "up lines-lost:" lines-lost)
-        #_(up lines-lost)))))
+      (println (utils/progress-bar-from-stats (str (:key host-config)) max-host-key-length max-filename-length progress)))))
 
 ;; which lines are immediately accessible above the cursor position
 ;; that we can move the cursor to to rewrite
@@ -217,30 +167,16 @@
   (atom []))
 
 (defn update-accessible-line-count [s uform ufile umeta uline line-count]
-  (let [before s
-        after
-        (->> s
-             (mapv (fn [{:keys [form file meta line] :as data}]
-                     (if (and (= form uform)
-                              (= file ufile)
-                              (= meta umeta)
-                              (= line uline))
-                       (assoc data :line-count line-count)
-                       data))))]
-    ;; (prn 'update-accessible-line-count 'before)
-    ;; (clojure.pprint/pprint before)
-    ;; (prn 'update-accessible-line-count 'after)
-    ;; (clojure.pprint/pprint after)
-    after
-    ))
+  (->> s
+       (mapv (fn [{:keys [form file meta line] :as data}]
+               (if (and (= form uform)
+                        (= file ufile)
+                        (= meta umeta)
+                        (= line uline))
+                 (assoc data :line-count line-count)
+                 data)))))
 
 (defn state-change [[o n]]
-  ;; (println "OLD")
-  ;; (clojure.pprint/pprint o)
-  ;; (println "NEW")
-  ;; (clojure.pprint/pprint n)
-  ;;(println)
-
   (when debug (println "-------"))
   (let [old-log (:log o)
         new-log (:log n)
@@ -263,9 +199,6 @@
 
       (do
         ;; update lines if they are still just above our cursor position...
-        ;;(println "up:" new-lines)
-        ;;(prn "accessible:" accessible-lines)
-
         ;; work out what has changed, and if those lines changed are still accessible
         ;; cursor move and update them
         (let [accessible @accessible-lines
@@ -284,12 +217,8 @@
               diff-log-entries
               (map new-log diff-log-indices)
 
-              ;;_ (clojure.pprint/pprint accessible)
-
               ;; find those diffs in the accessible
-              accessible-info accessible #_(sort-by :line
-                                                    (for [[k v] accessible]
-                                                      (into k v)))
+              accessible-info accessible
               rows (reductions + (map :line-count accessible-info))
               accessible-info (map (fn [{:keys [line-count] :as info} last-row]
                                      (assoc info
@@ -311,19 +240,9 @@
               non-accessibles-found (filter identity
                                             (for [{:keys [form file meta line] :as d} diff-log-entries]
                                               (when-not (accessible-by-line line)
-                                                d)))
-
-
-              ]
-
-          ;; (prn 'diff diff-log-entries)
-          ;; (prn 'info accessible-info)
-          ;; (prn 'rows rows)
-          ;; (prn 'found accessibles-found)
-
+                                                d)))]
           ;; update those that are accessible
           (when (not (empty? accessibles-found))
-            ;;(prn accessibles-found)
             (doseq [{:keys [first-row last-row copy-progress
                             form file meta line line-count
                             ] :as acc} accessibles-found]
@@ -332,8 +251,6 @@
                 (prn 'up (- max-row first-row))
                 (up (- max-row first-row)))
 
-
-              ;;(prn acc)
               (print-state acc)
 
               (let [old-size line-count
@@ -368,8 +285,7 @@
                   (do
                     (if debug
                       (prn 'down (- max-row last-row))
-                      (down (- max-row last-row)))
-                    ))
+                      (down (- max-row last-row)))))
 
                 (swap! accessible-lines update-accessible-line-count
                        form file meta line new-size))))
@@ -387,25 +303,13 @@
                    (for [l non-accessibles-found]
                      (assoc (select-keys l [:form :file :meta :line])
                             :line-count
-                            (inc (count (:copy-progress l))))))
-            ))
-
-        ;;(print-state (subvec new-log 0))
-
-        )
-      )
-    )
-  ;;(println "-------")
+                            (inc (count (:copy-progress l)))))))))))
 
   (let [new-debug (:debug n)
         old-debug (:debug o)
-        entries (clojure.set/difference new-debug old-debug)
-        ]
+        entries (clojure.set/difference new-debug old-debug)]
     (doseq [item entries] (print-debug item))
-    (when-not (empty? entries) (reset! accessible-lines []))
-    )
-
-  ;;(println "-------")
+    (when-not (empty? entries) (reset! accessible-lines [])))
 
   ;; find new failures
   (let [old-log-results (mapv :results (:log o))
@@ -420,20 +324,11 @@
          (apply concat))]
     (doseq [failure new-failures]
       (print-failure failure))
-    (when-not (empty? new-failures) (reset! accessible-lines []))
-    )
+    (when-not (empty? new-failures) (reset! accessible-lines [])))
 
   (when debug
     (println "-------")
-    (println))
-
-
-
-
-  ;;(println)
-
-  )
-
+    (println)))
 
 (defmethod output/print-thread :default [_]
   (thread
@@ -444,7 +339,7 @@
 (defonce state-watcher
   (add-watch
    state :output
-   (fn [k a o n]
+   (fn [_ _ o n]
      (when (not= o n)
        (put! state-change-chan [o n]))
      )))
@@ -486,25 +381,20 @@
          (fn [s]
            (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta file-meta}))]
              ;; already a line output. add to it.
-             (do
-
-               #_(prn 'MATCH matching-index
-                    )
-               (update
-                s
-                matching-index
-                (fn [{:keys [width results] :as data}]
-                  #_(prn 'UPDATE results result)
-                  (-> data
-                      (update :copy-progress dissoc (:host-string host-config))
-                      (assoc
-                       :width (+ width (count (:host-string host-config)) 1)
-                       :results (conj results
-                                      {:result result
-                                       :host-config host-config
-                                       :pos width
-                                       }
-                                      ))))))
+             (update
+              s
+              matching-index
+              (fn [{:keys [width results] :as data}]
+                (-> data
+                    (update :copy-progress dissoc (:host-string host-config))
+                    (assoc
+                     :width (+ width (count (:host-string host-config)) 1)
+                     :results (conj results
+                                    {:result result
+                                     :host-config host-config
+                                     :pos width
+                                     }
+                                    )))))
 
              ;; TODO: this check shouldnt be done here
              ;; in test output handler no key will exist because nothing is stored
