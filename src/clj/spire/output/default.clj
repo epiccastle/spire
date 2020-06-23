@@ -11,17 +11,8 @@
 
 (defonce state
   (atom {:log []
-         :failed #{}
          :debug #{}
          }))
-
-;; remember the state of those that have failed so we don't print twice
-(defonce failed-set
-  (atom #{}))
-
-;; remember the state of those that have print debug so we don't print twice
-(defonce debug-set
-  (atom #{}))
 
 (defn up [n]
   (cond
@@ -108,37 +99,6 @@
           s)))))
 
 #_ (cut-trailing-blank-line "foo bar bard\n")
-
-(defn print-new-failures [results]
-  (let [failed (->> results
-                    (filter #(= :failed (:result (:result %)))))
-        old-failed @failed-set
-        new-failed (->> failed
-                        (filter #(not (old-failed %))))
-        ]
-    (swap! failed-set into new-failed)
-    (doseq [{:keys [result host-config]} new-failed]
-      (println
-       (str
-        (utils/colour :yellow)
-        (utils/escape-codes 40 0 31 1)
-        (format "%s failed!%s %s%s exit:%d%s"
-                (str (:key host-config))
-                (utils/reset)
-                (utils/escape-codes 40 0 31 5)
-                (:host-string host-config)
-                (:exit result)
-                (utils/reset))))
-      (println "--stdout--")
-      (let [trimmed (cut-trailing-blank-line (:out result))]
-        (when-not (empty? trimmed)
-          (println trimmed)))
-      (println "--stderr--")
-      (let [trimmed (cut-trailing-blank-line (:err result))]
-        (when-not (empty? trimmed)
-          (println trimmed)))
-      (println "----------"))
-    new-failed))
 
 (defn print-failure [{:keys [result host-config]}]
   (println
