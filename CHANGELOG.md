@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file. This change
 - download of directory without :recurse prints no error or warning - #81
 - download module progress bar malformed - #80
 - remove flashing output - #83
+- user module does not create users home directory #79
+- user module does not alter :groups if user already exists #78
 
 ### Added
 
