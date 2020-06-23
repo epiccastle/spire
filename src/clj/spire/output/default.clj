@@ -375,10 +375,32 @@
 
                 (cond
                   (> new-size old-size)
-                  (prn 'expanded)
+                  (do
+                    (prn 'expanded)
+
+                    ;; clear below
+                    (prn 'clear-screen-from-cursor-down)
+
+                    ;; we reprint all subsequent state
+                    ;; state is inside accessibles, after out point
+                    (let [after (->> accessible-info
+                                     (drop-while #(<= (:first-row %) first-row)))]
+                      (doseq [a after]
+                        (print-state a))))
 
                   (< new-size old-size)
-                  (prn 'collapsed)
+                  (do
+                    (prn 'collapsed)
+
+                    ;; clear below
+                    (prn 'clear-screen-from-cursor-down)
+
+                    ;; we reprint all subsequent state
+                    (let [after (->> accessible-info
+                                     (drop-while #(<= (:first-row %) first-row)))]
+                      (doseq [a after]
+                        (print-state a)))
+                    )
 
                   :else
                   (prn 'down (- max-row last-row)))
