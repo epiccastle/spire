@@ -390,7 +390,8 @@
             (swap! accessible-lines into
                    (for [l non-accessibles-found]
                      (assoc (select-keys l [:form :file :meta :line])
-                            :line-count 1)))
+                            :line-count
+                            (inc (count (:copy-progress l))))))
             ))
 
         ;;(print-state (subvec new-log 0))
