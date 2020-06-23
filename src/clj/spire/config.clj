@@ -2,8 +2,7 @@
   (:require [clojure.java.io :as io])
   (:import [java.util Base64]))
 
-(def libs-set ["libspire.dylib" "libspire.so"
-               "sunec.lib" "sunec.dll" "libsunec.dylib" "libsunec.so"])
+(def libs-set ["libspire.dylib" "libspire.so"])
 
 (defn path-split
   "give a full path filename, return a tuple of
@@ -38,15 +37,20 @@
                   (not= (.length (io/file dest-path)) resource-size))
           (io/copy (io/input-stream file) (io/file dest-path)))))))
 
+(defn get-libs-dir []
+  (let [home-dir (System/getenv "HOME")
+        config-dir (path-join home-dir ".spire")
+        libs-dir (path-join config-dir "libs")]
+    libs-dir))
+
 (defn init! []
   (let [native-image?
         (and (= "Substrate VM" (System/getProperty "java.vm.name"))
              (= "runtime" (System/getProperty "org.graalvm.nativeimage.imagecode")))
-        home-dir (System/getenv "HOME")
-        config-dir (path-join home-dir ".spire")
-        libs-dir (path-join config-dir "libs")]
+        libs-dir (get-libs-dir)]
     (.mkdirs (io/as-file libs-dir))
-
+    (setup libs-dir)
     (when native-image?
-      (setup libs-dir)
+      ;; most JVM implementations: this property needs to be set on launch
+      ;; but graalvm allows us to dynamically change it
       (System/setProperty "java.library.path" libs-dir))))
