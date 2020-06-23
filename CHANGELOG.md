@@ -3,6 +3,17 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+### Fixed
+- download of directory without :recurse prints no error or warning - #81
+- download module progress bar malformed - #80
+- remove flashing output - #83
+
+### Added
+
+### Changed
+- rewrote :default output module - #77 #72
+- remove download module :flat. module should always be flat downloads - #89
+
 ## [0.1.0-alpha.13] - 2020-06-06
 
 ### Fixed
