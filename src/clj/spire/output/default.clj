@@ -7,6 +7,8 @@
 
 (set! *warn-on-reflection* true)
 
+(def debug false)
+
 (defonce state
   (atom {:log []
          :failed #{}
@@ -277,16 +279,16 @@
   ;; (clojure.pprint/pprint o)
   ;; (println "NEW")
   ;; (clojure.pprint/pprint n)
-  (println)
+  ;;(println)
 
-  (println "-------")
+  (when debug (println "-------"))
   (let [old-log (:log o)
         new-log (:log n)
         new-lines (- (count new-log) (count old-log))
         ]
     (if (pos? new-lines)
       (do
-        (prn 'new-lines new-lines)
+        (when debug (prn 'new-lines new-lines))
 
         ;; new lines to print
         (doseq [n (subvec new-log (- (count new-log) new-lines))]
@@ -365,8 +367,12 @@
             (doseq [{:keys [first-row last-row copy-progress
                             form file meta line line-count
                             ] :as acc} accessibles-found]
-              (prn 'up (- max-row first-row) ;;acc
-                   )
+
+              (if debug
+                (prn 'up (- max-row first-row))
+                (up (- max-row first-row)))
+
+
               ;;(prn acc)
               (print-state acc)
 
@@ -374,12 +380,12 @@
                     new-size (inc (count copy-progress))]
 
                 (cond
-                  (> new-size old-size)
+                  (not= new-size old-size)
                   (do
-                    (prn 'expanded)
-
                     ;; clear below
-                    (prn 'clear-screen-from-cursor-down)
+                    (if debug
+                      (prn 'clear-screen-from-cursor-down)
+                      (clear-screen-from-cursor-down))
 
                     ;; we reprint all subsequent state
                     ;; state is inside accessibles, after out point
@@ -388,41 +394,19 @@
                       (doseq [a after]
                         (print-state a))))
 
-                  (< new-size old-size)
-                  (do
-                    (prn 'collapsed)
-
-                    ;; clear below
-                    (prn 'clear-screen-from-cursor-down)
-
-                    ;; we reprint all subsequent state
-                    (let [after (->> accessible-info
-                                     (drop-while #(<= (:first-row %) first-row)))]
-                      (doseq [a after]
-                        (print-state a)))
-                    )
-
                   :else
-                  (prn 'down (- max-row last-row)))
+                  (do
+                    (if debug
+                      (prn 'down (- max-row last-row))
+                      (down (- max-row last-row)))
+                    ))
 
                 (swap! accessible-lines update-accessible-line-count
                        form file meta line new-size))))
 
-
-          #_(when (not (empty? diff-log-indices))
-              (let [highest-update (apply min (map :line diff-log-entries))]
-
-                (prn diff-log-entries)
-                (prn max-line-num)
-                (prn highest-update)
-
-                ;; TODO: deal with multilines
-                (prn "up:" (inc (- max-line-num highest-update)))
-                (print-state (into [] diff-log-entries))))
-
           ;; then for inaccessible changes... print new lines.
           (when (not (empty? non-accessibles-found))
-            (prn 'non-acc (count non-accessibles-found))
+            ;;(prn 'non-acc (count non-accessibles-found))
 
             ;; new lines to print
             (doseq [n non-accessibles-found]
@@ -469,12 +453,14 @@
     (when-not (empty? new-failures) (reset! accessible-lines []))
     )
 
-  (println "-------")
+  (when debug
+    (println "-------")
+    (println))
 
 
 
 
-  (println)
+  ;;(println)
 
   )
 
