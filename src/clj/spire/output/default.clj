@@ -167,7 +167,7 @@
       (apply str (take (count str-line) (repeat "-")))
       (utils/reset)))))
 
-(defn print-state [o {:keys [form file meta results copy-progress] :as s}]
+(defn print-state [{:keys [form file meta results copy-progress] :as s}]
   (let [completed (for [{:keys [host-config result]} results]
                     (str " "
                          (utils/colour
@@ -282,8 +282,8 @@
         (prn 'new-lines new-lines)
 
         ;; new lines to print
-        (for [n (subvec new-log (- (count new-log) new-lines))]
-          (print-state nil n))
+        (doseq [n (subvec new-log (- (count new-log) new-lines))]
+          (print-state n))
 
         ;; remember these lines as being accessible
         (swap! accessible-lines into
@@ -384,7 +384,7 @@
 
             ;; new lines to print
             (doseq [n non-accessibles-found]
-              (print-state nil n))
+              (print-state n))
 
             ;; remember these lines as being accessible
             (swap! accessible-lines into
