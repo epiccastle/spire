@@ -4,15 +4,13 @@
             [puget.printer :as puget]
             [clojure.core.async :refer [<!! put! chan thread]]))
 
-
 (set! *warn-on-reflection* true)
 
 (def debug false)
 
 (defonce state
   (atom {:log []
-         :debug #{}
-         }))
+         :debug #{}}))
 
 (defn up [n]
   (cond
@@ -38,8 +36,7 @@
   (right (- n)))
 
 (defn clear-line []
-  (print (str "\033[2K"))
-  )
+  (print (str "\033[2K")))
 
 (defn clear-screen-from-cursor-down []
   (print (str "\033[J")))
@@ -202,8 +199,6 @@
         ;; work out what has changed, and if those lines changed are still accessible
         ;; cursor move and update them
         (let [accessible @accessible-lines
-              lines-accessible (map :line accessible)
-              max-line-num (apply max 0 lines-accessible)
 
               diff-log-indices
               (filter identity
@@ -218,14 +213,12 @@
               (map new-log diff-log-indices)
 
               ;; find those diffs in the accessible
-              accessible-info accessible
-              rows (reductions + (map :line-count accessible-info))
+              rows (reductions + (map :line-count accessible))
               accessible-info (map (fn [{:keys [line-count] :as info} last-row]
                                      (assoc info
                                             :last-row last-row
-                                            :first-row (- last-row line-count)
-                                            ))
-                                   accessible-info rows)
+                                            :first-row (- last-row line-count)))
+                                   accessible rows)
               max-row (last rows)
 
               accessible-by-line (->> (for [acc accessible-info]
