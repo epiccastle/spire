@@ -3,14 +3,14 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.14] - 2020-06-24
+
 ### Fixed
 - download of directory without :recurse prints no error or warning - #81
 - download module progress bar malformed - #80
 - remove flashing output - #83
 - user module does not create users home directory #79
 - user module does not alter :groups if user already exists #78
-
-### Added
 
 ### Changed
 - rewrote :default output module - #77 #72
@@ -159,7 +159,8 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.13...HEAD
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.14...HEAD
+[0.1.0-alpha.13]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.13...v0.1.0-alpha.14
 [0.1.0-alpha.13]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.12...v0.1.0-alpha.13
 [0.1.0-alpha.12]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.11...v0.1.0-alpha.12
 [0.1.0-alpha.11]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.10...v0.1.0-alpha.11
