@@ -353,7 +353,9 @@
       :required true}]
 
     [:dest
-     {:description ["A local path to copy the files into"]
+     {:description ["A local path to copy the files into."
+                    "If :recurse is true and :dest path ends in a slash; indicates that destination is a directory and the contents of :src are to be copied into the directory."
+                    "If :recurse is true and :dest path does not end in a slash; indicates that the :src directory is to be copies as the specified path."]
       :type :string
       :required true}]
 
