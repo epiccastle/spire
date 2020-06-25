@@ -171,6 +171,7 @@
 (def namespaces
   {
    'clojure.core {'slurp slurp
+                  'spit spit
                   'future (with-meta @#'clojure.core/future {:sci/macro true})
                   'future-call clojure.core/future-call
                   '*in* (sci/new-dynamic-var '*in* *in*)
