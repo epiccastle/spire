@@ -410,7 +410,9 @@
        ]
       :type [:string :bytearray :file]}]
     [:dest
-     {:description ["The destination path to copy the file or directory into."]
+     {:description ["The destination path to copy the file or directory into."
+                    "If :recurse is true and :dest path ends in a slash; indicates that destination is a directory and the contents of :src are to be copied into the directory."
+                    "If :recurse is true and :dest path does not end in a slash; indicates that the :src directory is to be copies as the specified path."]
       :type :string}]
     [:owner
      {:description ["Make the destination file or files owned by this user."
