@@ -1,8 +1,10 @@
 (ns spire.module.shell
   (:require [spire.state :as state]
             [spire.facts :as facts]
-            [spire.ssh :as ssh]
+            [spire.remote :as remote]
             [spire.utils :as utils]
+            [spire.module.rm :as rm]
+            [spire.module.upload :as upload]
             [clojure.string :as string]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
@@ -25,7 +27,7 @@
 
 #_ (make-exists-string ["privatekey" "public\"key"])
 
-(utils/defmodule shell* [{:keys [env dir shell out opts cmd creates]
+(utils/defmodule shell* [{:keys [env dir shell out opts cmd creates stdin]
                           :or {env {}
                                dir "."
                                shell "bash"}
@@ -35,40 +37,58 @@
   (or (preflight opts)
       (let [{:keys [agent-forwarding]} (state/get-host-config)
             shell-path (facts/get-fact [:paths (keyword shell)])
+            remote-script-file (remote/make-temp-filename {:prefix "spire-shell-"
+                                                           :extension "sh"})
             default-env (if shell-path
                           {:SHELL shell-path}
                           {})
             env-string (->> env
                             (merge default-env)
                             make-env-string)
-            {:keys [exit out err] :as result}
-            (exec-fn session
-                     ;; command
-                     (shell-fn shell)
+            script (if creates
+                     (format "cd \"%s\"\nif [ %s ]; then\nexit 0\nelse\nexport %s; set -e; %s\nexit -1\nfi\n"
+                             dir (make-exists-string creates)
+                             env-string cmd)
+                     (format "cd \"%s\"; export %s; %s" dir env-string cmd))]
 
-                     ;; stdin
-                     (stdin-fn
-                      (if creates
-                        (format "cd \"%s\"\nif [ %s ]; then\nexit 0\nelse\nexport %s; set -e; %s\nexit -1\nfi\n"
-                                dir (make-exists-string creates)
-                                env-string cmd)
-                        (format "cd \"%s\"; export %s; %s" dir env-string cmd)))
+        ;; if stdin is specified we create a remote script to execute
+        ;; and pass in out stdin to it. We delete this file after execution
+        (when stdin (upload/upload* nil nil nil {:content script :dest remote-script-file}))
 
-                     ;; output format
-                     (or out "UTF-8")
+        ;; if stdin is not specified, we feed the script directly to the
+        ;; process as stdin
+        (try
+          (let [{:keys [exit out err] :as result}
+                (exec-fn session
+                         ;; command
+                         (shell-fn
+                          (if stdin
+                            (format "%s %s" shell remote-script-file)
+                            shell))
 
-                     ;; options
-                     (into {:agent-forwarding agent-forwarding}
-                           (or opts {})))]
+                         ;; stdin
+                         (stdin-fn
+                          (if stdin
+                            stdin
+                            script))
 
-        (assoc result
-               :out-lines (string/split-lines out)
+                         ;; output format
+                         (or out "UTF-8")
 
-               :result
-               (cond
-                 (zero? exit) :ok
-                 (= 255 exit) :changed
-                 :else :failed)))))
+                         ;; options
+                         (into {:agent-forwarding agent-forwarding}
+                               (or opts {})))]
+            (assoc result
+                   :out-lines (string/split-lines out)
+
+                   :result
+                   (cond
+                     (zero? exit) :ok
+                     (= 255 exit) :changed
+                     :else :failed)))
+          (finally
+            (when stdin (rm/rm* remote-script-file)))
+          ))))
 
 (defmacro shell
   "run commands and shell snippets on the remote hosts.
@@ -86,6 +106,9 @@
   relative path, is relative to the users home directory when running
   on a remote system, and relative to the execution that was the
   current working directory when spire was executed.
+
+  `:stdin` supply a string argument to pass to the executing script as
+  its standard input
 
   `:env` a hashmap of environment variables to set before executing
   the command. Environment variable names (the hashmap keys) can be
@@ -123,6 +146,11 @@
      {:description ["Specify the shell to use to run the command. Default is `bash`."]
       :type :string
       :required false}]
+
+    [:stdin
+     {:description ["Supply a string argument to pass to the executing script as its standard input"]
+      :type :string
+      :required :false}]
 
     [:dir
      {:description ["Execute the command from within the specified directory."
