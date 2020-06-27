@@ -189,15 +189,17 @@
         (when debug (prn 'new-lines new-lines))
 
         ;; new lines to print
-        (doseq [n (subvec new-log (- (count new-log) new-lines))]
-          (print-state n))
+        (let [line-counts
+              (doall
+               (for [n (subvec new-log (- (count new-log) new-lines))]
+                 [n (print-state n)]))]
 
-        ;; remember these lines as being accessible
-        (swap! accessible-lines into
-               (for [l (subvec new-log (- (count new-log) new-lines))]
-                 (do ;;(println "adding!" l)
-                   (assoc (select-keys l [:form :file :meta :line])
-                          :line-count 1)))))
+          ;; remember these lines as being accessible
+          (swap! accessible-lines into
+                 (for [[l line-count] line-counts]
+                   (do ;;(println "adding!" l)
+                     (assoc (select-keys l [:form :file :meta :line])
+                            :line-count line-count))))))
 
       (do
         ;; update lines if they are still just above our cursor position...
