@@ -251,10 +251,8 @@
                 (prn 'up (- max-row first-row))
                 (up (- max-row first-row)))
 
-              (print-state acc)
-
               (let [old-size line-count
-                    new-size (inc (count copy-progress))]
+                    new-size (print-state acc)]
 
                 (cond
                   (not= new-size old-size)
@@ -293,15 +291,18 @@
             ;;(prn 'non-acc (count non-accessibles-found))
 
             ;; new lines to print
-            (doseq [n non-accessibles-found]
-              (print-state n))
+            (let [line-counts
+                  (doall
+                   (for [n non-accessibles-found]
+                     [n (print-state n)]))]
 
-            ;; remember these lines as being accessible
-            (swap! accessible-lines into
-                   (for [l non-accessibles-found]
-                     (assoc (select-keys l [:form :file :meta :line])
-                            :line-count
-                            (inc (count (:copy-progress l)))))))))))
+              ;; remember these lines as being accessible
+              (swap! accessible-lines into
+                     (for [[l line-count] line-counts]
+                       (do ;;(println "adding!" l)
+                         (assoc (select-keys l [:form :file :meta :line])
+                                :line-count line-count)))))
+   )))))
 
   (let [new-debug (:debug n)
         old-debug (:debug o)
