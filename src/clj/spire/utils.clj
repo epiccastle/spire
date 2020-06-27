@@ -389,6 +389,15 @@
       (str s (n-spaces (- term-width len)))
       (str (subs s 0 term-width) (colour 0)))))
 
+(defn num-terminal-lines
+  "calculate over how many lines the passed string, if printed to an empty
+  terminal, would span"
+  [s]
+  (let [len (displayed-length s)
+        term-width (SpireUtils/get_terminal_width)
+        ]
+    (inc (quot len term-width))))
+
 (defn which-spire []
   (let [executable (executing-bin-path)
         java? (string/ends-with? executable "java")]
