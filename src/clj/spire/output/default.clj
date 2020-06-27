@@ -2,11 +2,14 @@
   (:require [spire.utils :as utils]
             [spire.output.core :as output]
             [puget.printer :as puget]
+            [sci.core :as sci]
             [clojure.core.async :refer [<!! put! chan thread]]))
 
 (set! *warn-on-reflection* true)
 
 (def debug false)
+
+(def max-string-length (sci/new-dynamic-var 'max-string-length nil))
 
 (defonce state
   (atom {:log []
@@ -40,6 +43,19 @@
 
 (defn clear-screen-from-cursor-down []
   (print (str "\033[J")))
+
+(defn elide-form-strings
+  [form max-length]
+  (if max-length
+    (->> form
+         (clojure.walk/postwalk
+          (fn [f]
+            (if (string? f)
+              (if (< max-length (count f))
+                (str (subs f 0 max-length) "…")
+                f)
+              f))))
+    form))
 
 (defn find-forms [s form]
   (filter #(= form (:form %)) s))
@@ -132,7 +148,7 @@
       (apply str (take (count str-line) (repeat "-")))
       (utils/reset)))))
 
-(defn print-state [{:keys [form file meta results copy-progress] :as s}]
+(defn print-state [{:keys [form file meta results copy-progress opts] :as s}]
   (let [completed (for [{:keys [host-config result]} results]
                     (str " "
                          (utils/colour
@@ -144,17 +160,19 @@
                          (str (:key host-config))
                          (utils/colour)))
         line (str (format "%s:%d " file (:line meta))
-                  (pr-str form)
+                  (pr-str (elide-form-strings form (:max-string-length opts)))
                   (apply str completed)
                   )]
 
-    (println line #_(utils/append-erasure-to-line line))
+    (println line)
 
     ;; progress bars for this module
-    (let [max-host-key-length (when-not (empty? copy-progress)
-                                (apply max (map (fn [[h _]] (count (str (:key h)))) copy-progress)))
-          max-filename-length (when-not (empty? copy-progress)
-                                (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
+    (let [max-host-key-length
+          (when-not (empty? copy-progress)
+            (apply max (map (fn [[h _]] (count (str (:key h)))) copy-progress)))
+          max-filename-length
+          (when-not (empty? copy-progress)
+            (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
           ]
       (doseq [[host-config progress] copy-progress]
         (println (utils/progress-bar-from-stats (str (:key host-config)) max-host-key-length max-filename-length progress))))
@@ -368,6 +386,7 @@
                       :meta file-meta
                       :line (count s)
                       :width (count (pr-str form))
+                      :opts {:max-string-length @max-string-length}
                       :results []})))))
 
 (defmethod output/print-result :default [_ file form file-meta host-config result]

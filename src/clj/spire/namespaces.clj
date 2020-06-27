@@ -203,10 +203,9 @@
    'spire.default (make-sci-bindings spire.default)
    'spire.selmer (make-sci-bindings spire.selmer)
    'spire.output.core (make-sci-bindings spire.output.core)
-   'spire.output.default (make-sci-bindings spire.output.default)
+   'spire.output.default (make-sci-bindings-clean spire.output.default)
    'spire.output.events (make-sci-bindings spire.output.events)
    'spire.output.quiet (make-sci-bindings spire.output.quiet)
-
 
    'clojure.java.io (make-sci-bindings clojure.java.io)
    'clojure.tools.cli (make-sci-bindings clojure.tools.cli)
