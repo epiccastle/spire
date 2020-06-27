@@ -145,17 +145,23 @@
                          (utils/colour)))
         line (str (format "%s:%d " file (:line meta))
                   (pr-str form)
-                  (apply str completed))]
-    (println (utils/append-erasure-to-line line)))
+                  (apply str completed)
+                  )]
 
-  ;; progress bars for this module
-  (let [max-host-key-length (when-not (empty? copy-progress)
-                              (apply max (map (fn [[h _]] (count (str (:key h)))) copy-progress)))
-        max-filename-length (when-not (empty? copy-progress)
-                              (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
-        ]
-    (doseq [[host-config progress] copy-progress]
-      (println (utils/progress-bar-from-stats (str (:key host-config)) max-host-key-length max-filename-length progress)))))
+    (println line #_(utils/append-erasure-to-line line))
+
+    ;; progress bars for this module
+    (let [max-host-key-length (when-not (empty? copy-progress)
+                                (apply max (map (fn [[h _]] (count (str (:key h)))) copy-progress)))
+          max-filename-length (when-not (empty? copy-progress)
+                                (apply max (map (fn [[_ v]] (:max-filename-length v)) copy-progress)))
+          ]
+      (doseq [[host-config progress] copy-progress]
+        (println (utils/progress-bar-from-stats (str (:key host-config)) max-host-key-length max-filename-length progress))))
+
+    ;; return the total number of lines
+    (+ (count copy-progress) (utils/num-terminal-lines line)))
+  )
 
 ;; which lines are immediately accessible above the cursor position
 ;; that we can move the cursor to to rewrite
