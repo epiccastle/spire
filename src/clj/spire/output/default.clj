@@ -9,6 +9,7 @@
 
 (def debug false)
 
+;; truncate the printing of any string literals inside forms.
 (def max-string-length (sci/new-dynamic-var 'max-string-length nil))
 
 (defonce state
@@ -440,3 +441,8 @@
              ;; no matching-index. probably a test being run
              s)))
   context)
+
+(defmethod output/print-streams :default [_ file form form-meta host-string stdout stderr]
+  (prn 'print-streams file form form-meta host-string stdout stderr)
+  (println "\n\n\n\n\n\n\n")
+  )

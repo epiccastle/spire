@@ -16,3 +16,6 @@
 
 (defmulti print-progress
   (fn [driver file form form-meta host-string {:keys [progress context] :as data}] driver))
+
+(defmulti print-streams
+  (fn [driver file form form-meta host-string stdout stderr] driver))
