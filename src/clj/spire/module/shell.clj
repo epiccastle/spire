@@ -58,7 +58,8 @@
         ;; if stdin is not specified, we feed the script directly to the
         ;; process as stdin
         (try
-          (let [{:keys [exit out err] :as result}
+          (let [out-arg out
+                {:keys [exit out err] :as result}
                 (exec-fn session
                          ;; command
                          (shell-fn
@@ -73,19 +74,19 @@
                             script))
 
                          ;; output format
-                         (or out "UTF-8")
+                         (or out-arg "UTF-8")
 
                          ;; options
                          (into {:agent-forwarding agent-forwarding}
                                (or opts {})))]
-            (assoc result
-                   :out-lines (string/split-lines out)
-
-                   :result
-                   (cond
-                     (zero? exit) :ok
-                     (= 255 exit) :changed
-                     :else :failed)))
+            (if (= :stream out-arg)
+              (assoc result :result :pending)
+              (assoc result
+                     :out-lines (string/split-lines out)
+                     :result (cond
+                               (zero? exit) :ok
+                               (= 255 exit) :changed
+                               :else :failed))))
           (finally
             (when stdin (rm/rm* remote-script-file)))
           ))))

@@ -477,7 +477,7 @@
            ~pipeline-args [(spire.state/get-host-config) (spire.state/get-connection) (spire.state/get-shell-context)]
            result# (do ~@body)
            result-code# (:result result#)]
-       (if (#{:ok :changed} result-code#)
+       (if (#{:ok :changed :pending} result-code#)
          result#
          (throw (ex-info "module failed" result#))))))
 
