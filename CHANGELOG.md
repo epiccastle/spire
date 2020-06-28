@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+### Changed
+- updated sci to 0.1.1-alpha.1
+
 ## [0.1.0-alpha.14] - 2020-06-24
 
 ### Fixed
