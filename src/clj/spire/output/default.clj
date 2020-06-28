@@ -3,6 +3,7 @@
             [spire.output.core :as output]
             [puget.printer :as puget]
             [sci.core :as sci]
+            [clojure.string :as string]
             [clojure.core.async :refer [<!! put! chan thread]]))
 
 (set! *warn-on-reflection* true)
@@ -44,6 +45,25 @@
 
 (defn clear-screen-from-cursor-down []
   (print (str "\033[J")))
+
+(defn read-until [ch]
+  (loop [input ""]
+    (let [c (char (.read *in*))]
+      (if (not= ch (str c))
+        (recur (str input c))
+        (str input c)))))
+
+(defn read-cursor-position []
+  (print (str "\033[6n"))
+  (SpireUtils/enter-raw-mode 0)
+  (.flush *out*)
+  (let [text (read-until "R")]
+    (SpireUtils/leave-raw-mode 0)
+    (let [[_ body] (string/split text #"\[")
+          [body _] (string/split body #"R")
+          [row col] (string/split body #";")]
+      [(Integer/parseInt row)
+       (Integer/parseInt col)])))
 
 (defn elide-form-strings
   [form max-length]
@@ -444,5 +464,6 @@
 
 (defmethod output/print-streams :default [_ file form form-meta host-string stdout stderr]
   (prn 'print-streams file form form-meta host-string stdout stderr)
+  (prn (read-cursor-position))
   (println "\n\n\n\n\n\n\n")
   )
