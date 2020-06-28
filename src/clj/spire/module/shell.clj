@@ -3,9 +3,11 @@
             [spire.facts :as facts]
             [spire.remote :as remote]
             [spire.utils :as utils]
+            [spire.context :as context]
             [spire.module.rm :as rm]
             [spire.module.upload :as upload]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.java.io :as io]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
@@ -27,10 +29,42 @@
 
 #_ (make-exists-string ["privatekey" "public\"key"])
 
-(utils/defmodule shell* [{:keys [env dir shell out opts cmd creates stdin]
+(defn process-streams
+  "Stream the stdout and stderr to the output module"
+  [{:keys [file form meta host-config channel out-stream err-stream]}]
+  (loop [out-data ""
+         err-data ""]
+    (let [avail (.available ^java.io.InputStream out-stream)]
+      (if (pos? avail)
+        (let [out-array (byte-array avail)
+              res (.read ^java.io.InputStream out-stream out-array 0 avail)]
+          (when-not (= -1 res)
+            (spire.output.core/print-streams
+             (context/deref* spire.state/output-module)
+             file form meta host-config (String. out-array) nil)
+            (recur (str out-data (String. out-array))
+                   err-data)))
+        ;; maybe we are at end of stream. try and read
+        (let [res (.read ^java.io.InputStream out-stream)]
+          (if-not (= -1 res)
+            (do
+              (spire.output.core/print-streams
+               (context/deref* spire.state/output-module)
+               file form meta host-config (str (char res)) nil)
+              (recur (str out-data (char res))
+                     err-data))
+            {:result :ok
+             :exit (.waitFor ^java.lang.Process channel)
+             :out out-data
+             :out-lines (string/split-lines out-data)
+             :err err-data}))))))
+
+(utils/defmodule shell* [{:keys [env dir shell out opts cmd creates stdin stream-out stream-key]
                           :or {env {}
                                dir "."
-                               shell "bash"}
+                               shell "bash"
+                               stream-key {}
+                               }
 
                           :as opts}]
   [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
@@ -59,7 +93,12 @@
         ;; process as stdin
         (try
           (let [out-arg out
-                {:keys [exit out err] :as result}
+                {:keys [
+                        ;; normal execution
+                        exit out err
+
+                        ;; stream reporting
+                        channel out-stream err-stream] :as result}
                 (exec-fn session
                          ;; command
                          (shell-fn
@@ -74,19 +113,29 @@
                             script))
 
                          ;; output format
-                         (or out-arg "UTF-8")
+                         (if stream-out
+                           :stream
+                           (or out-arg "UTF-8"))
 
                          ;; options
                          (into {:agent-forwarding agent-forwarding}
                                (or opts {})))]
-            (if (= :stream out-arg)
-              (assoc result :result :pending)
-              (assoc result
-                     :out-lines (string/split-lines out)
-                     :result (cond
-                               (zero? exit) :ok
-                               (= 255 exit) :changed
-                               :else :failed))))
+            (if stream-out
+              (process-streams {:file (:file stream-key)
+                                :form (:form stream-key)
+                                :meta (:meta stream-key)
+                                :host-config (:host-config stream-key)
+                                :channel channel
+                                :out-stream out-stream
+                                :err-stream err-stream})
+              (if (= :stream out-arg)
+                (assoc result :result :pending)
+                (assoc result
+                       :out-lines (string/split-lines out)
+                       :result (cond
+                                 (zero? exit) :ok
+                                 (= 255 exit) :changed
+                                 :else :failed)))))
           (finally
             (when stdin (rm/rm* remote-script-file)))
           ))))
@@ -121,8 +170,12 @@
   these files exist on the machine, the command will not be executed
   and the job result will be reported as `:ok`
   "
-  [& args]
-  `(utils/wrap-report ~&form (shell* ~@args)))
+  [args]
+  `(utils/wrap-report ~&form (shell* (assoc ~args :stream-key
+                                            {:file ~(utils/current-file)
+                                             :form (quote ~&form)
+                                             :meta ~(meta &form)
+                                             :host-config ~(spire.state/get-host-config)}))))
 
 
 (def documentation
