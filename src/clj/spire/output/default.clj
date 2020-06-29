@@ -466,4 +466,16 @@
   (prn 'print-streams file form form-meta host-string stdout stderr)
   (prn (read-cursor-position))
   (println "\n\n\n\n\n\n\n")
+  (swap! state
+         update :log
+         (fn [s]
+           (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta form-meta}))]
+             (update
+              s
+              matching-index
+              (fn [{:keys [width results] :as data}]
+                (update-in data [:streams host-string] #(conj (or % []) [stdout stderr]))))
+
+             ;; no matching-index. probably a test being run
+             s)))
   )
