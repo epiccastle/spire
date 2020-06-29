@@ -498,9 +498,7 @@
   context)
 
 (defmethod output/print-streams :default [_ file form form-meta host-string stdout stderr]
-  (prn 'print-streams file form form-meta host-string stdout stderr)
-  (prn (read-cursor-position))
-  (println "\n\n\n\n\n\n\n")
+  ;; (prn 'print-streams file form form-meta host-string stdout stderr)
   (swap! state
          update :log
          (fn [s]
