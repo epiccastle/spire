@@ -29,37 +29,45 @@
 
 #_ (make-exists-string ["privatekey" "public\"key"])
 
+(defn read-avail-string-from-input-stream
+  "read available string from a stream and return it.
+  return nil if nothing is available"
+  [stream]
+  (let [avail (.available ^java.io.InputStream stream)]
+    (when (pos? avail)
+      (let [out-array (byte-array avail)
+            res (.read ^java.io.InputStream stream out-array 0 avail)]
+        (when-not (= -1 res)
+          (String. out-array))))))
+
 (defn process-streams
   "Stream the stdout and stderr to the output module"
   [{:keys [file form meta host-config channel out-stream err-stream]}]
   (loop [out-data ""
          err-data ""]
-    (let [avail (.available ^java.io.InputStream out-stream)]
-      (if (pos? avail)
-        (let [out-array (byte-array avail)
-              res (.read ^java.io.InputStream out-stream out-array 0 avail)]
-          (when-not (= -1 res)
+    (if-let [out (read-avail-string-from-input-stream out-stream)]
+      (do
+        (spire.output.core/print-streams
+         (context/deref* spire.state/output-module)
+         file form meta host-config out nil)
+        (recur (str out-data out) err-data))
+
+      ;; maybe we are at end of stream. try and read
+      (let [res (.read ^java.io.InputStream out-stream)]
+        (if-not (= -1 res)
+          (do
             (spire.output.core/print-streams
              (context/deref* spire.state/output-module)
-             file form meta host-config (String. out-array) nil)
-            (recur (str out-data (String. out-array))
-                   err-data)))
-        ;; maybe we are at end of stream. try and read
-        (let [res (.read ^java.io.InputStream out-stream)]
-          (if-not (= -1 res)
-            (do
-              (spire.output.core/print-streams
-               (context/deref* spire.state/output-module)
-               file form meta host-config (str (char res)) nil)
-              (recur (str out-data (char res))
-                     err-data))
-            {:result :ok
-             :exit (if (= java.lang.ProcessImpl (class channel))
-                     (.waitFor ^java.lang.Process channel)
-                     (.getExitStatus ^com.jcraft.jsch.ChannelExec channel))
-             :out out-data
-             :out-lines (string/split-lines out-data)
-             :err err-data}))))))
+             file form meta host-config (str (char res)) nil)
+            (recur (str out-data (char res))
+                   err-data))
+          {:result :ok
+           :exit (if (= java.lang.ProcessImpl (class channel))
+                   (.waitFor ^java.lang.Process channel)
+                   (.getExitStatus ^com.jcraft.jsch.ChannelExec channel))
+           :out out-data
+           :out-lines (string/split-lines out-data)
+           :err err-data})))))
 
 (utils/defmodule shell* [{:keys [env dir shell out opts cmd creates stdin print stream-key]
                           :or {env {}
