@@ -61,7 +61,7 @@
              :out-lines (string/split-lines out-data)
              :err err-data}))))))
 
-(utils/defmodule shell* [{:keys [env dir shell out opts cmd creates stdin stream-out stream-key]
+(utils/defmodule shell* [{:keys [env dir shell out opts cmd creates stdin print stream-key]
                           :or {env {}
                                dir "."
                                shell "bash"
@@ -115,14 +115,14 @@
                             script))
 
                          ;; output format
-                         (if stream-out
+                         (if print
                            :stream
                            (or out-arg "UTF-8"))
 
                          ;; options
                          (into {:agent-forwarding agent-forwarding}
                                (or opts {})))]
-            (if stream-out
+            (if print
               (process-streams {:file (:file stream-key)
                                 :form (:form stream-key)
                                 :meta (:meta stream-key)
