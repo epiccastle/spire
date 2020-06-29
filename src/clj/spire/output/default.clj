@@ -48,7 +48,7 @@
 
 (defn read-until [ch]
   (loop [input ""]
-    (let [c (char (.read *in*))]
+    (let [c (char (.read ^java.io.Reader *in*))]
       (if (not= ch (str c))
         (recur (str input c))
         (str input c)))))
@@ -134,6 +134,24 @@
 
 #_ (cut-trailing-blank-line "foo bar bard\n")
 
+
+;; which lines are immediately accessible above the cursor position
+;; that we can move the cursor to to rewrite
+;; lines are in order as they appear. entries are hashmaps.
+;; keys are form, file, meta, line, line-count
+(defonce accessible-lines
+  (atom []))
+
+(defn update-accessible-line-count [s uform ufile umeta uline line-count]
+  (->> s
+       (mapv (fn [{:keys [form file meta line] :as data}]
+               (if (and (= form uform)
+                        (= file ufile)
+                        (= meta umeta)
+                        (= line uline))
+                 (assoc data :line-count line-count)
+                 data)))))
+
 (defn print-failure [{:keys [result host-config]}]
   (println
    (str
@@ -201,21 +219,6 @@
     ;; return the total number of lines
     (+ (count copy-progress) (utils/num-terminal-lines line)))
   )
-
-;; which lines are immediately accessible above the cursor position
-;; that we can move the cursor to to rewrite
-(defonce accessible-lines
-  (atom []))
-
-(defn update-accessible-line-count [s uform ufile umeta uline line-count]
-  (->> s
-       (mapv (fn [{:keys [form file meta line] :as data}]
-               (if (and (= form uform)
-                        (= file ufile)
-                        (= meta umeta)
-                        (= line uline))
-                 (assoc data :line-count line-count)
-                 data)))))
 
 (defn state-change [[o n]]
   (when debug (println "-------"))
@@ -341,7 +344,39 @@
                        (do ;;(println "adding!" l)
                          (assoc (select-keys l [:form :file :meta :line])
                                 :line-count line-count)))))
-   )))))
+            ))))
+
+    ;; new print data
+    (let [new-streams
+          (->>
+           (map (fn [o n]
+                  (if (and (not= o n)
+                           (not= (:streams o) (:streams n)))
+                    [{:form (:form n)
+                      :file (:file n)
+                      :meta (:meta n)
+                      :line (:line n)}
+                     (->> (for [[k v] (:streams n)]
+                            (let [old-data (get-in o [:streams k])
+                                  new-data v]
+                              (when (> (count new-data) (count old-data))
+                                (subvec v (count old-data))
+                                )))
+                          (apply concat))]
+                    nil))
+                old-log new-log)
+           (filter identity))]
+      (doseq [[k v] new-streams]
+        (doseq [[out err] v]
+          (when out
+            (print out)
+            (.flush ^java.io.Writer *out*))
+          (when err
+            (binding [*out* *err*]
+              (print err))
+            (.flush ^java.io.Writer *err*))))
+      (when (seq new-streams)
+        (reset! accessible-lines []))))
 
   (let [new-debug (:debug n)
         old-debug (:debug o)
