@@ -54,7 +54,9 @@
               (recur (str out-data (char res))
                      err-data))
             {:result :ok
-             :exit (.waitFor ^java.lang.Process channel)
+             :exit (if (= java.lang.Process (class channel))
+                     (.waitFor ^java.lang.Process channel)
+                     (.getExitStatus ^com.jcraft.jsch.ChannelExec channel))
              :out out-data
              :out-lines (string/split-lines out-data)
              :err err-data}))))))
