@@ -343,14 +343,13 @@
                      (for [[l line-count] line-counts]
                        (do ;;(println "adding!" l)
                          (assoc (select-keys l [:form :file :meta :line])
-                                :line-count line-count)))))
-            ))))
+                                :line-count line-count)))))))))
 
     ;; new print data
     (let [new-streams
           (->>
            (map (fn [o n]
-                  (if (and (not= o n)
+                  (when (and (not= o n)
                            (not= (:streams o) (:streams n)))
                     [{:form (:form n)
                       :file (:file n)
@@ -362,8 +361,7 @@
                               (when (> (count new-data) (count old-data))
                                 (subvec v (count old-data))
                                 )))
-                          (apply concat))]
-                    nil))
+                          (apply concat))]))
                 old-log new-log)
            (filter identity))]
       (doseq [[k v] new-streams]
@@ -390,9 +388,9 @@
         new-failures
         (->>
          (map (fn [o n]
-                (if (not= o n)
-                  (filter #(= :failed (:result (:result %))) (subvec n (count o)))
-                  nil)) old-log-results new-log-results)
+                (when (not= o n)
+                  (filter #(= :failed (:result (:result %))) (subvec n (count o)))))
+              old-log-results new-log-results)
          (filter identity)
          (apply concat))]
     (doseq [failure new-failures]
