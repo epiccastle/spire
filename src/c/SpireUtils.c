@@ -9,6 +9,10 @@
 #include <sys/ioctl.h>
 #include "SpireUtils.h"
 
+JNIEXPORT jint JNICALL Java_SpireUtils_is_1a_1tty (JNIEnv *env, jclass this) {
+  return (jint)isatty(STDOUT_FILENO);
+}
+
 static int get_win_size(int fd, struct winsize *win) {
   return ioctl(fd, TIOCGWINSZ, (char*)win);
 }

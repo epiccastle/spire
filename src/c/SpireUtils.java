@@ -1,4 +1,7 @@
 public class SpireUtils {
+    // terminal tty
+    public static native int is_a_tty();
+
     // terminal size queries
     public static native int get_terminal_width();
     public static native int get_terminal_height();
