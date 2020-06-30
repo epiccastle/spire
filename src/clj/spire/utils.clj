@@ -194,18 +194,19 @@
 (defmethod content-stream java.lang.String [f] (io/input-stream (.getBytes ^String f)))
 (defmethod content-stream (Class/forName "[B") [f] (io/input-stream f))
 
+(defn has-terminal?
+  "If the standard out is attached to a terminal, return true.
+  If there is no terminal (stdout is redirected to a file or /dev/null) then
+  return false"
+  []
+  (pos? (SpireUtils/is_a_tty)))
+
 (defn get-terminal-width
-  "Returns a clean version of the terminal width. If the JVM is running in a
-  completely isolated JVM, the C library cannot get the terminal with (the ioctl
-  fails) and the width is reported as 61542 (on linux). If you run under a trampoline
-  (with `lein trampoline`) or as a graal native binary, the terminal width is reported
-  correctly. This `get-terminal-width` call sanitises this return value so it can
-  be used without problems in a REPL (so as to not print 61000 character long lines).
-  In these cases, the width is reported as 80.
-  "
+  "Returns a clean version of the terminal width. If there is no terminal, returns
+  a fake width (80)"
   []
   (let [width (SpireUtils/get_terminal_width)]
-    (if (< 10000 width) 80 width)))
+    (if (has-terminal?) width 80)))
 
 (defn progress-bar
   "given the arguments `bytes`, `total`, `frac` and `state`, print to `*out*` a
@@ -379,11 +380,15 @@
 (defn n-spaces [n]
   (apply str (map (fn [_] " ") (range n))))
 
+(def clear-line "\033[2K")
+
+;; TODO: replace with clear-line prefix
 (defn erase-line []
   (n-spaces (SpireUtils/get_terminal_width)))
 
 (defn append-erasure-to-line [s]
-  (let [len (displayed-length s)
+  (str clear-line s)
+  #_(let [len (displayed-length s)
         term-width (SpireUtils/get_terminal_width)]
     (if (> term-width len)
       (str s (n-spaces (- term-width len)))
@@ -393,10 +398,12 @@
   "calculate over how many lines the passed string, if printed to an empty
   terminal, would span"
   [s]
-  (let [len (displayed-length s)
-        term-width (SpireUtils/get_terminal_width)
-        ]
-    (inc (quot len term-width))))
+  (if (has-terminal?)
+    (let [len (displayed-length s)
+          term-width (SpireUtils/get_terminal_width)
+          ]
+      (inc (quot len term-width)))
+    1))
 
 (defn which-spire []
   (let [executable (executing-bin-path)
