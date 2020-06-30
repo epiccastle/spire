@@ -40,34 +40,44 @@
         (when-not (= -1 res)
           (String. out-array))))))
 
+(defn read-stream-until-eof [stream callback]
+  (loop [out-data ""]
+    (if-let [out (read-avail-string-from-input-stream stream)]
+      (do
+        (callback out)
+        (recur (str out-data out)))
+
+      (let [res (.read ^java.io.InputStream stream)]
+        (if-not (= -1 res)
+          (let [out (str (char res) (read-avail-string-from-input-stream stream))]
+            (callback out)
+            (recur (str out-data out)))
+
+          out-data)))))
+
 (defn process-streams
   "Stream the stdout and stderr to the output module"
   [{:keys [file form meta host-config channel out-stream err-stream]}]
-  (loop [out-data ""
-         err-data ""]
-    (if-let [out (read-avail-string-from-input-stream out-stream)]
-      (do
-        (spire.output.core/print-streams
-         (context/deref* spire.state/output-module)
-         file form meta host-config out nil)
-        (recur (str out-data out) err-data))
-
-      ;; maybe we are at end of stream. try and read
-      (let [res (.read ^java.io.InputStream out-stream)]
-        (if-not (= -1 res)
-          (do
-            (spire.output.core/print-streams
-             (context/deref* spire.state/output-module)
-             file form meta host-config (str (char res)) nil)
-            (recur (str out-data (char res))
-                   err-data))
-          {:result :ok
-           :exit (if (= java.lang.ProcessImpl (class channel))
-                   (.waitFor ^java.lang.Process channel)
-                   (.getExitStatus ^com.jcraft.jsch.ChannelExec channel))
-           :out out-data
-           :out-lines (string/split-lines out-data)
-           :err err-data})))))
+  (let [err-streamer (future
+                       (read-stream-until-eof
+                        err-stream
+                        (fn [err]
+                          (spire.output.core/print-streams
+                           (context/deref* spire.state/output-module)
+                           file form meta host-config nil err))))
+        out-data (read-stream-until-eof
+                  out-stream
+                  (fn [out]
+                    (spire.output.core/print-streams
+                     (context/deref* spire.state/output-module)
+                     file form meta host-config out nil)))]
+    {:result :ok
+     :exit (if (= java.lang.ProcessImpl (class channel))
+             (.waitFor ^java.lang.Process channel)
+             (.getExitStatus ^com.jcraft.jsch.ChannelExec channel))
+     :out out-data
+     :out-lines (string/split-lines out-data)
+     :err @err-streamer}))
 
 (utils/defmodule shell* [{:keys [env dir shell out opts cmd creates stdin print stream-key]
                           :or {env {}
