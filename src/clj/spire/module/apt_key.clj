@@ -22,28 +22,57 @@
    "apt_key_list.sh"
    {}))
 
+(defn process-key [out-lines]
+  (loop [[line & remains] out-lines
+         present-section nil
+         data {}]
+    (if line
+      (if (re-find #"^\w" line)
+        (let [[section body] (string/split line #"\s+" 2)]
+          (recur remains (keyword section) (assoc data (keyword section) [body])))
+        (recur remains present-section
+               (update data present-section conj (string/trim line))))
+      data)))
+
+(defn process-apt-key-list-output [out-lines]
+  (let [file-keys
+        (loop [[line & remains] out-lines
+               present-file nil
+               lines {}]
+          (if line
+            (if (and remains (string/starts-with? (first remains) "-----"))
+              (recur (rest remains) line lines)
+              (recur remains present-file (update lines present-file #(conj (or %1 []) %2) line)))
+            lines))]
+    (->> (for [[k v] file-keys]
+           [k
+            (->> v
+                 (partition-by empty?)
+                 (filter #(not= % '("")))
+                 (mapv process-key))])
+         (into {}))))
+
 (defmethod process-result :list
   [_ _ {:keys [out err exit] :as result}]
-  (cond
-    (zero? exit)
-    (assoc result
-           :result :ok
-           :out-lines (string/split out #"\n")
-           :err-lines (string/split err #"\n")
-           )
+  (let [out-lines (string/split out #"\n")]
+    (cond
+      (zero? exit)
+      (assoc result
+             :result :ok
+             :out-lines out-lines
+             :keys (process-apt-key-list-output out-lines)
+             )
 
-    (= 255 exit)
-    (assoc result
-           :result :changed
-           :out-lines (string/split out #"\n")
-           :err-lines (string/split err #"\n")
-           )
+      (= 255 exit)
+      (assoc result
+             :result :changed
+             :out-lines out-lines
+             )
 
-    :else
-    (assoc result
-           :result :failed
-           :out-lines (string/split out #"\n")
-           :err-lines (string/split err #"\n"))))
+      :else
+      (assoc result
+             :result :failed
+             :out-lines out-lines))))
 
 
 
