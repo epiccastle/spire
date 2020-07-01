@@ -30,7 +30,7 @@
       (str ".list")))
 
 ;;
-;; (line-in-file :present ...)
+;; (apt-repo :present ...)
 ;;
 (defmethod preflight :present [_ _]
   (facts/check-bins-present #{:sed :grep :awk :apt-key :curl :bash}))
@@ -95,7 +95,7 @@
            :err-lines (string/split err #"\n"))))
 
 ;;
-;; (line-in-file :absent ...)
+;; (apt-repo :absent ...)
 ;;
 (defmethod preflight :absent [_ _]
   (facts/check-bins-present #{:sed :grep :awk :apt-key :curl :bash}))
