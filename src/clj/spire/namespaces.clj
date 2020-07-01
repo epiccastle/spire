@@ -19,6 +19,7 @@
             [spire.module.apt :as apt]
             [spire.module.attrs :as attrs]
             [spire.module.apt-repo :as apt-repo]
+            [spire.module.apt-key :as apt-key]
             [spire.module.pkg :as pkg]
             [spire.module.rm :as rm]
             [spire.module.group :as group]
@@ -70,6 +71,8 @@
         (quote ~'apt) (sci-bind-macro apt/apt ~ns-sym)
         (quote ~'apt-repo*) (copy-var apt-repo/apt-repo* ~ns-sym)
         (quote ~'apt-repo) (sci-bind-macro apt-repo/apt-repo ~ns-sym)
+        (quote ~'apt-key*) (copy-var apt-key/apt-key* ~ns-sym)
+        (quote ~'apt-key) (sci-bind-macro apt-key/apt-key ~ns-sym)
         (quote ~'attrs*) (copy-var attrs/attrs* ~ns-sym)
         (quote ~'attrs) (sci-bind-macro attrs/attrs ~ns-sym)
         (quote ~'curl*) (copy-var curl/curl* ~ns-sym)
@@ -221,6 +224,7 @@
    'spire.module.attrs (make-sci-bindings spire.module.attrs)
    'spire.module.authorized-keys (make-sci-bindings spire.module.authorized-keys)
    'spire.module.apt-repo (make-sci-bindings spire.module.apt-repo)
+   'spire.module.apt-key (make-sci-bindings spire.module.apt-key)
    'spire.module.curl (make-sci-bindings spire.module.curl)
    'spire.module.download (make-sci-bindings spire.module.download)
    'spire.module.group (make-sci-bindings spire.module.group)
