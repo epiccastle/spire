@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+### Fixed
+- piping spire shell :print output to dev null results in divide by zero - #103
+- default output module correctly shows muliline forms - #96
+
+### Added
+- missing spit - #101
+- apt-key module - #99
+- shell module gets :stdin option - #98
+- shell module gets :print option - #97 #82
+
 ### Changed
 - updated sci to 0.1.1-alpha.1
 
