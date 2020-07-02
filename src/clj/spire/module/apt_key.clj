@@ -175,13 +175,13 @@
 
   `opts`: an optional hashmap of options with the following keys:
 
-  `:fingerprint` The gpg fingerprint of the the key to be installed or
-  removed
-
   `:public-key` The contents of the gpg public key. Supply a string in
   PEM format.
 
   `:public-key-url` A url to download the key from.
+
+  `:fingerprint` The gpg fingerprint of the the key to be installed or
+  removed
 
   `:keyring` An optional keyring file path to place the trusted key in.
   "
@@ -190,50 +190,63 @@
 
 (def documentation
   {
-   :module "apt-repo"
-   :blurb "Manage extra apt repositories"
+   :module "apt-key"
+   :blurb "Manage pgp keys for signed apt packages"
    :description
    [
-    "This module manages the presence of extra apt repositories."]
-   :form "(apt-repo command opts)"
+    "This module manages the presence of pgp keys used by apt to verify packages."]
+   :form "(apt-key command & [opts])"
    :args
    [{:arg "command"
-     :desc "The overall command to execute. Should be one of `:present` or `:absent`"
+     :desc "The overall command to execute. Should be one of `:list`, `:present` or `:absent`"
      :values
-     [[:present "Ensure the specified apt repository is present on the machine"]
-      [:absent "Ensure the specified apt repository is absent on the machine"]]}
+     [[:list "Lists the presently installed pgp keys"]
+      [:present "Ensure the specified pgp key is present on the machine"]
+      [:absent "Ensure the specified pgp key is absent on the machine"]]}
     {:arg "options"
      :desc "A hashmap of options"}]
 
    :opts
    [
-    [:repo
-     {:description ["The repository line as it appears in an apt source file."
-                    "A ppa description string."]
+    [:public-key
+     {:description ["The contents of the gpg public key."
+                    "Supply a string in PEM format."]
       :type :string
-      :required true}]
-    [:filename
-     {:description ["The base filename to use when storing the config."
-                    "Only necessary when `command` is `:present`."
-                    "When `command` is `:absent` the repo lists are searched and all references to the repo are removed."]}]
-    ]
+      :required :false}]
+
+    [:public-key-url
+     {:description ["A URL to download the public key from."
+                    "Should return the key as it would be supplied to `:public-key`."]
+      :type :string
+      :required :false}]
+
+    [:fingerprint
+     {:description ["The gpg key fingerprint of the key to be installed or removed."]
+      :type :string
+      :required :false}]
+
+    [:keyring
+     {:description ["An optional keyring file path to place the key in."]
+      :type :string
+      :required :false}]]
 
    :examples
    [
     {:description
-     "Add specified repository into sources list using specified filename."
+     "Add the goaccess apt-key (following https://goaccess.io/download#official-repo)"
      :form "
-(apt-repo :present {:repo \"deb http://dl.google.com/linux/chrome/deb/ stable main\"
-                    :filename \"google-chrome\"})"}
+(apt-key :present {:public-key-url \"https://deb.goaccess.io/gnugpg.key\"
+                   :keyring \"/etc/apt/trusted.gpg.d/goaccess.gpg\"
+                   :fingerprint \"C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D\"})"}
     {:description
-     "Install an ubuntu ppa apt source for php packages"
+     "Remove the goaccess apt-key"
      :form "
-(apt-repo :present {:repo \"ppa:ondrej/php\"})"}
+(apt-key :absent {:fingerprint \"C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D\"})"}
 
     {:description
-     "Remove the ubuntu php ppa"
+     "List all installed apt-keys"
      :form "
-(apt-repo :absent {:repo \"ppa:ondrej/php\"})"}
+(apt-key :list)"}
 
     ]
    })
