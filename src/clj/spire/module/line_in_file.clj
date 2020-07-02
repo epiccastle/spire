@@ -312,7 +312,9 @@
        "In `:absent` mode, the pattern of lines to remove. All occurances of that line will be removed."
        "In `:get` mode, the pattern of lines to bre returned. All occurances that match will be returned."
        "If the regular expression is not matched, the line will be added to the file. `:before` and `:after` will allow you to control where in the file the line is inserted."
-       "If `:before` or `:after` is not used then ensure the regular expression matches both the initial state of the line as well as its state after replacement to ensure idempotence."]
+       "If `:before` or `:after` is not used then ensure the regular expression matches both the initial state of the line as well as its state after replacement to ensure idempotence."
+       "NOTE: The regular expression is passed as a clojure regex literal or a Java regex but is converted into a sed regular expression for operation on the host. As such the semantics of the regular expression are those of the sed implementation on the host and not of Java's Pattern class."
+       ]
       :aliases [:regex]
       :type :regexp}]
 
