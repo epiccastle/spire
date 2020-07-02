@@ -114,6 +114,45 @@
              :out-lines out-lines))))
 
 
+;;
+;; (apt-key :absent ...)
+;;
+(defmethod preflight :absent [_ _]
+  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl :bash}))
+
+(defmethod make-script :absent [_ {:keys [fingerprint public-key public-key-url]}]
+  (utils/make-script
+   "apt_key_absent.sh"
+   {:FINGERPRINT (some-> fingerprint
+                         name
+                         (string/replace #"\s+" "")
+                         (string/upper-case))
+    :PUBLIC_KEY public-key
+    :PUBLIC_KEY_URL public-key-url}))
+
+(defmethod process-result :absent
+  [_ _ {:keys [out err exit] :as result}]
+  (let [out-lines (string/split out #"\n")]
+    (cond
+      (zero? exit)
+      (assoc result
+             :result :ok
+             :out-lines out-lines
+             )
+
+      (= 255 exit)
+      (assoc result
+             :result :changed
+             :out-lines out-lines
+             )
+
+      :else
+      (assoc result
+             :result :failed
+             :out-lines out-lines))))
+
+
+
 
 
 (utils/defmodule apt-key* [command opts]
@@ -126,19 +165,25 @@
 
 (defmacro apt-key
   "manage the presence or absence of extra apt repositories.
-  (apt-repo command opts)
+  (apt-key command & [opts])
 
   given:
 
-  `command`: Should be one of `:present` or `:absent`
+  `command`: Should be one of `:list`, `:present` or
+  `:absent`. `:list` requires no `opts` to be supplied. `:present` and
+  `:absent` require further `opts`
 
-  `opts`: a hashmap of options with the following keys:
+  `opts`: an optional hashmap of options with the following keys:
 
-  `:repo` The repository line as it appears in apt sources file, or a
-  ppa description line.
+  `:fingerprint` The gpg fingerprint of the the key to be installed or
+  removed
 
-  `:filename` an optional filename base for the storage of the repo
-  definition inside /etc/apt/sources.d
+  `:public-key` The contents of the gpg public key. Supply a string in
+  PEM format.
+
+  `:public-key-url` A url to download the key from.
+
+  `:keyring` An optional keyring file path to place the trusted key in.
   "
   [& args]
   `(utils/wrap-report ~&form (apt-key* ~@args)))
