@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. This change
 ### Fixed
 - piping spire shell :print output to dev null results in divide by zero - #103
 - default output module correctly shows muliline forms - #96
+- add line-in-file documentation around the regexp being converted to sed patterns - #87
 
 ### Added
 - missing spit - #101
