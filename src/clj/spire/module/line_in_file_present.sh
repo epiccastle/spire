@@ -34,9 +34,13 @@ if [ "$LINENUM" ]; then
   fi
 fi
 
-# :present by regexp
-if [ "$REGEX" ]; then
-  LINENUMS=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
+# :present by regexp or string-match
+if [ "$REGEX" ] || [ "$STRING_MATCH" ]; then
+  if [ "$REGEX" ]; then
+    LINENUMS=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
+  else
+    LINENUMS=$(grep -n -F "${STRING_MATCH}" "$FILE" | cut -d: -f1 | $SELECTOR)
+  fi
 
   if [ "$LINENUMS" ]; then
     REVERSE=""

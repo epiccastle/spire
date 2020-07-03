@@ -19,7 +19,7 @@
 ;;
 ;; (line-in-file :present ...)
 ;;
-(defmethod preflight :present [_ {:keys [path regexp after before match insert-at]}]
+(defmethod preflight :present [_ {:keys [path regexp string-match after before match insert-at]}]
   (cond
     (empty? path)
     (assoc failed-result
@@ -30,6 +30,11 @@
     (assoc failed-result
            :exit 3
            :err "Cannot specify both :after and :before to :present")
+
+    (and regexp string-match)
+    (assoc failed-result
+           :exit 3
+           :err "Cannot specify both :regexp and :string-match to :present")
 
     (not (options-match-choices (or match options-match-default)))
     (assoc failed-result
@@ -52,7 +57,7 @@
                      (apply str))]
     (str escaped (utils/string-escape remain))))
 
-(defmethod make-script :present [_ {:keys [path regexp line-num line after before match insert-at]}]
+(defmethod make-script :present [_ {:keys [path regexp string-match line-num line after before match insert-at]}]
   ;;(prn 'make-script :present (some->> line utils/string-escape))
   ;;(println (some->> line utils/string-escape))
   ;;(println line)
@@ -60,6 +65,7 @@
    :linux (utils/make-script
            "line_in_file_present.sh"
            {:REGEX (some->> regexp utils/re-pattern-to-sed)
+            :STRING_MATCH string-match
             :FILE (some->> path utils/path-escape)
             :LINENUM line-num
             :LINE (some->> line utils/string-escape)
@@ -72,19 +78,20 @@
                         :all "cat")
             :INSERTAT (some->> insert-at name)})
    :else (utils/make-script
-           "line_in_file_present_bsd.sh"
-           {:REGEX (some->> regexp utils/re-pattern-to-sed)
-            :FILE (some->> path utils/path-escape)
-            :LINENUM line-num
-            :LINE (some->> line utils/string-escape)
-            :SEDLINE (some->> line utils/string-escape utils/string-escape)
-            :AFTER (some->> after utils/re-pattern-to-sed)
-            :BEFORE (some->> before utils/re-pattern-to-sed)
-            :SELECTOR (case (or match options-match-default)
-                        :first "head -1"
-                        :last "tail -1"
-                        :all "cat")
-            :INSERTAT (some->> insert-at name)})))
+          "line_in_file_present_bsd.sh"
+          {:REGEX (some->> regexp utils/re-pattern-to-sed)
+           :STRING_MATCH string-match
+           :FILE (some->> path utils/path-escape)
+           :LINENUM line-num
+           :LINE (some->> line utils/string-escape)
+           :SEDLINE (some->> line utils/string-escape utils/string-escape)
+           :AFTER (some->> after utils/re-pattern-to-sed)
+           :BEFORE (some->> before utils/re-pattern-to-sed)
+           :SELECTOR (case (or match options-match-default)
+                       :first "head -1"
+                       :last "tail -1"
+                       :all "cat")
+           :INSERTAT (some->> insert-at name)})))
 
 (defmethod process-result :present
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
@@ -106,30 +113,37 @@
 ;;
 ;; (line-in-file :absent ...)
 ;;
-(defmethod preflight :absent [_ {:keys [path regexp line-num]}]
+(defmethod preflight :absent [_ {:keys [path regexp string-match line-num]}]
   (cond
     (empty? path)
     (assoc failed-result
            :exit 4
            :err ":path must be specified")
 
+    (and regexp string-match)
+    (assoc failed-result
+           :exit 3
+           :err "Cannot specify both :regexp and :string-match to :absent")
+
     (not (or regexp line-num))
     (assoc failed-result
            :exit 3
            :err "must specify :regexp or :line-num")))
 
-(defmethod make-script :absent [_ {:keys [path regexp line-num]}]
+(defmethod make-script :absent [_ {:keys [path regexp string-match line-num]}]
   (facts/on-os
    :linux (utils/make-script
-         "line_in_file_absent.sh"
-         {:REGEX (some->> regexp utils/re-pattern-to-sed)
-          :FILE (some->> path utils/path-escape)
-          :LINENUM line-num})
+           "line_in_file_absent.sh"
+           {:REGEX (some->> regexp utils/re-pattern-to-sed)
+            :STRING_MATCH string-match
+            :FILE (some->> path utils/path-escape)
+            :LINENUM line-num})
    :else (utils/make-script
-         "line_in_file_absent_bsd.sh"
-         {:REGEX (some->> regexp utils/re-pattern-to-sed)
-          :FILE (some->> path utils/path-escape)
-          :LINENUM line-num})))
+          "line_in_file_absent_bsd.sh"
+          {:REGEX (some->> regexp utils/re-pattern-to-sed)
+           :STRING_MATCH string-match
+           :FILE (some->> path utils/path-escape)
+           :LINENUM line-num})))
 
 (defmethod process-result :absent
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
@@ -152,7 +166,7 @@
 ;;
 ;; (line-in-file :get ...)
 ;;
-(defmethod preflight :get [_ {:keys [path line-num regexp match]}]
+(defmethod preflight :get [_ {:keys [path line-num regexp string-match match]}]
   (cond
     (empty? path)
     (assoc failed-result
@@ -163,6 +177,11 @@
     (assoc failed-result
            :exit 3
            :err "Cannot specify both :line-num and :regexp to :get")
+
+    (and regexp string-match)
+    (assoc failed-result
+           :exit 3
+           :err "Cannot specify both :regexp and :string-match to :present")
 
     (not (options-match-choices (or match options-match-default)))
     (assoc failed-result
@@ -175,10 +194,11 @@
            :exit 2
            :err "No line number 0 in file. File line numbers are 1 offset.")))
 
-(defmethod make-script :get [_ {:keys [path line-num regexp match]}]
+(defmethod make-script :get [_ {:keys [path line-num regexp string-match match]}]
   (utils/make-script
    "line_in_file_get.sh"
    {:REGEX (some->> regexp utils/re-pattern-to-sed)
+    :STRING_MATCH string-match
     :FILE (some->> path utils/path-escape)
     :LINENUM line-num
     :SELECTOR (case (or match options-match-default)
@@ -253,6 +273,9 @@
   `:regexp` The regular expression to look for in every line of the
   file. The line that matches will be replaced.
 
+  `:string-match` A string to look for in every line of the file. The
+  line that contains a match for the string will be replaced.
+
   `:line-num` Specify the line to match by line number instead of
   regular expression.
 
@@ -310,13 +333,25 @@
        "The regular expression to look for in every line of the file"
        "In `:present` mode, the pattern to replace if found. Replaces the last occurance of that pattern."
        "In `:absent` mode, the pattern of lines to remove. All occurances of that line will be removed."
-       "In `:get` mode, the pattern of lines to bre returned. All occurances that match will be returned."
+       "In `:get` mode, the pattern of lines to be returned. All occurances that match will be returned."
        "If the regular expression is not matched, the line will be added to the file. `:before` and `:after` will allow you to control where in the file the line is inserted."
        "If `:before` or `:after` is not used then ensure the regular expression matches both the initial state of the line as well as its state after replacement to ensure idempotence."
        "NOTE: The regular expression is passed as a clojure regex literal or a Java regex but is converted into a sed regular expression for operation on the host. As such the semantics of the regular expression are those of the sed implementation on the host and not of Java's Pattern class."
        ]
       :aliases [:regex]
       :type :regexp}]
+
+    [:string-match
+     :description
+     [
+      "A string to look for in every line of the file."
+      "In `:present` mode, the line that contains a match for the string will be replaced."
+      "In `:absent` mode, the line that contains a match for the string will be removed."
+      "In `:get` mode, the line that contains a match for the string will be returned."
+      "The same rules `:before` and `:after` rules for `:regexp` apply."
+      ]
+     :required false
+     :type :string]
 
     [:line
      {

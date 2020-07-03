@@ -26,9 +26,14 @@ if [ "$LINENUM" ]; then
   exit 0
 fi
 
-# :get by regexp
-if [ "$REGEX" ]; then
-  LINENUMS=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
+# :get by regexp or string-match
+if [ "$REGEX" ] || [ "$STRING_MATCH" ]; then
+  if [ "$REGEX" ]; then
+    LINENUMS=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
+  else
+    LINENUMS=$(grep -n -F "${STRING_MATCH}" "$FILE" | cut -d: -f1 | $SELECTOR)
+  fi
+
   if [ "$LINENUMS" ]; then
     SED_LP_CMD=$(echo $LINENUMS | sed 's/ /p;/g' | sed 's/$/p;/g')
     LINECONTENTS=$(sed -n "$SED_LP_CMD" "$FILE")

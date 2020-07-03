@@ -27,9 +27,14 @@ if [ "$LINENUM" ]; then
   exit -1
 fi
 
-# :absent by regexp
-if [ "$REGEX" ]; then
-  LINENUM=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
+# :absent by regexp or string-match
+if [ "$REGEX" ] || [ "$STRING_MATCH" ]; then
+  if [ "$REGEX" ]; then
+    LINENUMS=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
+  else
+    LINENUMS=$(grep -n -F "${STRING_MATCH}" "$FILE" | cut -d: -f1 | $SELECTOR)
+  fi
+
   if [ "$LINENUM" ]; then
     sed -i "" "${LINENUM}d${LINE}" "$FILE"
     exit -1
