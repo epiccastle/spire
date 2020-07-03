@@ -30,9 +30,9 @@ fi
 # :absent by regexp or string-match
 if [ "$REGEX" ] || [ "$STRING_MATCH" ]; then
   if [ "$REGEX" ]; then
-    LINENUMS=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
+    LINENUM=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
   else
-    LINENUMS=$(grep -n -F "${STRING_MATCH}" "$FILE" | cut -d: -f1 | $SELECTOR)
+    LINENUM=$(grep -n -F "${STRING_MATCH}" "$FILE" | cut -d: -f1 | $SELECTOR)
   fi
 
   if [ "$LINENUM" ]; then
