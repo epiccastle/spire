@@ -59,7 +59,11 @@
                      (apply str))]
     (str escaped (utils/string-escape remain))))
 
-(defmethod make-script :present [_ {:keys [path regexp string-match line-match line-num line after before match insert-at]}]
+(defmethod make-script :present [_ {:keys [path
+                                           regexp string-match line-match
+                                           line-num line
+                                           after before
+                                           match insert-at]}]
   ;;(prn 'make-script :present (some->> line utils/string-escape))
   ;;(println (some->> line utils/string-escape))
   ;;(println line)
@@ -67,8 +71,10 @@
    :linux (utils/make-script
            "line_in_file_present.sh"
            {:REGEX (some->> regexp utils/re-pattern-to-sed)
-            :STRING_MATCH string-match
-            :LINE_MATCH line-match
+            :STRING_MATCH (some->> string-match utils/string-escape)
+            :LINE_MATCH (some->>
+                         (if (or regexp string-match line-match) line-match line)
+                         utils/string-escape)
             :FILE (some->> path utils/path-escape)
             :LINENUM line-num
             :LINE (some->> line utils/string-escape)
@@ -83,8 +89,10 @@
    :else (utils/make-script
           "line_in_file_present_bsd.sh"
           {:REGEX (some->> regexp utils/re-pattern-to-sed)
-           :STRING_MATCH string-match
-           :LINE_MATCH line-match
+           :STRING_MATCH (some->> string-match utils/string-escape)
+           :LINE_MATCH (some->>
+                        (if (or regexp string-match line-match) line-match line)
+                         utils/string-escape)
            :FILE (some->> path utils/path-escape)
            :LINENUM line-num
            :LINE (some->> line utils/string-escape)
@@ -117,7 +125,9 @@
 ;;
 ;; (line-in-file :absent ...)
 ;;
-(defmethod preflight :absent [_ {:keys [path regexp string-match line-match line-num]}]
+(defmethod preflight :absent [_ {:keys [path
+                                        regexp string-match line-match
+                                        line-num]}]
   (cond
     (empty? path)
     (assoc failed-result
@@ -141,20 +151,26 @@
            :exit 3
            :err "must specify :regexp or :line-num")))
 
-(defmethod make-script :absent [_ {:keys [path regexp string-match line-match line-num]}]
+(defmethod make-script :absent [_ {:keys [path
+                                          regexp string-match line-match
+                                          line line-num]}]
   (facts/on-os
    :linux (utils/make-script
            "line_in_file_absent.sh"
            {:REGEX (some->> regexp utils/re-pattern-to-sed)
-            :STRING_MATCH string-match
-            :LINE_MATCH line-match
+            :STRING_MATCH (some->> string-match utils/string-escape)
+            :LINE_MATCH (some->>
+                         (if (or regexp string-match line-match) line-match line)
+                         utils/string-escape)
             :FILE (some->> path utils/path-escape)
             :LINENUM line-num})
    :else (utils/make-script
           "line_in_file_absent_bsd.sh"
           {:REGEX (some->> regexp utils/re-pattern-to-sed)
-           :STRING_MATCH string-match
-           :LINE_MATCH line-match
+           :STRING_MATCH (some->> string-match utils/string-escape)
+           :LINE_MATCH (some->>
+                        (if (or regexp string-match line-match) line-match line)
+                        utils/string-escape)
            :FILE (some->> path utils/path-escape)
            :LINENUM line-num})))
 
@@ -179,7 +195,9 @@
 ;;
 ;; (line-in-file :get ...)
 ;;
-(defmethod preflight :get [_ {:keys [path line-num regexp string-match line-match match]}]
+(defmethod preflight :get [_ {:keys [path
+                                     line-num regexp string-match
+                                     line-match match]}]
   (cond
     (empty? path)
     (assoc failed-result
@@ -209,12 +227,16 @@
            :exit 2
            :err "No line number 0 in file. File line numbers are 1 offset.")))
 
-(defmethod make-script :get [_ {:keys [path line-num regexp string-match line-match match]}]
+(defmethod make-script :get [_ {:keys [path
+                                       line-num regexp string-match
+                                       line-match line match]}]
   (utils/make-script
    "line_in_file_get.sh"
    {:REGEX (some->> regexp utils/re-pattern-to-sed)
-    :STRING_MATCH string-match
-    :LINE_MATCH line-match
+    :STRING_MATCH (some->> string-match utils/string-escape)
+    :LINE_MATCH (some->>
+                 (if (or regexp string-match line-match) line-match line)
+                 utils/string-escape)
     :FILE (some->> path utils/path-escape)
     :LINENUM line-num
     :SELECTOR (case (or match options-match-default)
@@ -292,13 +314,16 @@
   `:string-match` A string to look for in every line of the file. The
   line that contains a match for the string will be replaced.
 
-  `:line-match` An entire line to look for in every line of the file. The
-  line that completely matches the string will be replaced.
+  `:line-match` An entire line to look for in every line of the
+  file. The line that completely matches the string will be
+  replaced. If neither `:regexp` nor `:string-match` nor `:line-match`
+  is specified, then the contents of `:line` is used as a value for
+  `:line-match`.
 
   `:line-num` Specify the line to match by line number instead of
   regular expression.
 
-  `:line` The contents of the line to insert into the file
+  `:line` The contents of the line to insert into the file.
 
   `:after` A regular expression to insert the line after, if the
   `:regexp` match is not found.
@@ -380,6 +405,7 @@
       "In `:absent` mode, the line that matches will be removed."
       "In `:get` mode, the lines that match will be returned."
       "The same rules `:before` and `:after` rules for `:regexp` apply."
+      "If neither `:regexp` nor `:string-match` nor `:line-match` is specified, then the contents of `:line` is used as a value for `:line-match`."
       ]
      :required false
      :type :string]
