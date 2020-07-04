@@ -19,7 +19,7 @@
 ;;
 ;; (line-in-file :present ...)
 ;;
-(defmethod preflight :present [_ {:keys [path regexp string-match after before match insert-at]}]
+(defmethod preflight :present [_ {:keys [path regexp string-match line-match after before match insert-at]}]
   (cond
     (empty? path)
     (assoc failed-result
@@ -31,10 +31,12 @@
            :exit 3
            :err "Cannot specify both :after and :before to :present")
 
-    (and regexp string-match)
+    (< 1 (+ (if regexp 1 0)
+            (if string-match 1 0)
+            (if line-match 1 0)))
     (assoc failed-result
            :exit 3
-           :err "Cannot specify both :regexp and :string-match to :present")
+           :err "Can only specify one of :regexp, :string-match and :line-match to :present")
 
     (not (options-match-choices (or match options-match-default)))
     (assoc failed-result
@@ -57,7 +59,7 @@
                      (apply str))]
     (str escaped (utils/string-escape remain))))
 
-(defmethod make-script :present [_ {:keys [path regexp string-match line-num line after before match insert-at]}]
+(defmethod make-script :present [_ {:keys [path regexp string-match line-match line-num line after before match insert-at]}]
   ;;(prn 'make-script :present (some->> line utils/string-escape))
   ;;(println (some->> line utils/string-escape))
   ;;(println line)
@@ -66,6 +68,7 @@
            "line_in_file_present.sh"
            {:REGEX (some->> regexp utils/re-pattern-to-sed)
             :STRING_MATCH string-match
+            :LINE_MATCH line-match
             :FILE (some->> path utils/path-escape)
             :LINENUM line-num
             :LINE (some->> line utils/string-escape)
@@ -81,6 +84,7 @@
           "line_in_file_present_bsd.sh"
           {:REGEX (some->> regexp utils/re-pattern-to-sed)
            :STRING_MATCH string-match
+           :LINE_MATCH line-match
            :FILE (some->> path utils/path-escape)
            :LINENUM line-num
            :LINE (some->> line utils/string-escape)
@@ -113,12 +117,19 @@
 ;;
 ;; (line-in-file :absent ...)
 ;;
-(defmethod preflight :absent [_ {:keys [path regexp string-match line-num]}]
+(defmethod preflight :absent [_ {:keys [path regexp string-match line-match line-num]}]
   (cond
     (empty? path)
     (assoc failed-result
            :exit 4
            :err ":path must be specified")
+
+    (< 1 (+ (if regexp 1 0)
+            (if string-match 1 0)
+            (if line-match 1 0)))
+    (assoc failed-result
+           :exit 3
+           :err "Can only specify one of :regexp, :string-match and :line-match to :absent")
 
     (and regexp string-match)
     (assoc failed-result
@@ -130,18 +141,20 @@
            :exit 3
            :err "must specify :regexp or :line-num")))
 
-(defmethod make-script :absent [_ {:keys [path regexp string-match line-num]}]
+(defmethod make-script :absent [_ {:keys [path regexp string-match line-match line-num]}]
   (facts/on-os
    :linux (utils/make-script
            "line_in_file_absent.sh"
            {:REGEX (some->> regexp utils/re-pattern-to-sed)
             :STRING_MATCH string-match
+            :LINE_MATCH line-match
             :FILE (some->> path utils/path-escape)
             :LINENUM line-num})
    :else (utils/make-script
           "line_in_file_absent_bsd.sh"
           {:REGEX (some->> regexp utils/re-pattern-to-sed)
            :STRING_MATCH string-match
+           :LINE_MATCH line-match
            :FILE (some->> path utils/path-escape)
            :LINENUM line-num})))
 
@@ -166,7 +179,7 @@
 ;;
 ;; (line-in-file :get ...)
 ;;
-(defmethod preflight :get [_ {:keys [path line-num regexp string-match match]}]
+(defmethod preflight :get [_ {:keys [path line-num regexp string-match line-match match]}]
   (cond
     (empty? path)
     (assoc failed-result
@@ -178,10 +191,12 @@
            :exit 3
            :err "Cannot specify both :line-num and :regexp to :get")
 
-    (and regexp string-match)
+    (< 1 (+ (if regexp 1 0)
+            (if string-match 1 0)
+            (if line-match 1 0)))
     (assoc failed-result
            :exit 3
-           :err "Cannot specify both :regexp and :string-match to :present")
+           :err "Can only specify one of :regexp, :string-match and :line-match to :get")
 
     (not (options-match-choices (or match options-match-default)))
     (assoc failed-result
@@ -194,11 +209,12 @@
            :exit 2
            :err "No line number 0 in file. File line numbers are 1 offset.")))
 
-(defmethod make-script :get [_ {:keys [path line-num regexp string-match match]}]
+(defmethod make-script :get [_ {:keys [path line-num regexp string-match line-match match]}]
   (utils/make-script
    "line_in_file_get.sh"
    {:REGEX (some->> regexp utils/re-pattern-to-sed)
     :STRING_MATCH string-match
+    :LINE_MATCH line-match
     :FILE (some->> path utils/path-escape)
     :LINENUM line-num
     :SELECTOR (case (or match options-match-default)
@@ -276,6 +292,9 @@
   `:string-match` A string to look for in every line of the file. The
   line that contains a match for the string will be replaced.
 
+  `:line-match` An entire line to look for in every line of the file. The
+  line that completely matches the string will be replaced.
+
   `:line-num` Specify the line to match by line number instead of
   regular expression.
 
@@ -348,6 +367,18 @@
       "In `:present` mode, the line that contains a match for the string will be replaced."
       "In `:absent` mode, the line that contains a match for the string will be removed."
       "In `:get` mode, the line that contains a match for the string will be returned."
+      "The same rules `:before` and `:after` rules for `:regexp` apply."
+      ]
+     :required false
+     :type :string]
+
+    [:line-match
+     :description
+     [
+      "An entire line to look for in every line of the file."
+      "In `:present` mode, the line that matches will be replaced."
+      "In `:absent` mode, the line that matches will be removed."
+      "In `:get` mode, the lines that match will be returned."
       "The same rules `:before` and `:after` rules for `:regexp` apply."
       ]
      :required false
