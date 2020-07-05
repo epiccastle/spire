@@ -687,10 +687,7 @@ This is line #7
 This is line #8
 This is line #9
 This is line #10
-")))
-
-
-      )))
+"))))))
 
 (deftest line-in-file-string-match
   (testing "string-match-replace"
@@ -710,6 +707,7 @@ This is line #8
 This is line #9
 This is line #10
 ")))
+
     (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
       (is (=
            (line-in-file :present {:path tmp :string-match "is line" :line "replacement"
@@ -726,10 +724,7 @@ This is line #7
 This is line #8
 This is line #9
 replacement
-"
-             )
-          )
-      )
+")))
 
     (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
       (is (=
@@ -747,10 +742,7 @@ This is line #7
 This is line #8
 This is line #9
 This is line #10
-"
-             )
-          )
-      )
+")))
 
     (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
       (is (=
@@ -767,9 +759,7 @@ This is line #7
 This is line #8
 This is line #9
 This is line #10
-"
-             )
-          ))
+")))
 
     (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
       (is (=
@@ -788,9 +778,7 @@ This is line #7
 This is line #8
 This is line #9
 This is line #10
-"
-             )
-          ))
+")))
 
     (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
       (is (=
@@ -809,9 +797,7 @@ This is line #8
 This is line #9
 This is line #10
 replacement
-"
-             )
-          ))
+")))
 
 
     (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
@@ -830,10 +816,7 @@ replacement
 replacement
 replacement
 replacement
-"
-             )
-          )
-      )
+")))
 
     (test-utils/with-temp-files [tmp "test/files/line-in-file/regexp-file.txt"]
       (is (=
@@ -860,9 +843,7 @@ This is line #17
 This is line #18 and it contains a | character
 This is line #19 and it contains a [ character
 This is line #20
-"
-             )
-          ))
+")))
 
     (test-utils/with-temp-files [tmp "test/files/line-in-file/regexp-file.txt"]
       (is (=
@@ -890,9 +871,244 @@ This is line #17
 This is line #18 and it contains a | character
 This is line #19 and it contains a [ character
 This is line #20
-"
-             )
-          )
-      )
+")))
+
+    (test-utils/with-temp-files [tmp "test/files/line-in-file/regexp-file.txt"]
+      (is (=
+           (line-in-file :present {:path tmp :string-match "a . character" :line "replacement"
+                                   :match :all})
+           {:exit 0 :out "" :err "" :result :changed}))
+      (is (= (slurp tmp)
+             "This is line #1
+This is line #2 and it contains a \\ character
+This is line #3
+This is line #4 and it contains a ' character
+This is line #5 and it contains a \" character
+This is line #6
+This is line #7
+This is line #8
+This is line #9 and it contains a / character
+This is line #10
+This is line #11
+replacement
+This is line #13 and it contains a * character
+This is line #14
+This is line #15 and it contains a $ character
+This is line #16
+This is line #17
+This is line #18 and it contains a | character
+This is line #19 and it contains a [ character
+This is line #20
+")))
+
+    ))
+
+
+
+
+
+(deftest line-in-file-line-match
+  (testing "line-match-replace"
+    (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
+      (is (=
+           (line-in-file :present {:path tmp :line-match "This is line #5" :line "line 5"})
+           {:exit 0 :out "" :err "" :result :changed}))
+      (is (= (slurp tmp)
+             "This is line #1
+This is line #2
+This is line #3
+This is line #4
+line 5
+This is line #6
+This is line #7
+This is line #8
+This is line #9
+This is line #10
+")))
+
+    (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
+      (is (=
+           (line-in-file :present {:path tmp :line-match "line #5" :line "line 5"})
+           {:exit 0 :out "" :err "" :result :changed}))
+      (is (= (slurp tmp)
+             "This is line #1
+This is line #2
+This is line #3
+This is line #4
+This is line #5
+This is line #6
+This is line #7
+This is line #8
+This is line #9
+This is line #10
+line 5
+")))
+
+    (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
+      (spit tmp "line 1
+line 2
+line 2
+")
+      (is (=
+           (line-in-file :present {:path tmp :line-match "line 2" :line "replacement"
+                                   :match :last})
+           {:exit 0 :out "" :err "" :result :changed}))
+      (is (= (slurp tmp)
+             "line 1
+line 2
+replacement
+")))
+
+    (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
+      (spit tmp "line 1
+line 2
+line 2
+")
+      (is (=
+           (line-in-file :present {:path tmp :line-match "line 2" :line "replacement"
+                                   :match :first})
+           {:exit 0 :out "" :err "" :result :changed}))
+      (is (= (slurp tmp)
+             "line 1
+replacement
+line 2
+")))
+
+    (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
+      (spit tmp "line 1
+line 2
+line 2
+")
+      (is (=
+           (line-in-file :present {:path tmp :line-match "line 2" :line "replacement"
+                                   :match :all})
+           {:exit 0 :out "" :err "" :result :changed}))
+      (is (= (slurp tmp)
+             "line 1
+replacement
+replacement
+")))
+
+    (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
+      (is (=
+           (line-in-file :present {:path tmp :line-match "This is line" :line "replacement"
+                                   :insert-at :bof})
+           {:exit 0 :out "" :err "" :result :changed}))
+      (is (= (slurp tmp)
+             "replacement
+This is line #1
+This is line #2
+This is line #3
+This is line #4
+This is line #5
+This is line #6
+This is line #7
+This is line #8
+This is line #9
+This is line #10
+")))
+
+    (test-utils/with-temp-files [tmp "test/files/line-in-file/simple-file.txt"]
+      (is (=
+           (line-in-file :present {:path tmp :line-match "This is line" :line "replacement"
+                                   :insert-at :eof})
+           {:exit 0 :out "" :err "" :result :changed}))
+      (is (= (slurp tmp)
+             "This is line #1
+This is line #2
+This is line #3
+This is line #4
+This is line #5
+This is line #6
+This is line #7
+This is line #8
+This is line #9
+This is line #10
+replacement
+")))
+
+    (test-utils/with-temp-files [tmp "test/files/line-in-file/regexp-file.txt"]
+      (is (=
+           (line-in-file :present {:path tmp :line-match "This is line #15 and it contains a $ character" :line "replacement"})
+           {:exit 0 :out "" :err "" :result :changed}))
+      (is (= (slurp tmp)
+             "This is line #1
+This is line #2 and it contains a \\ character
+This is line #3
+This is line #4 and it contains a ' character
+This is line #5 and it contains a \" character
+This is line #6
+This is line #7
+This is line #8
+This is line #9 and it contains a / character
+This is line #10
+This is line #11
+This is line #12 and it contains a . character
+This is line #13 and it contains a * character
+This is line #14
+replacement
+This is line #16
+This is line #17
+This is line #18 and it contains a | character
+This is line #19 and it contains a [ character
+This is line #20
+")))
+
+    (test-utils/with-temp-files [tmp "test/files/line-in-file/regexp-file.txt"]
+      (is (=
+           (line-in-file :present {:path tmp :line-match "This is line #12 and it contains a . character" :line "replacement"
+                                   :match :all})
+           {:exit 0 :out "" :err "" :result :changed}))
+      (is (= (slurp tmp)
+             "This is line #1
+This is line #2 and it contains a \\ character
+This is line #3
+This is line #4 and it contains a ' character
+This is line #5 and it contains a \" character
+This is line #6
+This is line #7
+This is line #8
+This is line #9 and it contains a / character
+This is line #10
+This is line #11
+replacement
+This is line #13 and it contains a * character
+This is line #14
+This is line #15 and it contains a $ character
+This is line #16
+This is line #17
+This is line #18 and it contains a | character
+This is line #19 and it contains a [ character
+This is line #20
+")))
+
+    (test-utils/with-temp-files [tmp "test/files/line-in-file/regexp-file.txt"]
+      (is (=
+           (line-in-file :present {:path tmp :line-match "a . character" :line "replacement"
+                                   :match :all})
+           {:exit 0 :out "" :err "" :result :changed}))
+      (is (= (slurp tmp)
+             "This is line #1
+This is line #2 and it contains a \\ character
+This is line #3
+This is line #4 and it contains a ' character
+This is line #5 and it contains a \" character
+This is line #6
+This is line #7
+This is line #8
+This is line #9 and it contains a / character
+This is line #10
+This is line #11
+This is line #12 and it contains a . character
+This is line #13 and it contains a * character
+This is line #14
+This is line #15 and it contains a $ character
+This is line #16
+This is line #17
+This is line #18 and it contains a | character
+This is line #19 and it contains a [ character
+This is line #20
+replacement
+")))
 
     ))
