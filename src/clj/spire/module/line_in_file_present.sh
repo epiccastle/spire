@@ -34,7 +34,7 @@ if [ "$LINENUM" ]; then
   fi
 fi
 
-# :present by regexp or string-match
+# :present by regexp or string-match or line-match
 if [ "$REGEX" ] || [ "$STRING_MATCH" ] || [ "$LINE_MATCH" ]; then
   if [ "$REGEX" ]; then
     LINENUMS=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
