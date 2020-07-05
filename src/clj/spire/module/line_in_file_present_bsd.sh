@@ -93,9 +93,18 @@ ${SEDLINE}\\
       done
       exit $EXIT
     else
-      sed -i "" "\$a\\
+      if [ "$INSERTAT" = "bof" ]; then
+        sed -i "" "1i\\
 ${SEDLINE}\\
 " "$FILE"
+        exit -1
+      else
+        sed -i "" "\$a\\
+${SEDLINE}\\
+" "$FILE"
+        exit -1
+      fi
+
       exit -1
     fi
   fi
