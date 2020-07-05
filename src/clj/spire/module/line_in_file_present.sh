@@ -38,12 +38,10 @@ fi
 if [ "$REGEX" ] || [ "$STRING_MATCH" ] || [ "$LINE_MATCH" ]; then
   if [ "$REGEX" ]; then
     LINENUMS=$(sed -n "${REGEX}=" "$FILE" | $SELECTOR)
+  elif [ "$STRING_MATCH" ]; then
+    LINENUMS=$(grep -n -F "${STRING_MATCH}" "$FILE" | $SELECTOR | cut -d: -f1)
   else
-    if [ "$STRING_MATCH" ]; then
-      LINENUMS=$(grep -n -F "${STRING_MATCH}" "$FILE" | cut -d: -f1 | $SELECTOR)
-    else
-      LINENUMS=$(grep -n -x -F "${LINE_MATCH}" "$FILE" | cut -d: -f1 | $SELECTOR)
-    fi
+    LINENUMS=$(grep -n -x -F "${LINE_MATCH}" "$FILE" | $SELECTOR | cut -d: -f1)
   fi
 
   if [ "$LINENUMS" ]; then
