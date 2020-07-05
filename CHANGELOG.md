@@ -7,12 +7,16 @@ All notable changes to this project will be documented in this file. This change
 - piping spire shell :print output to dev null results in divide by zero - #103
 - default output module correctly shows muliline forms - #96
 - add line-in-file documentation around the regexp being converted to sed patterns - #87
+- fix broken :insert-at in line-in-file
 
 ### Added
 - missing spit - #101
 - apt-key module - #99
 - shell module gets :stdin option - #98
 - shell module gets :print option - #97 #82
+- line-in-file :string-match option
+- line-in-file :line-match option
+- line-in-file module: match by line if only line is provided - #86
 
 ### Changed
 - updated sci to 0.1.1-alpha.1
