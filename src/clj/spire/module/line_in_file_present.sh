@@ -84,8 +84,13 @@ if [ "$REGEX" ] || [ "$STRING_MATCH" ] || [ "$LINE_MATCH" ]; then
       done
       exit $EXIT
     else
-      sed -i "\$a${SEDLINE}" "$FILE"
-      exit -1
+      if [ "$INSERTAT" = "bof" ]; then
+        sed -i "1i${SEDLINE}" "$FILE"
+        exit -1
+      else
+        sed -i "\$a${SEDLINE}" "$FILE"
+        exit -1
+      fi
     fi
   fi
 fi
