@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.15] - 2020-07-05
+
 ### Fixed
 - piping spire shell :print output to dev null results in divide by zero - #103
 - default output module correctly shows muliline forms - #96
@@ -177,8 +179,9 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.14...HEAD
-[0.1.0-alpha.13]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.13...v0.1.0-alpha.14
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.15...HEAD
+[0.1.0-alpha.15]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.14...v0.1.0-alpha.15
+[0.1.0-alpha.14]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.13...v0.1.0-alpha.14
 [0.1.0-alpha.13]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.12...v0.1.0-alpha.13
 [0.1.0-alpha.12]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.11...v0.1.0-alpha.12
 [0.1.0-alpha.11]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.10...v0.1.0-alpha.11
