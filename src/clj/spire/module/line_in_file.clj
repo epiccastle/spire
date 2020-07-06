@@ -331,7 +331,7 @@
   `:before` A regular expression to insert the line before, if the
   `:regexp` match is not found.
 
-  `:match` How to landle files with multiple lines that match. Should
+  `:match` How to handle files with multiple lines that match. Should
   be `:first`, `:last` or `:all`
 
   `:insert-at` If no line matches and no `:after` or `:before`
@@ -386,29 +386,36 @@
       :type :regexp}]
 
     [:string-match
-     :description
-     [
-      "A string to look for in every line of the file."
-      "In `:present` mode, the line that contains a match for the string will be replaced."
-      "In `:absent` mode, the line that contains a match for the string will be removed."
-      "In `:get` mode, the line that contains a match for the string will be returned."
-      "The same rules `:before` and `:after` rules for `:regexp` apply."
-      ]
-     :required false
-     :type :string]
+     {:description
+      [
+       "A string to look for in every line of the file."
+       "In `:present` mode, the line that contains a match for the string will be replaced."
+       "In `:absent` mode, the line that contains a match for the string will be removed."
+       "In `:get` mode, the line that contains a match for the string will be returned."
+       "The same `:before`, `:after` and `:insert-at` rules apply as they do for `:regexp`."
+       ]
+      :required false
+      :type :string}]
 
     [:line-match
-     :description
-     [
-      "An entire line to look for in every line of the file."
-      "In `:present` mode, the line that matches will be replaced."
-      "In `:absent` mode, the line that matches will be removed."
-      "In `:get` mode, the lines that match will be returned."
-      "The same rules `:before` and `:after` rules for `:regexp` apply."
-      "If neither `:regexp` nor `:string-match` nor `:line-match` is specified, then the contents of `:line` is used as a value for `:line-match`."
-      ]
-     :required false
-     :type :string]
+     {:description
+      [
+       "An entire line to look for in every line of the file."
+       "In `:present` mode, the line that matches will be replaced."
+       "In `:absent` mode, the line that matches will be removed."
+       "In `:get` mode, the lines that match will be returned."
+       "The same `:before`, `:after` and `:insert-at` rules apply as they do for `:regexp`."
+       "If neither `:regexp` nor `:string-match` nor `:line-match` is specified, then the contents of `:line` is used as a value for `:line-match`."
+       ]
+      :required false
+      :type :string}]
+
+    [:line-num
+     {:description
+      ["Specify the line to match by line number instead of regular expression. or string"]
+      :type :integer
+      :required false
+      }]
 
     [:line
      {
@@ -421,12 +428,51 @@
       :description
       [
        "Used with mode `:present`"
-       "If specified, the line will be inserted after the last match of the specified regular expression."
+       "If specified, the line will be inserted after the last (or first) match of the specified regular expression."
        "If the first match is required, use `:first-match true`"
-       "If the specified regular expression has no matches, the line will be appended to the end of the file."
-       "If a match is found for `:regexp`, insertion is skipped and this parameter is ignored"
+       "If the specified search expression has no matches, the line will be appended to the end (or prepended to the start) of the file."
+       "If the prepending to the start is required, use `:insert-at :bof`"
+       "If a match is found for `:regexp`, `:string-match` or `:line-match`, insertion is skipped and this parameter is ignored"
        "May not be used in conjunction with `:before`"]
-      :type :regexp}]]
+      :type :regexp}]
+
+    [:before
+     {
+      :description
+      [
+       "Used with mode `:present`"
+       "If specified, the line will be inserted before the last (or first) match of the specified regular expression."
+       "If the first match is required, use `:first-match true`"
+       "If the specified search expression has no matches, the line will be appended to the end (or prepended to the start) of the file."
+       "If the prepending to the start is required, use `:insert-at :bof`"
+       "If a match is found for `:regexp`, `:string-match` or `:line-match`, insertion is skipped and this parameter is ignored"
+       "May not be used in conjunction with `:after`"]
+      :type :regexp}]
+
+    [:match
+     {
+      :description
+      [
+       "How to handle files with multiple lines that match."
+       "Should be `:first`, `:last` or `:all`"]
+      :type :keyword
+      :required :false
+      :default options-match-default}]
+
+    [:insert-at
+     {
+      :description
+      ["If no line matches and no `:after` or `:before` matches, describes where to insert the line."
+       "Should be `:eof` for end of file, or `:bof` for beginning of file."]
+      :type :keyword
+      :required :false
+      :default :eof
+      }]
+
+
+
+    ]
+
 
    :examples
    [
