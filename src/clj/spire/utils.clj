@@ -347,7 +347,7 @@
 (defn progress-bar-from-stats [host-string max-host-string-len max-filename-len
                                {:keys [file bytes total frac bytes-per-second eta]}]
   (let [
-        columns (SpireUtils/get_terminal_width)
+        columns (get-terminal-width)
         right-side-buffer 32
         width (- columns right-side-buffer max-host-string-len max-filename-len 1)
         host-string-padding (apply str (map (fn [_] " ") (range (- max-host-string-len (count host-string)))))
@@ -383,7 +383,7 @@
 (def clear-line "\033[2K")
 
 ;; TODO: replace with clear-line prefix
-(defn erase-line []
+#_(defn erase-line []
   (n-spaces (SpireUtils/get_terminal_width)))
 
 (defn append-erasure-to-line [s]
@@ -400,7 +400,7 @@
   [s]
   (if (has-terminal?)
     (let [len (displayed-length s)
-          term-width (SpireUtils/get_terminal_width)
+          term-width (get-terminal-width)
           ]
       (inc (quot len term-width)))
     1))
