@@ -179,7 +179,7 @@
                                        (into #{}))
 
              max-filename-length (->> remote-to-local
-                                      (map count)
+                                      (map (comp count #(.getName %) io/file :filename remote))
                                       (apply max 0))
 
              all-files-total total
