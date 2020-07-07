@@ -217,6 +217,25 @@
         (println (utils/progress-bar-from-stats (str (:key host-config)) max-host-key-length max-filename-length progress))))
 
     ;; return the total number of lines
+    (+ (count copy-progress) (utils/num-terminal-lines line))))
+
+(defn count-lines [{:keys [form file meta results copy-progress opts] :as s}]
+  (let [completed (for [{:keys [host-config result]} results]
+                    (str " "
+                         (utils/colour
+                          (case (:result result)
+                            :ok :green
+                            :changed :yellow
+                            :failed :red
+                            :blue))
+                         (str (:key host-config))
+                         (utils/colour)))
+        line (str (format "%s:%d " file (:line meta))
+                  (pr-str (elide-form-strings form (:max-string-length opts)))
+                  (apply str completed)
+                  )]
+
+    ;; return the total number of lines
     (+ (count copy-progress) (utils/num-terminal-lines line)))
   )
 
@@ -294,7 +313,7 @@
                 (up (- max-row first-row)))
 
               (let [old-size line-count
-                    new-size (print-state acc)]
+                    new-size (count-lines acc)]
 
                 (cond
                   (not= new-size old-size)
@@ -303,6 +322,8 @@
                     (if debug
                       (prn 'clear-screen-from-cursor-down)
                       (clear-screen-from-cursor-down))
+
+                    (print-state acc)
 
                     ;; we reprint all subsequent state
                     ;; state is inside accessibles, after out point
@@ -321,6 +342,9 @@
 
                   :else
                   (do
+
+                    (print-state acc)
+
                     (if debug
                       (prn 'down (- max-row last-row))
                       (down (- max-row last-row)))))
