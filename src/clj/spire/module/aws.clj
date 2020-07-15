@@ -34,6 +34,31 @@
 
 #_ (make-command :ec2 :get-password-data {:instance-id :i-0a55f23607bb7479a})
 
+(defn process-result-value [result-val]
+  (cond
+    (and (string? result-val)
+         (re-matches #"\d\d\d\d\-\d\d\-\d\dT\d\d:\d\d:\d\d\.\d\d\d.+" result-val))
+    (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd'T'HH:mm:ss.SSSX") result-val)
+
+    :else
+    result-val))
+
+#_ (process-result-value "2020-07-13T15:13:33.000Z")
+#_ (process-result-value "i-0a55f23607bb7479a")
+
+(defn process-result [data]
+  (->> data
+       (map (fn [[k v]]
+              [k (process-result-value v)]))
+       (into {})))
+
+#_ (process-result
+    {
+    "InstanceId" "i-0a55f23607bb7479a",
+    "PasswordData" "\r\ndata==\r\n",
+    "Timestamp" "2020-07-13T15:13:33.000Z"
+})
+
 (utils/defmodule aws* [module command opts]
   [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (or (preflight module command opts)
