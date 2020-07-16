@@ -17,7 +17,7 @@
    "date" "sed" "grep" "awk" "curl" "mkdir"
    "groupadd" "groupmod" "groupdel"
    "useradd" "usermod" "userdel"
-   "wget" "git" "tar" "rsync" "bzip2"
+   "wget" "git" "tar" "rsync" "bzip2" "aws"
    "bzcat" "bunzip2" "gzip" "gunzip" "zip"
    "unzip" "uname" "lsb_release"
    "md5sum" "md5"
