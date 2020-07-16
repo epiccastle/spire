@@ -20,13 +20,23 @@
        name
        utils/string-quote))
 
+;; TODO duplicate from shell. DRY it up
+(defn make-env-string [env]
+  (string/join
+   " "
+   (for [[k v] env] (format "%s=\"%s\"" (name k) (str v)))))
+
 (defn make-command [module command opts]
   (let [flags (->> opts
                    (mapv (fn [[k v]]
                            [(make-option-flag k)
                             (make-option-value v)
                          ])))]
-    (format "%s %s %s" (name module) (name command)
+    (format "export %s; %s %s %s"
+            (make-env-string {:AWS_ACCESS_KEY_ID "key-id"
+                              :AWS_SECRET_ACCESS_KEY "secret"
+                              :AWS_DEFAULT_REGION "region"})
+            (name module) (name command)
             (string/join " " (flatten flags))
             )
     )
