@@ -30,17 +30,11 @@
   (let [flags (->> opts
                    (mapv (fn [[k v]]
                            [(make-option-flag k)
-                            (make-option-value v)
-                         ])))]
-    (format "export %s; %s %s %s"
-            (make-env-string {:AWS_ACCESS_KEY_ID "key-id"
-                              :AWS_SECRET_ACCESS_KEY "secret"
-                              :AWS_DEFAULT_REGION "region"})
-            (name module) (name command)
-            (string/join " " (flatten flags))
-            )
-    )
-  )
+                            (make-option-value v)])))]
+    (format "%s %s %s" (name module) (name command) (string/join " " (flatten flags)))))
+
+(defn add-environment [command env]
+  (format "export %s; %s" (make-env-string env) command))
 
 #_ (make-command :ec2 :get-password-data {:instance-id :i-0a55f23607bb7479a})
 
@@ -75,7 +69,10 @@
       (exec-fn session
 
                ;; command
-               (make-command module command opts)
+               (-> (make-command module command opts)
+                   (add-environment {:AWS_ACCESS_KEY_ID "key-id"
+                                     :AWS_SECRET_ACCESS_KEY "secret"
+                                     :AWS_DEFAULT_REGION "region"}))
 
                ;; stdin
                ""
