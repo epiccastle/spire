@@ -69,6 +69,9 @@
       (exec-fn session
 
                ;; command
+               "bash"
+
+               ;; stdin
                (-> (make-command module command opts)
                    (add-environment
                     {:AWS_ACCESS_KEY_ID (get opts :aws-access-key-id
@@ -77,9 +80,6 @@
                                                  (System/getenv "AWS_SECRET_ACCESS_KEY"))
                      :AWS_DEFAULT_REGION (get opts :region
                                               (System/getenv "AWS_DEFAULT_REGION"))}))
-
-               ;; stdin
-               ""
 
                ;; output format
                "UTF-8"
