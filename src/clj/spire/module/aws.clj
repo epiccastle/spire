@@ -70,9 +70,13 @@
 
                ;; command
                (-> (make-command module command opts)
-                   (add-environment {:AWS_ACCESS_KEY_ID "key-id"
-                                     :AWS_SECRET_ACCESS_KEY "secret"
-                                     :AWS_DEFAULT_REGION "region"}))
+                   (add-environment
+                    {:AWS_ACCESS_KEY_ID (get opts :aws-access-key-id
+                                             (System/getenv "AWS_ACCESS_KEY_ID"))
+                     :AWS_SECRET_ACCESS_KEY (get opts :aws-secret-access-key
+                                                 (System/getenv "AWS_SECRET_ACCESS_KEY"))
+                     :AWS_DEFAULT_REGION (get opts :region
+                                              (System/getenv "AWS_DEFAULT_REGION"))}))
 
                ;; stdin
                ""
