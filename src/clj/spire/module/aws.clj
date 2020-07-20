@@ -63,13 +63,13 @@
     "Timestamp" "2020-07-13T15:13:33.000Z"
 })
 
-(def aws-credentials (sci/new-dynamic-var 'aws-credentials {}))
+(def aws-creds (sci/new-dynamic-var 'aws-credentials {}))
 
 (utils/defmodule aws* [module command opts]
   [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (let [{:keys [access-key-id
                 secret-access-key
-                region]} (context/deref* aws-credentials)]
+                region]} (context/deref* aws-creds)]
     (or (preflight module command opts)
         (exec-fn session
 
