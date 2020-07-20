@@ -17,6 +17,7 @@
             [spire.module.upload :as upload]
             [spire.module.user :as user]
             [spire.module.apt :as apt]
+            [spire.module.aws :as aws]
             [spire.module.attrs :as attrs]
             [spire.module.apt-repo :as apt-repo]
             [spire.module.apt-key :as apt-key]
