@@ -1,6 +1,8 @@
 (ns spire.module.aws
   (:require [spire.facts :as facts]
             [spire.utils :as utils]
+            [spire.context :as context]
+            [sci.core :as sci]
             [clojure.string :as string]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
