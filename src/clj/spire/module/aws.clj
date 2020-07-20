@@ -63,32 +63,42 @@
     "Timestamp" "2020-07-13T15:13:33.000Z"
 })
 
+(def aws-credentials (sci/new-dynamic-var 'aws-credentials {}))
+
 (utils/defmodule aws* [module command opts]
   [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
-  (or (preflight module command opts)
-      (exec-fn session
+  (let [{:keys [access-key-id
+                secret-access-key
+                region]} (context/deref* aws-credentials)]
+    (or (preflight module command opts)
+        (exec-fn session
 
-               ;; command
-               "bash"
+                 ;; command
+                 "bash"
 
-               ;; stdin
-               (-> (make-command module command opts)
-                   (add-environment
-                    {:AWS_ACCESS_KEY_ID (get opts :aws-access-key-id
-                                             (System/getenv "AWS_ACCESS_KEY_ID"))
-                     :AWS_SECRET_ACCESS_KEY (get opts :aws-secret-access-key
-                                                 (System/getenv "AWS_SECRET_ACCESS_KEY"))
-                     :AWS_DEFAULT_REGION (get opts :region
-                                              (System/getenv "AWS_DEFAULT_REGION"))}))
+                 ;; stdin
+                 (-> (make-command module command opts)
+                     (add-environment
+                      {:AWS_ACCESS_KEY_ID (get opts :aws-access-key-id
+                                               (or access-key-id
+                                                   (System/getenv "AWS_ACCESS_KEY_ID")))
+                       :AWS_SECRET_ACCESS_KEY (get opts :aws-secret-access-key
+                                                   (or secret-access-key
+                                                       (System/getenv "AWS_SECRET_ACCESS_KEY")))
+                       :AWS_DEFAULT_REGION (get opts :region
+                                                (or region
+                                                    (System/getenv "AWS_DEFAULT_REGION")))}))
 
-               ;; output format
-               "UTF-8"
+                 ;; output format
+                 "UTF-8"
 
-               ;; opts
-               {}
-               )
-      )
-  )
+                 ;; opts
+                 {}
+                 ))))
+
+(defmacro with-aws-creds [creds & body]
+  `(context/binding* [aws-credentials creds]
+                     ~@body))
 
 (defmacro aws
   ""
