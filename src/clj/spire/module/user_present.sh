@@ -107,6 +107,8 @@ if [ "$PWD_LINE" ]; then
   else
     COMMAND="true"
   fi
+
+  PRE_GROUPS=$(groups "$NAME")
 else
   # user does not exist
   ARGS=""
@@ -153,11 +155,11 @@ else
   fi
 
   COMMAND="useradd${ARGS} '$NAME'"
+  PRE_GROUPS=""
 fi
 
 # echo "command:"
 # echo "$COMMAND"
-PRE_GROUPS=$(groups "$NAME")
 eval $COMMAND
 POST_GROUPS=$(groups "$NAME")
 if [ "$PRE_GROUPS" != "$POST_GROUPS" ]; then
