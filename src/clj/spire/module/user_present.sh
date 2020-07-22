@@ -36,6 +36,7 @@ if [ "$PWD_LINE" ]; then
   # echo "exp: $OEXPIRE"
 
   ARGS=""
+  PRE_GROUPS=$(groups "$NAME")
   EXIT=0
 
   if [ "$COMMENT" ] && [ "$COMMENT" != "$OCOMMENT" ]; then
@@ -107,11 +108,10 @@ if [ "$PWD_LINE" ]; then
   else
     COMMAND="true"
   fi
-
-  PRE_GROUPS=$(groups "$NAME")
 else
   # user does not exist
   ARGS=""
+  PRE_GROUPS=""
   EXIT=0
 
   if [ "$COMMENT" ]; then
@@ -155,7 +155,6 @@ else
   fi
 
   COMMAND="useradd${ARGS} '$NAME'"
-  PRE_GROUPS=""
 fi
 
 # echo "command:"
