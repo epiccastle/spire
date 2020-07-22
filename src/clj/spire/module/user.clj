@@ -13,7 +13,7 @@
 (defmulti process-result (fn [command opts result] command))
 
 (defmethod preflight :present [_ {:keys [user] :as opts}]
-  (facts/check-bins-present [:grep :true :useradd :usermod :bash :chown :cp]))
+  (facts/check-bins-present [:grep :true :useradd :usermod :bash :chown :cp :cut :awk]))
 
 (defmethod make-script :present [_ {:keys [name comment uid home
                                            group groups password shell

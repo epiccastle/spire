@@ -37,6 +37,7 @@ if [ "$PWD_LINE" ]; then
 
   ARGS=""
   PRE_GROUPS=$(groups "$NAME")
+  OGROUP=$(echo "$PRE_GROUPS" | cut -d: -f2 | awk '{print $1}')
   EXIT=0
 
   if [ "$COMMENT" ] && [ "$COMMENT" != "$OCOMMENT" ]; then
