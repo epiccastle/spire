@@ -27,8 +27,8 @@
    "sha384sum" "sha384"
    "sha512sum" "sha512"
    "scp" "service"
-   "apt" "apt-get" "dpkg" "yum" "rpm" "pkg"
-   "apt-key"
+   "apt" "apt-get" "dpkg" "yum" "rpm" "pkg" "apt-key"
+   "systemctl" "journalctl"
    ])
 
 (defn make-which [shell]
