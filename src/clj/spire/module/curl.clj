@@ -163,7 +163,7 @@
 
 (defn- curl-response->map
   "Parses a curl response input stream into a map"
-  [result headers decode? decode-opts]
+  [result headers decode decode-opts]
   (let [[status headers]
         (reduce (fn [[status parsed-headers :as acc] header-line]
                     (if (string/starts-with? header-line "HTTP/")
@@ -174,7 +174,7 @@
                           acc))))
                   [nil {}]
                   headers)
-        decoded (when (and decode? (not (empty? result)))
+        decoded (when (and decode (not (empty? result)))
                   (decode-body headers result decode-opts))
         response {:status status
                   :headers headers
@@ -183,9 +183,9 @@
     response))
 
 (defn process-result [{:keys [method headers accept dump-header form cookies cookie-jar url auth query-params
-                              data-raw data-binary http2 output user-agent decode? decode-opts success-test]
+                              data-raw data-binary http2 output user-agent decode decode-opts success-test]
                        :or {method :GET
-                            decode? true
+                            decode true
                             success-test (fn [{:keys [status]}]
                                            (<= status 399))}
                        :as opts}
@@ -194,7 +194,7 @@
                       rm-result]
   (cond
     (zero? exit)
-    (let [response-map (curl-response->map out (:out-lines get-file-result) decode? decode-opts)
+    (let [response-map (curl-response->map out (:out-lines get-file-result) decode decode-opts)
           result (success-test response-map)]
       (-> response-map
           (assoc :exit 0
@@ -259,7 +259,7 @@
 
   `:user-agent` Supply a custom user agent string
 
-  `:decode?` Set to `false` to disable automatic response body decoding
+  `:decode` Set to `false` to disable automatic response body decoding
 
   `:decode-opts` Specify extra options to be sent to the decoder
 
@@ -333,7 +333,7 @@
     [:user-agent
      {:description ["Supply a custom user agent string for the request."]}
      ]
-    [:decode?
+    [:decode
      {:description ["Decode the response body according to its mime type."]}
      ]
     [:decode-opts
