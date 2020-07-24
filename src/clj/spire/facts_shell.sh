@@ -1,6 +1,6 @@
 set -e
 echo $0
-file `which $0`
+which $0
 uname -a
 uname -m
 uname -n

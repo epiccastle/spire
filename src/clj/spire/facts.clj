@@ -66,11 +66,9 @@
    :kernel {:release kernel-release
             :version kernel-version}})
 
-(defn process-shell-info [[command file uname platform node-name os kernel-release kernel-version]]
-  (let [[path info] (string/split file #":\s*" 2)]
-    {:command command
-     :path path
-     :info info}))
+(defn process-shell-info [[command path uname platform node-name os kernel-release kernel-version]]
+  {:command command
+   :path path})
 
 (defn process-system [uname-data shell-data]
   (let [detect (:detect shell-data)

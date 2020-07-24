@@ -1,5 +1,5 @@
 echo csh
-file `which csh`
+which csh
 uname -a
 uname -m
 uname -n
