@@ -79,11 +79,13 @@
      :out-lines (string/split-lines out-data)
      :err @err-streamer}))
 
-(utils/defmodule shell* [{:keys [env dir shell out opts cmd creates stdin print stream-key]
+(utils/defmodule shell* [{:keys [env dir shell out opts cmd creates stdin print stream-key ok-exit changed-exit]
                           :or {env {}
                                dir "."
                                shell "bash"
                                stream-key {}
+                               ok-exit zero?
+                               changed-exit #{255}
                                }
 
                           :as opts}]
@@ -153,8 +155,8 @@
                 (assoc result
                        :out-lines (string/split-lines out)
                        :result (cond
-                                 (zero? exit) :ok
-                                 (= 255 exit) :changed
+                                 (ok-exit exit) :ok
+                                 (changed-exit exit) :changed
                                  :else :failed)))))
           (finally
             (when stdin (rm/rm* remote-script-file)))
@@ -189,6 +191,15 @@
   `:creates` a list of filenames that the command will create. If
   these files exist on the machine, the command will not be executed
   and the job result will be reported as `:ok`
+
+  `:ok-exit` a callable that will be passed the shell exit code. If
+  it returns true, the job is marked as `:result :ok`
+
+  `:changed-exit` a callable that will be passed the shell exit
+  code. If it returns true the job is marked as
+  `:result :changed`. Note: :changed-exit is checked
+  after :ok-exit. If both return false, the job is marked as
+  `:result :failed`.
   "
   [args]
   `(utils/wrap-report ~&form (shell* (assoc ~args :stream-key
