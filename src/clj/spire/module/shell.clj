@@ -261,6 +261,13 @@
      {:description ["Specify a list of files that the command will create."
                     "If these files exist on the remote host, the command will not be executed and the job execution will be marked as `:ok`."]
       :type [:vector :list :lazy-seq]
-      :required false}]]})
+      :required false}]
+
+    [:ok-exit
+     {:description ["a callable that will be passed the shell exit code."
+                    "If it returns true, the job is marked as `:result :ok`"]
+      :type [:function :set]
+      :required :false}]
+    ]})
 
 #_ [env dir shell out opts cmd creates]
