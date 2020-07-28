@@ -268,6 +268,12 @@
                     "If it returns true, the job is marked as `:result :ok`"]
       :type [:function :set]
       :required :false}]
-    ]})
+
+    [:changed-exit
+     {:description ["a callable that will be passed the shell exit code."
+                    "If it returns true the job is marked as `:result :changed`."
+                    "Note: :changed-exit is checked after :ok-exit. If both return false, the job is marked as `:result :failed`."]
+      :type [:function :set]
+      :required :false}]]})
 
 #_ [env dir shell out opts cmd creates]
