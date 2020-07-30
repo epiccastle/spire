@@ -135,3 +135,6 @@
 
    :opts
    []})
+
+
+#_ (aws :ec2 :describe-instances {:region "ap-southeast-2"})
