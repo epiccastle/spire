@@ -33,7 +33,7 @@
                    (mapv (fn [[k v]]
                            [(make-option-flag k)
                             (make-option-value v)])))]
-    (format "%s %s %s" (name module) (name command) (string/join " " (flatten flags)))))
+    (format "aws %s %s %s" (name module) (name command) (string/join " " (flatten flags)))))
 
 (defn add-environment [command env]
   (format "export %s; %s" (make-env-string env) command))
