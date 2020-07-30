@@ -71,32 +71,47 @@
   [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (let [{:keys [access-key-id
                 secret-access-key
-                region]} (context/deref* aws-creds)]
+                region]} (context/deref* aws-creds)
+        clean-opts (dissoc opts :aws-access-key-id :aws-secret-access-key :region)
+        cmd (-> (make-command module command clean-opts)
+                (add-environment
+                 {:AWS_ACCESS_KEY_ID (get opts :aws-access-key-id
+                                          (or access-key-id
+                                              (System/getenv "AWS_ACCESS_KEY_ID")))
+                  :AWS_SECRET_ACCESS_KEY (get opts :aws-secret-access-key
+                                              (or secret-access-key
+                                                  (System/getenv "AWS_SECRET_ACCESS_KEY")))
+                  :AWS_DEFAULT_REGION (get opts :region
+                                           (or region
+                                               (System/getenv "AWS_DEFAULT_REGION")))}))]
     (or (preflight module command opts)
-        (exec-fn session
+        (let [{:keys [exit out err]}
+              (exec-fn session
 
-                 ;; command
-                 "bash"
+                       ;; command
+                       "bash"
 
-                 ;; stdin
-                 (-> (make-command module command opts)
-                     (add-environment
-                      {:AWS_ACCESS_KEY_ID (get opts :aws-access-key-id
-                                               (or access-key-id
-                                                   (System/getenv "AWS_ACCESS_KEY_ID")))
-                       :AWS_SECRET_ACCESS_KEY (get opts :aws-secret-access-key
-                                                   (or secret-access-key
-                                                       (System/getenv "AWS_SECRET_ACCESS_KEY")))
-                       :AWS_DEFAULT_REGION (get opts :region
-                                                (or region
-                                                    (System/getenv "AWS_DEFAULT_REGION")))}))
+                       ;; stdin
+                       cmd
 
-                 ;; output format
-                 "UTF-8"
+                       ;; output format
+                       "UTF-8"
 
-                 ;; opts
-                 {}
-                 ))))
+                       ;; opts
+                       {})]
+
+          (if (zero? exit)
+            {:exit exit
+             :result :ok
+             :out out
+             :err err
+             :decoded (process-result-value (json/read-str out :key-fn keyword))}
+            {:exit exit
+             :err err
+             :out out
+             :result :failed}
+            )
+          ))))
 
 (defmacro with-aws-creds [creds & body]
   `(context/binding* [aws-credentials creds]
