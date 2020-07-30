@@ -120,8 +120,8 @@
 
 (defmacro aws
   ""
-  [args]
-  `(utils/wrap-report ~&form (aws* ~args)))
+  [& args]
+  `(utils/wrap-report ~&form (aws* ~@args)))
 
 (def documentation
   {
