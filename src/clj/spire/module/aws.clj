@@ -3,6 +3,7 @@
             [spire.utils :as utils]
             [spire.context :as context]
             [sci.core :as sci]
+            [clojure.data.json :as json]
             [clojure.string :as string]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
