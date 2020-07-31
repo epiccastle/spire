@@ -72,8 +72,12 @@
   [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
   (let [{:keys [access-key-id
                 secret-access-key
-                region]} (context/deref* aws-creds)
-        clean-opts (dissoc opts :aws-access-key-id :aws-secret-access-key :region)
+                region
+                json-decode-args
+                ]} (context/deref* aws-creds)
+        clean-opts (dissoc opts :aws-access-key-id :aws-secret-access-key :region :json-decode-args)
+        json-decode-args (get opts :json-decode-args
+                              (or json-decode-args [:key-fn keyword]))
         cmd (-> (make-command module command clean-opts)
                 (add-environment
                  {:AWS_ACCESS_KEY_ID (get opts :aws-access-key-id
@@ -106,7 +110,7 @@
              :result :ok
              :out out
              :err err
-             :decoded (process-result-value (json/read-str out :key-fn keyword))}
+             :decoded (process-result-value (apply json/read-str out json-decode-args))}
             {:exit exit
              :err err
              :out out
