@@ -66,6 +66,28 @@
     "Timestamp" "2020-07-13T15:13:33.000Z"
 })
 
+
+(defn build-filter [fmap]
+  (into
+   []
+   (for [[k v] fmap]
+     {:Name (name k)
+      :Values (cond
+                (string? v)
+                [v]
+
+                (keyword? v)
+                [(name v)]
+
+                :else
+                v)})))
+
+(defn build-filter-json [fmap]
+  (json/write-str (build-filter fmap)))
+
+#_ (build-filter {:platform :windows
+                  :root-device-type :ebs})
+
 (def aws-creds (sci/new-dynamic-var 'aws-credentials {}))
 
 (utils/defmodule aws* [module command opts]
