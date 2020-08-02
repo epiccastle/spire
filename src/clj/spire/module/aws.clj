@@ -87,6 +87,8 @@
 
 #_ (build-filter {:platform :windows
                   :root-device-type :ebs})
+#_ (build-filter {:tag:Type :Custom})
+
 
 (def aws-creds (sci/new-dynamic-var 'aws-credentials {}))
 
@@ -164,3 +166,26 @@
 
 
 #_ (aws :ec2 :describe-instances {:region "ap-southeast-2"})
+(defn snake->camel [s]
+  (->> (string/split s #"-")
+       (map string/capitalize)
+       (string/join "")))
+
+#_ (snake->camel "instance-ids")
+
+(defn split-camel-case [s]
+  (re-seq #"[A-Z][a-z]+" s))
+
+#_ (= (split-camel-case  "CamelCaseToSplit")
+      ["Camel" "Case" "To" "Split"]
+      )
+
+(defn camel->snake [s]
+  (->> s
+       split-camel-case
+       (map string/lower-case)
+       (string/join "-"))
+  )
+
+#_ (camel->snake "InstanceIdsForYou")
+
