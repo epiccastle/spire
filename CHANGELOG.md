@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+### Added
+- spire.module.user/password
+
 ## [0.1.0-alpha.15] - 2020-07-05
 
 ### Fixed
