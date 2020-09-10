@@ -120,8 +120,8 @@
    :md5 "$1$"
    :des ""})
 
-(defn password [password {:keys [type salt]
-                          :or {type :sha512}}]
+(defn password [password & [{:keys [type salt]
+                              :or {type :sha512}}]]
   (let [salt (or salt (make-salt (salt-sizes type)))
         prefix (salt-prefix type)]
     (Crypt/crypt ^String password ^String (str prefix salt))))
