@@ -29,7 +29,7 @@
 
                  ;; http
                  [org.martinklepsch/clj-http-lite "0.4.3"]]
-  :plugins [[cider/cider-nrepl "0.21.1"]]
+  :plugins [[cider/cider-nrepl "0.24.0"]]
   :source-paths ["src/clj"]
   :java-source-paths ["src/c" "src/java"]
   :test-paths ["test/clojure"]
