@@ -2,7 +2,9 @@
   (:require [spire.utils :as utils]
             [spire.ssh :as ssh]
             [spire.facts :as facts]
-            [clojure.string :as string]))
+            [clojure.string :as string])
+  (:import [org.apache.commons.codec.digest Crypt]
+           [java.security SecureRandom]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
@@ -96,6 +98,35 @@
 (defn gecos [{:keys [fullname room office home info]}]
   (str fullname "," room "," office "," home "," info))
 
+(def b64t-chars "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+
+(defn make-salt [size]
+  (let [rng (SecureRandom.)]
+    (->>
+     (repeatedly
+      #(.charAt b64t-chars (.nextInt rng (count b64t-chars))))
+     (take size)
+     (apply str))))
+
+(def salt-sizes
+  {:sha256 16
+   :sha512 16
+   :md5 8
+   :des 2})
+
+(def salt-prefix
+  {:sha256 "$5$"
+   :sha512 "$6$"
+   :md5 "$1$"
+   :des ""})
+
+(defn password [password {:keys [type salt]
+                          :or {type :sha512}}]
+  (let [salt (or salt (make-salt (salt-sizes type)))
+        prefix (salt-prefix type)]
+    (Crypt/crypt ^String password ^String (str prefix salt))))
+
+#_ (password "yourpass")
 
 (def documentation
   {:module "user"

@@ -92,6 +92,8 @@
         (quote ~'user*) (copy-var user/user* ~ns-sym)
         (quote ~'user) (sci-bind-macro user/user ~ns-sym)
         (quote ~'gecos) (copy-var user/gecos ~ns-sym)
+        (quote ~'make-salt) (copy-var user/make-salt ~ns-sym)
+        (quote ~'password) (copy-var user/password ~ns-sym)
 
         (quote ~'get-fact) (copy-var facts/get-fact ~ns-sym)
         (quote ~'fetch-facts) (copy-var facts/fetch-facts ~ns-sym)

@@ -24,7 +24,7 @@
 
                  [com.jcraft/jsch "0.1.55"]
 
-                 ;; base64
+                 ;; base64 and password crypt
                  [commons-codec/commons-codec "1.12"]
 
                  ;; http
