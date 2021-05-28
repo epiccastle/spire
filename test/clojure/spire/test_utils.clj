@@ -4,7 +4,9 @@
    [clojure.java.shell :as shell]
    [clojure.java.io :as io]
    [clojure.string :as string]
-   [spire.ssh :as ssh])
+   [spire.ssh :as ssh]
+   [spire.state]
+   )
   (:import [java.nio.file Files]))
 
 
