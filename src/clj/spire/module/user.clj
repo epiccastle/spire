@@ -24,18 +24,18 @@
                                     :or {create-home true}
                                     :as opts}]
   (utils/make-script
-          "user_present.sh"
-          {:NAME name
-           :COMMENT comment
-           :USER_ID uid
-           :HOME_DIR home
-           :GROUP group
-           :GROUPSET (some->> groups (string/join ","))
-           :PASSWORD (some->> password utils/var-escape)
-           :SHELL shell
-           :CREATE_HOME (when create-home "true")
-           :MOVE_HOME (when move-home "true")
-           }))
+    "user_present.sh"
+    {:NAME name
+     :COMMENT comment
+     :USER_ID uid
+     :HOME_DIR home
+     :GROUP group
+     :GROUPSET (some->> groups (string/join ","))
+     :PASSWORD (some->> password utils/var-escape)
+     :SHELL shell
+     :CREATE_HOME (when create-home "true")
+     :MOVE_HOME (when move-home "true")
+     }))
 
 (defmethod process-result :present
   [_ {:keys [user] :as opts} {:keys [out err exit] :as result}]
@@ -135,6 +135,7 @@
    ["This module ensures a particular user is present on, or absent from, the remote machine."
     "It ensures that the configuration of the user matches the values specified."
     "The user can be specified by username or by user id. If both are specified the user is found by name, and the id is set to match the id value."
+    "Note: User creation and deletion honours the USERGROUPS_ENAB setting in /etc/login.defs on systems that use this."
     ]
    :form "(user command options)"
    :args
