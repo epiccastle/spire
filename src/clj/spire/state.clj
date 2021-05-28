@@ -2,9 +2,16 @@
   (:require [sci.core :as sci]
             [spire.local :as local]))
 
-;; all the open ssh connections
-;; keys => host-string
-;; value => session
+;; ssh-connections:
+;; Atom that holds all the open ssh connections. Atom value is a hashmap
+
+;; keys => host config hash-map.
+;; eg. {:username "crispin",
+;;      :hostname "localhost",
+;;      :port 22}
+;; value => sessions and use-counts
+;; eg. {:connection #object[com.jcraft.jsch.Session 0x79130491 "com.jcraft.jsch.Session@79130491"],
+;;      :use-count 1}
 (defonce ssh-connections
   (atom {}))
 
