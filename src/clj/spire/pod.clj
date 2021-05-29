@@ -128,9 +128,60 @@
 
 #_ (make-lookup spire.transport)
 
+(defmacro make-inlined-code-set
+  "sometime non-macro code needs to be inlined. This macro creates the pod
+  definitions for the code for a bunch of vars defined in a namespace"
+  [namespace syms & [{:keys [pre-declares rename]
+                      :or {pre-declares []
+                           rename {}}
+                      :as opts}]]
+  (let [interns (ns-interns namespace)]
+    (into
+     (if-not (empty? pre-declares)
+       [{"name" "_pre-declares"
+         "code" (->> pre-declares
+                     (map #(format "(declare %s)" %))
+                     (clojure.string/join " "))}]
+       [])
+     (for [sym syms]
+       {"name" (str (get rename sym sym))
+        "code" `(process-source ~(symbol (interns sym)) ~opts)}))))
 
+#_ (make-inlined-code-set spire.transport [ssh])
 
+(defmacro make-inlined-namespace
+  "join all the var definition bodies together for a namespace,
+  and wrap in the babashka pod namespace header
+  "
+  [namespace & body]
+  `{"name" (str pod-namespace-prefix ~(str namespace))
+    "vars" (vec (apply concat (vector ~@body)))}
+  )
 
+#_ (make-inlined-namespace
+    spire.transport
+    (make-inlined-code-set spire.transport [ssh])
+    (make-inlined-code-set spire.transport [debug])
+                           )
+
+(defmacro make-inlined-public-fns
+  [namespace & [{:keys [exclude only include-private rename]
+                 :or {exclude #{}
+                      only (constantly true)
+                      include-private false
+                      rename {}}}]]
+  (let [interns (if include-private
+                  (ns-interns namespace)
+                  (ns-publics namespace))]
+    (into []
+          (filter identity
+                  (for [sym (keys interns)]
+                    (when (and (not (exclude sym))
+                               (not (:macro (meta (interns sym))))
+                               (only sym))
+                      {"name" (str (get rename sym sym))}))))))
+
+#_ (make-inlined-public-fns spire.transport)
 
 (defn main []
   (try
