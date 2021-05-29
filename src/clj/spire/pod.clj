@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [read-string])
   (:require [bencode.core :refer [read-bencode write-bencode]]
             [spire.transport]
+            [spire.ssh]
             [clojure.edn :as edn]
             [clojure.repl]
             [clojure.java.io :as io])
@@ -200,15 +201,25 @@
         (case op-decoded
           "describe"
           (do
-            (debug 'returning (make-inlined-code-set-macros spire.transport))
             (write {"format" "edn"
                     "namespaces"
-                    [{
-                       "name" "spire.transport"
-                      "vars" [{"name" "ssh"
-                               "code" "(defn ssh [t] t)"
-                               }]
-                       }]
+                    [
+                     (make-inlined-namespace
+                      spire.ssh
+                      (make-inlined-code-set
+                       spire.ssh
+                       [debug ctrl-c carridge-return
+                        to-camel-case string-to-byte-array
+                        ascii utf-8 *piped-stream-buffer-size*
+                        default-port])
+                      (make-inlined-code-set-macros spire.ssh)
+                      (make-inlined-public-fns spire.ssh))
+
+                     #_(make-inlined-namespace
+                        spire.transport
+                        (make-inlined-code-set-macros spire.transport)
+                        (make-inlined-public-fns spire.transport))
+                     ]
                     "id" (read-string id)})
             (recur))
           "load-ns"
