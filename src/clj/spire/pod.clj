@@ -60,31 +60,39 @@
   rename contains a hashmap of symbols to be renamed and what to rename them to
   ns-renames is the same for full namespaces.
   "
-  [sym & [{:keys [ns-renames rename]
+  [sym & [{:keys [ns-renames
+                  rename
+                  ]
            :or {ns-renames {}
                 rename {}
                 }}]]
-  (->
-   (clojure.repl/source-fn sym)
-   (edamame.core/parse-string  {:all true
-                                :auto-resolve {:current (namespace sym)}})
-   (rename-second rename)               ; rename the top level namespace
-   (->> (clojure.walk/postwalk
-         (fn [form]
-           (if (symbol? form)
-             (let [ns (namespace form)
-                   sym-name (name form)]
-               (if (ns-renames ns)
-                 (symbol (ns-renames ns) sym-name)
+  (binding [*print-meta* true]
+    (->
+     (clojure.repl/source-fn sym)
+     (edamame.core/parse-string  {:all true
+                                  :auto-resolve {:current (namespace sym)}})
+     (rename-second rename)           ; rename the top level namespace
+     (->> (clojure.walk/postwalk
+           (fn [form]
+             (if (symbol? form)
+               (let [ns (namespace form)
+                     sym-name (name form)
+                     meta-data (dissoc (meta form) :row :col :end-row :end-col)]
+                 (with-meta
+                   (if (ns-renames ns)
+                     (symbol (ns-renames ns) sym-name)
 
-                 (if (translate-ns? ns)
-                   (symbol (str pod-namespace-prefix ns) sym-name)
-                   (symbol ns sym-name)
-                   )))
-             form))))
-   prn-str))
+                     (if (translate-ns? ns)
+                       (symbol (str pod-namespace-prefix ns) sym-name)
+                       (symbol ns sym-name)
+                       ))
+                   meta-data))
+               form))))
+     prn-str)))
 
 #_ (process-source spire.transport/ssh)
+#_ (process-source spire.ssh/*piped-stream-buffer-size*)
+#_ (process-source spire.transport/debug)
 
 (defmacro make-inlined-code-set-macros
   "given a namespace, extract all the definitions for the macros
