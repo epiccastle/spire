@@ -140,7 +140,8 @@
 (defmacro make-inlined-code-set
   "sometime non-macro code needs to be inlined. This macro creates the pod
   definitions for the code for a bunch of vars defined in a namespace"
-  [namespace syms & [{:keys [pre-declares rename]
+  [namespace syms & [{:keys [pre-declares
+                             rename]
                       :or {pre-declares []
                            rename {}}
                       :as opts}]]
@@ -216,10 +217,19 @@
                       spire.ssh
                       (make-inlined-code-set
                        spire.ssh
-                       [debug ctrl-c carridge-return
+                       [
+                        ;; defs
+                        debug ctrl-c carridge-return default-port
+
+                        ;; privates
                         to-camel-case string-to-byte-array
-                        ascii utf-8 *piped-stream-buffer-size*
-                        default-port])
+
+                        ;; charsets? java heap?
+                        ascii utf-8
+
+                        ;; dynamic
+                        *piped-stream-buffer-size*
+                        ])
                       (make-inlined-code-set-macros spire.ssh)
                       (make-inlined-public-fns spire.ssh))
 
