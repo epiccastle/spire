@@ -4,7 +4,7 @@
             [spire.output.core :as output]
             [spire.utils :as utils]
             [spire.eval :as eval]
-            [spire.pod :as pod]
+            [spire.pod.core :as pod]
             [spire.transport :as transport]
             [spire.output.default]
             [spire.output.events]
