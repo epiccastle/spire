@@ -92,19 +92,18 @@
                              {:pre-requires [[clojure.string :as string]]}
                              )
                             ;;(utils/make-inlined-code-set-macros spire.ssh)
-                            #_(utils/make-inlined-public-fns
+                            (utils/make-inlined-public-fns
                                spire.ssh
-                               {:exclude #{debug}}
+                               {:exclude #{debug ctrl-c carridge-return default-port
+                                           to-camel-case string-to-byte-array
+                                           ascii utf-8
+                                           *piped-stream-buffer-size*}}
                                )
-                            [
-                             {"name" "make-user-info"}
-                             {"name" "raw-mode-read-line"}
 
-                             ]
 
                             )
 
-                           #_(utils/make-inlined-namespace
+                           (utils/make-inlined-namespace
                               spire.transport
                               (utils/make-inlined-code-set-macros spire.transport)
                               (utils/make-inlined-public-fns spire.transport))

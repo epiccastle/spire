@@ -226,6 +226,7 @@
 #_ (make-key "user-info")
 
 (defonce user-info-state (atom {}))
+(defonce session-state (atom {}))
 
 (def lookup
   {'pod.epiccastle.spire.ssh/make-user-info
@@ -237,5 +238,36 @@
 
    'pod.epiccastle.spire.ssh/raw-mode-read-line
    spire.ssh/raw-mode-read-line
+
+   'pod.epiccastle.spire.ssh/print-flush-ask-yes-no
+   spire.ssh/print-flush-ask-yes-no
+
+   ;; 'pod.epiccastle.spire.ssh/make-session
+   ;; spire.ssh/make-session
+
+   ;; 'pod.epiccastle.spire.ssh/ssh-exec-proc
+   ;; spire.ssh/ssh-exec-proc
+
+   'pod.epiccastle.spire.transport/connect
+   (fn [& args]
+     (let [result (apply spire.transport/connect args)
+           key (make-key "pod.epiccastle.spire.transport" "session")]
+       (swap! session-state assoc key result)
+       key))
+
+   'pod.epiccastle.spire.transport/disconnect
+   (fn [& args]
+     (let [connection (get @session-state (first args))]
+       (spire.transport/disconnect connection)))
+
+   'pod.epiccastle.spire.transport/open-connection
+   (fn [& args]
+     (let [result (apply spire.transport/open-connection args)
+           key (make-key "pod.epiccastle.spire.transport" "session")]
+       (swap! session-state assoc key result)
+       key))
+
+   'pod.epiccastle.spire.transport/close-connection
+   spire.transport/close-connection
 
    })
