@@ -58,32 +58,33 @@
 (defn -main
   [& args]
   (try
-    (if (System/getenv "BABASHKA_POD")
+    (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
+      (sci/binding [state/output-module (clojure.edn/read-string (get options :output ":default"))]
+        (initialise options)
+        (output/print-thread @state/output-module)
+
+        (if (System/getenv "BABASHKA_POD")
           (pod/main)
-          (let [{:keys [options summary arguments]} (cli/parse-opts args cli-options)]
-            (sci/binding [state/output-module (clojure.edn/read-string (get options :output ":default"))]
-              (initialise options)
-              (output/print-thread @state/output-module)
 
-              (cond
-                (:help options)
-                (println (usage summary))
+          (cond
+            (:help options)
+            (println (usage summary))
 
-                (:version options)
-                (println "Version:" version)
+            (:version options)
+            (println "Version:" version)
 
-                (:evaluate options)
-                (->> options :evaluate (eval/evaluate args) delay-print)
+            (:evaluate options)
+            (->> options :evaluate (eval/evaluate args) delay-print)
 
-                (:nrepl-server options)
-                (->> options :nrepl-server (eval/nrepl-server args))
+            (:nrepl-server options)
+            (->> options :nrepl-server (eval/nrepl-server args))
 
-                (pos? (count arguments))
-                (sci/binding [sci/file (first arguments)]
-                  (-> arguments first slurp (->> (eval/evaluate args)) delay-print))
+            (pos? (count arguments))
+            (sci/binding [sci/file (first arguments)]
+              (-> arguments first slurp (->> (eval/evaluate args)) delay-print))
 
-                :else
-                (println (usage summary))))))
+            :else
+            (println (usage summary))))))
     (finally
       (transport/disconnect-all!)
       (shutdown-agents))))
