@@ -236,6 +236,6 @@
        key))
 
    'pod.epiccastle.spire.ssh/raw-mode-read-line
-   (fn [] (.readPassword (System/console)))
+   spire.ssh/raw-mode-read-line
 
    })
