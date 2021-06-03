@@ -213,70 +213,11 @@
 
 #_ (make-lookup spire.ssh)
 
-(def key-set (into [] "0123456789abcdefghijklmnopqrstuvwxyz"))
-(def key-length 16)
-
-(defn make-key [namespace prefix]
-  (->> key-length
-       range
-       (map (fn [_] (rand-nth key-set)))
-       (apply str prefix "-")
-       (keyword namespace)))
-
-#_ (make-key "user-info")
 
 (def user-info-state (atom {:instance->key {}
                                 :key->instance {}}))
 (def session-state (atom {:instance->key {}
                               :key->instance {}}))
-
-(defn add-instance!
-  "if instance is already added, returns the existing key.
-  otherwise gens a new key, adds the instance, and returns the key"
-  [state instance key-ns key-prefix]
-  (-> (swap! state
-             (fn [{:keys [key->instance instance->key] :as s}]
-               (if-let [existing-key (get instance->key instance)]
-                 s
-                 (let [new-key (make-key key-ns key-prefix)]
-                   (-> s
-                       (assoc-in [:key->instance new-key] instance)
-                       (assoc-in [:instance->key instance] new-key))))))
-      (get-in [:instance->key instance])))
-
-#_ (def key-added (add-instance! user-info-state :info1 "ns" "info"))
-
-(defn remove-instance!
-  "remove an instance by instance. return the storage key of the removed
-  instance if it was removed or nil"
-  [state instance]
-  (let [[o n] (swap-vals! state
-                          (fn [{:keys [key->instance instance->key] :as s}]
-                            (if-let [existing-key (get instance->key instance)]
-                              (-> s
-                                  (update :key->instance dissoc existing-key)
-                                  (update :instance->key dissoc (key->instance existing-key)))
-                              s)))]
-    (when-not (identical? o n)
-      (get-in o [:instance->key instance]))))
-
-#_ (remove-instance! user-info-state :info1)
-
-(defn remove-instance-by-key!
-  "remove an instance by key. return the instance removed if it was removed
-  or nil if not"
-  [state storage-key]
-  (let [[o n] (swap-vals! state
-                          (fn [{:keys [key->instance instance->key] :as s}]
-                            (if-let [existing-instance (get key->instance storage-key)]
-                              (-> s
-                                  (update :key->instance dissoc (instance->key existing-instance))
-                                  (update :instance->key dissoc existing-instance))
-                              s)))]
-    (when-not (identical? o n)
-      (get-in o [:key->instance storage-key]))))
-
-#_ (remove-instance-by-key! user-info-state key-added)
 
 (def lookup
   {'pod.epiccastle.spire.ssh/make-user-info
@@ -291,11 +232,14 @@
    'pod.epiccastle.spire.ssh/print-flush-ask-yes-no
    spire.ssh/print-flush-ask-yes-no
 
-   ;; 'pod.epiccastle.spire.ssh/make-session
-   ;; spire.ssh/make-session
+   ;;'pod.epiccastle.spire.ssh/make-session
+   ;;spire.ssh/make-session
 
    ;; 'pod.epiccastle.spire.ssh/ssh-exec-proc
    ;; spire.ssh/ssh-exec-proc
+
+
+
 
    'pod.epiccastle.spire.transport/connect
    (fn [& args]
