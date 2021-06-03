@@ -1,4 +1,4 @@
-(ns spire.pod.mappings
+(ns spire.pod.mapping
   (:import [java.lang.ref WeakReference ReferenceQueue]
            [java.util WeakHashMap Collections HashMap]))
 
