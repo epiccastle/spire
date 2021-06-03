@@ -1,6 +1,7 @@
 (ns spire.pod.utils
   (:refer-clojure :exclude [read-string])
   (:require [bencode.core :refer [read-bencode write-bencode]]
+            [spire.pod.mapping :as mapping]
             [spire.transport]
             [spire.ssh]
             [clojure.edn :as edn]
@@ -214,15 +215,13 @@
 #_ (make-lookup spire.ssh)
 
 
-(def user-info-state (atom {:instance->key {}
-                                :key->instance {}}))
-(def session-state (atom {:instance->key {}
-                              :key->instance {}}))
+(def user-info-state (mapping/make-mapping))
+(def session-state (mapping/make-mapping))
 
 (def lookup
   {'pod.epiccastle.spire.ssh/make-user-info
    (fn [& args]
-     (add-instance!
+     (mapping/add-instance!
       user-info-state (apply spire.ssh/make-user-info args)
       "pod.epiccastle.spire.ssh" "user-info"))
 
@@ -243,14 +242,14 @@
 
    'pod.epiccastle.spire.transport/connect
    (fn [& args]
-     (let [result (apply spire.transport/connect args)
-           key (make-key "pod.epiccastle.spire.transport" "session")]
-       (swap! session-state assoc key result)
-       key))
+     (let [result (apply spire.transport/connect args)]
+       (mapping/add-instance!
+        session-state result
+        "pod.epiccastle.spire.transport" "session")))
 
    'pod.epiccastle.spire.transport/disconnect
    (fn [& args]
-     (let [connection (get @session-state (first args))]
+     (let [connection (mapping/get-instance-for-key session-state (first args))]
        (spire.transport/disconnect connection)))
 
    'pod.epiccastle.spire.transport/disconnect-all!
@@ -258,15 +257,15 @@
 
    'pod.epiccastle.spire.transport/open-connection
    (fn [& args]
-     (add-instance! session-state (apply spire.transport/open-connection args)
-                    "pod.epiccastle.spire.transport" "session"))
+     (mapping/add-instance!
+      session-state (apply spire.transport/open-connection args)
+      "pod.epiccastle.spire.transport" "session"))
 
    'pod.epiccastle.spire.transport/close-connection
    spire.transport/close-connection
 
    'pod.epiccastle.spire.transport/get-connection
    (fn [& args]
-     (get-in @session-state [:instance->key (apply spire.transport/get-connection args)])
-     )
+     (mapping/get-key-for-instance session-state (apply spire.transport/get-connection args)))
 
    })
