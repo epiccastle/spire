@@ -12,7 +12,11 @@
 ;; when these namespaces appear in source,
 ;; they will be prefixed by our pod namespace prefix
 (def translate-ns?
-  #{"spire.transport"})
+  #{"spire.transport"
+    "spire.context"
+    "spire.state"
+    "spire.facts"
+    })
 
 (def pod-namespace-prefix "pod.epiccastle.")
 
@@ -39,9 +43,11 @@
   "
   [sym & [{:keys [ns-renames
                   rename
+                  replace-symbol
                   ]
            :or {ns-renames {}
                 rename {}
+                replace-symbol {}
                 }}]]
   (binding [*print-meta* true]
     (->
@@ -56,18 +62,21 @@
                      sym-name (name form)
                      meta-data (dissoc (meta form) :row :col :end-row :end-col)]
                  (with-meta
-                   (if (ns-renames ns)
-                     (symbol (ns-renames ns) sym-name)
+                   (if (replace-symbol form)
+                     (symbol (replace-symbol form))
+                     (if (ns-renames ns)
+                       (symbol (ns-renames ns) sym-name)
 
-                     (if (translate-ns? ns)
-                       (symbol (str pod-namespace-prefix ns) sym-name)
-                       (symbol ns sym-name)
-                       ))
+                       (if (translate-ns? ns)
+                         (symbol (str pod-namespace-prefix ns) sym-name)
+                         (symbol ns sym-name)
+                         )))
                    meta-data))
                form))))
      prn-str)))
 
-#_ (process-source spire.transport/ssh)
+#_ (process-source spire.transport/ssh {:replace-symbol {open-connection bar/FOOOO}
+                                        :ns-renames {"clojure.core" "foo"}})
 #_ (process-source spire.ssh/*piped-stream-buffer-size*)
 #_ (process-source spire.transport/debug)
 
@@ -77,8 +86,11 @@
   exclude can take a set of symbols to exclude from
   processing
   "
-  [namespace & [{:keys [exclude]
-                 :or {exclude #{}}}]]
+  [namespace & [{:keys [exclude ns-renames rename replace-symbol]
+                 :or {exclude #{}
+                      ns-renames {}
+                      rename {}
+                      replace-symbol {}}}]]
   (let [interns (ns-interns namespace)]
     (into []
           (filter identity
@@ -86,11 +98,17 @@
                     (when (and (:macro (meta (interns sym))) ;; only process macros
                                (not (exclude sym)))
                       {"name" (str sym)
-                       "code" `(process-source ~(symbol (interns sym)))
+                       "code" `(process-source ~(symbol (interns sym))
+                                               ~{:ns-renames ns-renames
+                                                 :rename rename
+                                                 :replace-symbol replace-symbol})
                        }))))))
 
 #_ (make-inlined-code-set-macros spire.transport)
 #_ (make-inlined-code-set-macros spire.transport {:exclude #{local ssh ssh-group}})
+#_ (make-inlined-code-set-macros spire.transport {:exclude #{local ssh-group}
+                                                  :replace-symbol {open-connection FOO/BAR}
+                                                  :ns-renames {"clojure.core" "foo"}})
 
 (defmacro make-function-lookup-table
   "given a namespace, create a hashmap table with keys of the
@@ -231,6 +249,11 @@
    'pod.epiccastle.spire.ssh/print-flush-ask-yes-no
    spire.ssh/print-flush-ask-yes-no
 
+   'pod.epiccastle.spire.ssh/host-description-to-host-config
+   spire.ssh/host-description-to-host-config
+
+
+
    ;;'pod.epiccastle.spire.ssh/make-session
    ;;spire.ssh/make-session
 
@@ -267,5 +290,20 @@
    'pod.epiccastle.spire.transport/get-connection
    (fn [& args]
      (mapping/get-key-for-instance session-state (apply spire.transport/get-connection args)))
+
+   'pod.epiccastle.spire.transport/flush-out
+   spire.transport/flush-out
+
+
+
+   'pod.epiccastle.spire.facts/update-facts!
+   spire.facts/update-facts!
+
+   'pod.epiccastle.spire.facts/get-fact
+   spire.facts/get-fact
+
+
+
+
 
    })
