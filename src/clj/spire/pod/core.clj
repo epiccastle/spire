@@ -93,20 +93,61 @@
                              )
                             ;;(utils/make-inlined-code-set-macros spire.ssh)
                             (utils/make-inlined-public-fns
-                               spire.ssh
-                               {:exclude #{debug ctrl-c carridge-return default-port
-                                           to-camel-case string-to-byte-array
-                                           ascii utf-8
-                                           *piped-stream-buffer-size*}}
-                               )
+                             spire.ssh
+                             {:exclude #{debug ctrl-c carridge-return default-port
+                                         to-camel-case string-to-byte-array
+                                         ascii utf-8
+                                         *piped-stream-buffer-size*}}
+                             )
 
 
                             )
 
                            (utils/make-inlined-namespace
-                              spire.transport
-                              (utils/make-inlined-code-set-macros spire.transport)
-                              (utils/make-inlined-public-fns spire.transport))
+                            spire.transport
+                            (utils/make-inlined-public-fns spire.transport)
+                            (utils/make-inlined-code-set-macros
+                             spire.transport
+                             {:replace-symbol
+                              {open-connection pod.epiccastle.spire.transport/open-connection
+                               close-connection pod.epiccastle.spire.transport/close-connection
+                               }
+                              :ns-renames {"context" "pod.epiccastle.spire.context"
+                                           "state" "pod.epiccastle.spire.state"
+                                           "facts" "pod.epiccastle.spire.facts"
+                                           "ssh" "pod.epiccastle.spire.ssh"}})
+                            )
+
+                           (utils/make-inlined-namespace
+                            spire.context
+                            [{"name" "context"
+                              "code" "(def ^:dynamic context :babashka)"}]
+                            (utils/make-inlined-code-set
+                             spire.context
+                             [binding-sym deref-sym])
+
+                            ;;(utils/make-inlined-public-fns spire.context)
+                            (utils/make-inlined-code-set-macros
+                             spire.context
+
+                             ))
+
+                           (utils/make-inlined-namespace
+                            spire.state
+                            [{"name" "host-config"
+                              "code" "(def ^:dynamic host-config nil)"}
+
+                             {"name" "connection"
+                              "code" "(def ^:dynamic connection nil)"}
+
+                             {"name" "shell-context"
+                              "code" "(def ^:dynamic shell-context nil)"}
+                             ])
+
+                           (utils/make-inlined-namespace
+                            spire.facts
+                            (utils/make-inlined-public-fns spire.facts)
+                            )
                            ]
                           "id" (read-string id)})
               (recur))
