@@ -12,10 +12,13 @@
 
 (def debug false)
 
+(defn make-agent []
+  (JSch.))
+
 (defn connect [host-config]
   (when debug (prn 'connect host-config))
   (let [
-        agent (JSch.)
+        agent (make-agent)
         session (ssh/make-session agent (:hostname host-config) host-config)
         irepo (ssh-agent/make-identity-repository)
         user-info (ssh/make-user-info host-config)
