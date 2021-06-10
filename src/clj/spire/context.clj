@@ -5,9 +5,10 @@
   (sci/new-dynamic-var 'context :clojure))
 
 (defn binding-sym []
-  (if (= :sci @context)
-    'clojure.core/binding
-    'sci.core/binding))
+  (cond
+    (= :babashka context) 'clojure.core/binding
+    (= :sci @context) 'clojure.core/binding
+    :default 'sci.core/binding))
 
 (defmacro binding* [binding-pairs & body]
   (concat [(binding-sym) binding-pairs] body))
@@ -15,9 +16,10 @@
 #_ (macroexpand-1 '(binding [a 1 b 2] (foo) (bar)))
 
 (defn deref-sym []
-  (if (= :sci @context)
-    'clojure.core/identity
-    'clojure.core/deref))
+  (cond
+    (= :babashka context) 'clojure.core/identity
+    (= :sci @context) 'clojure.core/identity
+    :default 'clojure.core/deref))
 
 (defmacro deref* [& body]
   (concat [(deref-sym)] body))
