@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [read-string read])
   (:require [bencode.core :refer [read-bencode write-bencode]]
             [spire.pod.utils :as utils]
+            [spire.pod.lookup :as lookup]
             [spire.transport]
             [spire.ssh]
             [clojure.edn :as edn]
@@ -38,6 +39,20 @@
   (when d
     (read-string d)))
 
+(def ns-renames
+  {"spire.transport" "pod.epiccastle.spire.transport"
+   "spire.ssh" "pod.epiccastle.spire.ssh"
+   "spire.context" "pod.epiccastle.spire.context"
+   "spire.state" "pod.epiccastle.spire.state"
+   "spire.facts" "pod.epiccastle.spire.facts"
+
+   "transport" "pod.epiccastle.spire.transport"
+   "ssh" "pod.epiccastle.spire.ssh"
+   "context" "pod.epiccastle.spire.context"
+   "state" "pod.epiccastle.spire.state"
+   "facts" "pod.epiccastle.spire.facts"
+   })
+
 (defn main []
   (let [server (ServerSocket. 0)
         port (.getLocalPort server)
@@ -73,7 +88,7 @@
                           "namespaces"
                           [
                            (utils/make-inlined-namespace
-                            spire.ssh
+                            pod.epiccastle.spire.ssh
                             (utils/make-inlined-code-set
                              spire.ssh
                              [
@@ -89,7 +104,8 @@
                               ;; dynamic
                               *piped-stream-buffer-size*
                               ]
-                             {:pre-requires [[clojure.string :as string]]}
+                             {:pre-requires [[clojure.string :as string]]
+                              :rename-ns ns-renames}
                              )
                             ;;(utils/make-inlined-code-set-macros spire.ssh)
                             (utils/make-inlined-public-fns
@@ -97,43 +113,44 @@
                              {:exclude #{debug ctrl-c carridge-return default-port
                                          to-camel-case string-to-byte-array
                                          ascii utf-8
-                                         *piped-stream-buffer-size*}}
+                                         *piped-stream-buffer-size*}
+                              }
                              )
 
 
                             )
 
                            (utils/make-inlined-namespace
-                            spire.transport
+                            pod.epiccastle.spire.transport
                             (utils/make-inlined-public-fns spire.transport)
                             (utils/make-inlined-code-set-macros
                              spire.transport
-                             {:replace-symbol
+                             {:rename-symbol
                               {open-connection pod.epiccastle.spire.transport/open-connection
                                close-connection pod.epiccastle.spire.transport/close-connection
                                }
-                              :ns-renames {"context" "pod.epiccastle.spire.context"
-                                           "state" "pod.epiccastle.spire.state"
-                                           "facts" "pod.epiccastle.spire.facts"
-                                           "ssh" "pod.epiccastle.spire.ssh"}})
+                              :rename-ns ns-renames})
                             )
 
                            (utils/make-inlined-namespace
-                            spire.context
+                            pod.epiccastle.spire.context
                             [{"name" "context"
                               "code" "(def ^:dynamic context :babashka)"}]
                             (utils/make-inlined-code-set
                              spire.context
-                             [binding-sym deref-sym])
+                             [binding-sym deref-sym]
+                             {:rename-ns ns-renames})
 
                             ;;(utils/make-inlined-public-fns spire.context)
                             (utils/make-inlined-code-set-macros
                              spire.context
+                             {:rename-ns ns-renames}
+                             )
 
-                             ))
+                            )
 
                            (utils/make-inlined-namespace
-                            spire.state
+                            pod.epiccastle.spire.state
                             [{"name" "host-config"
                               "code" "(def ^:dynamic host-config nil)"}
 
@@ -145,7 +162,7 @@
                              ])
 
                            (utils/make-inlined-namespace
-                            spire.facts
+                            pod.epiccastle.spire.facts
                             (utils/make-inlined-public-fns spire.facts)
                             )
                            ]
@@ -165,7 +182,7 @@
                       args args-decoded]
                   (debug 'invoke var args)
                   (let [args (edn/read-string args)]
-                    (if-let [f (utils/lookup var)]
+                    (if-let [f (lookup/lookup var)]
                       (let [value (pr-str (apply f args))
                             reply {"value" value
                                    "id" id

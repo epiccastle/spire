@@ -1,24 +1,8 @@
 (ns spire.pod.utils
   (:refer-clojure :exclude [read-string])
-  (:require [bencode.core :refer [read-bencode write-bencode]]
-            [spire.pod.mapping :as mapping]
-            [spire.transport]
+  (:require [spire.transport]
             [spire.ssh]
-            [clojure.edn :as edn]
-            [clojure.repl]
-            [clojure.java.io :as io])
-  (:import [java.io PushbackInputStream]))
-
-;; when these namespaces appear in source,
-;; they will be prefixed by our pod namespace prefix
-(def translate-ns?
-  #{"spire.transport"
-    "spire.context"
-    "spire.state"
-    "spire.facts"
-    })
-
-(def pod-namespace-prefix "pod.epiccastle.")
+            [clojure.repl]))
 
 (defn rename-second
   "given a clojure form, will rename the symbol in
@@ -38,23 +22,26 @@
 (defmacro process-source
   "given the fully qualified symbol for a macro or function, read that namespace's
   source code in and find that definition and extract the source code for it.
-  rename contains a hashmap of symbols to be renamed and what to rename them to
-  ns-renames is the same for full namespaces.
+  rename-def contains a hashmap of symbols to be renamed and what to rename them to
+  and this renames them in the second position. ie. (def RENAMETHIS ...)
+  rename-ns renames any namespaced symbol found into a new namespace. keys and values
+  of this hashmap need to be strings. eg {\"clojure.core\" \"my-new-core-ns\"}
+  rename-symbol renames any symbol found into a new symbol
   "
-  [sym & [{:keys [ns-renames
-                  rename
-                  replace-symbol
+  [sym & [{:keys [rename-ns
+                  rename-def
+                  rename-symbol
                   ]
-           :or {ns-renames {}
-                rename {}
-                replace-symbol {}
+           :or {rename-ns {}
+                rename-def {}
+                rename-symbol {}
                 }}]]
   (binding [*print-meta* true]
     (->
      (clojure.repl/source-fn sym)
      (edamame.core/parse-string  {:all true
                                   :auto-resolve {:current (namespace sym)}})
-     (rename-second rename)           ; rename the top level namespace
+     (rename-second rename-def)           ; rename the top level namespace
      (->> (clojure.walk/postwalk
            (fn [form]
              (if (symbol? form)
@@ -62,21 +49,17 @@
                      sym-name (name form)
                      meta-data (dissoc (meta form) :row :col :end-row :end-col)]
                  (with-meta
-                   (if (replace-symbol form)
-                     (symbol (replace-symbol form))
-                     (if (ns-renames ns)
-                       (symbol (ns-renames ns) sym-name)
-
-                       (if (translate-ns? ns)
-                         (symbol (str pod-namespace-prefix ns) sym-name)
-                         (symbol ns sym-name)
-                         )))
+                   (if (rename-symbol form)
+                     (symbol (rename-symbol form))
+                     (if (rename-ns ns)
+                       (symbol (rename-ns ns) sym-name)
+                       (symbol ns sym-name)))
                    meta-data))
                form))))
      prn-str)))
 
-#_ (process-source spire.transport/ssh {:replace-symbol {open-connection bar/FOOOO}
-                                        :ns-renames {"clojure.core" "foo"}})
+#_ (process-source spire.transport/ssh {:rename-symbol {open-connection bar/FOOOO}
+                                        :rename-ns {"clojure.core" "foo"}})
 #_ (process-source spire.ssh/*piped-stream-buffer-size*)
 #_ (process-source spire.transport/debug)
 
@@ -86,11 +69,11 @@
   exclude can take a set of symbols to exclude from
   processing
   "
-  [namespace & [{:keys [exclude ns-renames rename replace-symbol]
+  [namespace & [{:keys [exclude rename-ns rename rename-symbol]
                  :or {exclude #{}
-                      ns-renames {}
+                      rename-ns {}
                       rename {}
-                      replace-symbol {}}}]]
+                      rename-symbol {}}}]]
   (let [interns (ns-interns namespace)]
     (into []
           (filter identity
@@ -99,21 +82,21 @@
                                (not (exclude sym)))
                       {"name" (str sym)
                        "code" `(process-source ~(symbol (interns sym))
-                                               ~{:ns-renames ns-renames
+                                               ~{:rename-ns (eval rename-ns)
                                                  :rename rename
-                                                 :replace-symbol replace-symbol})
+                                                 :rename-symbol rename-symbol})
                        }))))))
 
 #_ (make-inlined-code-set-macros spire.transport)
 #_ (make-inlined-code-set-macros spire.transport {:exclude #{local ssh ssh-group}})
 #_ (make-inlined-code-set-macros spire.transport {:exclude #{local ssh-group}
-                                                  :replace-symbol {open-connection FOO/BAR}
-                                                  :ns-renames {"clojure.core" "foo"}})
+                                                  :rename-symbol {open-connection FOO/BAR}
+                                                  :rename-ns {"clojure.core" "foo"}})
 
 (defmacro make-function-lookup-table
   "given a namespace, create a hashmap table with keys of the
   function name, and values of the actual functions themselves"
-  [ns]
+  [ns pod-namespace-prefix]
   (->>
    (for [[k v] (ns-interns ns)]
      (let [{:keys [ns name macro private]} (meta v)]
@@ -180,7 +163,7 @@
   and wrap in the babashka pod namespace header
   "
   [namespace & body]
-  `{"name" (str pod-namespace-prefix ~(str namespace))
+  `{"name" ~(str namespace)
     "vars" (vec (apply concat (vector ~@body)))}
   )
 
@@ -209,11 +192,7 @@
 
 #_ (make-inlined-public-fns spire.transport)
 
-(declare lookup)
-
-
-
-(defmacro make-lookup [ns]
+(defmacro make-lookup [ns pod-namespace-prefix]
   (->>
    (for [[k v] (ns-interns ns)]
      (let [{:keys [ns name macro private]} (meta v)]
@@ -230,80 +209,4 @@
    (filter identity)
    (into {})))
 
-#_ (make-lookup spire.ssh)
-
-
-(def user-info-state (mapping/make-mapping))
-(def session-state (mapping/make-mapping))
-
-(def lookup
-  {'pod.epiccastle.spire.ssh/make-user-info
-   (fn [& args]
-     (mapping/add-instance!
-      user-info-state (apply spire.ssh/make-user-info args)
-      "pod.epiccastle.spire.ssh" "user-info"))
-
-   'pod.epiccastle.spire.ssh/raw-mode-read-line
-   spire.ssh/raw-mode-read-line
-
-   'pod.epiccastle.spire.ssh/print-flush-ask-yes-no
-   spire.ssh/print-flush-ask-yes-no
-
-   'pod.epiccastle.spire.ssh/host-description-to-host-config
-   spire.ssh/host-description-to-host-config
-
-
-
-   ;;'pod.epiccastle.spire.ssh/make-session
-   ;;spire.ssh/make-session
-
-   ;; 'pod.epiccastle.spire.ssh/ssh-exec-proc
-   ;; spire.ssh/ssh-exec-proc
-
-
-
-
-   'pod.epiccastle.spire.transport/connect
-   (fn [& args]
-     (let [result (apply spire.transport/connect args)]
-       (mapping/add-instance!
-        session-state result
-        "pod.epiccastle.spire.transport" "session")))
-
-   'pod.epiccastle.spire.transport/disconnect
-   (fn [& args]
-     (let [connection (mapping/get-instance-for-key session-state (first args))]
-       (spire.transport/disconnect connection)))
-
-   'pod.epiccastle.spire.transport/disconnect-all!
-   spire.transport/disconnect-all!
-
-   'pod.epiccastle.spire.transport/open-connection
-   (fn [& args]
-     (mapping/add-instance!
-      session-state (apply spire.transport/open-connection args)
-      "pod.epiccastle.spire.transport" "session"))
-
-   'pod.epiccastle.spire.transport/close-connection
-   spire.transport/close-connection
-
-   'pod.epiccastle.spire.transport/get-connection
-   (fn [& args]
-     (mapping/get-key-for-instance session-state (apply spire.transport/get-connection args)))
-
-   'pod.epiccastle.spire.transport/flush-out
-   spire.transport/flush-out
-
-
-
-   'pod.epiccastle.spire.facts/update-facts!
-   spire.facts/update-facts!
-
-   'pod.epiccastle.spire.facts/get-fact
-   spire.facts/get-fact
-
-
-
-
-
-   })
+#_ (make-lookup spire.ssh "pod.epiccastle.")
