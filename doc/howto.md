@@ -182,7 +182,7 @@ Pass in the known signature as the value of `:host-key-accept`:
 
 ## Activate authentication agent forwarding to the remote machine
 
-Set `:auth-forward` to `true` in the host config
+Set `:agent-forwarding` to `true` in the host config
 
 ```clojure
 (ssh {:username "root"
