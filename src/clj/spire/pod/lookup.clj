@@ -8,12 +8,17 @@
 (def user-info-state (mapping/make-mapping))
 (def session-state (mapping/make-mapping))
 
-(def lookup
-  {'pod.epiccastle.spire.ssh/make-user-info
-   (fn [& args]
-     (mapping/add-instance!
-      user-info-state (apply spire.ssh/make-user-info args)
-      "pod.epiccastle.spire.ssh" "user-info"))
+(defmacro make-plain-lookup [ns-to syms]
+  (let [ns-from (str "pod.epiccastle." (str ns-to))]
+    (into []
+          (for [sym syms]
+               `['~(symbol ns-from (str sym))
+                 ~(symbol ns-to (str sym))]))))
+
+#_
+(macroexpand-1 '(make-plain-lookup "spire.foo" [a b c]))
+
+#_(make-plain-lookup "spire.local" [is-file? is-dir?])
 
    'pod.epiccastle.spire.ssh/raw-mode-read-line
    spire.ssh/raw-mode-read-line
