@@ -5,6 +5,7 @@
             [spire.pod.lookup :as lookup]
             [spire.transport]
             [spire.ssh]
+            [spire.module.shell]
             [clojure.edn :as edn]
             [clojure.repl]
             [clojure.java.io :as io])
@@ -43,14 +44,21 @@
   {"spire.transport" "pod.epiccastle.spire.transport"
    "spire.ssh" "pod.epiccastle.spire.ssh"
    "spire.context" "pod.epiccastle.spire.context"
+   "spire.local" "pod.epiccastle.spire.local"
    "spire.state" "pod.epiccastle.spire.state"
    "spire.facts" "pod.epiccastle.spire.facts"
+   "spire.utils" "pod.epiccastle.spire.utils"
+   "spire.output.core" "pod.epiccastle.spire.output.core"
+   "spire.module.shell" "pod.epiccastle.spire.module.shell"
 
    "transport" "pod.epiccastle.spire.transport"
    "ssh" "pod.epiccastle.spire.ssh"
    "context" "pod.epiccastle.spire.context"
+   "local" "pod.epiccastle.spire.local"
    "state" "pod.epiccastle.spire.state"
    "facts" "pod.epiccastle.spire.facts"
+   "utils" "pod.epiccastle.spire.utils"
+   "io" "clojure.java.io"
    })
 
 (defn main []
@@ -87,6 +95,12 @@
                           "format" "edn"
                           "namespaces"
                           [
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.output.core
+                            (utils/make-inlined-code-set
+                             spire.output.core
+                             [print-thread print-form print-result debug-result print-progress print-streams]))
+
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.ssh
                             (utils/make-inlined-code-set
@@ -150,7 +164,12 @@
                             )
 
                            (utils/make-inlined-namespace
+                            pod.epiccastle.spire.local
+                            (utils/make-inlined-public-fns spire.local))
+
+                           (utils/make-inlined-namespace
                             pod.epiccastle.spire.state
+
                             [{"name" "host-config"
                               "code" "(def ^:dynamic host-config nil)"}
 
@@ -159,12 +178,76 @@
 
                              {"name" "shell-context"
                               "code" "(def ^:dynamic shell-context nil)"}
-                             ])
+
+                             {"name" "output-module"
+                              "code" "(def ^:dynamic output-module nil)"}
+                             ]
+
+                            (utils/make-inlined-code-set
+                             spire.state
+                             [ssh-connections
+                              default-context
+                              set-default-context!
+                              get-default-context
+                              get-host-config
+                              get-connection
+                              get-shell-context
+                              get-output-module
+                              ]
+                             {:rename-ns ns-renames})
+
+                            (utils/make-inlined-public-fns
+                             spire.state
+                             {:exclude
+                              #{
+                                host-config
+                                connection
+                                shell-context
+                                output-module
+                                set-default-context!
+                                get-default-context
+                                get-host-config
+                                get-connection
+                                get-shell-context
+                                get-output-module
+                                }
+                              }
+                             )
+                            )
+
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.utils
+                            (utils/make-inlined-public-fns spire.utils)
+                            (utils/make-inlined-code-set-macros
+                             spire.utils
+                             {:rename-ns ns-renames}
+                             )
+                            )
 
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.facts
+
+                            (utils/make-inlined-code-set
+                             spire.facts
+                             [state]
+                             {:rename-ns ns-renames})
+
                             (utils/make-inlined-public-fns spire.facts)
+
+                            (utils/make-inlined-code-set-macros
+                             spire.facts
+                             {:rename-ns ns-renames}
+                             )
                             )
+
+                           #_(utils/make-inlined-namespace
+                              pod.epiccastle.spire.module.shell
+                              (utils/make-inlined-public-fns spire.module.shell)
+                              (utils/make-inlined-code-set-macros
+                               spire.module.shell
+                               {:rename-ns ns-renames}
+                               )
+                              )
                            ]
                           "id" (read-string id)})
               (recur))
