@@ -422,11 +422,14 @@
     (println "-------")
     (println)))
 
-(defmethod output/print-thread :default [_]
+(defn output-print-thread []
   (thread
     (loop []
       (state-change (<!! state-change-chan))
       (recur))))
+
+(defmethod output/print-thread :default [_]
+  (output-print-thread))
 
 (defonce state-watcher
   (add-watch
@@ -446,7 +449,7 @@
                   i)))
          (filter identity))))
 
-(defmethod output/print-form :default [_ file form file-meta host-config]
+(defn output-print-form [file form file-meta host-config]
   ;; (prn 'print-form form file file-meta)
   (swap! state
          update :log
@@ -462,9 +465,13 @@
                       :line (count s)
                       :width (count (pr-str form))
                       :opts {:max-string-length @max-string-length}
-                      :results []})))))
+                      :results []}))))
+  )
 
-(defmethod output/print-result :default [_ file form file-meta host-config result]
+(defmethod output/print-form :default [_ file form file-meta host-config]
+  (output-print-form file form file-meta host-config))
+
+(defn output-print-result [file form file-meta host-config result]
   ;;(prn 'print-result file form file-meta host-config result)
   (comment
     (prn 'print-result result host-config)
@@ -492,15 +499,23 @@
              ;; TODO: this check shouldnt be done here
              ;; in test output handler no key will exist because nothing is stored
              s
-             ))))
+             )))
+  )
 
-(defmethod output/debug-result :default [_ file form file-meta host-config result]
+(defmethod output/print-result :default [_ file form file-meta host-config result]
+  (output-print-result file form file-meta host-config result)
+  )
+
+(defn output-debug-result [file form file-meta host-config result]
   ;;(prn 'debug-result file form file-meta host-config result)
   (swap! state
          update :debug
-         conj [file form file-meta host-config result]))
+         conj [file form file-meta host-config result])
+  )
+(defmethod output/debug-result :default [_ file form file-meta host-config result]
+  (output-debug-result file form file-meta host-config result))
 
-(defmethod output/print-progress :default [_ file form form-meta host-string {:keys [progress context] :as data}]
+(defn output-print-progress [file form form-meta host-string {:keys [progress context] :as data}]
   #_(prn 'print-progress file form form-meta host-string data)
   (swap! state
          update :log
@@ -516,7 +531,10 @@
              s)))
   context)
 
-(defmethod output/print-streams :default [_ file form form-meta host-string stdout stderr]
+(defmethod output/print-progress :default [_ file form form-meta host-string data]
+  (output-print-progress file form form-meta host-string data))
+
+(defn output-print-streams [file form form-meta host-string stdout stderr]
   ;; (prn 'print-streams file form form-meta host-string stdout stderr)
   (swap! state
          update :log
@@ -531,3 +549,6 @@
              ;; no matching-index. probably a test being run
              s)))
   )
+
+(defmethod output/print-streams :default [_ file form form-meta host-string stdout stderr]
+  (output-print-streams file form form-meta host-string stdout stderr))
