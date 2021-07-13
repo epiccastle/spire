@@ -36,27 +36,28 @@
                 rename-def {}
                 rename-symbol {}
                 }}]]
-  (binding [*print-meta* true]
-    (->
-     (clojure.repl/source-fn sym)
-     (edamame.core/parse-string  {:all true
-                                  :auto-resolve {:current (namespace sym)}})
-     (rename-second rename-def)           ; rename the top level namespace
-     (->> (clojure.walk/postwalk
-           (fn [form]
-             (if (symbol? form)
-               (let [ns (namespace form)
-                     sym-name (name form)
-                     meta-data (dissoc (meta form) :row :col :end-row :end-col)]
-                 (with-meta
-                   (if (rename-symbol form)
-                     (symbol (rename-symbol form))
-                     (if (rename-ns ns)
-                       (symbol (rename-ns ns) sym-name)
-                       (symbol ns sym-name)))
-                   meta-data))
-               form))))
-     prn-str)))
+  (let [rename-ns (eval rename-ns)]
+    (binding [*print-meta* true]
+      (->
+       (clojure.repl/source-fn sym)
+       (edamame.core/parse-string  {:all true
+                                    :auto-resolve {:current (namespace sym)}})
+       (rename-second rename-def)           ; rename the top level namespace
+       (->> (clojure.walk/postwalk
+             (fn [form]
+               (if (symbol? form)
+                 (let [ns (namespace form)
+                       sym-name (name form)
+                       meta-data (dissoc (meta form) :row :col :end-row :end-col)]
+                   (with-meta
+                     (if (rename-symbol form)
+                       (symbol (rename-symbol form))
+                       (if (rename-ns ns)
+                         (symbol (rename-ns ns) sym-name)
+                         (symbol ns sym-name)))
+                     meta-data))
+                 form))))
+       prn-str))))
 
 #_ (process-source spire.transport/ssh {:rename-symbol {open-connection bar/FOOOO}
                                         :rename-ns {"clojure.core" "foo"}})
@@ -125,10 +126,12 @@
   "
   [namespace syms & [{:keys [pre-declares
                              pre-requires
-                             rename]
+                             rename
+                             rename-ns]
                       :or {pre-declares []
                            pre-requires []
-                           rename {}}
+                           rename {}
+                           rename-ns {}}
                       :as opts}]]
   (let [interns (ns-interns namespace)]
     (into []
@@ -157,6 +160,11 @@
     {:pre-requires [[clojure.string :as string]
                     [clojure.set :as set]]}
     )
+
+#_ (def renames {"local" "foo"})
+#_ (make-inlined-code-set
+    spire.state [get-shell-context]
+    {:rename-ns renames})
 
 (defmacro make-inlined-namespace
   "join all the var definition bodies together for a namespace,
