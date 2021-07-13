@@ -5,6 +5,8 @@
             [spire.pod.lookup :as lookup]
             [spire.transport]
             [spire.ssh]
+            [spire.output.core]
+            [spire.output.default]
             [spire.module.shell]
             [clojure.edn :as edn]
             [clojure.repl]
@@ -49,6 +51,7 @@
    "spire.facts" "pod.epiccastle.spire.facts"
    "spire.utils" "pod.epiccastle.spire.utils"
    "spire.output.core" "pod.epiccastle.spire.output.core"
+   "spire.output.default" "pod.epiccastle.spire.output.default"
    "spire.module.shell" "pod.epiccastle.spire.module.shell"
 
    "transport" "pod.epiccastle.spire.transport"
@@ -59,6 +62,7 @@
    "facts" "pod.epiccastle.spire.facts"
    "utils" "pod.epiccastle.spire.utils"
    "io" "clojure.java.io"
+   "output" "pod.epiccastle.spire.output.core"
    })
 
 (defn main []
@@ -95,11 +99,63 @@
                           "format" "edn"
                           "namespaces"
                           [
+                           ;;
+                           ;; spire.utils
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.utils
+                            (utils/make-inlined-public-fns
+                             spire.utils
+                             {:exclude #{current-file current-file-parent}}
+                             )
+                            [{"name" "current-file"
+                              "code" "(defn current-file [] *file*)"}]
+                            (utils/make-inlined-code-set
+                             spire.utils [current-file-parent]
+                             {:rename-ns ns-renames}
+                             )
+                            (utils/make-inlined-code-set-macros
+                             spire.utils
+                             {:rename-ns ns-renames}
+                             )
+                            )
+
+                           ;; output modules
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.output.core
                             (utils/make-inlined-code-set
                              spire.output.core
                              [print-thread print-form print-result debug-result print-progress print-streams]))
+
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.output.default
+                            [{"name" "max-string-length"
+                              "code" "(def ^:dynamic max-string-length nil)"}]
+
+                            (utils/make-inlined-public-fns
+                             spire.output.default)
+
+                            [{"name" "_multimethod_output_print-thread"
+                              "code" "(defmethod pod.epiccastle.spire.output.core/print-thread :default [_] (output-print-thread))"}
+                             {"name" "_multimethod_output_print-form"
+                              "code" "(defmethod pod.epiccastle.spire.output.core/print-form :default [_ file form file-meta host-config] (output-print-form file form file-meta host-config))"}
+                             {"name" "_multimethod_output_print-result"
+                              "code" "(defmethod pod.epiccastle.spire.output.core/print-result :default [_ file form file-meta host-config result] (output-print-result file form file-meta host-config result))"}
+                             {"name" "_multimethod_output_debug-result"
+                              "code" "(defmethod pod.epiccastle.spire.output.core/debug-result :default [_ file form file-meta host-config result] (output-debug-result file form file-meta host-config result))"}
+                             {"name" "_multimethod_output_print-progress"
+                              "code" "(defmethod pod.epiccastle.spire.output.core/print-progress :default [_ file form form-meta host-string data] (output-print-progress file form form-meta host-string data))"}
+                             {"name" "_multimethod_output_print-streams"
+                              "code" "(defmethod pod.epiccastle.spire.output.core/print-streams :default [_ file form form-meta host-string stdout stderr] (output-print-streams file form form-meta host-string stdout stderr))"}
+
+                             ]
+
+                            )
+
+
+
+
+
 
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.ssh
@@ -215,14 +271,7 @@
                              )
                             )
 
-                           (utils/make-inlined-namespace
-                            pod.epiccastle.spire.utils
-                            (utils/make-inlined-public-fns spire.utils)
-                            (utils/make-inlined-code-set-macros
-                             spire.utils
-                             {:rename-ns ns-renames}
-                             )
-                            )
+
 
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.facts
@@ -240,14 +289,15 @@
                              )
                             )
 
-                           #_(utils/make-inlined-namespace
-                              pod.epiccastle.spire.module.shell
-                              (utils/make-inlined-public-fns spire.module.shell)
-                              (utils/make-inlined-code-set-macros
-                               spire.module.shell
-                               {:rename-ns ns-renames}
-                               )
-                              )
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.shell
+                            (utils/make-inlined-public-fns spire.module.shell)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.shell
+                             {:rename-ns ns-renames
+                              :rename-symbol {shell* pod.epiccastle.spire.module.shell/shell*}}
+                             )
+                            )
                            ]
                           "id" (read-string id)})
               (recur))

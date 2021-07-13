@@ -83,10 +83,6 @@
     'pod.epiccastle.spire.transport/flush-out
     spire.transport/flush-out
 
-
-    'pod.epiccastle.spire.module.shell/shell*
-    spire.module.shell/shell*
-
     }
 
    (into
@@ -109,7 +105,39 @@
    (into
     (make-plain-lookup
      "spire.state"
-     []
-     ))
+     []))
+
+   (into
+    (make-plain-lookup
+     "spire.output.default"
+     [up down right left clear-screen-from-cursor-down
+      read-until read-cursor-position elide-form-strings
+      find-forms find-last-form find-form-indices
+      find-last-form-index find-form-missing-hoststring-indices
+      find-first-form-missing-hoststring-index
+      calculate-heights state-line-complete? cut-trailing-blank-line
+      update-accessible-line-count
+      print-failure print-debug print-state
+      count-lines state-change
+      output-print-thread
+      find-forms-matching-index
+      output-print-form
+      output-print-result
+      output-debug-result
+      output-print-progress
+      output-print-streams
+      ]))
+
+   (into
+    (make-plain-lookup
+     "spire.module.shell"
+     [
+      preflight process-result make-env-string
+      make-exists-string
+      read-avail-string-from-input-stream
+      read-stream-until-eof
+      process-streams
+      shell*
+      ]))
    )
   )
