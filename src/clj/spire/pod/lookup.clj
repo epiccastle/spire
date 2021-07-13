@@ -84,14 +84,6 @@
     spire.transport/flush-out
 
 
-
-    'pod.epiccastle.spire.facts/update-facts!
-    spire.facts/update-facts!
-
-    'pod.epiccastle.spire.facts/get-fact
-    spire.facts/get-fact
-
-
     'pod.epiccastle.spire.module.shell/shell*
     spire.module.shell/shell*
 
@@ -101,7 +93,23 @@
     (make-plain-lookup
      "spire.local"
      [is-file? is-dir? is-readable? is-writable?
-      path-md5sums path-full-info local-exec])
-    )
+      path-md5sums path-full-info local-exec]))
+
+   (into
+    (make-plain-lookup
+     "spire.facts"
+     [make-which process-uname process-shell-uname process-shell-info
+      process-system process-paths process-lsb-release guess-mac-codename
+      process-system-profiler runner fetch-shell fetch-facts run-and-return-lines
+      run-lsb-release run-system-profiler process-release-info
+      process-id fetch-shell-facts update-facts! get-fact fetch-facts-paths
+      update-facts-paths! update-facts-user! replace-facts-user!
+      os md5 check-bins-present]))
+
+   (into
+    (make-plain-lookup
+     "spire.state"
+     []
+     ))
    )
   )
