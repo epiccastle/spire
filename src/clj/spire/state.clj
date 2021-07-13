@@ -1,6 +1,7 @@
 (ns spire.state
   (:require [sci.core :as sci]
-            [spire.local :as local]))
+            [spire.local :as local]
+            [spire.context :as context]))
 
 ;; ssh-connections:
 ;; Atom that holds all the open ssh connections. Atom value is a hashmap
@@ -41,7 +42,7 @@
   @default-context)
 
 (defn get-host-config []
-  (if-let [conf @host-config]
+  (if-let [conf (context/deref* host-config)]
     conf
     (let [{:keys [host-config]} @default-context]
       (if host-config
@@ -49,7 +50,7 @@
         {:key "local"}))))
 
 (defn get-connection []
-  (if-let [conn @connection]
+  (if-let [conn (context/deref* connection)]
     conn
     (let [{:keys [connection]} @default-context]
       (if connection
@@ -57,7 +58,7 @@
         nil))))
 
 (defn get-shell-context []
-  (if-let [conf @shell-context]
+  (if-let [conf (context/deref* shell-context)]
     conf
     (let [{:keys [shell-context]} @default-context]
       (if shell-context
@@ -69,6 +70,6 @@
          :stdin-fn identity}))))
 
 (defn get-output-module []
-  (if-let [out @output-module]
+  (if-let [out (context/deref* output-module)]
     out
     nil))
