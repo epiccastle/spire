@@ -105,7 +105,7 @@
        (let [conn# (open-connection host-config#)]
          (context/binding* [state/host-config host-config#
                             state/connection conn#
-                            state/shell-context {:priveleges :normal
+                            state/shell-context {:privileges :normal
                                                  :exec :ssh
                                                  :exec-fn ssh/ssh-exec
                                                  :shell-fn identity
@@ -130,7 +130,7 @@
                                       state/connection (get-connection
                                                         (ssh/host-config-to-connection-key
                                                          host-config#))
-                                      state/shell-context {:priveleges :normal
+                                      state/shell-context {:privileges :normal
                                                            :exec :ssh
                                                            :exec-fn ssh/ssh-exec
                                                            :shell-fn identity
@@ -150,7 +150,7 @@
 (defmacro local [& body]
   `(context/binding* [state/host-config {:key "local"}
                       state/connection nil
-                      state/shell-context {:priveleges :normal
+                      state/shell-context {:privileges :normal
                                            :exec :local
                                            :exec-fn local/local-exec
                                            :shell-fn identity
