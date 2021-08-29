@@ -117,6 +117,8 @@
         (quote ~'sudo) (sci-bind-macro sudo/sudo ~ns-sym)
 
         (quote ~'selmer) (copy-var selmer/selmer ~ns-sym)
+        (quote ~'render-string) (copy-var selmer/render-string ~ns-sym)
+        (quote ~'render-file) (copy-var selmer/render-file ~ns-sym)
 
         (quote ~'download*) (copy-var download/download* ~ns-sym)
         (quote ~'download) (sci-bind-macro download/download ~ns-sym)
