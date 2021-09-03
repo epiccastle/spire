@@ -5,6 +5,7 @@
             [spire.pod.lookup :as lookup]
             [spire.transport]
             [spire.ssh]
+            [spire.selmer]
             [spire.output.core]
             [spire.output.default]
             [spire.module.shell]
@@ -298,6 +299,10 @@
                               :rename-symbol {shell* pod.epiccastle.spire.module.shell/shell*}}
                              )
                             )
+
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.selmer
+                            (utils/make-inlined-public-fns spire.selmer))
                            ]
                           "id" (read-string id)})
               (recur))

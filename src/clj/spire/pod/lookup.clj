@@ -139,5 +139,9 @@
       process-streams
       shell*
       ]))
-   )
+
+   (into
+    (make-plain-lookup
+     "spire.selmer"
+     [selmer])))
   )
