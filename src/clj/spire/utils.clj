@@ -473,7 +473,7 @@
       double-quote))
 
 (defn current-file []
-  (or @sci-vars/current-file ""))
+  (or @sci-vars/current-file "<repl>"))
 
 (defn current-file-parent []
   (or (some-> (current-file) io/file .getParent) "."))
