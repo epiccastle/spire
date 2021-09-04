@@ -220,10 +220,13 @@
      :group-names (into #{} (map :name groups))
      }))
 
-(defmethod fetch-shell-facts :fish [shell]
+(defn get-facts-fish-script []
+  (utils/embed-src "facts_fish.fish"))
+
+(defn fetch-shell-facts-fish [shell]
   (let [base-shell-uname-output (run-and-return-lines
                                  shell
-                                 (utils/embed-src "facts_fish.fish")
+                                 (get-facts-fish-script)
                                  "facts_fish.fish script exited %d: %s")
         shell-version-output (run-and-return-lines shell
                                                    "echo $FISH_VERSION"
@@ -248,13 +251,56 @@
           :paths paths
           :ssh-config (state/get-host-config)})))
 
-(defmethod fetch-shell-facts :csh [shell]
+(defmethod fetch-shell-facts :fish [shell]
+  (fetch-shell-facts-fish shell))
+
+(defn get-facts-csh-script []
+  (utils/embed-src "facts_shell.csh"))
+
+(defn get-facts-id-script []
+  (utils/embed-src "facts_id.sh"))
+
+(defn fetch-shell-facts-csh [shell]
   (let [base-shell-uname-output (run-and-return-lines
                                  shell
-                                 (utils/embed-src "facts_shell.csh")
+                                 (get-facts-csh-script)
                                  "facts_shell.csh script exited %d: %s")
         shell-version-output (run-and-return-lines shell
-                                                   (utils/embed-src "facts_id.sh")
+                                                   (get-facts-id-script)
+                                                   "facts_id.sh exited %d: %s")
+        paths-output (run-and-return-lines shell (make-which shell)
+                                           "retrieving paths script exited %d: %s")
+        id-out (run-and-return-lines shell "id" "running remote `id` command exited %d: %s")
+
+        uname-data (process-shell-uname base-shell-uname-output)
+        shell-data (process-shell-info base-shell-uname-output)
+        detect (first shell-version-output)
+        version (last (string/split detect #"\s+"))
+        paths (process-paths {:paths paths-output})
+        shell-data (assoc shell-data :detect detect :version version)
+        system-data (process-system uname-data shell-data)
+        release-info (process-release-info system-data shell)
+        system-data (into system-data release-info)]
+    (->> {:shell shell-data
+          :uname uname-data
+          :system system-data
+          :user (process-id id-out)
+          :paths paths
+          :ssh-config (state/get-host-config)})))
+
+(defmethod fetch-shell-facts :csh [shell]
+  (fetch-shell-facts-csh shell))
+
+(defn get-facts-sh-script []
+  (utils/embed-src "facts_shell.sh"))
+
+(defn fetch-shell-facts-default [shell]
+  (let [base-shell-uname-output (run-and-return-lines
+                                 shell
+                                 (get-facts-sh-script)
+                                 "facts_shell.sh script exited %d: %s")
+        shell-version-output (run-and-return-lines shell
+                                                   (get-facts-id-script)
                                                    "facts_id.sh exited %d: %s")
         paths-output (run-and-return-lines shell (make-which shell)
                                            "retrieving paths script exited %d: %s")
@@ -277,32 +323,7 @@
           :ssh-config (state/get-host-config)})))
 
 (defmethod fetch-shell-facts :default [shell]
-  (let [base-shell-uname-output (run-and-return-lines
-                                 shell
-                                 (utils/embed-src "facts_shell.sh")
-                                 "facts_shell.sh script exited %d: %s")
-        shell-version-output (run-and-return-lines shell
-                                                   (utils/embed-src "facts_id.sh")
-                                                   "facts_id.sh exited %d: %s")
-        paths-output (run-and-return-lines shell (make-which shell)
-                                           "retrieving paths script exited %d: %s")
-        id-out (run-and-return-lines shell "id" "running remote `id` command exited %d: %s")
-
-        uname-data (process-shell-uname base-shell-uname-output)
-        shell-data (process-shell-info base-shell-uname-output)
-        detect (first shell-version-output)
-        version (last (string/split detect #"\s+"))
-        paths (process-paths {:paths paths-output})
-        shell-data (assoc shell-data :detect detect :version version)
-        system-data (process-system uname-data shell-data)
-        release-info (process-release-info system-data shell)
-        system-data (into system-data release-info)]
-    (->> {:shell shell-data
-          :uname uname-data
-          :system system-data
-          :user (process-id id-out)
-          :paths paths
-          :ssh-config (state/get-host-config)})))
+  (fetch-shell-facts-default shell))
 
 (defn update-facts! []
   (let [facts (fetch-facts)]
