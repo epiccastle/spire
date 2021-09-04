@@ -121,9 +121,7 @@
                              )
                             (utils/make-inlined-code-set-macros
                              spire.utils
-                             {:rename-ns ns-renames}
-                             )
-                            )
+                             {:rename-ns ns-renames}))
 
                            ;; output modules
                            (utils/make-inlined-namespace
@@ -281,12 +279,73 @@
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.facts
 
+                            (utils/make-inlined-public-fns
+                             spire.facts
+                             {:only
+                              #{
+                                process-uname
+                                process-shell-uname
+                                process-shell-info
+                                process-system
+                                process-paths
+                                process-lsb-release
+                                guess-mac-codename
+                                process-system-profiler
+                                process-id-name-substring
+                                process-id
+                                get-facts-fish-script
+                                get-facts-csh-script
+                                get-facts-sh-script
+                                get-facts-id-script
+                                }})
+
                             (utils/make-inlined-code-set
                              spire.facts
-                             [state]
-                             {:rename-ns ns-renames})
+                             [state
+                              bins
+                              make-which
+                              mac-codenames
+                              runner
+                              fetch-shell
+                              fetch-shell-facts
+                              fetch-facts
+                              run-and-return-lines
+                              run-lsb-release
+                              run-system-profiler
+                              process-release-info
+                              fetch-shell-facts-fish
+                              fetch-shell-facts-csh
+                              fetch-shell-facts-default
+                              update-facts!
+                              get-fact
+                              fetch-facts-paths
+                              update-facts-paths!
+                              update-facts-user!
+                              replace-facts-user!
+                              os
+                              md5
+                              check-bins-present]
+                             {:rename-ns ns-renames
+                              :rename-symbol
+                              { ;;fetch-facts pod.epiccastle.spire.facts/fetch-facts
+                               process-lsb-release pod.epiccastle.spire.facts/process-lsb-release
+                               }})
 
-                            (utils/make-inlined-public-fns spire.facts)
+                            [
+                             {"name" "_multimethod_facts_fetch-shell-facts-fish"
+                              "code" "(defmethod pod.epiccastle.spire.facts/fetch-shell-facts :fish [shell] (fetch-shell-facts-fish shell))"}
+
+                             {"name" "_multimethod_facts_fetch-shell-facts-csh"
+                              "code" "(defmethod pod.epiccastle.spire.facts/fetch-shell-facts :csh [shell] (fetch-shell-facts-csh shell))"}
+
+                             {"name" "_multimethod_facts_fetch-shell-facts-default"
+                              "code" "(defmethod pod.epiccastle.spire.facts/fetch-shell-facts :default [shell] (fetch-shell-facts-default shell))"}
+
+
+
+                             ]
+
+
 
                             (utils/make-inlined-code-set-macros
                              spire.facts
