@@ -198,7 +198,7 @@
     ;; what about freebsd?
     :else nil))
 
-(defn- process-id-name-substring [substring]
+(defn process-id-name-substring [substring]
   (let [[_ id name] (re-matches #"(\d+)\(([\d\w_\.\-]+)\)" substring)]
     {:id (Integer/parseInt id)
      :name name}))
