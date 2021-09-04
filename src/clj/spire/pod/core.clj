@@ -6,6 +6,7 @@
             [spire.transport]
             [spire.ssh]
             [spire.selmer]
+            [spire.remote]
             [spire.output.core]
             [spire.output.default]
             [spire.module.shell]
@@ -50,6 +51,7 @@
    "spire.local" "pod.epiccastle.spire.local"
    "spire.state" "pod.epiccastle.spire.state"
    "spire.facts" "pod.epiccastle.spire.facts"
+   "spire.remote" "pod.epiccastle.spire.remote"
    "spire.utils" "pod.epiccastle.spire.utils"
    "spire.output.core" "pod.epiccastle.spire.output.core"
    "spire.output.default" "pod.epiccastle.spire.output.default"
@@ -64,6 +66,8 @@
    "utils" "pod.epiccastle.spire.utils"
    "io" "clojure.java.io"
    "output" "pod.epiccastle.spire.output.core"
+   "string" "clojure.string"
+   "remote" "pod.epiccastle.spire.remote"
    })
 
 (defn main []
@@ -287,7 +291,27 @@
                             (utils/make-inlined-code-set-macros
                              spire.facts
                              {:rename-ns ns-renames}
-                             )
+                             ))
+
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.remote
+
+                            #_(utils/make-inlined-code-set
+                               spire.remote
+                               [is-writable? is-readable? is-file? is-dir? exists?
+                                path-full-info]
+                               {:rename-ns ns-renames}
+                               )
+
+                            #_(utils/make-inlined-public-fns
+                               spire.remote
+                               {:only
+                                #{
+                                  process-md5-out path-md5sums
+                                  process-stat-mode-out
+                                  make-temp-filename}})
+
+                            (utils/make-inlined-public-fns spire.remote)
                             )
 
                            (utils/make-inlined-namespace
