@@ -99,13 +99,29 @@
    (into
     (make-plain-lookup
      "spire.facts"
-     [make-which process-uname process-shell-uname process-shell-info
-      process-system process-paths process-lsb-release guess-mac-codename
-      process-system-profiler runner fetch-shell fetch-facts run-and-return-lines
-      run-lsb-release run-system-profiler process-release-info
-      process-id fetch-shell-facts update-facts! get-fact fetch-facts-paths
-      update-facts-paths! update-facts-user! replace-facts-user!
-      os md5 check-bins-present]))
+     [
+      process-uname
+      process-shell-uname
+      process-shell-info
+      process-system
+      process-paths
+      process-lsb-release
+      guess-mac-codename
+      process-system-profiler
+      process-id-name-substring
+      process-id
+      get-facts-fish-script
+      get-facts-csh-script
+      get-facts-sh-script
+      get-facts-id-script
+      ]))
+
+   (into
+    (make-plain-lookup
+     "spire.remote"
+     [is-writable? is-readable? is-file? is-dir? exists?
+      process-md5-out path-md5sums process-stat-mode-out
+      path-full-info make-temp-filename]))
 
    (into
     (make-plain-lookup
