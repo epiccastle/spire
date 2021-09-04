@@ -158,11 +158,20 @@
       read-avail-string-from-input-stream
       read-stream-until-eof
       process-streams
-      shell*
+      #_ shell*
       ]))
 
    (into
     (make-plain-lookup
      "spire.selmer"
-     [selmer])))
+     [selmer]))
+
+   (into
+    (make-plain-lookup
+     "spire.module.apt"
+     [
+      preflight process-result make-script
+      process-values process-apt-update-line
+      apt*
+      ])))
   )
