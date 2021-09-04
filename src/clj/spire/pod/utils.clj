@@ -151,8 +151,10 @@
                              (format "(require %s)"))}]
                [])
            (for [sym syms]
-             {"name" (str (get rename sym sym))
-              "code" `(process-source ~(symbol (interns sym)) ~opts)})))))
+             (do
+               #_(println "sym:" sym)
+               {"name" (str (get rename sym sym))
+                "code" `(process-source ~(symbol (interns sym)) ~opts)}))))))
 
 #_ (make-inlined-code-set spire.transport [ssh])
 #_ (make-inlined-code-set
