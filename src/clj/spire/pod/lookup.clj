@@ -41,6 +41,11 @@
     'pod.epiccastle.spire.ssh/host-description-to-host-config
     spire.ssh/host-description-to-host-config
 
+    'pod.epiccastle.spire.ssh/ssh-exec
+    (fn [session-key & args]
+      (apply spire.ssh/ssh-exec
+       (mapping/get-instance-for-key session-state session-key)
+       args))
 
 
     ;;'pod.epiccastle.spire.ssh/make-session
