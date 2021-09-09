@@ -369,7 +369,7 @@
 
 (defmacro on-os [ & pairs]
   (let [os (gensym)]
-    `(let [~os (spire.facts/get-fact [:system :os])]
+    `(let [~os (get-fact [:system :os])]
        (cond
          ~@(apply concat
                   (for [[pred form] (partition 2 pairs)]
@@ -388,7 +388,7 @@
 
 (defmacro on-shell [ & pairs]
   (let [shell (gensym)]
-    `(let [~shell (spire.facts/get-fact [:system :shell])]
+    `(let [~shell (get-fact [:system :shell])]
        (cond
          ~@(apply concat
                   (for [[pred form] (partition 2 pairs)]
@@ -407,7 +407,7 @@
 
 (defmacro on-distro [ & pairs]
   (let [shell (gensym)]
-    `(let [~shell (spire.facts/get-fact [:system :distro])]
+    `(let [~shell (get-fact [:system :distro])]
        (cond
          ~@(apply concat
                   (for [[pred form] (partition 2 pairs)]

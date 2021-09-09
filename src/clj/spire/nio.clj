@@ -33,7 +33,11 @@
 (def no-follow-links
   (into-array LinkOption [LinkOption/NOFOLLOW_LINKS]))
 
-(defn last-access-time [file]
+(defn last-access-time
+  "return the last access time for the passed in file in seconds since the epoch.
+  `file` is a string.
+  "
+  [file]
   (let [p (.toPath (io/file file))]
     (int
      (/ (.toMillis (.lastAccessTime (Files/readAttributes p java.nio.file.attribute.BasicFileAttributes ^"[Ljava.nio.file.LinkOption;" empty-link-options)))
@@ -41,7 +45,11 @@
 
 #_ (last-access-time ".")
 
-(defn last-modified-time [file]
+(defn last-modified-time
+  "return the last modified time for the passed in file in seconds since the epoch.
+  `file` is a string.
+  "
+  [file]
   (let [p (.toPath (io/file file))]
     (int
      (/ (.toMillis (.lastModifiedTime (Files/readAttributes p java.nio.file.attribute.BasicFileAttributes ^"[Ljava.nio.file.LinkOption;" empty-link-options)))
@@ -60,7 +68,10 @@
    PosixFilePermission/OTHERS_WRITE   0002
    PosixFilePermission/OTHERS_EXECUTE 0001})
 
-(defn file-mode [file]
+(defn file-mode
+  "returns the modification bits of the file as an integer. If you express this in octal
+  you will get the representation chmod command uses. eg `(format \"%o\" (file-mode \".\"))` "
+  [file]
   (let [p (.toPath (io/file file))
         perm-hash-set (.permissions ^java.nio.file.attribute.PosixFileAttributes (Files/readAttributes p java.nio.file.attribute.PosixFileAttributes ^"[Ljava.nio.file.LinkOption;" empty-link-options))]
     (reduce (fn [acc [perm-mode perm-val]]
@@ -71,7 +82,9 @@
 
 #_ (format "%o" (file-mode "."))
 
-(defn mode->permissions [mode]
+(defn mode->permissions
+  "given an integer file mode, returns the set of PosixFilePermission instances for nio use."
+  [mode]
   (reduce (fn [acc [perm flag]]
             (if (pos? (bit-and mode flag))
               (conj acc perm)
@@ -80,55 +93,68 @@
 
 #_ (mode->permissions 0700)
 
-(defn set-file-mode [file mode]
-  (let [p (.toPath (io/file file))]
-    (Files/setPosixFilePermissions p (mode->permissions mode))))
+(defn set-file-mode
+  "set an existing `file` to the specified `mode`. `file` is a string. `mode` is an integer."
+  [file mode]
+  (-> file
+      io/file
+      .toPath
+      (Files/setPosixFilePermissions (mode->permissions mode))
+      str))
 
 #_ (set-file-mode "foo" 0644)
 
-(defn create-file [file mode]
+(defn create-file
+  "create a new empty `file` with specified `mode`. Honours the umask."
+  [file mode]
   (let [p (.toPath (io/file file))]
-    (Files/createFile p (into-array FileAttribute [(PosixFilePermissions/asFileAttribute
-                                                    (mode->permissions mode))]))))
+    (-> file
+        io/file
+        .toPath
+        (Files/createFile (into-array FileAttribute [(PosixFilePermissions/asFileAttribute
+                                                      (mode->permissions mode))]))
+        str)))
 
 #_ (create-file "foo" 0755)
 
-(defn timestamp->touch [ts]
+(defn timestamp->touch
+  "converts an integer timestamp to the format used by GNU touch"
+  [ts]
   (let [datetime (coerce/from-epoch (int ts))
         year (time/year datetime)
         month (time/month datetime)
         day (time/day datetime)
         hour (time/hour datetime)
         minute (time/minute datetime)
-        second (time/second datetime)
-        ]
-    (format "%d-%02d-%02d %02d:%02d:%02d.000000000 +0000" year month day hour minute second)
-    )
-  )
+        second (time/second datetime)]
+    (format "%d-%02d-%02d %02d:%02d:%02d.000000000 +0000" year month day hour minute second)))
 
-(defn timestamp->touch-bsd [ts]
+(defn timestamp->touch-bsd
+  "converts an integer timestamp to the format used by BSD touch"
+  [ts]
   (let [datetime (coerce/from-epoch ts)
         year (time/year datetime)
         month (time/month datetime)
         day (time/day datetime)
         hour (time/hour datetime)
         minute (time/minute datetime)
-        second (time/second datetime)
-        ]
-    (format "%d%02d%02d%02d%02d.%02d" year month day hour minute second)
-    )
-  )
+        second (time/second datetime)]
+    (format "%d%02d%02d%02d%02d.%02d" year month day hour minute second)))
 
 #_ (timestamp->touch 1514779200)
 
-(defn set-last-modified-time [file ts]
+(defn set-last-modified-time
+  "sets the last modified time of `file` to the timestamp `ts`"
+  [file ts]
   (let [file-time (FileTime/fromMillis (* ts 1000))
         p (.toPath (io/file file))]
-    (Files/setLastModifiedTime p file-time)))
+    (str (Files/setLastModifiedTime p file-time))))
 
 #_ (set-last-modified-time "foo" 0)
 
-(defn set-last-access-time [file ts]
+(defn set-last-access-time
+  "sets the last access time of `file` to the timestamp `ts`"
+  [file ts]
   (let [file-time (FileTime/fromMillis (* ts 1000))
         p (.toPath (io/file file))]
     (.setTimes ^java.nio.file.attribute.BasicFileAttributeView (Files/getFileAttributeView p BasicFileAttributeView ^"[Ljava.nio.file.LinkOption;" empty-link-options)
@@ -138,7 +164,10 @@
 
 #_ (set-last-access-time "foo" 0)
 
-(defn set-last-modified-and-access-time [file modified access]
+(defn set-last-modified-and-access-time
+  "sets the last modified time of `file` to the timestamp `modified` and the last
+  access time to the timestamp `access`"
+  [file modified access]
   (let [modified-time (FileTime/fromMillis (* modified 1000))
         access-time (FileTime/fromMillis (* access 1000))
         p (.toPath (io/file file))]
@@ -148,12 +177,18 @@
 
 #_ (set-last-modified-and-access-time "foo" 99999 99999)
 
-(defn idem-set-last-access-time [f ts]
+(defn idem-set-last-access-time
+  "idempotently set the last access time for file `f`. Returns `true` if the file was changed,
+  returns `nil` if the access time was already set."
+  [f ts]
   (when (not= (last-access-time f) ts)
     (set-last-access-time f ts)
     true))
 
-(defn idem-set-last-modified-time [f ts]
+(defn idem-set-last-modified-time
+  "idempotently set the last modified time for file `f`. Returns `true` if the file was changed,
+  returns `nil` if the modified time was already set."
+  [f ts]
   (when (not= (last-modified-time f) ts)
     (set-last-modified-time f ts)
     true))
@@ -176,7 +211,9 @@
 #_ (set-owner "foo" "crispin")
 #_ (set-owner "foo" 1000)
 
-(defn idem-set-owner [file owner]
+(defn idem-set-owner
+  "idempotently sets the owner of a file. returns true if the owner is actually changed."
+  [file owner]
   (let [p (.toPath (io/file file))]
     (if (number? owner)
       (let [uid (Files/getAttribute p "unix:uid" ^"[Ljava.nio.file.LinkOption;" empty-link-options)]

@@ -6,7 +6,9 @@
             [spire.transport]
             [spire.ssh]
             [spire.selmer]
+            [spire.local]
             [spire.remote]
+            [spire.nio]
             [spire.output.core]
             [spire.output.default]
             [spire.module.shell]
@@ -53,6 +55,7 @@
    "spire.facts" "pod.epiccastle.spire.facts"
    "spire.remote" "pod.epiccastle.spire.remote"
    "spire.utils" "pod.epiccastle.spire.utils"
+   "spire.nio" "pod.epiccastle.spire.nio"
    "spire.output.core" "pod.epiccastle.spire.output.core"
    "spire.output.default" "pod.epiccastle.spire.output.default"
    "spire.module.shell" "pod.epiccastle.spire.module.shell"
@@ -64,10 +67,12 @@
    "state" "pod.epiccastle.spire.state"
    "facts" "pod.epiccastle.spire.facts"
    "utils" "pod.epiccastle.spire.utils"
+   "nio" "pod.epiccastle.spire.nio"
    "io" "clojure.java.io"
    "output" "pod.epiccastle.spire.output.core"
    "string" "clojure.string"
    "remote" "pod.epiccastle.spire.remote"
+   "PosixFilePermission" "java.nio.file.attribute.PosixFilePermission"
    })
 
 (defn main []
@@ -158,10 +163,16 @@
 
 
 
-
-
+                           ;;
+                           ;; spire.ssh
+                           ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.ssh
+                            [#_{"name" "_imports"
+                              "code" "(import [java.io
+            PipedInputStream PipedOutputStream
+            ByteArrayInputStream ByteArrayOutputStream
+            ])"}]
                             (utils/make-inlined-code-set
                              spire.ssh
                              [
@@ -176,25 +187,33 @@
 
                               ;; dynamic
                               *piped-stream-buffer-size*
+
+                              streams-for-out streams-for-in string-stream
                               ]
                              {:pre-requires [[clojure.string :as string]]
-                              :rename-ns ns-renames}
-                             )
+                              :rename-ns ns-renames
+                              :rename-symbol {PipedOutputStream. java.io.PipedOutputStream.
+                                              PipedInputStream. java.io.PipedInputStream.
+                                              ByteArrayOutputStream. java.io.ByteArrayOutputStream.
+                                              ByteArrayInputStream. java.io.ByteArrayInputStream.}})
                             ;;(utils/make-inlined-code-set-macros spire.ssh)
                             (utils/make-inlined-public-fns
                              spire.ssh
                              {:exclude #{debug ctrl-c carridge-return default-port
                                          to-camel-case string-to-byte-array
                                          ascii utf-8
-                                         *piped-stream-buffer-size*}
-                              }
-                             )
+                                         *piped-stream-buffer-size*
+                                         streams-for-out streams-for-in string-stream}}))
 
-
-                            )
-
+                           ;;
+                           ;; spire.transport
+                           ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.transport
+                            (utils/make-inlined-code-set
+                             spire.transport
+                             [debug]
+                             {:rename-ns ns-renames})
                             (utils/make-inlined-public-fns spire.transport)
                             (utils/make-inlined-code-set-macros
                              spire.transport
@@ -205,6 +224,9 @@
                               :rename-ns ns-renames})
                             )
 
+                           ;;
+                           ;; spire.context
+                           ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.context
                             [{"name" "context"
@@ -217,15 +239,18 @@
                             ;;(utils/make-inlined-public-fns spire.context)
                             (utils/make-inlined-code-set-macros
                              spire.context
-                             {:rename-ns ns-renames}
-                             )
+                             {:rename-ns ns-renames}))
 
-                            )
-
+                           ;;
+                           ;; spire.local
+                           ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.local
                             (utils/make-inlined-public-fns spire.local))
 
+                           ;;
+                           ;; spire.state
+                           ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.state
 
@@ -268,14 +293,11 @@
                                 get-host-config
                                 get-connection
                                 get-shell-context
-                                get-output-module
-                                }
-                              }
-                             )
-                            )
+                                get-output-module}}))
 
-
-
+                           ;;
+                           ;; spire.facts
+                           ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.facts
 
@@ -296,8 +318,7 @@
                                 get-facts-fish-script
                                 get-facts-csh-script
                                 get-facts-sh-script
-                                get-facts-id-script
-                                }})
+                                get-facts-id-script}})
 
                             (utils/make-inlined-code-set
                              spire.facts
@@ -339,54 +360,99 @@
                               "code" "(defmethod pod.epiccastle.spire.facts/fetch-shell-facts :csh [shell] (fetch-shell-facts-csh shell))"}
 
                              {"name" "_multimethod_facts_fetch-shell-facts-default"
-                              "code" "(defmethod pod.epiccastle.spire.facts/fetch-shell-facts :default [shell] (fetch-shell-facts-default shell))"}
-
-
-
-                             ]
-
-
+                              "code" "(defmethod pod.epiccastle.spire.facts/fetch-shell-facts :default [shell] (fetch-shell-facts-default shell))"}]
 
                             (utils/make-inlined-code-set-macros
                              spire.facts
-                             {:rename-ns ns-renames}
-                             ))
+                             {:rename-ns ns-renames
+                              :rename-symbol
+                              {get-fact pod.epiccastle.spire.facts/get-fact}}))
 
+                           ;;
+                           ;; spire.nio
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.nio
+
+                            (utils/make-inlined-public-fns
+                             spire.nio
+                             {:exclude
+                              #{mode->permissions}})
+
+                            ;; spire side multimethods
+                            [{"name" "set-owner"}
+                             {"name" "set-group"}]
+
+                            (utils/make-inlined-code-set
+                             spire.nio
+                             [permission->mode
+                              mode->permissions]
+                             {:rename-ns ns-renames}))
+
+                           ;;
+                           ;; spire.remote
+                           ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.remote
 
-                            #_(utils/make-inlined-code-set
+                            (utils/make-inlined-public-fns
+                               spire.remote
+                               {:only
+                                #{
+                                  process-md5-out
+                                  path-md5sums
+                                  process-stat-mode-out
+                                  make-temp-filename}})
+
+                            (utils/make-inlined-code-set
                                spire.remote
                                [is-writable? is-readable? is-file? is-dir? exists?
                                 path-full-info]
                                {:rename-ns ns-renames}
                                )
 
-                            #_(utils/make-inlined-public-fns
-                               spire.remote
-                               {:only
-                                #{
-                                  process-md5-out path-md5sums
-                                  process-stat-mode-out
-                                  make-temp-filename}})
-
-                            (utils/make-inlined-public-fns spire.remote)
+                            #_(utils/make-inlined-public-fns spire.remote)
                             )
+
+
+
+
+                           #_(utils/make-inlined-namespace
+                              pod.epiccastle.spire.module.shell
+                              (utils/make-inlined-public-fns spire.module.shell)
+                              (utils/make-inlined-code-set-macros
+                               spire.module.shell
+                               {:rename-ns ns-renames
+                                :rename-symbol {shell* pod.epiccastle.spire.module.shell/shell*}}
+                               )
+                              )
 
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.module.shell
                             (utils/make-inlined-public-fns spire.module.shell)
                             (utils/make-inlined-code-set-macros
                              spire.module.shell
-                             {:rename-ns ns-renames
-                              :rename-symbol {shell* pod.epiccastle.spire.module.shell/shell*}}
+                             {:rename-ns ns-renames}
                              )
+                            #_(utils/make-inlined-code-set
+                               spire.module.shell
+                               [shell*]
+                               {:rename-ns ns-renames})
                             )
 
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.selmer
                             (utils/make-inlined-public-fns spire.selmer))
-                           ]
+
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.apt
+                            (utils/make-inlined-public-fns spire.module.apt)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.apt
+                             {:rename-ns ns-renames
+                              :rename-symbol {apt* pod.epiccastle.spire.module.apt/apt*}}
+                             )
+                            )]
                           "id" (read-string id)})
               (recur))
             "load-ns"

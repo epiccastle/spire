@@ -26,160 +26,208 @@
 #_ (symbol "foo" "bar")
 
 (def lookup
-  (->
-   {'pod.epiccastle.spire.ssh/make-user-info
-    (fn [& args]
-      (mapping/add-instance!
-       user-info-state
-       (apply spire.ssh/make-user-info args)
-       "pod.epiccastle.spire.ssh" "user-info"))
+  (-> {}
 
-    'pod.epiccastle.spire.ssh/make-session
-    (fn [agent-key & args]
-      (mapping/add-instance!
-       session-state
-       (apply spire.ssh/make-session (mapping/get-instance-for-key agent-state agent-key) args)
-       "pod.epiccastle.spire.ssh" "session"))
+      ;;
+      ;; spire.ssh
+      ;;
+      (into
+       {'pod.epiccastle.spire.ssh/make-user-info
+        (fn [& args]
+          (mapping/add-instance!
+           user-info-state
+           (apply spire.ssh/make-user-info args)
+           "pod.epiccastle.spire.ssh" "user-info"))
 
-    'pod.epiccastle.spire.ssh/ssh-exec-proc
-    (fn [session-key & args]
-      (apply spire.ssh/ssh-exec-proc
-             (mapping/get-instance-for-key session-state session-key)
-             args))
+        'pod.epiccastle.spire.ssh/make-session
+        (fn [agent-key & args]
+          (mapping/add-instance!
+           session-state
+           (apply spire.ssh/make-session (mapping/get-instance-for-key agent-state agent-key) args)
+           "pod.epiccastle.spire.ssh" "session"))
 
-    'pod.epiccastle.spire.ssh/ssh-exec
-    (fn [session-key & args]
-      (apply spire.ssh/ssh-exec
-             (mapping/get-instance-for-key session-state session-key)
-             args))
-     }
+        'pod.epiccastle.spire.ssh/ssh-exec-proc
+        (fn [session-key & args]
+          (apply spire.ssh/ssh-exec-proc
+                 (mapping/get-instance-for-key session-state session-key)
+                 args))
 
-   (into
-    (make-plain-lookup
-     "spire.ssh"
-     [raw-mode-read-line
-      print-flush-ask-yes-no
-      host-description-to-host-config
-      ]))
+        'pod.epiccastle.spire.ssh/ssh-exec
+        (fn [session-key & args]
+          (apply spire.ssh/ssh-exec
+                 (mapping/get-instance-for-key session-state session-key)
+                 args))
+        })
+
+      (into
+       (make-plain-lookup
+        "spire.ssh"
+        [raw-mode-read-line
+         print-flush-ask-yes-no
+         split-host-string
+         parse-host-string
+         host-config-to-string
+         host-config-to-connection-key
+         fill-in-host-description-defaults
+         host-description-to-host-config]))
 
 
+      ;;
+      ;; spire.transport
+      ;;
+      (into
+       {
+        'pod.epiccastle.spire.transport/make-agent
+        (fn []
+          (let [result (spire.transport/make-agent)]
+            (mapping/add-instance!
+             agent-state result
+             "pod.epiccastle.spire.transport" "agent")))
+
+        'pod.epiccastle.spire.transport/connect
+        (fn [& args]
+          (let [result (apply spire.transport/connect args)]
+            (mapping/add-instance!
+             session-state result
+             "pod.epiccastle.spire.transport" "session")))
+
+        'pod.epiccastle.spire.transport/disconnect
+        (fn [& args]
+          (let [connection (mapping/get-instance-for-key session-state (first args))]
+            (spire.transport/disconnect connection)))
+
+        'pod.epiccastle.spire.transport/open-connection
+        (fn [& args]
+          (mapping/add-instance!
+           session-state (apply spire.transport/open-connection args)
+           "pod.epiccastle.spire.transport" "session"))
+
+        'pod.epiccastle.spire.transport/get-connection
+        (fn [& args]
+          (mapping/get-key-for-instance session-state (apply spire.transport/get-connection args)))
 
 
+        })
 
-   (into
-    {'pod.epiccastle.spire.transport/connect
-     (fn [& args]
-       (let [result (apply spire.transport/connect args)]
-         (mapping/add-instance!
-          session-state result
-          "pod.epiccastle.spire.transport" "session")))
+      (into
+       (make-plain-lookup
+        "spire.transport"
+        [disconnect-all!
+         close-connection
+         flush-out
+         ]))
 
-     'pod.epiccastle.spire.transport/disconnect
-     (fn [& args]
-       (let [connection (mapping/get-instance-for-key session-state (first args))]
-         (spire.transport/disconnect connection)))
+      (into
+       (make-plain-lookup
+        "spire.local"
+        [is-file? is-dir? is-readable? is-writable?
+         path-md5sums path-full-info local-exec]))
 
-     'pod.epiccastle.spire.transport/disconnect-all!
-     spire.transport/disconnect-all!
+      (into
+       (make-plain-lookup
+        "spire.facts"
+        [
+         process-uname
+         process-shell-uname
+         process-shell-info
+         process-system
+         process-paths
+         process-lsb-release
+         guess-mac-codename
+         process-system-profiler
+         process-id-name-substring
+         process-id
+         get-facts-fish-script
+         get-facts-csh-script
+         get-facts-sh-script
+         get-facts-id-script
+         ]))
 
-     'pod.epiccastle.spire.transport/open-connection
-     (fn [& args]
-       (mapping/add-instance!
-        session-state (apply spire.transport/open-connection args)
-        "pod.epiccastle.spire.transport" "session"))
+      (into
+       (make-plain-lookup
+        "spire.remote"
+        [is-writable? is-readable? is-file? is-dir? exists?
+         process-md5-out path-md5sums process-stat-mode-out
+         path-full-info make-temp-filename]))
 
-     'pod.epiccastle.spire.transport/close-connection
-     spire.transport/close-connection
+      (into
+       (make-plain-lookup
+        "spire.state"
+        []))
 
-     'pod.epiccastle.spire.transport/get-connection
-     (fn [& args]
-       (mapping/get-key-for-instance session-state (apply spire.transport/get-connection args)))
+      (into
+       (make-plain-lookup
+        "spire.output.default"
+        [up down right left clear-screen-from-cursor-down
+         read-until read-cursor-position elide-form-strings
+         find-forms find-last-form find-form-indices
+         find-last-form-index find-form-missing-hoststring-indices
+         find-first-form-missing-hoststring-index
+         calculate-heights state-line-complete? cut-trailing-blank-line
+         update-accessible-line-count
+         print-failure print-debug print-state
+         count-lines state-change
+         output-print-thread
+         find-forms-matching-index
+         output-print-form
+         output-print-result
+         output-debug-result
+         output-print-progress
+         output-print-streams
+         ]))
 
-     'pod.epiccastle.spire.transport/flush-out
-     spire.transport/flush-out})
+      (into
+       (make-plain-lookup
+        "spire.module.shell"
+        [
+         preflight process-result make-env-string
+         make-exists-string
+         read-avail-string-from-input-stream
+         read-stream-until-eof
+         process-streams
+         #_ shell*
+         ]))
 
-   (into
-    (make-plain-lookup
-     "spire.local"
-     [is-file? is-dir? is-readable? is-writable?
-      path-md5sums path-full-info local-exec]))
+      (into
+       (make-plain-lookup
+        "spire.selmer"
+        [selmer]))
 
-   (into
-    (make-plain-lookup
-     "spire.facts"
-     [
-      process-uname
-      process-shell-uname
-      process-shell-info
-      process-system
-      process-paths
-      process-lsb-release
-      guess-mac-codename
-      process-system-profiler
-      process-id-name-substring
-      process-id
-      get-facts-fish-script
-      get-facts-csh-script
-      get-facts-sh-script
-      get-facts-id-script
-      ]))
+      (into
+       (make-plain-lookup
+        "spire.module.apt"
+        [
+         preflight process-result make-script
+         process-values process-apt-update-line
+         apt*
+         ]))
 
-   (into
-    (make-plain-lookup
-     "spire.remote"
-     [is-writable? is-readable? is-file? is-dir? exists?
-      process-md5-out path-md5sums process-stat-mode-out
-      path-full-info make-temp-filename]))
+      (into
+       (make-plain-lookup
+        "spire.nio"
+        [relativise
+         last-access-time
+         last-modified-time
+         file-mode
+         set-file-mode
+         create-file
+         timestamp->touch
+         timestamp->touch-bsd
+         set-last-modified-time
+         set-last-access-time
+         set-last-modified-and-access-time
+         idem-set-last-access-time
+         idem-set-last-modified-time
+         set-owner
+         idem-set-owner
+         set-group
+         idem-set-group
+         idem-set-mode
+         set-attr
+         set-attrs
+         set-attrs-preserve
+         ]))
+      )
 
-   (into
-    (make-plain-lookup
-     "spire.state"
-     []))
 
-   (into
-    (make-plain-lookup
-     "spire.output.default"
-     [up down right left clear-screen-from-cursor-down
-      read-until read-cursor-position elide-form-strings
-      find-forms find-last-form find-form-indices
-      find-last-form-index find-form-missing-hoststring-indices
-      find-first-form-missing-hoststring-index
-      calculate-heights state-line-complete? cut-trailing-blank-line
-      update-accessible-line-count
-      print-failure print-debug print-state
-      count-lines state-change
-      output-print-thread
-      find-forms-matching-index
-      output-print-form
-      output-print-result
-      output-debug-result
-      output-print-progress
-      output-print-streams
-      ]))
-
-   (into
-    (make-plain-lookup
-     "spire.module.shell"
-     [
-      preflight process-result make-env-string
-      make-exists-string
-      read-avail-string-from-input-stream
-      read-stream-until-eof
-      process-streams
-      #_ shell*
-      ]))
-
-   (into
-    (make-plain-lookup
-     "spire.selmer"
-     [selmer]))
-
-   (into
-    (make-plain-lookup
-     "spire.module.apt"
-     [
-      preflight process-result make-script
-      process-values process-apt-update-line
-      apt*
-      ])))
   )
