@@ -37,7 +37,7 @@
 (assert (<= 0 (nio/file-mode ".") 0777))
 (assert (= 3 (count (nio/mode->permissions 0700))))
 
-(process ["rm" "-f" "/tmp/foo"])
+(process ["rm" "-rf" "/tmp/foo"])
 (nio/create-file "/tmp/foo" 0666)
 ;; assume umask 022
 (assert (= "644" (stat-mode "/tmp/foo")))

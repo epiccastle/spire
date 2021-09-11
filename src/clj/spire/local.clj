@@ -15,10 +15,10 @@
   (.isDirectory (io/file path)))
 
 (defn is-readable? [path]
-  (.canWrite (io/file path)))
+  (.canRead (io/file path)))
 
 (defn is-writable? [path]
-  (.canRead (io/file path)))
+  (.canWrite (io/file path)))
 
 (defn path-md5sums [path]
   (->> (file-seq (io/file path))

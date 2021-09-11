@@ -235,7 +235,7 @@ keys.  All other option key pairs will be passed as SSH config options."
     issue."}
   *piped-stream-buffer-size* (* 1024 256))
 
-(defn- streams-for-out
+(defn streams-for-out
   [out]
   (if (= :stream out)
     (let [os (PipedOutputStream.)]
@@ -339,21 +339,20 @@ keys.  All other option key pairs will be passed as SSH config options."
   )
 
 (defn fill-in-host-description-defaults [host-description]
-  (do
-    (assert (not (and (:host-string host-description)
-                      (:hostname host-description)))
-            "cant have both host-string and hostname set in description.")
-    (if (:host-string host-description)
-      (let [{:keys [username hostname port] :as parsed} (parse-host-string (:host-string host-description))]
-        (-> host-description
-            (update :key #(or % (host-config-to-string parsed)))
-            (assoc :username username ;; would be nil if none specified
-                   :hostname hostname
-                   :port port)))
-
+  (assert (not (and (:host-string host-description)
+                    (:hostname host-description)))
+          "cant have both host-string and hostname set in description.")
+  (if (:host-string host-description)
+    (let [{:keys [username hostname port] :as parsed} (parse-host-string (:host-string host-description))]
       (-> host-description
-          (update :key #(or % (host-config-to-string host-description)))
-          (assoc :host-string (host-config-to-string host-description))))))
+          (update :key #(or % (host-config-to-string parsed)))
+          (assoc :username username ;; would be nil if none specified
+                 :hostname hostname
+                 :port port)))
+
+    (-> host-description
+        (update :key #(or % (host-config-to-string host-description)))
+        (assoc :host-string (host-config-to-string host-description)))))
 
 (defn host-description-to-host-config [host-description]
   (if-not (string? host-description)

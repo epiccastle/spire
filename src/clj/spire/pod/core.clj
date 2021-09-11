@@ -400,14 +400,13 @@
                                {:only
                                 #{
                                   process-md5-out
-                                  path-md5sums
                                   process-stat-mode-out
                                   make-temp-filename}})
 
                             (utils/make-inlined-code-set
                                spire.remote
                                [is-writable? is-readable? is-file? is-dir? exists?
-                                path-full-info]
+                                path-full-info path-md5sums]
                                {:rename-ns ns-renames}
                                )
 
