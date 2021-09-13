@@ -179,3 +179,11 @@ macos-client-test-jvm: ssh_test_key_rsa
 
 jar-help:
 	java -Djava.library.path="." -jar target/uberjar/spire-$(VERSION)-standalone.jar -h
+
+tests-pod:
+	bb test/test-pod/test-remote.clj
+	bb test/test-pod/test-facts.clj
+	bb test/test-pod/test-nio.clj
+	bb test/test-pod/test-transport.clj
+	bb test/test-pod/test-shlex.clj
+	bb test/test-pod/test-sh.clj

@@ -190,6 +190,16 @@
 
       (into
        (make-plain-lookup
+        "spire.sh"
+        [proc feed-from feed-from-string]))
+
+      (into
+       (make-plain-lookup
+        "spire.shlex"
+        [parse]))
+
+      (into
+       (make-plain-lookup
         "spire.selmer"
         [selmer]))
 

@@ -5,6 +5,8 @@
             [spire.pod.lookup :as lookup]
             [spire.transport]
             [spire.ssh]
+            [spire.shlex]
+            [spire.sh]
             [spire.selmer]
             [spire.local]
             [spire.remote]
@@ -67,6 +69,7 @@
    "state" "pod.epiccastle.spire.state"
    "facts" "pod.epiccastle.spire.facts"
    "utils" "pod.epiccastle.spire.utils"
+   "shlex" "pod.epiccastle.spire.shlex"
    "nio" "pod.epiccastle.spire.nio"
    "io" "clojure.java.io"
    "output" "pod.epiccastle.spire.output.core"
@@ -169,7 +172,7 @@
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.ssh
                             [#_{"name" "_imports"
-                              "code" "(import [java.io
+                                "code" "(import [java.io
             PipedInputStream PipedOutputStream
             ByteArrayInputStream ByteArrayOutputStream
             ])"}]
@@ -396,19 +399,19 @@
                             pod.epiccastle.spire.remote
 
                             (utils/make-inlined-public-fns
-                               spire.remote
-                               {:only
-                                #{
-                                  process-md5-out
-                                  process-stat-mode-out
-                                  make-temp-filename}})
+                             spire.remote
+                             {:only
+                              #{
+                                process-md5-out
+                                process-stat-mode-out
+                                make-temp-filename}})
 
                             (utils/make-inlined-code-set
-                               spire.remote
-                               [is-writable? is-readable? is-file? is-dir? exists?
-                                path-full-info path-md5sums]
-                               {:rename-ns ns-renames}
-                               )
+                             spire.remote
+                             [is-writable? is-readable? is-file? is-dir? exists?
+                              path-full-info path-md5sums]
+                             {:rename-ns ns-renames}
+                             )
 
                             #_(utils/make-inlined-public-fns spire.remote)
                             )
@@ -438,6 +441,40 @@
                                [shell*]
                                {:rename-ns ns-renames})
                             )
+
+                           (
+                            utils/make-inlined-namespace
+                            pod.epiccastle.spire.shlex
+                            (utils/make-inlined-public-fns
+                             spire.shlex
+                             {:only #{parse}}
+                                                           )
+                            (utils/make-inlined-code-set
+                             spire.shlex
+                             [whitespace-chars newline-chars read-char skip-until
+                              read-double-quotes read-single-quotes
+                              read-until-whitespace read-while-whitespace
+                              ]
+                             {:rename-ns ns-renames
+                              :rename-symbol {}})
+                            )
+
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.sh
+                            (utils/make-inlined-code-set
+                             spire.sh
+                             [proc feed-from feed-from-string
+                              *piped-stream-buffer-size*
+                              streams-for-out streams-for-in read-all-bytes
+                              exec
+                              ]
+                             {:rename-ns ns-renames
+                              :rename-symbol {PipedOutputStream. java.io.PipedOutputStream.
+                                              PipedInputStream. java.io.PipedInputStream.
+                                              ByteArrayOutputStream. java.io.ByteArrayOutputStream.
+                                              }}))
+
+
 
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.selmer
