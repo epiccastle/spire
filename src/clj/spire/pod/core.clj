@@ -3,6 +3,7 @@
   (:require [bencode.core :refer [read-bencode write-bencode]]
             [spire.pod.utils :as utils]
             [spire.pod.lookup :as lookup]
+            [spire.pod.stream]
             [spire.transport]
             [spire.ssh]
             [spire.shlex]
@@ -164,6 +165,21 @@
                             )
 
 
+                           ;;
+                           ;; spire.pod.stream
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.pod.stream
+                            (utils/make-inlined-public-fns
+                             spire.pod.stream
+                             {:exclude
+                              #{make-piped-input-stream
+                                make-piped-output-stream}})
+                            (utils/make-inlined-code-set
+                             spire.pod.stream
+                             [make-piped-input-stream
+                              make-piped-output-stream])
+                            )
 
 
                            ;;
@@ -206,7 +222,18 @@
                                          to-camel-case string-to-byte-array
                                          ascii utf-8
                                          *piped-stream-buffer-size*
-                                         streams-for-out streams-for-in string-stream}}))
+                                         streams-for-out streams-for-in string-stream}})
+
+                            [{"name" "ssh-exec-proc-wrap"
+                              "code" "(defn ssh-exec-proc-wrap [session cmd opts]
+(let [{:keys [channel out in err]} (ssh-exec-proc session cmd opts)]
+{:channel channel
+ :out (pod.epiccastle.spire.pod.stream/make-piped-input-stream out)
+ :in (pod.epiccastle.spire.pod.stream/make-piped-output-stream in)
+ :err (pod.epiccastle.spire.pod.stream/make-piped-input-stream err)
+})
+)"}]
+                            )
 
                            ;;
                            ;; spire.transport
@@ -448,7 +475,7 @@
                             (utils/make-inlined-public-fns
                              spire.shlex
                              {:only #{parse}}
-                                                           )
+                             )
                             (utils/make-inlined-code-set
                              spire.shlex
                              [whitespace-chars newline-chars read-char skip-until
@@ -474,7 +501,9 @@
                                               ByteArrayOutputStream. java.io.ByteArrayOutputStream.
                                               }}))
 
-
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.scp
+                            (utils/make-inlined-public-fns spire.scp))
 
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.selmer

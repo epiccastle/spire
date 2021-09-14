@@ -1,5 +1,6 @@
 (ns spire.pod.lookup
   (:require [spire.pod.mapping :as mapping]
+            [spire.pod.stream]
             [spire.ssh]
             [spire.transport]
             [spire.facts]
@@ -10,6 +11,10 @@
 (def user-info-state (mapping/make-mapping))
 (def session-state (mapping/make-mapping))
 (def agent-state (mapping/make-mapping))
+(def channel-exec-state (mapping/make-mapping))
+(def piped-input-stream-state (mapping/make-mapping))
+(def piped-output-stream-state (mapping/make-mapping))
+(def channel-state (mapping/make-mapping))
 
 (defmacro make-plain-lookup [ns-to syms]
   (let [ns-from (str "pod.epiccastle." (str ns-to))]
@@ -48,9 +53,22 @@
 
         'pod.epiccastle.spire.ssh/ssh-exec-proc
         (fn [session-key & args]
-          (apply spire.ssh/ssh-exec-proc
-                 (mapping/get-instance-for-key session-state session-key)
-                 args))
+          (let [{:keys [channel out err in]}
+                (apply spire.ssh/ssh-exec-proc
+                       (mapping/get-instance-for-key session-state session-key)
+                       args)]
+            {:channel (mapping/add-instance!
+                       channel-exec-state channel
+                       "pod.epiccastle.spire.ssh" "channel-exec")
+             :out (mapping/add-instance!
+                   piped-input-stream-state out
+                   "pod.epiccastle.spire.ssh" "piped-input-stream")
+             :err (mapping/add-instance!
+                   piped-input-stream-state err
+                   "pod.epiccastle.spire.ssh" "piped-input-stream")
+             :in (mapping/add-instance!
+                  channel-state in
+                  "pod.epiccastle.spire.ssh" "channel")}))
 
         'pod.epiccastle.spire.ssh/ssh-exec
         (fn [session-key & args]
@@ -197,6 +215,37 @@
        (make-plain-lookup
         "spire.shlex"
         [parse]))
+
+      (into
+       (make-plain-lookup
+        "spire.scp"
+        [scp-to scp-content-to scp-parse-times scp-parse-copy
+         scp-sink-file scp-sink scp-from]))
+
+      (into
+       (make-plain-lookup
+        "spire.pod.stream"
+        [write-byte write-bytes
+         read-byte read-bytes
+         receive close available connect]))
+
+      (into
+       {
+        'pod.epiccastle.spire.pod.stream/read-byte
+        (fn [stream-key]
+          (spire.pod.stream/read-byte
+           (mapping/get-instance-for-key piped-input-stream-state stream-key)))
+
+        'pod.epiccastle.spire.pod.stream/read-bytes
+        (fn [stream-key length]
+          (spire.pod.stream/read-bytes
+           (mapping/get-instance-for-key piped-input-stream-state stream-key)
+           length))
+
+
+
+
+        })
 
       (into
        (make-plain-lookup
