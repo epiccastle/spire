@@ -182,8 +182,10 @@ jar-help:
 
 tests-pod:
 	bb test/test-pod/test-remote.clj
+	bb test/test-pod/test-local.clj
 	bb test/test-pod/test-facts.clj
 	bb test/test-pod/test-nio.clj
 	bb test/test-pod/test-transport.clj
 	bb test/test-pod/test-shlex.clj
 	bb test/test-pod/test-sh.clj
+	bb test/test-pod/test-ssh.clj

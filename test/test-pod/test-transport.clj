@@ -38,3 +38,6 @@
     (assert (= 0 (- (count (connections search)) conns)))))
 
 (test-connection username hostname)
+
+;; test nested connections dont return unserialisable EDN data
+(transport/ssh "localhost" (transport/ssh "localhost"))

@@ -59,6 +59,7 @@
    "spire.remote" "pod.epiccastle.spire.remote"
    "spire.utils" "pod.epiccastle.spire.utils"
    "spire.nio" "pod.epiccastle.spire.nio"
+   "spire.pod.stream" "pod.epiccastle.spire.pod.stream"
    "spire.output.core" "pod.epiccastle.spire.output.core"
    "spire.output.default" "pod.epiccastle.spire.output.default"
    "spire.module.shell" "pod.epiccastle.spire.module.shell"
@@ -173,12 +174,16 @@
                             (utils/make-inlined-public-fns
                              spire.pod.stream
                              {:exclude
-                              #{make-piped-input-stream
+                              #{encode decode
+                                make-piped-input-stream
                                 make-piped-output-stream}})
                             (utils/make-inlined-code-set
                              spire.pod.stream
-                             [make-piped-input-stream
-                              make-piped-output-stream])
+                             [encode decode
+                              make-piped-input-stream
+                              make-piped-output-stream]
+                             {:rename-ns ns-renames}
+                             )
                             )
 
 
@@ -222,17 +227,27 @@
                                          to-camel-case string-to-byte-array
                                          ascii utf-8
                                          *piped-stream-buffer-size*
-                                         streams-for-out streams-for-in string-stream}})
+                                         streams-for-out streams-for-in string-stream
+                                         ssh-exec-proc}})
 
-                            [{"name" "ssh-exec-proc-wrap"
-                              "code" "(defn ssh-exec-proc-wrap [session cmd opts]
-(let [{:keys [channel out in err]} (ssh-exec-proc session cmd opts)]
+                            [{"name" "ssh-exec-proc*"}
+                             {"name" "ssh-exec-proc"
+                              "code" "(defn ssh-exec-proc [session cmd opts]
+(let [{:keys [channel out in err]} (ssh-exec-proc* session cmd opts)]
 {:channel channel
  :out (pod.epiccastle.spire.pod.stream/make-piped-input-stream out)
  :in (pod.epiccastle.spire.pod.stream/make-piped-output-stream in)
  :err (pod.epiccastle.spire.pod.stream/make-piped-input-stream err)
 })
-)"}]
+)"}
+                             {"name" "ssh-exec*"}
+                             {"name" "ssh-exec"
+                              "code" "(defn ssh-exec [session cmd in out opts]
+(let [{:keys [channel err-stream out-stream exit out err]} (ssh-exec* session cmd in out opts)]
+(if channel {:channel channel :out-stream (pod.epiccastle.spire.pod.stream/make-piped-input-stream out-stream) :err-stream (pod.epiccastle.spire.pod.stream/make-piped-input-stream err-stream)} {:exit exit :out out :err err})))
+"}
+
+                             ]
                             )
 
                            ;;

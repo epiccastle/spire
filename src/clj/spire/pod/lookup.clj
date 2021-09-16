@@ -51,7 +51,7 @@
            (apply spire.ssh/make-session (mapping/get-instance-for-key agent-state agent-key) args)
            "pod.epiccastle.spire.ssh" "session"))
 
-        'pod.epiccastle.spire.ssh/ssh-exec-proc
+        'pod.epiccastle.spire.ssh/ssh-exec-proc*
         (fn [session-key & args]
           (let [{:keys [channel out err in]}
                 (apply spire.ssh/ssh-exec-proc
@@ -67,14 +67,33 @@
                    piped-input-stream-state err
                    "pod.epiccastle.spire.ssh" "piped-input-stream")
              :in (mapping/add-instance!
-                  channel-state in
-                  "pod.epiccastle.spire.ssh" "channel")}))
+                  piped-output-stream-state in
+                  "pod.epiccastle.spire.ssh" "piped-output-stream")}))
 
-        'pod.epiccastle.spire.ssh/ssh-exec
+        'pod.epiccastle.spire.ssh/ssh-exec*
         (fn [session-key & args]
-          (apply spire.ssh/ssh-exec
-                 (mapping/get-instance-for-key session-state session-key)
-                 args))
+          (let [{:keys [channel out-stream err-stream exit out err]}
+                (apply spire.ssh/ssh-exec
+                       (mapping/get-instance-for-key session-state session-key)
+                       args)]
+            (if channel
+              ;; streaming response
+              {:channel (mapping/add-instance!
+                         channel-state channel
+                         "pod.epiccastle.spire.ssh" "channel")
+               :out-stream (mapping/add-instance!
+                            piped-input-stream-state out-stream
+                            "pod.epiccastle.spire.ssh" "piped-input-stream")
+               :err-stream (mapping/add-instance!
+                            piped-input-stream-state err-stream
+                            "pod.epiccastle.spire.ssh" "piped-input-stream")}
+
+              ;; full response
+              {:exit exit
+               :out out
+               :err err}
+              )
+            ))
         })
 
       (into
@@ -222,15 +241,29 @@
         [scp-to scp-content-to scp-parse-times scp-parse-copy
          scp-sink-file scp-sink scp-from]))
 
-      (into
-       (make-plain-lookup
-        "spire.pod.stream"
-        [write-byte write-bytes
-         read-byte read-bytes
-         receive close available connect]))
+      #_(into
+         (make-plain-lookup
+          "spire.pod.stream"
+          [encode decode
+           write-byte write-bytes
+           read-byte read-bytes
+           receive close available connect]))
 
       (into
        {
+        ;;
+        ;; piped input stream
+        ;;
+        'pod.epiccastle.spire.pod.stream/available
+        (fn [stream-key]
+          (spire.pod.stream/available
+           (mapping/get-instance-for-key piped-input-stream-state stream-key)))
+
+        'pod.epiccastle.spire.pod.stream/close-input-stream
+        (fn [stream-key]
+          (spire.pod.stream/close-input-stream
+           (mapping/get-instance-for-key piped-input-stream-state stream-key)))
+
         'pod.epiccastle.spire.pod.stream/read-byte
         (fn [stream-key]
           (spire.pod.stream/read-byte
@@ -242,8 +275,41 @@
            (mapping/get-instance-for-key piped-input-stream-state stream-key)
            length))
 
+        'pod.epiccastle.spire.pod.stream/receive
+        (fn [stream-key]
+          (spire.pod.stream/receive
+           (mapping/get-instance-for-key piped-input-stream-state stream-key)))
 
+        ;;
+        ;; piped output stream
+        ;;
+        'pod.epiccastle.spire.pod.stream/close-output-stream
+        (fn [stream-key]
+          (spire.pod.stream/close-output-stream
+           (mapping/get-instance-for-key piped-output-stream-state stream-key)))
 
+        'pod.epiccastle.spire.pod.stream/connect
+        (fn [stream-key sink-key]
+          (spire.pod.stream/connect
+           (mapping/get-instance-for-key piped-output-stream-state stream-key)
+           (mapping/get-instance-for-key piped-input-stream-state sink-key)))
+
+        'pod.epiccastle.spire.pod.stream/flush-output-stream
+        (fn [stream-key]
+          (spire.pod.stream/flush-output-stream
+           (mapping/get-instance-for-key piped-output-stream-state stream-key)))
+
+        'pod.epiccastle.spire.pod.stream/write-byte
+        (fn [stream-key b]
+          (spire.pod.stream/write-byte
+           (mapping/get-instance-for-key piped-output-stream-state stream-key)
+           b))
+
+        'pod.epiccastle.spire.pod.stream/write-bytes
+        (fn [stream-key bs]
+          (spire.pod.stream/write-bytes
+           (mapping/get-instance-for-key piped-output-stream-state stream-key)
+           bs))
 
         })
 
