@@ -71,11 +71,19 @@
                   "pod.epiccastle.spire.ssh" "piped-output-stream")}))
 
         'pod.epiccastle.spire.ssh/ssh-exec*
-        (fn [session-key & args]
+        (fn [session-key cmd in out opts]
           (let [{:keys [channel out-stream err-stream exit out err]}
-                (apply spire.ssh/ssh-exec
-                       (mapping/get-instance-for-key session-state session-key)
-                       args)]
+                (spire.ssh/ssh-exec
+                 (mapping/get-instance-for-key session-state session-key)
+                 cmd
+                 in
+                 #_(if (= java.io.PipedInputStream (class in))
+                   (mapping/add-instance!
+                    piped-input-stream-state in
+                    "pod.epiccastle.spire.ssh" "piped-output-stream")
+                   )
+                 out
+                 opts)]
             (if channel
               ;; streaming response
               {:channel (mapping/add-instance!
@@ -317,6 +325,39 @@
        (make-plain-lookup
         "spire.selmer"
         [selmer]))
+
+      (into
+       (make-plain-lookup
+        "spire.utils"
+        [to-snakecase
+         lsb-process
+         escape-code
+         escape-codes
+         colour
+         reverse-text
+         bold
+         reset
+         speed-string
+         eta-string
+         has-terminal?
+         get-terminal-width
+         #_progress-bar
+         #_progress-bar-from-stats
+         strip-colour-codes
+         displayed-length
+         n-spaces
+         append-erasure-to-line
+         num-terminal-lines
+         ;;re-pattern-to-sed
+         containing-folder
+         path-escape
+         var-escape
+         double-quote
+         path-quote
+         string-escape
+         string-quote
+         changed?
+         ]))
 
       (into
        (make-plain-lookup

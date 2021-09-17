@@ -159,16 +159,6 @@
       :else
       (format "%dh%02dm%02ds" h m s))))
 
-(defn executing-bin-path
-  "On a unix system with a /proc filesystem (Linux, FreeBSD with procfs) return
-  the full path of the binary that has launched this process
-
-  (executing-bin-path)
-  ;;=> \"/usr/lib/jvm/java-8-oracle/jre/bin/java\"
-  "
-  []
-  (.getCanonicalPath (io/as-file "/proc/self/exe")))
-
 (defmulti content-size type)
 (defmethod content-size java.io.File [f] (.length ^java.io.File f))
 (defmethod content-size java.lang.String [f] (count (.getBytes ^String f)))
@@ -208,7 +198,7 @@
   (let [width (SpireUtils/get_terminal_width)]
     (if (has-terminal?) width 80)))
 
-(defn progress-bar
+#_ (defn progress-bar
   "given the arguments `bytes`, `total`, `frac` and `state`, print to `*out*` a
   status bar as a side-effect. Then return the new `state` (to be passed back into
   progress-bar later)
@@ -232,10 +222,16 @@
   [bytes total frac {:keys [start-time start-bytes]}]
   (let [
         columns (get-terminal-width)
-        now (time/now)
+        now (java.util.Date.)     #_(time/now)
         first? (not start-time)
 
-        duration (when-not first? (/ (float (time/in-millis (time/interval start-time now))) 1000))
+        duration (when-not first? (/ (float
+
+                                      (- (.getTime ^java.util.Date now)
+                                         (.getTime ^java.util.Date start-time))
+                                      #_(time/in-millis (time/interval start-time now))
+
+                                      ) 1000))
         bytes-since-start (when-not first? (- bytes start-bytes))
         bytes-per-second (when (some-> duration pos?) (int (/ bytes-since-start duration)))
         bytes-remaining (- total bytes)
@@ -299,13 +295,19 @@
    {:keys [start-time start-bytes fileset-file-start]}]
   (let [
         columns (get-terminal-width)
-        now (time/now)
+        now (java.util.Date.) #_(time/now)
         first? (not start-time)
         fileset-file-start (or fileset-file-start 0)
         fileset-total (or fileset-total total)
         fileset-copied-so-far (+ fileset-file-start bytes)
 
-        duration (when-not first? (/ (float (time/in-millis (time/interval start-time now))) 1000))
+        duration (when-not first? (/ (float
+
+                                      (- (.getTime ^java.util.Date now)
+                                         (.getTime ^java.util.Date start-time))
+                                      #_(time/in-millis (time/interval start-time now))
+
+                                      ) 1000))
         bytes-since-start (when-not first? (- (+ bytes fileset-file-start) start-bytes))
         bytes-per-second (when (some-> duration pos?) (int (/ bytes-since-start duration)))
         bytes-remaining (- fileset-total fileset-copied-so-far)
@@ -405,17 +407,6 @@
       (inc (quot len term-width)))
     1))
 
-(defn which-spire []
-  (let [executable (executing-bin-path)
-        java? (string/ends-with? executable "java")]
-    (if java?
-      (when (.exists (io/as-file "./spire")) "./spire")
-      executable)))
-
-(defn compatible-arch? [{{:keys [processor]} :arch}]
-  (let [local-processor-arch (string/trim (:out (shell/sh "uname" "-p")))]
-    (= local-processor-arch processor)))
-
 (defmacro embed [filename]
   (slurp filename))
 
@@ -432,7 +423,7 @@
     ~(case shell
        :fish `(apply str (for [[k# v#] ~vars] (str "set "(name k#) " \"" v# "\"\n")))
        `(apply str (for [[k# v#] ~vars] (str (name k#) "=\"" v# "\"\n"))))
-    (embed-src ~fname)))
+    (spire.utils/embed-src ~fname)))
 
 (defn re-pattern-to-sed [re]
   (-> (.pattern ^java.util.regex.Pattern re)
