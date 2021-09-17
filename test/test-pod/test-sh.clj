@@ -59,3 +59,7 @@
 (->> (sh/exec "echo -n foo" "" :bytes {})
      (= '{:exit 0, :err (), :out (102 111 111)})
      assert)
+
+(let [{:keys [out-stream]} (sh/exec "echo -n foo" "" :stream {})]
+  (assert (= (mapv (fn [_] (.read out-stream)) (range 5))
+             [102 111 111 -1 -1])))
