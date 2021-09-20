@@ -6,6 +6,7 @@
             [spire.pod.stream]
             [spire.transport]
             [spire.ssh]
+            [spire.pod.scp]
             [spire.shlex]
             [spire.sh]
             [spire.selmer]
@@ -59,6 +60,7 @@
    "spire.remote" "pod.epiccastle.spire.remote"
    "spire.utils" "pod.epiccastle.spire.utils"
    "spire.nio" "pod.epiccastle.spire.nio"
+   "spire.sh" "pod.epiccastle.spire.sh"
    "spire.pod.stream" "pod.epiccastle.spire.pod.stream"
    "spire.output.core" "pod.epiccastle.spire.output.core"
    "spire.output.default" "pod.epiccastle.spire.output.default"
@@ -71,6 +73,7 @@
    "state" "pod.epiccastle.spire.state"
    "facts" "pod.epiccastle.spire.facts"
    "utils" "pod.epiccastle.spire.utils"
+   "sh" "pod.epiccastle.spire.sh"
    "shlex" "pod.epiccastle.spire.shlex"
    "nio" "pod.epiccastle.spire.nio"
    "io" "clojure.java.io"
@@ -115,6 +118,61 @@
                           "namespaces"
                           [
                            ;;
+                           ;; spire.shlex
+                           ;;
+                           (
+                            utils/make-inlined-namespace
+                            pod.epiccastle.spire.shlex
+                            (utils/make-inlined-public-fns
+                             spire.shlex
+                             {:only #{parse}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.shlex
+                             [whitespace-chars newline-chars read-char skip-until
+                              read-double-quotes read-single-quotes
+                              read-until-whitespace read-while-whitespace
+                              ]
+                             {:rename-ns ns-renames
+                              :rename-symbol {}})
+                            )
+
+                           ;;
+                           ;; spire.sh
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.sh
+                            (utils/make-inlined-code-set
+                             spire.sh
+                             [proc feed-from feed-from-string
+                              *piped-stream-buffer-size*
+                              streams-for-out streams-for-in read-all-bytes
+                              exec
+                              ]
+                             {:rename-ns ns-renames
+                              :rename-symbol {PipedOutputStream. java.io.PipedOutputStream.
+                                              PipedInputStream. java.io.PipedInputStream.
+                                              ByteArrayOutputStream. java.io.ByteArrayOutputStream.
+                                              }}))
+
+                           ;;
+                           ;; spire.local
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.local
+                            (utils/make-inlined-public-fns
+                             spire.local
+                             {:exclude #{local-exec}})
+
+                            (utils/make-inlined-code-set
+                             spire.local
+                             [local-exec]
+                             {:rename-ns ns-renames}
+                             )
+                            )
+
+
+                           ;;
                            ;; spire.utils
                            ;;
                            (utils/make-inlined-namespace
@@ -126,14 +184,72 @@
                             [{"name" "current-file"
                               "code" "(defn current-file [] *file*)"}]
                             (utils/make-inlined-code-set
-                             spire.utils [current-file-parent]
+                             spire.utils [current-file-parent
+                                          colour-map
+                                          kilobyte
+                                          megabyte
+                                          gigabyte
+                                          clear-line
+
+                                          ]
                              {:rename-ns ns-renames}
                              )
                             (utils/make-inlined-code-set-macros
                              spire.utils
-                             {:rename-ns ns-renames}))
+                             {:rename-ns ns-renames})
 
+                            [
+                             {"name" "content-size"
+                              "code" "
+(defmulti content-size type)
+(defmethod content-size java.io.File [f] (.length ^java.io.File f))
+(defmethod content-size java.lang.String [f] (count (.getBytes ^String f)))
+(defmethod content-size (Class/forName \"[B\") [f] (count f))
+"}
+                             {"name" "content-display-name"
+                              "code" "
+(defmulti content-display-name type)
+(defmethod content-display-name java.io.File [f] (.getName ^java.io.File f))
+(defmethod content-display-name java.lang.String [f] \"[String Data]\")
+(defmethod content-display-name (Class/forName \"[B\") [f] \"[Byte Array]\")
+"}
+                             {"name" "content-recursive?"
+                              "code" "
+(defmulti content-recursive? type)
+(defmethod content-recursive? java.io.File [f] (.isDirectory ^java.io.File f))
+(defmethod content-recursive? java.lang.String [f] false)
+(defmethod content-recursive? (Class/forName \"[B\") [f] false)
+"}
+
+                             {"name" "content-file?"
+                              "code" "
+(defmulti content-file? type)
+(defmethod content-file? java.io.File [f] (.isFile ^java.io.File f))
+(defmethod content-file? java.lang.String [f] false)
+(defmethod content-file? (Class/forName \"[B\") [f] false)
+"}
+
+                             {"name" "content-stream"
+                              "code" "
+(defmulti content-stream type)
+(defmethod content-stream java.io.File [f] (clojure.java.io/input-stream ^java.io.File f))
+(defmethod content-stream java.lang.String [f] (clojure.java.io/input-stream (.getBytes ^String f)))
+(defmethod content-stream (Class/forName \"[B\") [f] (clojure.java.io/input-stream f))
+"}]
+
+                            (utils/make-inlined-code-set
+                             spire.utils
+                             [progress-stats
+                              progress-bar-from-stats
+                              re-pattern-to-sed
+                              ]
+                             {:rename-ns ns-renames}
+                             )
+                            )
+
+                           ;;
                            ;; output modules
+                           ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.output.core
                             (utils/make-inlined-code-set
@@ -240,7 +356,10 @@
  :err (pod.epiccastle.spire.pod.stream/make-piped-input-stream err)
 })
 )"}
+                             ;; spire side
                              {"name" "ssh-exec*"}
+
+                             ;; bb side
                              {"name" "ssh-exec"
                               "code" "(defn ssh-exec [session cmd in out opts]
 (let [{:keys [channel err-stream out-stream exit out err]} (ssh-exec* session cmd in out opts)]
@@ -286,12 +405,6 @@
                              spire.context
                              {:rename-ns ns-renames}))
 
-                           ;;
-                           ;; spire.local
-                           ;;
-                           (utils/make-inlined-namespace
-                            pod.epiccastle.spire.local
-                            (utils/make-inlined-public-fns spire.local))
 
                            ;;
                            ;; spire.state
@@ -484,41 +597,46 @@
                                {:rename-ns ns-renames})
                             )
 
-                           (
-                            utils/make-inlined-namespace
-                            pod.epiccastle.spire.shlex
-                            (utils/make-inlined-public-fns
-                             spire.shlex
-                             {:only #{parse}}
-                             )
-                            (utils/make-inlined-code-set
-                             spire.shlex
-                             [whitespace-chars newline-chars read-char skip-until
-                              read-double-quotes read-single-quotes
-                              read-until-whitespace read-while-whitespace
-                              ]
-                             {:rename-ns ns-renames
-                              :rename-symbol {}})
-                            )
 
-                           (utils/make-inlined-namespace
-                            pod.epiccastle.spire.sh
-                            (utils/make-inlined-code-set
-                             spire.sh
-                             [proc feed-from feed-from-string
-                              *piped-stream-buffer-size*
-                              streams-for-out streams-for-in read-all-bytes
-                              exec
-                              ]
-                             {:rename-ns ns-renames
-                              :rename-symbol {PipedOutputStream. java.io.PipedOutputStream.
-                                              PipedInputStream. java.io.PipedInputStream.
-                                              ByteArrayOutputStream. java.io.ByteArrayOutputStream.
-                                              }}))
-
+                           ;;
+                           ;; spire.scp
+                           ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.scp
-                            (utils/make-inlined-public-fns spire.scp))
+                            (utils/make-inlined-public-fns spire.pod.scp)
+                            [{"name" "_import"
+                              "code" "(def _import (import [java.io
+            InputStream OutputStream File FileOutputStream
+            PipedInputStream PipedOutputStream StringReader]
+           ))"}]
+                            (utils/make-inlined-code-set
+                             spire.pod.scp
+                             [debug debugf
+                              scp-send-ack
+                              scp-receive-ack
+                              scp-send-command
+                              scp-copy-file
+                              scp-copy-data
+                              scp-copy-dir
+                              scp-files
+                              scp-to
+                              scp-content-to
+                              ;; scp-parse-times
+                              ;; scp-parse-copy
+                              scp-receive-command
+                              scp-sink-file
+                              scp-sink
+                              scp-from
+                              ]
+                             {:rename-ns ns-renames
+                              :rename-symbol {OutputStream java.io.OutputStream
+                                              FileOutputStream java.io.FileOutputStream
+                                              InputStream java.io.InputStream
+                                              PipedInputStream java.io.PipedInputStream
+                                              PipedOutputStream java.io.PipedOutputStream
+                                              StringReader java.io.StringReader
+                                              }})
+                            )
 
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.selmer

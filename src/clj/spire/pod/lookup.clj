@@ -1,6 +1,7 @@
 (ns spire.pod.lookup
   (:require [spire.pod.mapping :as mapping]
             [spire.pod.stream]
+            [spire.pod.scp]
             [spire.ssh]
             [spire.transport]
             [spire.facts]
@@ -76,12 +77,9 @@
                 (spire.ssh/ssh-exec
                  (mapping/get-instance-for-key session-state session-key)
                  cmd
-                 in
-                 #_(if (= java.io.PipedInputStream (class in))
-                   (mapping/add-instance!
-                    piped-input-stream-state in
-                    "pod.epiccastle.spire.ssh" "piped-output-stream")
-                   )
+                 (if (keyword? in)
+                   (mapping/get-instance-for-key piped-input-stream-state in)
+                   in)
                  out
                  opts)]
             (if channel
@@ -248,6 +246,22 @@
         "spire.scp"
         [scp-to scp-content-to scp-parse-times scp-parse-copy
          scp-sink-file scp-sink scp-from]))
+
+      (into
+       {'pod.epiccastle.spire.scp/pod-side-streams-for-in
+        (fn [buffer]
+          (let [[is os] (spire.pod.scp/pod-side-streams-for-in buffer)]
+            [(mapping/add-instance!
+              piped-input-stream-state
+              is
+              "pod.epiccastle.spire.scp" "piped-input-stream")
+             (mapping/add-instance!
+              piped-output-stream-state
+              os
+              "pod.epiccastle.spire.scp" "piped-output-stream")]
+
+            ))
+        })
 
       #_(into
          (make-plain-lookup
