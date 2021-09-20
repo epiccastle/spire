@@ -90,7 +90,12 @@
       )
     (write
       ([b]
-       (write-byte stream-key b))
+       (if (bytes? b)
+         (write-bytes
+          stream-key
+          (encode b))
+         (write-byte stream-key b)
+         ))
       ([byte-arr off len]
        (write-bytes
         stream-key
