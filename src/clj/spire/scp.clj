@@ -11,13 +11,13 @@
 
 ;; https://web.archive.org/web/20170215184048/https://blogs.oracle.com/janp/entry/how_the_scp_protocol_works
 
-(comment
-  (def debug println)
-  (def debugf (comp println format)))
-
 (comment)
-(defmacro debug [& args])
-(defmacro debugf [& args])
+(def debug println)
+(def debugf (comp println format))
+
+(comment
+  (defmacro debug [& args])
+  (defmacro debugf [& args]))
 
 (defn- scp-send-ack
   "Send acknowledgement to the specified output stream"
@@ -231,13 +231,18 @@
            ^PipedOutputStream send] (ssh/streams-for-in)
           cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
           _ (debugf "scp-to: %s using executor %s" cmd (str exec))
+          _ (prn exec-fn session shell-fn stdin-fn opts)
+          _ (prn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts)
           {:keys [out-stream]}
           (if (= exec :local)
             (exec-fn nil
                      (shell-fn
                       (format "bash -c 'umask 0000; %s'" cmd))
                      (stdin-fn in) :stream opts)
-            (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts))
+            (do
+              (prn 1)
+              (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts)))
+          _ (prn 2)
           recv out-stream]
       (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)
       (debug "Receive initial ACK")
@@ -249,6 +254,7 @@
             (debugf "scp-to: from %s name: %s"
                     (.getPath file)
                     (.getName file)))
+
           (cond
             (utils/content-recursive? file)
             (do
