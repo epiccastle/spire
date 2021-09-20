@@ -75,7 +75,10 @@
                    (do
                      (disconnect connection)
                      (dissoc s conn-key))
-                   (update-in s [conn-key :use-count] dec))))))))
+                   (update-in s [conn-key :use-count] dec))))))
+
+    nil ;; this return value will be serialised when used as a pod in nested `ssh` macros
+    ))
 
 (defn get-connection [conn-key]
   (get-in @state/ssh-connections [conn-key :connection]))
