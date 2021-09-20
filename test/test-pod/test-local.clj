@@ -100,3 +100,8 @@
  assert)
 
 (assert (= "foo\n" (:out (local/local-exec nil "echo foo" nil  "UTF-8" {}))))
+
+(let [{:keys [out-stream]} (local/local-exec nil "echo -n foo" nil :stream {})]
+  (assert (= (mapv (fn [_] (.read out-stream)) (range 5))
+             [102 111 111 -1 -1]))
+  )
