@@ -160,7 +160,7 @@
        (sudo-id full-conf#)
 
        (context/binding* [state/shell-context
-                          {:priveleges :sudo
+                          {:privilege :sudo
                            :exec (:exec (state/get-shell-context))
                            :exec-fn (:exec-fn (state/get-shell-context))
                            :shell-fn (partial make-sudo-command full-conf# "")

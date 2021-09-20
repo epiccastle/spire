@@ -64,7 +64,7 @@
       (if shell-context
         shell-context
         {:exec :local
-         :priveleges :normal
+         :privilege :normal
          :exec-fn local/local-exec
          :shell-fn identity
          :stdin-fn identity}))))
