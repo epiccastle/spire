@@ -1,5 +1,5 @@
 (ns test-pod.test-remote
-  (:require [test-pod.utils :refer [run bash]]
+  (:require [test-pod.utils :refer [bash]]
             [clojure.string :as string]
             [clojure.test :refer [is deftest]]
 

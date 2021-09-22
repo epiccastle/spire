@@ -6,7 +6,10 @@
 
 (require '[test-pod.test-utils]
          '[test-pod.test-remote]
+         '[test-pod.test-local]
          )
 
 (test/run-tests 'test-pod.test-utils
-                'test-pod.test-remote)
+                'test-pod.test-remote
+                'test-pod.test-local
+                )
