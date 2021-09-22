@@ -4,6 +4,9 @@
 
 (pods/load-pod ["lein" "trampoline" "run"] {:transport :socket})
 
-(require '[test-pod.test-utils])
+(require '[test-pod.test-utils]
+         '[test-pod.test-remote]
+         )
 
-(test/run-tests 'test-pod.test-utils)
+(test/run-tests 'test-pod.test-utils
+                'test-pod.test-remote)

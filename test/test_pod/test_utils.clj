@@ -72,12 +72,16 @@ Codename:	bionic
   (is (not (utils/content-recursive? (byte-array 3)))))
 
 (deftest content-file?
+  (bash "rm -rf /tmp/foo")
+  (bash "mkdir /tmp/foo")
   (is (utils/content-file? (io/file "/tmp/foo.txt")))
   (is (not (utils/content-file? (io/file "/tmp/foo"))))
   (is (not (utils/content-file? "foo")))
   (is (not (utils/content-file? (byte-array 3)))))
 
 (deftest content-stream
+  (bash "rm -f /tmp/foo.txt")
+  (bash "echo -n foo > /tmp/foo.txt")
   (is (= java.io.BufferedInputStream (class (utils/content-stream (io/file "/tmp/foo.txt")))))
   (is (= java.io.BufferedInputStream (class (utils/content-stream "foo"))))
   (is (= java.io.BufferedInputStream (class (utils/content-stream (byte-array 3))))))
@@ -87,6 +91,8 @@ Codename:	bionic
   (is (integer? (utils/get-terminal-width))))
 
 (deftest progress-stats
+  (bash "rm -f /tmp/foo.txt")
+  (bash "echo -n foo > /tmp/foo.txt")
   (let [now (java.util.Date.)
         f (io/file "/tmp/foo.txt")
         a (->
@@ -109,6 +115,8 @@ Codename:	bionic
     (is (= a b))))
 
 (deftest progress-bar-from-stats
+  (bash "rm -f /tmp/foo.txt")
+  (bash "echo -n foo > /tmp/foo.txt")
   (let [f (io/file "/tmp/foo.txt")
         line (utils/progress-bar-from-stats "localhost" 9 7
                                             {:bytes-per-second 11
@@ -131,6 +139,8 @@ Codename:	bionic
   (is (= 1 (utils/num-terminal-lines "line"))))
 
 (deftest embed
+  (bash "rm -f /tmp/foo.txt")
+  (bash "echo -n foo > /tmp/foo.txt")
   (is (= "foo" (utils/embed "/tmp/foo.txt")))
   (is (string/starts-with?
        (utils/embed-src "test_utils.clj")
