@@ -1,122 +1,119 @@
 (ns test-pod.test-nio
-  (:require [babashka.pods :as pods]
-            [babashka.process :refer [process check]]
-            [clojure.string :as string]
-            ))
+  (:require [test-pod.conf :refer [username]]
+            [test-pod.utils :refer
+             [bash run-int run-trim
+              stat-mode stat-last-modified-time stat-last-access-time]]
+            [clojure.test :refer [is deftest]]
 
-(require '[babashka.pods :as pods])
+            [pod.epiccastle.spire.nio :as nio]))
 
-(pods/load-pod ["lein" "trampoline" "run"] {:transport :socket})
-
-(require '[pod.epiccastle.spire.nio :as nio])
-
-(def username (or (System/getenv "TEST_USER") (System/getenv "USER")))
-
-(defn run [args]
-  (-> args process :out slurp))
-
-(defn run-trim [args]
-  (-> args run string/trim))
-
-(defn run-int [args]
-  (-> args run-trim Integer/parseInt))
-
-(defn stat-mode [file]
-  ;; gnu stat format. linux only
-  (run-trim ["stat" "-c" "%a" file]))
-
-(defn stat-last-modified-time [file]
-  (run-int ["stat" "-c" "%Y" file]))
-
-(defn stat-last-access-time [file]
-  (run-int ["stat" "-c" "%X" file]))
-
-(assert (= "../bar" (nio/relativise "/path/to/foo" "/path/to/bar")))
-(assert (< 1599000000 (nio/last-access-time ".")))
-(assert (< 1599000000 (nio/last-modified-time ".")))
-(assert (<= 0 (nio/file-mode ".") 0777))
-(assert (= 3 (count (nio/mode->permissions 0700))))
-
-(process ["rm" "-rf" "/tmp/foo"])
-(nio/create-file "/tmp/foo" 0666)
-;; assume umask 022
-(assert (= "644" (stat-mode "/tmp/foo")))
-(nio/set-file-mode "/tmp/foo" 0777)
-(assert (= "777" (stat-mode "/tmp/foo")))
-
-(assert (= "2020-09-01 22:40:00.000000000 +0000" (nio/timestamp->touch 1599000000)))
-(assert (= "202009012240.00" (nio/timestamp->touch-bsd 1599000000)))
-
-(nio/set-last-modified-time "/tmp/foo" 1599000000)
-(assert (= 1599000000 (stat-last-modified-time "/tmp/foo")))
-
-(nio/set-last-access-time "/tmp/foo" 1599000000)
-(assert (= 1599000000 (stat-last-access-time "/tmp/foo")))
-
-(nio/set-last-modified-and-access-time "/tmp/foo" 1599000001 1599000002)
-(assert (= 1599000001 (stat-last-modified-time "/tmp/foo")))
-(assert (= 1599000002 (stat-last-access-time "/tmp/foo")))
-
-(assert (nio/idem-set-last-access-time "/tmp/foo" 1599000000))
-(assert (= 1599000000 (stat-last-access-time "/tmp/foo")))
-(assert (not (nio/idem-set-last-access-time "/tmp/foo" 1599000000)))
-(assert (= 1599000000 (stat-last-access-time "/tmp/foo")))
-
-(assert (nio/idem-set-last-modified-time "/tmp/foo" 1599000000))
-(assert (= 1599000000 (stat-last-modified-time "/tmp/foo")))
-(assert (not (nio/idem-set-last-modified-time "/tmp/foo" 1599000000)))
-(assert (= 1599000000 (stat-last-modified-time "/tmp/foo")))
-
-(assert (nio/set-owner "/tmp/foo" username))
 (def user-id (run-int ["id" "-u"]))
-(assert (nio/set-owner "/tmp/foo" user-id))
-
-(nio/set-owner "/tmp/foo" username)
-(assert (not (nio/idem-set-owner "/tmp/foo" username)))
-(nio/set-owner "/tmp/foo" user-id)
-(assert (not (nio/idem-set-owner "/tmp/foo" user-id)))
-
 (def group-id (run-int ["id" "-g"]))
 (def group-name (run-trim ["id" "-gn"]))
 
-(assert (nio/set-group "/tmp/foo" group-name))
-(assert (not (nio/idem-set-group "/tmp/foo" group-name)))
-(assert (nio/set-group "/tmp/foo" group-id))
-(assert (not (nio/idem-set-group "/tmp/foo" group-id)))
+(deftest basic-files
+  (is (= "../bar" (nio/relativise "/path/to/foo" "/path/to/bar")))
+  (is (< 1599000000 (nio/last-access-time ".")))
+  (is (< 1599000000 (nio/last-modified-time ".")))
+  (is (<= 0 (nio/file-mode ".") 0777))
+  (is (= 3 (count (nio/mode->permissions 0700)))))
 
-(assert (nio/idem-set-mode "/tmp/foo" 0400))
-(assert (= "400" (stat-mode "/tmp/foo")))
-(assert (not (nio/idem-set-mode "/tmp/foo" 0400)))
-(assert (= "400" (stat-mode "/tmp/foo")))
+(deftest modes
+  (bash "rm -rf /tmp/foo")
+  (nio/create-file "/tmp/foo" 0666)
+  ;; assume umask 022
+  (is (= "644" (stat-mode "/tmp/foo")))
+  (nio/set-file-mode "/tmp/foo" 0777)
+  (is (= "777" (stat-mode "/tmp/foo"))))
 
-(assert (nio/idem-set-mode "/tmp/foo" 0666))
-(assert (= "666" (stat-mode "/tmp/foo")))
-(assert (not (nio/idem-set-mode "/tmp/foo" 0666)))
-(assert (= "666" (stat-mode "/tmp/foo")))
+(deftest touch
+  (is (= "2020-09-01 22:40:00.000000000 +0000" (nio/timestamp->touch 1599000000)))
+  (is (= "202009012240.00" (nio/timestamp->touch-bsd 1599000000))))
 
-(assert (not (nio/set-attr "/tmp/foo" user-id group-id 0666)))
-(assert (nio/set-attr "/tmp/foo" user-id group-id 0400))
+(deftest times
+  (bash "rm -rf /tmp/foo")
+  (nio/create-file "/tmp/foo" 0777)
 
-(assert (nio/set-attrs {:path "/tmp/foo" :mode 0644}))
-(assert (not (nio/set-attrs {:path "/tmp/foo" :mode 0644})))
+  (nio/set-last-modified-time "/tmp/foo" 1599000000)
+  (is (= 1599000000 (stat-last-modified-time "/tmp/foo")))
 
-(run ["rm" "-rf" "/tmp/bar"])
-(run ["mkdir" "-p" "/tmp/bar/baz"])
-(run ["touch" "/tmp/bar/foo"])
-(run ["touch" "/tmp/bar/baz/foo"])
-(assert
- (nio/set-attrs-preserve
-  {"foo" {:mode 0666 :last-access 1599000000 :last-modified 1599000000}
-   "baz" {:mode 0777 :last-access 1599000000 :last-modified 1599000000}
-   "baz/foo" {:mode 0666 :last-access 1599000000 :last-modified 1599000000}}
-  "/tmp/bar"))
+  (nio/set-last-access-time "/tmp/foo" 1599000000)
+  (is (= 1599000000 (stat-last-access-time "/tmp/foo")))
 
-(assert (= 1599000000 (stat-last-modified-time "/tmp/bar/foo")))
-(assert (= 1599000000 (stat-last-modified-time "/tmp/bar/baz")))
-(assert (= 1599000000 (stat-last-modified-time "/tmp/bar/baz/foo")))
-(assert (= 1599000000 (stat-last-access-time "/tmp/bar/foo")))
-(assert (= 1599000000 (stat-last-access-time "/tmp/bar/baz")))
-(assert (= 1599000000 (stat-last-access-time "/tmp/bar/baz/foo")))
-(assert (= "666" (stat-mode "/tmp/bar/foo")))
-(assert (= "777" (stat-mode "/tmp/bar/baz")))
-(assert (= "666" (stat-mode "/tmp/bar/baz/foo")))
+  (nio/set-last-modified-and-access-time "/tmp/foo" 1599000001 1599000002)
+  (is (= 1599000001 (stat-last-modified-time "/tmp/foo")))
+  (is (= 1599000002 (stat-last-access-time "/tmp/foo")))
+
+  (is (nio/idem-set-last-access-time "/tmp/foo" 1599000000))
+  (is (= 1599000000 (stat-last-access-time "/tmp/foo")))
+  (is (not (nio/idem-set-last-access-time "/tmp/foo" 1599000000)))
+  (is (= 1599000000 (stat-last-access-time "/tmp/foo")))
+
+  (is (nio/idem-set-last-modified-time "/tmp/foo" 1599000000))
+  (is (= 1599000000 (stat-last-modified-time "/tmp/foo")))
+  (is (not (nio/idem-set-last-modified-time "/tmp/foo" 1599000000)))
+  (is (= 1599000000 (stat-last-modified-time "/tmp/foo"))))
+
+(deftest ownership
+  (bash "rm -rf /tmp/foo")
+  (nio/create-file "/tmp/foo" 0777)
+
+  (is (nio/set-owner "/tmp/foo" username))
+
+  (is (nio/set-owner "/tmp/foo" user-id))
+
+  (nio/set-owner "/tmp/foo" username)
+  (is (not (nio/idem-set-owner "/tmp/foo" username)))
+  (nio/set-owner "/tmp/foo" user-id)
+  (is (not (nio/idem-set-owner "/tmp/foo" user-id))))
+
+(deftest groups
+  (bash "rm -rf /tmp/foo")
+  (nio/create-file "/tmp/foo" 0777)
+
+  (is (nio/set-group "/tmp/foo" group-name))
+  (is (not (nio/idem-set-group "/tmp/foo" group-name)))
+  (is (nio/set-group "/tmp/foo" group-id))
+  (is (not (nio/idem-set-group "/tmp/foo" group-id))))
+
+(deftest more-modes
+  (bash "rm -rf /tmp/foo")
+  (nio/create-file "/tmp/foo" 0777)
+
+  (is (nio/idem-set-mode "/tmp/foo" 0400))
+  (is (= "400" (stat-mode "/tmp/foo")))
+  (is (not (nio/idem-set-mode "/tmp/foo" 0400)))
+  (is (= "400" (stat-mode "/tmp/foo")))
+
+  (is (nio/idem-set-mode "/tmp/foo" 0666))
+  (is (= "666" (stat-mode "/tmp/foo")))
+  (is (not (nio/idem-set-mode "/tmp/foo" 0666)))
+  (is (= "666" (stat-mode "/tmp/foo")))
+
+  (is (not (nio/set-attr "/tmp/foo" user-id group-id 0666)))
+  (is (nio/set-attr "/tmp/foo" user-id group-id 0400))
+
+  (is (nio/set-attrs {:path "/tmp/foo" :mode 0644}))
+  (is (not (nio/set-attrs {:path "/tmp/foo" :mode 0644}))))
+
+(deftest set-attrs-preserve
+  (bash "rm -rf /tmp/bar")
+  (bash "mkdir -p /tmp/bar/baz")
+  (bash "touch /tmp/bar/foo")
+  (bash "touch /tmp/bar/baz/foo")
+  (is
+   (nio/set-attrs-preserve
+    {"foo" {:mode 0666 :last-access 1599000000 :last-modified 1599000000}
+     "baz" {:mode 0777 :last-access 1599000000 :last-modified 1599000000}
+     "baz/foo" {:mode 0666 :last-access 1599000000 :last-modified 1599000000}}
+    "/tmp/bar"))
+
+  (is (= 1599000000 (stat-last-modified-time "/tmp/bar/foo")))
+  (is (= 1599000000 (stat-last-modified-time "/tmp/bar/baz")))
+  (is (= 1599000000 (stat-last-modified-time "/tmp/bar/baz/foo")))
+  (is (= 1599000000 (stat-last-access-time "/tmp/bar/foo")))
+  (is (= 1599000000 (stat-last-access-time "/tmp/bar/baz")))
+  (is (= 1599000000 (stat-last-access-time "/tmp/bar/baz/foo")))
+  (is (= "666" (stat-mode "/tmp/bar/foo")))
+  (is (= "777" (stat-mode "/tmp/bar/baz")))
+  (is (= "666" (stat-mode "/tmp/bar/baz/foo"))))
