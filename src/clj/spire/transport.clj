@@ -36,6 +36,7 @@
     session
     ))
 
+
 (defn disconnect [connection]
   (when debug (prn 'disconnect connection))
   (.disconnect connection))
@@ -114,8 +115,9 @@
                             state/shell-context {:privilege :normal
                                                  :exec :ssh
                                                  :exec-fn ssh/ssh-exec
-                                                 :shell-fn identity
-                                                 :stdin-fn identity}]
+                                                 ;;:shell-fn identity
+                                                 ;;:stdin-fn identity
+                                                 }]
                            (facts/update-facts!)
                            (do ~@body)))
        (finally
@@ -139,8 +141,9 @@
                                       state/shell-context {:privilege :normal
                                                            :exec :ssh
                                                            :exec-fn ssh/ssh-exec
-                                                           :shell-fn identity
-                                                           :stdin-fn identity}]
+                                                           ;;:shell-fn identity
+                                                           ;;:stdin-fn identity
+                                                           }]
                                      (facts/update-facts!)
                                      (let [result# (do ~@body)]
                                        result#)))])))]
@@ -159,6 +162,7 @@
                       state/shell-context {:privilege :normal
                                            :exec :local
                                            :exec-fn local/local-exec
-                                           :shell-fn identity
-                                           :stdin-fn identity}]
+                                           ;;:shell-fn identity
+                                           ;;:stdin-fn identity
+                                           }]
                      (do ~@body)))

@@ -6,7 +6,9 @@
             [spire.transport]
             [spire.facts]
             [spire.local]
+            [spire.sudo]
             [spire.module.shell]
+            [spire.module.sudo]
             ))
 
 (def user-info-state (mapping/make-mapping))
@@ -262,6 +264,13 @@
 
             ))
         })
+
+      (into
+       (make-plain-lookup
+        "spire.sudo"
+        [make-sudo-command]))
+
+
 
       #_(into
          (make-plain-lookup

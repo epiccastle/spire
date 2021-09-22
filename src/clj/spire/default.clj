@@ -33,8 +33,9 @@
            {:privilege :normal
             :exec :ssh
             :exec-fn ssh/ssh-exec
-            :shell-fn identity
-            :stdin-fn identity}))
+            ;;:shell-fn identity
+            ;;:stdin-fn identity
+            }))
         true))))
 
 (defn empty!
@@ -63,8 +64,9 @@
      {:privilege :normal
       :exec :ssh
       :exec-fn ssh/ssh-exec
-      :shell-fn identity
-      :stdin-fn identity})
+      ;;:shell-fn identity
+      ;;:stdin-fn identity
+      })
     true))
 
 (defn set-ssh!

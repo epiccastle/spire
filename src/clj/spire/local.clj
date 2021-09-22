@@ -1,6 +1,7 @@
 (ns spire.local
   (:require [spire.nio :as nio]
             [spire.sh :as sh]
+            [spire.sudo :as sudo]
             [digest :as digest]
             [clojure.string :as string]
             [clojure.java.io :as io]
@@ -65,6 +66,15 @@
 #_ (path-full-info "/tmp/bashrc")
 
 ;; support out = :stream...
-(defn local-exec [_ cmd in out opts]
+(defn local-exec [_ cmd in out {:keys [sudo] :as opts}]
   ;;(prn 'local-exec cmd in out opts)
-  (sh/exec cmd in out opts))
+  (let [
+        in (if (:stdin? sudo)
+             (spire.sudo/prefix-sudo-stdin (:opts sudo) in)
+             in)
+
+        cmd (if (:shell? sudo)
+              (spire.sudo/make-sudo-command (:opts sudo) "" cmd)
+              cmd)
+        ]
+    (sh/exec cmd in out opts)))

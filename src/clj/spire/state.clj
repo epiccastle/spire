@@ -66,8 +66,9 @@
         {:exec :local
          :privilege :normal
          :exec-fn local/local-exec
-         :shell-fn identity
-         :stdin-fn identity}))))
+         ;;:shell-fn identity
+         ;;:stdin-fn identity
+         }))))
 
 (defn get-output-module []
   (if-let [out (context/deref* output-module)]

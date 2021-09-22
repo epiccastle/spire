@@ -1,6 +1,5 @@
 (ns spire.facts
   (:require [clojure.string :as string]
-            [spire.ssh :as ssh]
             [spire.utils :as utils]
             [spire.state :as state]))
 

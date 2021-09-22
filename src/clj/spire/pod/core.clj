@@ -65,6 +65,8 @@
    "spire.output.core" "pod.epiccastle.spire.output.core"
    "spire.output.default" "pod.epiccastle.spire.output.default"
    "spire.module.shell" "pod.epiccastle.spire.module.shell"
+   "spire.module.sudo" "pod.epiccastle.spire.module.sudo"
+   "spire.sudo" "pod.epiccastle.spire.sudo"
 
    "transport" "pod.epiccastle.spire.transport"
    "ssh" "pod.epiccastle.spire.ssh"
@@ -154,6 +156,28 @@
                                               PipedInputStream. java.io.PipedInputStream.
                                               ByteArrayOutputStream. java.io.ByteArrayOutputStream.
                                               }}))
+
+                           ;;
+                           ;; spire.sudo
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.sudo
+
+                            (utils/make-inlined-public-fns
+                             spire.sudo
+                             {:only #{make-sudo-command}}
+                             )
+
+                            (utils/make-inlined-code-set
+                             spire.sudo
+                             [copy-string-into-byte-array
+                              prefix-sudo-stdin]
+                             {:rename-ns ns-renames
+                              :rename-symbol {PipedInputStream java.io.PipedInputStream}}
+                             )
+
+                            )
+
 
                            ;;
                            ;; spire.local
@@ -525,6 +549,38 @@
                              {:rename-ns ns-renames
                               :rename-symbol
                               {get-fact pod.epiccastle.spire.facts/get-fact}}))
+
+                           ;;
+                           ;; spire.module.sudo
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.sudo
+
+                            (utils/make-inlined-code-set
+                             spire.module.sudo
+                             [passwords])
+
+                            (utils/make-inlined-public-fns
+                             spire.module.sudo
+                             {:exclude #{passwords}})
+
+                            (utils/make-inlined-code-set
+                             spire.module.sudo
+                             [requires-password?
+                              sudo-id]
+                             {:rename-ns ns-renames
+                              :rename-symbol {}})
+
+                            (utils/make-inlined-code-set-macros
+                             spire.module.sudo
+                             {:rename-ns ns-renames
+                              :rename-symbol
+                              {requires-password? pod.epiccastle.spire.module.sudo/requires-password?
+                               passwords pod.epiccastle.spire.module.sudo/passwords
+                               sudo-id pod.epiccastle.spire.module.sudo/sudo-id}}
+                             )
+
+                            )
 
                            ;;
                            ;; spire.nio
