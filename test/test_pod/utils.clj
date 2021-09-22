@@ -23,3 +23,21 @@
 
 (defn bash [command]
   (run ["bash" "-c" command]))
+
+(defn split-lines [out]
+  (string/split out #"\n"))
+
+(defn strip-empty [strings]
+  (->> strings
+       (filter (comp not empty?))
+       (into [])))
+
+(defn connections [search]
+  (-> (process ["netstat" "-atp"])
+      (process ["grep" search])
+      (process ["grep" "ESTABLISHED"])
+      (process ["grep" "java"])
+      :out
+      slurp
+      split-lines
+      strip-empty))
