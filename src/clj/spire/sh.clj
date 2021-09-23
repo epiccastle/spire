@@ -26,7 +26,7 @@
      :process process}))
 
 (defn feed-from
-  "Feed to a process's input stream with optional. Options passed are
+  "Feed to a process's input stream with options. Options passed are
   fed to clojure.java.io/copy. They are :encoding to set the encoding
   and :buffer-size to set the size of the buffer. :encoding defaults to
   UTF-8 and :buffer-size to 1024."
@@ -47,7 +47,7 @@
     issue."}
   *piped-stream-buffer-size* (* 1024 256))
 
-(defn- streams-for-out
+(defn streams-for-out
   [out]
   (if (= :stream out)
     (let [os (PipedOutputStream.)]

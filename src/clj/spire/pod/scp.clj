@@ -267,8 +267,8 @@
                       (format "bash -c 'umask 0000; %s'" cmd))
                      (stdin-fn in) :stream opts)
             (do
-              (prn 1)
-              (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream (select-keys opts [:agent-forwarding :pty :in :out :err]))))
+              (prn 1 exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in))
+              (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream (assoc (select-keys opts [:agent-forwarding :pty :in :out :err :sudo]) :stdin? true :shell? true))))
           _ (prn 2)
           recv out-stream]
       (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)

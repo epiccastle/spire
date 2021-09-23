@@ -1,5 +1,6 @@
 (ns spire.ssh
-  (:require [clojure.string :as string])
+  (:require [clojure.string :as string]
+            [spire.sudo :as sudo])
   (:import [com.jcraft.jsch UserInfo]
            [com.jcraft.jsch
             JSch Session ChannelExec]
@@ -148,6 +149,8 @@
         (when debug (prn 'make-user-info 'showMessage))
         (println s)))))
 
+#_ (make-user-info {})
+
 (defn- to-camel-case [^String a]
   (apply str (map string/capitalize (.split (name a) "-"))))
 
@@ -265,7 +268,7 @@ keys.  All other option key pairs will be passed as SSH config options."
              result string.  In the case of :stream, the shell can
              be polled for connected status.
   "
-  [^Session session ^String cmd in out opts]
+  [^Session session ^String cmd in out {:keys [sudo] :as opts}]
   (when debug
     (prn 'ssh-exec session)
     (println cmd)
@@ -275,6 +278,17 @@ keys.  All other option key pairs will be passed as SSH config options."
          ^PipedInputStream out-inputstream] (streams-for-out out)
         [^PipedOutputStream err-stream
          ^PipedInputStream err-inputstream] (streams-for-out out)
+
+        in (if (:stdin? sudo)
+             (spire.sudo/prefix-sudo-stdin (:opts sudo) in)
+             in)
+
+        cmd (if (:shell? sudo)
+              (spire.sudo/make-sudo-command (:opts sudo) "" cmd)
+              cmd)
+
+        ;;_ (prn 'in in 'cmd cmd)
+
         proc (ssh-exec-proc
               session cmd
               (merge

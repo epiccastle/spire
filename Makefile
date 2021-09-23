@@ -181,14 +181,4 @@ jar-help:
 	java -Djava.library.path="." -jar target/uberjar/spire-$(VERSION)-standalone.jar -h
 
 tests-pod:
-	BABASHKA_CLASSPATH=test bb test/test_pod/runner.clj
-	# bb test/test-pod/test-remote.clj
-	# bb test/test-pod/test-local.clj
-	# bb test/test-pod/test-facts.clj
-	# bb test/test-pod/test-nio.clj
-	# bb test/test-pod/test-transport.clj
-	# bb test/test-pod/test-shlex.clj
-	# bb test/test-pod/test-sh.clj
-	# bb test/test-pod/test-ssh.clj
-	# bb test/test-pod/test-utils.clj
-	# bb test/test-pod/test-scp.clj
+	umask 022 && BABASHKA_CLASSPATH=test bb test/test_pod/runner.clj
