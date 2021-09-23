@@ -3,10 +3,10 @@
 ;; a partial implementation of the java stream interfaces
 ;; that can be used to stream data across the spire/babashka boundary.
 
-(defn encode [to-encode]
+(defn encode-base64 [to-encode]
   (.encodeToString (java.util.Base64/getEncoder) to-encode))
 
-(defn decode [to-decode]
+(defn decode-base64 [to-decode]
   (.decode (java.util.Base64/getDecoder) to-decode))
 
 ;; these are simple implemenations of stream read and write that
@@ -27,7 +27,7 @@
 (defn read-bytes [^java.io.PipedInputStream stream length]
   (let [a (byte-array length)
         result (.read stream a 0 length)]
-    [result (encode a)]))
+    [result (encode-base64 a)]))
 
 (defn receive [^java.io.PipedInputStream stream b]
   (.receive stream b))
@@ -49,7 +49,7 @@
          (let [[result data] (read-bytes stream-key len)]
            (when (pos? result)
              (System/arraycopy
-              (decode data) 0
+              (decode-base64 data) 0
               byte-arr off result))
            result))))
     (receive [b]
@@ -71,8 +71,10 @@
 (defn write-byte [stream byte]
   (.write stream byte))
 
-(defn write-bytes [stream bytes]
-  (let [a (decode bytes)]
+(defn write-bytes [stream base64]
+  (let [a (decode-base64 base64)]
+    (prn base64)
+    (prn stream a 0 (count a))
     (.write stream a 0 (count a))))
 
 
@@ -93,11 +95,11 @@
        (if (bytes? b)
          (write-bytes
           stream-key
-          (encode b))
+          (encode-base64 b))
          (write-byte stream-key b)
          ))
       ([byte-arr off len]
        (write-bytes
         stream-key
-        (encode
+        (encode-base64
          (java.util.Arrays/copyOfRange byte-arr off (+ off len))))))))

@@ -314,12 +314,12 @@
                             (utils/make-inlined-public-fns
                              spire.pod.stream
                              {:exclude
-                              #{encode decode
+                              #{encode-base64 decode-base64
                                 make-piped-input-stream
                                 make-piped-output-stream}})
                             (utils/make-inlined-code-set
                              spire.pod.stream
-                             [encode decode
+                             [encode-base64 decode-base64
                               make-piped-input-stream
                               make-piped-output-stream]
                              {:rename-ns ns-renames}
