@@ -6,7 +6,8 @@
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/core.async "0.6.532"]
                  [org.clojure/tools.cli "0.4.2"]
-                 [borkdude/sci "0.1.1-alpha.1"]
+                 [org.babashka/sci "0.2.8"]
+
                  [babashka/babashka.nrepl "0.0.3"]
                  [fipp "0.6.23"]
                  [mvxcvi/puget "1.2.0"]
