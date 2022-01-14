@@ -3,8 +3,16 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.16] - 2022-01-14
+
+### Fixed
+- download progress bar is still overrunning my terminal width - #110
+- spelling and documentation fixes
+- user module sometimes reports change when no change occurs - #115
+
 ### Added
-- spire.module.user/password
+- spire.module.user/password added
+- experimental `spire.module.aws` added
 
 ## [0.1.0-alpha.15] - 2020-07-05
 
