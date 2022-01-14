@@ -14,6 +14,9 @@ All notable changes to this project will be documented in this file. This change
 - spire.module.user/password added
 - experimental `spire.module.aws` added
 
+### Changed
+- updated sci and graalvm versions to latest
+
 ## [0.1.0-alpha.15] - 2020-07-05
 
 ### Fixed
