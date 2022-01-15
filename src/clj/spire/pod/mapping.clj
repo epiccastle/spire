@@ -23,7 +23,7 @@
        (apply str prefix "-")
        (keyword namespace)))
 
-(defrecord mapping
+(defrecord weak-mapping
     [
      ;; maps full java object instances to their keys.
      ;; is a WeakHashMap so instances magically disappear when GCed
@@ -45,18 +45,18 @@
      ;; to keep it threadsafe
      lock])
 
-(defn make-mapping []
-  (->mapping
+(defn make-weak-mapping []
+  (->weak-mapping
    (Collections/synchronizedMap (WeakHashMap.))
    (HashMap.)
    (HashMap.)
    (ReferenceQueue.)
    (Object.)))
 
-#_ (def mapping (make-mapping))
+#_ (def mapping (make-weak-mapping))
 
-(defn add-instance! [mapping instance key-ns key-prefix]
-  (let [{:keys [instance->key key->instance weakref->key queue lock]} mapping]
+(defn add-instance! [weak-mapping instance key-ns key-prefix]
+  (let [{:keys [instance->key key->instance weakref->key queue lock]} weak-mapping]
     (locking lock
       (if-let [existing-key (.get instance->key instance)]
         existing-key
@@ -68,11 +68,11 @@
           new-key)))))
 
 #_ (def obj (Object.))
-#_ (def addded-key (add-instance! mapping obj "ns" "prefix"))
-#_ mapping
+#_ (def addded-key (add-instance! weak-mapping obj "ns" "prefix"))
+#_ weak-mapping
 
-(defn clear-gc-references! [mapping]
-  (let [{:keys [key->instance weakref->key queue lock]} mapping]
+(defn clear-gc-references! [weak-mapping]
+  (let [{:keys [key->instance weakref->key queue lock]} weak-mapping]
     (locking lock
       (loop [weakref (.poll queue)
              deleted []]
@@ -83,44 +83,45 @@
             (recur (.poll queue) (conj deleted deleted-key)))
           deleted)))))
 
-#_ (clear-gc-references! mapping)
-#_ mapping
+#_ (clear-gc-references! weak-mapping)
+#_ weak-mapping
 
 #_ (def obj nil)
 #_ (System/gc)
 #_ (System/runFinalization)
 
-#_ (clear-gc-references! mapping)
-#_ mapping
+#_ (clear-gc-references! weak-mapping)
+#_ weak-mapping
 
-(defn get-key-for-instance [mapping instance]
-  (clear-gc-references! mapping)
-  (let [{:keys [instance->key lock]} mapping]
+(defn get-key-for-instance [weak-mapping instance]
+  (clear-gc-references! weak-mapping)
+  (let [{:keys [instance->key lock]} weak-mapping]
     (locking lock
       (.get instance->key instance))))
 
 #_ (def obj (Object.))
-#_ (add-instance! mapping obj "ns" "obj")
-#_ (get-key-for-instance mapping obj)
+#_ (add-instance! weak-mapping obj "ns" "obj")
+#_ (get-key-for-instance weak-mapping obj)
 
-(defn get-weakref-for-key [mapping key]
-  (clear-gc-references! mapping)
-  (let [{:keys [key->instance lock]} mapping]
+(defn get-weakref-for-key [weak-mapping key]
+  (clear-gc-references! weak-mapping)
+  (let [{:keys [key->instance lock]} weak-mapping]
     (locking lock
       (.get key->instance key))))
 
-#_ (= obj (.get (get-weakref-for-key mapping (get-key-for-instance mapping obj))))
-#_ (get-weakref-for-key mapping :foo)
+#_ (= obj (.get (get-weakref-for-key weak-mapping (get-key-for-instance weak-mapping obj))))
+#_ (get-weakref-for-key weak-mapping :foo)
 
-(defn get-instance-for-key [mapping key]
-  (when-let [weakref (get-weakref-for-key mapping key)]
+(defn get-instance-for-key [weak-mapping key]
+  (when-let [weakref (get-weakref-for-key weak-mapping key)]
     (.get weakref)))
 
-#_ (= obj (get-instance-for-key mapping (get-key-for-instance mapping obj)))
-#_ (get-instance-for-key mapping :foo)
+#_ (= obj (get-instance-for-key weak-mapping (get-key-for-instance weak-mapping obj)))
+#_ (get-instance-for-key weak-mapping :foo)
 
-(defn has-key [mapping key]
-  (boolean (get-instance-for-key mapping key)))
+(defn has-key [weak-mapping key]
+  (boolean (get-instance-for-key weak-mapping key)))
 
-(defn has-instance [mapping instance]
-  (boolean (get-key-for-instance mapping instance)))
+(defn has-instance [weak-mapping instance]
+  (boolean (get-key-for-instance weak-mapping instance)))
+
