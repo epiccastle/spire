@@ -11,13 +11,18 @@
             [spire.module.sudo]
             ))
 
-(def user-info-state (mapping/make-mapping))
-(def session-state (mapping/make-mapping))
-(def agent-state (mapping/make-mapping))
-(def channel-exec-state (mapping/make-mapping))
-(def piped-input-stream-state (mapping/make-mapping))
-(def piped-output-stream-state (mapping/make-mapping))
-(def channel-state (mapping/make-mapping))
+;; weak mappings
+(def user-info-state (mapping/make-weak-mapping))
+(def session-state (mapping/make-weak-mapping))
+(def agent-state (mapping/make-weak-mapping))
+(def channel-exec-state (mapping/make-weak-mapping))
+(def piped-input-stream-state (mapping/make-weak-mapping))
+(def piped-output-stream-state (mapping/make-weak-mapping))
+(def channel-state (mapping/make-weak-mapping))
+
+;; strong mappings
+(def strong-piped-input-stream-state (atom (mapping/make-strong-mapping)))
+(def strong-piped-output-stream-state (atom (mapping/make-strong-mapping)))
 
 (defmacro make-plain-lookup [ns-to syms]
   (let [ns-from (str "pod.epiccastle." (str ns-to))]
