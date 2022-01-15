@@ -138,7 +138,7 @@ Codename:	bionic
   (is (= "\033[2Kline") (utils/append-erasure-to-line "line"))
   (is (= 1 (utils/num-terminal-lines "line"))))
 
-(deftest embed
+#_(deftest embed
   (bash "rm -f /tmp/foo.txt")
   (bash "echo -n foo > /tmp/foo.txt")
   (is (= "foo" (utils/embed "/tmp/foo.txt")))
