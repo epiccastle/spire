@@ -125,3 +125,64 @@
 (defn has-instance [weak-mapping instance]
   (boolean (get-key-for-instance weak-mapping instance)))
 
+;;
+;; a strong ref mapping system
+;;
+
+;; sometimes the reference objects on the spire side hold no references
+;; due to the lifecycle being managed on the bb side. In these instances
+;; we need strong mapping so the GC doesn't clean up the objects underneath
+;; us. These objects need deletion triggered from the babashka side
+(defn make-strong-mapping []
+  {
+   ;; map java object instances to keywords
+   :instance->key {}
+
+   ;; maps the reference key to the object
+   :key->instance {}})
+
+(defn add-strong-instance
+  "returns the new mapping insance with instance added"
+  [mapping instance key-ns key-prefix]
+  (let [{:keys [instance->key key->instance]} mapping]
+    (if-let [existing-key (get instance->key instance)]
+      mapping
+      (let [new-key (make-key key-ns key-prefix)]
+        (-> mapping
+            (assoc-in [:instance->key instance] new-key)
+            (assoc-in [:key->instance new-key] instance))))))
+
+(defn add-strong-instance!
+  [mapping-atom instance key-ns key-prefix]
+  (-> (swap! mapping-atom add-strong-instance instance key-ns key-prefix)
+      (get-in [:instance->key instance])))
+
+(defn get-strong-key-for-instance [mapping instance]
+  (get-in mapping [:instance->key instance]))
+
+(defn get-strong-key-for-instance! [mapping-atom instance]
+  (get-strong-key-for-instance @mapping-atom instance))
+
+(defn get-strong-instance-for-key [mapping key]
+  (get-in mapping [:key->instance key]))
+
+(defn get-strong-instance-for-key! [mapping-atom key]
+  (get-strong-instance-for-key @mapping-atom key))
+
+(defn delete-strong-instance [mapping instance]
+  (let [key (get-strong-key-for-instance mapping instance)]
+    (-> mapping
+        (update :instance->key dissoc instance)
+        (update :key->instance dissoc key))))
+
+(defn delete-strong-instance! [mapping-atom instance]
+  (swap! mapping-atom delete-strong-instance instance))
+
+(defn delete-strong-key [mapping key]
+  (let [instance (get-strong-instance-for-key mapping key)]
+    (-> mapping
+        (update :instance->key dissoc instance)
+        (update :key->instance dissoc key))))
+
+(defn delete-strong-key! [mapping-atom key]
+  (swap! mapping-atom delete-strong-key key))
