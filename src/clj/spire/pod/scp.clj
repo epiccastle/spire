@@ -233,10 +233,17 @@
                 file)))]
     (map f paths)))
 
+(def streams (atom []))
+
+;; this is run on the pod side to create a stream pair
 (defn pod-side-streams-for-in
-  [buffer]
-  (let [is (PipedInputStream. buffer)]
-    [is (PipedOutputStream. is)]))
+  [{:keys [buffer sudo]
+    :or {sudo {}}}]
+  (prn 'pod-side-streams-for-in 'buffer buffer 'sudo sudo)
+  (let [is (PipedInputStream. buffer)
+        pair [is (PipedOutputStream. is)]]
+    (swap! streams conj pair)
+    pair))
 
 (defn scp-to
   "Copy local path(s) to remote path via scp"
