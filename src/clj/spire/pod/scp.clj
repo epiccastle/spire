@@ -1,5 +1,6 @@
 (ns spire.pod.scp
   (:require [spire.ssh :as ssh]
+            [spire.sudo :as sudo]
             [spire.utils :as utils]
             [spire.nio :as nio]
             [clojure.java.io :as io]
@@ -22,7 +23,7 @@
 (defn- scp-send-ack
   "Send acknowledgement to the specified output stream"
   [^OutputStream out]
-  (prn 'send-ack)
+  ;;(prn 'send-ack)
   (.write out (byte-array [0]))
   (.flush out))
 
@@ -31,7 +32,7 @@
   [^InputStream in]
   (prn 'recv-ack in)
   (let [code (.read in)]
-    (prn 'read)
+    (prn 'read code)
     (when-not (zero? code)
       ;; TODO: error should be read over stderr. we have bundled
       ;; stderr on stdout. Not elegant.
@@ -133,7 +134,7 @@
       (let [input-stream (utils/content-stream data)
             chunk-size buffer-size
             chunk (byte-array chunk-size)]
-        (prn 1)
+        ;;(prn 1)
         (loop [offset 0 context nil]
           (let [bytes-read (.read input-stream chunk)
                 new-offset (+ bytes-read offset)]
@@ -183,14 +184,14 @@
              (nio/file-mode dir)
              dir-mode)
            (.getName dir)))
-  (prn "files" dir)
-  (prn (seq (.listFiles dir)))
+  ;;(prn "files" dir)
+  ;;(prn (seq (.listFiles dir)))
   (let [final-progress-context
         (loop [[file & remain] (.listFiles dir)
                progress-context progress-context]
           #_ (when file
                (println "skip?" (.getPath file) "res:" (boolean (skip-files (.getPath file)))))
-          (when file
+          #_(when file
             (prn "file:" file (.isFile file) (.getPath file) (.isDirectory file) skip-files))
           (if file
             (cond
@@ -247,40 +248,56 @@
 
 (defn scp-to
   "Copy local path(s) to remote path via scp"
-  [session local-paths remote-path & {:keys [recurse shell-fn stdin-fn exec exec-fn]
-                                      :as opts
-                                      :or {shell-fn identity
-                                           stdin-fn identity}}]
+  [session local-paths remote-path & {:keys [recurse exec exec-fn sudo shell-fn stdin-fn]
+                                      :as opts}]
   (let [local-paths? (sequential? local-paths)
         local-paths (if local-paths? local-paths [local-paths])
-        ;;files (scp-files local-paths recurse)
         ]
     (let [[^PipedInputStream in
            ^PipedOutputStream send] (if (= exec :local)
                                       (ssh/streams-for-in)
-                                      (pod-side-streams-for-in (int spire.ssh/*piped-stream-buffer-size*))
-                                      )
+
+                                      (pod-side-streams-for-in
+                                       {:buffer (int spire.ssh/*piped-stream-buffer-size*)
+                                        :sudo sudo}))
           send (if (= exec :local)
                  send
                  (spire.pod.stream/make-piped-output-stream send))
-          cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
-          _ (debugf "scp-to: %s using executor %s" cmd (str exec))
-          _ (prn exec-fn session shell-fn stdin-fn opts)
-          _ (prn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts)
-          {:keys [out-stream]}
+          cmd (format "bash -c 'umask 0000; scp %s %s -t %s'" (:remote-flags opts "") (if recurse "-r" "") remote-path)
+
+          cmd (if (:shell? sudo)
+              (spire.sudo/make-sudo-command (:opts sudo) "" cmd)
+              cmd)
+
+          {:keys [out-stream
+                  err-stream] :as exec-results}
           (if (= exec :local)
-            (exec-fn nil
-                     (shell-fn
-                      (format "bash -c 'umask 0000; %s'" cmd))
-                     (stdin-fn in) :stream opts)
             (do
-              (prn 1 exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in))
-              (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream (assoc (select-keys opts [:agent-forwarding :pty :in :out :err :sudo]) :stdin? true :shell? true))))
-          _ (prn 2)
+              (exec-fn nil
+                       cmd
+                       in :stream opts))
+            (do
+              (exec-fn session cmd #_(str "umask 0000;" cmd) in :stream (select-keys opts [:agent-forwarding :pty :in :out :err :sudo]))
+              ))
+
+
+          ;;_ (prn 2)
           recv out-stream]
-      (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)
-      (debug "Receive initial ACK")
+
+      (let [oa (.available out-stream)
+            ea (.available err-stream)]
+        (debug "..." oa ea))
+
+      (when (:stdin? sudo)
+        (let [s (str (get-in sudo [:opts :password]) "\n")
+              arr (.getBytes s)
+              c (count arr)]
+          (.write send arr 0 c)))
+
+      (debug "Receive initial ACK" recv)
       (scp-receive-ack recv)
+      (debug "Received")
+
       (doseq [file local-paths]
         (let [file (io/file file)]
           (if (string? file)
@@ -319,14 +336,14 @@
          ^PipedOutputStream send]
         (if (= exec :local)
           (ssh/streams-for-in)
-          (pod-side-streams-for-in (int spire.ssh/*piped-stream-buffer-size*))
+          (pod-side-streams-for-in {:buffer (int spire.ssh/*piped-stream-buffer-size*)})
           )
         send (if (= exec :local)
                send
                (spire.pod.stream/make-piped-output-stream send))
         cmd (format "scp %s %s -t %s" (:remote-flags opts "") (if recurse "-r" "") remote-path)
         _ (debugf "scp-to: %s using executor %s" cmd (str exec))
-        _ (prn "!" exec-fn session (shell-fn cmd) (stdin-fn in) :stream opts)
+        ;;_ (prn "!" exec-fn session (shell-fn cmd) (stdin-fn in) :stream opts)
         {:keys [out-stream]}
         (if (= exec :local)
           (exec-fn nil
@@ -451,16 +468,16 @@
       \C (do
            (debug "\\C")
            (let [[mode length ^String filename] (scp-parse-copy cmd)
-                 _ (prn mode length filename)
-                 _ (prn file)
+                 ;;_ (prn mode length filename)
+                 ;;_ (prn file)
                  nfile (if (and (.exists file) (.isDirectory file))
                          (File. file filename)
                          file)]
              (when (.exists nfile)
                (.delete nfile))
-             (prn 1 nfile mode)
+             ;;(prn 1 nfile mode)
              (nio/create-file (.getPath nfile) mode)
-             (prn 2)
+             ;;(prn 2)
              (let [new-context
                    (update (scp-sink-file send recv nfile mode length options context)
                            :fileset-file-start + length)]
@@ -515,7 +532,7 @@
                  ^PipedOutputStream send]
                 (if (= exec :local)
                   (ssh/streams-for-in)
-                  (pod-side-streams-for-in (int spire.ssh/*piped-stream-buffer-size*))
+                  (pod-side-streams-for-in {:buffer (int spire.ssh/*piped-stream-buffer-size*)})
                   )
                 send (if (= exec :local)
                        send
@@ -534,13 +551,13 @@
                      remote-path
                      #_(string/join " " remote-paths))
                 _ (debugf "scp-from: %s" cmd)
-                _ (prn exec-fn session (shell-fn cmd) (stdin-fn in) :stream (select-keys opts [:agent-forwarding :pty :in :out :err]))
+                ;;_ (prn exec-fn session (shell-fn cmd) (stdin-fn in) :stream (select-keys opts [:agent-forwarding :pty :in :out :err]))
                 {:keys [^ChannelExec channel
                         out-stream]}
                 (exec-fn session (shell-fn cmd) (stdin-fn in) :stream (select-keys opts [:agent-forwarding :pty :in :out :err]))
                 exec channel
                 recv out-stream]
-            (prn 'out-stream out-stream)
+            ;;(prn 'out-stream out-stream)
             (debugf
              "scp-from %s %s" remote-path local-path)
             (scp-send-ack send)
