@@ -43,15 +43,25 @@
   (let [{:keys [exec-fn exec]} (state/get-shell-context)
         session (state/get-connection)
         cmd (spire.sudo/make-sudo-command sudo-opts "" "id")
+
+        _ (prn 'SUDO 'sudo-id
+               {:exec exec
+                :exec-fn exec-fn
+                :session session
+                :cmd cmd})
+
         {:keys [err out exit]}
         (if (= :local exec)
-          (exec-fn nil cmd "" #_(prefix-sudo-stdin opts "") "UTF-8" {:sudo {:opts sudo-opts
-                                                                            :stdin? true
-                                                                            :shell? false}
-                                                                     })
-          (exec-fn session cmd "" #_(prefix-sudo-stdin opts "") "UTF-8" {:sudo {:opts sudo-opts
-                                                                                :stdin? true
-                                                                                :shell? false}}))]
+          (exec-fn nil cmd "" #_(prefix-sudo-stdin opts "") "UTF-8"
+                   {:sudo {:opts sudo-opts
+                           :stdin? true
+                           :shell? false}
+                    })
+          (exec-fn session cmd (spire.sudo/prefix-sudo-stdin sudo-opts "") "UTF-8"
+                   {:sudo {:opts sudo-opts
+                           :stdin? true
+                           :shell? false}}))]
+    (prn 'SUDO 'sudo-id {:exit exit :out out :err err})
     (cond
       (and (= 1 exit) (.contains err "incorrect password") (= "" out))
       (throw (ex-info "sudo: incorrect password" {:module :sudo :cause :incorrect-password}))

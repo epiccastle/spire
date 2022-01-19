@@ -279,15 +279,15 @@ keys.  All other option key pairs will be passed as SSH config options."
         [^PipedOutputStream err-stream
          ^PipedInputStream err-inputstream] (streams-for-out out)
 
-        in (if (:stdin? sudo)
-             (spire.sudo/prefix-sudo-stdin (:opts sudo) in)
-             in)
+        ;; in (if (:stdin? sudo)
+        ;;      (spire.sudo/prefix-sudo-stdin (:opts sudo) in)
+        ;;      in)
 
-        cmd (if (:shell? sudo)
-              (spire.sudo/make-sudo-command (:opts sudo) "" cmd)
-              cmd)
+        ;; cmd (if (:shell? sudo)
+        ;;       (spire.sudo/make-sudo-command (:opts sudo) "" cmd)
+        ;;       cmd)
 
-        ;;_ (prn 'in in 'cmd cmd)
+        _ (prn 'ssh-exec 'in in 'cmd cmd)
 
         proc (ssh-exec-proc
               session cmd
