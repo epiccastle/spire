@@ -312,9 +312,10 @@
            length))
 
         'pod.epiccastle.spire.pod.stream/receive
-        (fn [stream-key]
+        (fn [stream-key b]
           (spire.pod.stream/receive
-           (mapping/get-instance-for-key piped-input-stream-state stream-key)))
+           (mapping/get-instance-for-key piped-input-stream-state stream-key)
+           b))
 
         ;;
         ;; piped output stream
