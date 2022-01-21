@@ -275,8 +275,8 @@
                        cmd
                        in :stream (dissoc opts :sudo)))
             (do
-              (exec-fn session cmd #_(str "umask 0000;" cmd) in :stream (select-keys opts [:agent-forwarding :pty :in :out :err ;; :sudo
-                                                                                           ]))
+              (exec-fn session cmd #_(str "umask 0000;" cmd) in :stream
+                       (select-keys opts [:agent-forwarding :pty :in :out :err]))
               ))
 
 
