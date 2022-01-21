@@ -60,7 +60,7 @@
 (deftest sudo-to-root-ssh
        (transport/ssh "localhost"
                       (sudo/sudo-user {:password sudo-password}
-                                      (prn state/shell-context)
+                                      ;; (prn state/shell-context)
                                       ;; (prn state/connection)
 
                                       (let [result
