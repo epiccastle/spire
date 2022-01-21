@@ -12,13 +12,13 @@
 
 ;; https://web.archive.org/web/20170215184048/https://blogs.oracle.com/janp/entry/how_the_scp_protocol_works
 
-(comment)
-(def debug println)
-(def debugf (comp println format))
-
 (comment
-  (defmacro debug [& args])
-  (defmacro debugf [& args]))
+  (def debug println)
+  (def debugf (comp println format)))
+
+(comment)
+(defmacro debug [& args])
+(defmacro debugf [& args])
 
 (defn- scp-send-ack
   "Send acknowledgement to the specified output stream"
@@ -30,9 +30,9 @@
 (defn- scp-receive-ack
   "Check for an acknowledgement byte from the given input stream"
   [^InputStream in]
-  (prn 'recv-ack in)
+  ;;(prn 'recv-ack in)
   (let [code (.read in)]
-    (prn 'read code)
+    ;;(prn 'read code)
     (when-not (zero? code)
       ;; TODO: error should be read over stderr. we have bundled
       ;; stderr on stdout. Not elegant.
@@ -238,9 +238,7 @@
 
 ;; this is run on the pod side to create a stream pair
 (defn pod-side-streams-for-in
-  [{:keys [buffer sudo]
-    :or {sudo {}}}]
-  (prn 'pod-side-streams-for-in 'buffer buffer 'sudo sudo)
+  [{:keys [buffer]}]
   (let [is (PipedInputStream. buffer)
         pair [is (PipedOutputStream. is)]]
     (swap! streams conj pair)
@@ -248,25 +246,25 @@
 
 (defn scp-to
   "Copy local path(s) to remote path via scp"
-  [session local-paths remote-path & {:keys [recurse exec exec-fn sudo shell-fn stdin-fn]
+  [session local-paths remote-path & {:keys [recurse exec exec-fn sudo]
                                       :as opts}]
   (let [local-paths? (sequential? local-paths)
         local-paths (if local-paths? local-paths [local-paths])
         ]
+    ;;(prn sudo)
     (let [[^PipedInputStream in
            ^PipedOutputStream send] (if (= exec :local)
                                       (ssh/streams-for-in)
 
                                       (pod-side-streams-for-in
-                                       {:buffer (int spire.ssh/*piped-stream-buffer-size*)
-                                        :sudo sudo}))
+                                       {:buffer (int spire.ssh/*piped-stream-buffer-size*)}))
           send (if (= exec :local)
                  send
                  (spire.pod.stream/make-piped-output-stream send))
           cmd (format "bash -c 'umask 0000; scp %s %s -t %s'" (:remote-flags opts "") (if recurse "-r" "") remote-path)
 
-          cmd (if (:shell? sudo)
-              (spire.sudo/make-sudo-command (:opts sudo) "" cmd)
+          cmd (if sudo #_(:shell? sudo)
+              (spire.sudo/make-sudo-command sudo "" cmd)
               cmd)
 
           {:keys [out-stream
@@ -275,9 +273,10 @@
             (do
               (exec-fn nil
                        cmd
-                       in :stream opts))
+                       in :stream (dissoc opts :sudo)))
             (do
-              (exec-fn session cmd #_(str "umask 0000;" cmd) in :stream (select-keys opts [:agent-forwarding :pty :in :out :err :sudo]))
+              (exec-fn session cmd #_(str "umask 0000;" cmd) in :stream (select-keys opts [:agent-forwarding :pty :in :out :err ;; :sudo
+                                                                                           ]))
               ))
 
 
@@ -288,8 +287,9 @@
             ea (.available err-stream)]
         (debug "..." oa ea))
 
-      (when (:stdin? sudo)
-        (let [s (str (get-in sudo [:opts :password]) "\n")
+      (when (= exec :ssh))
+      (when (:required? sudo)
+        (let [s (str (get sudo :password) "\n")
               arr (.getBytes s)
               c (count arr)]
           (.write send arr 0 c)))

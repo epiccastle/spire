@@ -17,10 +17,12 @@
         {:keys [exec-fn exec]} (state/get-shell-context)
         session (state/get-connection)
         cmd (spire.sudo/make-sudo-command opts "password required" "id")
+        ;;_ (prn 'requires? cmd)
         {:keys [out err exit]}
         (if (= :local exec)
           (exec-fn nil cmd "" "UTF-8" {})
           (exec-fn session cmd "" "UTF-8" {}))]
+    ;;(prn 'exit exit 'out out 'err err)
     (cond
       (and (= 1 exit) (string/starts-with? err "password required") (= "" out))
       true
@@ -39,29 +41,42 @@
   command `id`. This both tests if the password (if needed) is correct,
   and gathers user/group data for the escallated session that is then
   used to update system facts while in the body of the sudo macro."
-  [sudo-opts]
+  [sudo]
   (let [{:keys [exec-fn exec]} (state/get-shell-context)
         session (state/get-connection)
-        cmd (spire.sudo/make-sudo-command sudo-opts "" "id")
+        cmd (spire.sudo/make-sudo-command sudo "" "id")
 
-        _ (prn 'SUDO 'sudo-id
-               {:exec exec
-                :exec-fn exec-fn
-                :session session
-                :cmd cmd})
+        #_ (prn 'SUDO 'sudo-id
+                {:exec exec
+                 :exec-fn exec-fn
+                 :session session
+                 :cmd cmd})
+
+        in (if (:required? sudo)
+             (spire.sudo/prefix-sudo-stdin sudo "")
+             "")
+
+        ;; cmd (if sudo
+        ;;       (spire.sudo/make-sudo-command sudo "" cmd)
+        ;;       cmd)
+
+        ;;_ (prn 'sudo-id cmd)
 
         {:keys [err out exit]}
         (if (= :local exec)
-          (exec-fn nil cmd "" #_(prefix-sudo-stdin opts "") "UTF-8"
-                   {:sudo {:opts sudo-opts
+          (exec-fn nil cmd in #_(prefix-sudo-stdin opts "") "UTF-8"
+                   {} #_ {:sudo {:opts sudo-opts
                            :stdin? true
                            :shell? false}
                     })
-          (exec-fn session cmd (spire.sudo/prefix-sudo-stdin sudo-opts "") "UTF-8"
-                   {:sudo {:opts sudo-opts
+          (exec-fn session cmd in "UTF-8"
+                   {} #_ {:sudo {:opts sudo-opts
                            :stdin? true
                            :shell? false}}))]
-    (prn 'SUDO 'sudo-id {:exit exit :out out :err err})
+    ;;(prn 'SUDO 'sudo-id {:exit exit :out out :err err})
+
+    ;;(prn 'exit exit 'out out 'err err)
+
     (cond
       (and (= 1 exit) (.contains err "incorrect password") (= "" out))
       (throw (ex-info "sudo: incorrect password" {:module :sudo :cause :incorrect-password}))
@@ -83,6 +98,8 @@
          stored-password# (get @passwords store-key#)
          password# (get conf# :password stored-password#)
          full-conf# (assoc conf# :password password# :required? required?#)]
+
+     ;;(prn 'sudo-user 'requires-password? required?#)
 
      ;; TODO: if password is required and not specified, prompt for it at the
      ;; terminal, and block thread here until its available.
