@@ -69,12 +69,13 @@
 (defn local-exec [_ cmd in out {:keys [sudo] :as opts}]
   ;;(prn 'local-exec cmd in out opts)
   (let [
-        in (if (:stdin? sudo)
-             (spire.sudo/prefix-sudo-stdin (:opts sudo) in)
+        in (if (:required? sudo)
+             (spire.sudo/prefix-sudo-stdin sudo in)
              in)
 
-        cmd (if (:shell? sudo)
-              (spire.sudo/make-sudo-command (:opts sudo) "" cmd)
+        cmd (if sudo
+              (spire.sudo/make-sudo-command sudo "" cmd)
               cmd)
         ]
+    ;;(prn 'local/local-exec 'cmd cmd 'in in 'out out 'opts opts)
     (sh/exec cmd in out opts)))
