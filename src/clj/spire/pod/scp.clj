@@ -287,7 +287,6 @@
             ea (.available err-stream)]
         (debug "..." oa ea))
 
-      (when (= exec :ssh))
       (when (:required? sudo)
         (let [s (str (get sudo :password) "\n")
               arr (.getBytes s)
