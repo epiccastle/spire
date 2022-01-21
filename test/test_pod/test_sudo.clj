@@ -47,9 +47,6 @@
 (deftest sudo-to-root-local
        (transport/local
                       (sudo/sudo-user {:password sudo-password}
-                                      ;;(prn state/shell-context)
-                                      ;; (prn state/connection)
-
                                       (let [result
                                             (local/local-exec
                                              nil "whoami" "" "UTF-8"
@@ -60,9 +57,6 @@
 (deftest sudo-to-root-ssh
        (transport/ssh "localhost"
                       (sudo/sudo-user {:password sudo-password}
-                                      ;; (prn state/shell-context)
-                                      ;; (prn state/connection)
-
                                       (let [result
                                             (ssh/ssh-exec
                                              state/connection "whoami" "" "UTF-8"
@@ -70,7 +64,6 @@
                                         (is (= 0 (:exit result)))
                                         (is (= "root\n" (:out result)))
                                         (is (clojure.string/starts-with? (:err result) "[sudo] password for"))))))
-
 
 (defn preflight []
   (bash "sudo rm /tmp/test.txt /tmp/scp-dest/")
@@ -87,12 +80,9 @@
                                  (preflight)
                                  (scp/scp-to
                                   state/connection ["/tmp/test.txt"] "/tmp/scp-dest"
-
                                   :exec :ssh
                                   :exec-fn ssh/ssh-exec
-
                                   :sudo (:sudo state/shell-context))
-
                                  (is (= "root\n" (bash "stat -c %U /tmp/scp-dest/test.txt")))
                                  (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt")))
                                  )
@@ -105,72 +95,58 @@
                    (preflight)
                    (scp/scp-to
                     state/connection ["/tmp/test.txt"] "/tmp/scp-dest"
-
                     :exec :local
                     :exec-fn local/local-exec
-
                     :sudo (:sudo state/shell-context))
-
                    (is (= "root\n" (bash "stat -c %U /tmp/scp-dest/test.txt")))
-                   (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt")))
-                   )
-
-   ))
+                   (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt"))))))
 
 
 
-#_(deftest no-sudo-to-root-scp-ssh
-  (transport/ssh "crispin@localhost"
-                 (prn state/shell-context)
-                                 ;; (prn state/
-
-
-                 (bash "sudo rm /tmp/test.txt /tmp/scp-dest/")
-                 (bash "echo foo > /tmp/test.txt")
-                 (bash "sudo chown root:root /tmp/test.txt")
-                 (bash "rm -rf /tmp/scp-dest")
-                 (bash "mkdir /tmp/scp-dest ")
+(deftest no-sudo-to-root-scp-transport-ssh
+  (transport/ssh "localhost"
+                 (preflight)
                  (scp/scp-to
                   state/connection ["/tmp/test.txt"] "/tmp/scp-dest"
-
                   :exec :ssh
                   :exec-fn ssh/ssh-exec
-                  ;; :exec :local
-                  ;; :exec-fn local/local-exec
-
                   :sudo (:sudo state/shell-context))
+                 (is (= (str username "\n") (bash "stat -c %U /tmp/scp-dest/test.txt")))
+                 (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt")))))
 
-                 (is (= "crispin\n" (bash "stat -c %U /tmp/scp-dest/test.txt")))
-                 (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt")))
+(deftest no-sudo-to-root-scp-transport-local
+  (transport/local
+   (preflight)
+   (scp/scp-to
+    state/connection ["/tmp/test.txt"] "/tmp/scp-dest"
+    :exec :local
+    :exec-fn local/local-exec
+    :sudo (:sudo state/shell-context))
+   (is (= (str username "\n") (bash "stat -c %U /tmp/scp-dest/test.txt")))
+   (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt")))))
 
-
-                 ))
-
-#_
-(deftest sudo-to-root-scp-ssh-user-level
-  (transport/ssh "crispin@localhost"
+(deftest sudo-to-root-scp-user-level-transport-ssh
+  (transport/ssh "localhost"
                  (sudo/sudo-user {:password sudo-password
-                                  :username "crispin"}
-                                 (prn state/shell-context)
-                                 ;; (prn state/
-
-                                 (bash "sudo rm /tmp/test.txt /tmp/scp-dest/")
-                                 (bash "echo foo > /tmp/test.txt")
-                                 (bash "sudo chown root:root /tmp/test.txt")
-                                 (bash "rm -rf /tmp/scp-dest")
-                                 (bash "mkdir /tmp/scp-dest ")
+                                  :username username}
+                                 (preflight)
                                  (scp/scp-to
                                   state/connection ["/tmp/test.txt"] "/tmp/scp-dest"
-
                                   :exec :ssh
                                   :exec-fn ssh/ssh-exec
-                                  ;; :exec :local
-                                  ;; :exec-fn local/local-exec
-
                                   :sudo (:sudo state/shell-context))
+                                 (is (= (str username "\n") (bash "stat -c %U /tmp/scp-dest/test.txt")))
+                                 (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt"))))))
 
-                                 (is (= "crispin\n" (bash "stat -c %U /tmp/scp-dest/test.txt")))
-                                 (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt")))
-                                 )
-
-                 ))
+(deftest sudo-to-root-scp-user-level-transport-local
+  (transport/local
+   (sudo/sudo-user {:password sudo-password
+                    :username username}
+                   (preflight)
+                   (scp/scp-to
+                    state/connection ["/tmp/test.txt"] "/tmp/scp-dest"
+                    :exec :local
+                    :exec-fn local/local-exec
+                    :sudo (:sudo state/shell-context))
+                   (is (= (str username "\n") (bash "stat -c %U /tmp/scp-dest/test.txt")))
+                   (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt"))))))
