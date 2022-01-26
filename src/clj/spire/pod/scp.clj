@@ -517,7 +517,8 @@
 (defn scp-from
   "Copy remote path(s) to local path via scp."
   [session remote-paths ^String local-path
-   & {:keys [username password port mode dir-mode recurse preserve shell-fn stdin-fn exec exec-fn]
+   & {:keys [username password port mode dir-mode recurse preserve
+             shell-fn stdin-fn exec exec-fn sudo]
       :as opts
       :or {shell-fn identity
            stdin-fn identity}}]
@@ -549,14 +550,36 @@
                         (map (comp flags key)))))
                      remote-path
                      #_(string/join " " remote-paths))
+                cmd (if sudo #_(:shell? sudo)
+                        (spire.sudo/make-sudo-command sudo "" cmd)
+                        cmd)
                 _ (debugf "scp-from: %s" cmd)
                 ;;_ (prn exec-fn session (shell-fn cmd) (stdin-fn in) :stream (select-keys opts [:agent-forwarding :pty :in :out :err]))
                 {:keys [^ChannelExec channel
-                        out-stream]}
-                (exec-fn session (shell-fn cmd) (stdin-fn in) :stream (select-keys opts [:agent-forwarding :pty :in :out :err]))
+                        out-stream
+                        err-stream]}
+                (if (= exec :local)
+                  ;; local exec
+                  (exec-fn nil cmd in :stream (select-keys opts [:agent-forwarding :pty :in :out :err :sudo]))
+
+                  ;; ssh exec
+                  (exec-fn session cmd in :stream (select-keys opts [:agent-forwarding :pty :in :out :err]))
+
+                  )
                 exec channel
                 recv out-stream]
             ;;(prn 'out-stream out-stream)
+
+            (let [oa (.available out-stream)
+                  ea (.available err-stream)]
+              (debug "..." oa ea))
+
+            (when (:required? sudo)
+              (let [s (str (get sudo :password) "\n")
+                    arr (.getBytes s)
+                    c (count arr)]
+                (.write send arr 0 c)))
+
             (debugf
              "scp-from %s %s" remote-path local-path)
             (scp-send-ack send)

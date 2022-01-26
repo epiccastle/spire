@@ -44,6 +44,9 @@
 (defn bash [command]
   (run ["bash" "-c" command]))
 
+;;
+;; sudo execute
+;;
 (deftest sudo-to-root-local
        (transport/local
                       (sudo/sudo-user {:password sudo-password}
@@ -65,8 +68,11 @@
                                         (is (= "root\n" (:out result)))
                                         (is (clojure.string/starts-with? (:err result) "[sudo] password for"))))))
 
+;;
+;; sudo scp-to
+;;
 (defn preflight []
-  (bash "sudo rm /tmp/test.txt /tmp/scp-dest/")
+  (bash "sudo rm -rf /tmp/test.txt /tmp/scp-dest/")
   (bash "echo foo > /tmp/test.txt")
   (bash "sudo chown root:root /tmp/test.txt")
   (bash "rm -rf /tmp/scp-dest")
@@ -150,3 +156,64 @@
                     :sudo (:sudo state/shell-context))
                    (is (= (str username "\n") (bash "stat -c %U /tmp/scp-dest/test.txt")))
                    (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt"))))))
+
+;;
+;; sudo scp-from
+;;
+(defn preflight2 []
+  (preflight)
+  (bash "sudo chmod 0700 /tmp/test.txt")
+  )
+
+(deftest sudo-to-root-scp-from-transport-ssh
+  (transport/ssh {:username username
+                  :hostname "localhost"}
+                 (sudo/sudo-user {:password sudo-password}
+                                 (preflight2)
+                                 (scp/scp-from
+                                  state/connection ["/tmp/test.txt"] "/tmp/scp-dest"
+                                  :exec :ssh
+                                  :exec-fn ssh/ssh-exec
+                                  :sudo (:sudo state/shell-context))
+                                 (is (= (str username "\n") (bash "stat -c %U /tmp/scp-dest/test.txt")))
+                                 (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt")))
+                                 )
+
+                 ))
+
+(deftest sudo-to-root-scp-from-transport-ssh-restricted
+  (transport/ssh {:username username
+                  :hostname "localhost"}
+                 (preflight2)
+                 (is
+                  (thrown? clojure.lang.ExceptionInfo
+                           (scp/scp-from
+                            state/connection ["/tmp/test.txt"] "/tmp/scp-dest"
+                            :exec :ssh
+                            :exec-fn ssh/ssh-exec
+                            :sudo (:sudo state/shell-context))))))
+
+
+(deftest sudo-to-root-scp-transport-local
+  (transport/local
+   (sudo/sudo-user {:password sudo-password}
+                   (preflight2)
+                   (scp/scp-from
+                    state/connection ["/tmp/test.txt"] "/tmp/scp-dest"
+                    :exec :local
+                    :exec-fn local/local-exec
+                    :sudo (:sudo state/shell-context))
+                   (is (= "crispin\n" (bash "stat -c %U /tmp/scp-dest/test.txt")))
+                   (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt"))))))
+
+
+(deftest sudo-to-root-scp-transport-local-restricted
+  (transport/local
+   (sudo/sudo-user {:password sudo-password}
+                   (preflight2)
+                   (is (thrown? java.io.FileNotFoundException
+                                (scp/scp-to
+                                 state/connection ["/tmp/test.txt"] "/tmp/scp-dest"
+                                 :exec :local
+                                 :exec-fn local/local-exec
+                                 :sudo (:sudo state/shell-context)))))))
