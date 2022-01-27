@@ -267,6 +267,15 @@
               os
               "pod.epiccastle.spire.scp" "piped-output-stream")]
 
+            #_[(mapping/add-strong-instance!
+              strong-piped-input-stream-state
+              is
+              "pod.epiccastle.spire.scp" "piped-input-stream")
+             (mapping/add-strong-instance!
+              strong-piped-output-stream-state
+              os
+              "pod.epiccastle.spire.scp" "piped-output-stream")]
+
             ))
         })
 
@@ -422,6 +431,17 @@
          set-attrs
          set-attrs-preserve
          ]))
+
+      (into
+       (make-plain-lookup
+        "spire.compare"
+        [same-files
+         gather-file-sizes
+         same-file-content
+         add-transfer-set
+         local-to-remote
+         remote-to-local
+         remote-to-local-dirs]))
       )
 
 
