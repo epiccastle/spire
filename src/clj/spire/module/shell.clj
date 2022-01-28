@@ -1,5 +1,6 @@
 (ns spire.module.shell
   (:require [spire.state :as state]
+            [spire.ssh :as ssh]
             [spire.facts :as facts]
             [spire.remote :as remote]
             [spire.utils :as utils]
@@ -72,14 +73,14 @@
                      (context/deref* spire.state/output-module)
                      file form meta host-config out nil)))]
     {:result :ok
-     :exit (if (= java.lang.ProcessImpl (class channel))
+     :exit (if (= "java.lang.ProcessImpl" (.getName (class channel)))
              (.waitFor ^java.lang.Process channel)
-             (.getExitStatus ^com.jcraft.jsch.ChannelExec channel))
+             (ssh/wait-for-channel-exit channel))
      :out out-data
      :out-lines (string/split-lines out-data)
      :err @err-streamer}))
 
-(utils/defmodule shell* [{:keys [env dir shell out opts cmd creates stdin print stream-key ok-exit changed-exit]
+(utils/defmodule shell* [{:keys [env dir shell out cmd creates stdin print stream-key ok-exit changed-exit]
                           :or {env {}
                                dir "."
                                shell "bash"
@@ -89,7 +90,7 @@
                                }
 
                           :as opts}]
-  [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-string session {:keys [exec-fn sudo] :as shell-context}]
   (or (preflight opts)
       (let [{:keys [agent-forwarding]} (state/get-host-config)
             shell-path (facts/get-fact [:paths (keyword shell)])
@@ -123,16 +124,14 @@
                         channel out-stream err-stream] :as result}
                 (exec-fn session
                          ;; command
-                         (shell-fn
-                          (if stdin
-                            (format "%s %s" shell remote-script-file)
-                            shell))
+                         (if stdin
+                           (format "%s %s" shell remote-script-file)
+                           shell)
 
                          ;; stdin
-                         (stdin-fn
-                          (if stdin
-                            stdin
-                            script))
+                         (if stdin
+                           stdin
+                           script)
 
                          ;; output format
                          (if print
@@ -140,7 +139,8 @@
                            (or out-arg "UTF-8"))
 
                          ;; options
-                         (into {:agent-forwarding agent-forwarding}
+                         (into {:agent-forwarding agent-forwarding
+                                :sudo sudo}
                                (or opts {})))]
             (if print
               (process-streams {:file (:file stream-key)
