@@ -107,6 +107,10 @@
                :err err}
               )
             ))
+
+        'pod.epiccastle.spire.ssh/wait-for-channel-exit
+        (fn [channel]
+          (spire.ssh/wait-for-channel-exit (mapping/get-instance-for-key channel-state channel)))
         })
 
       (into
@@ -231,12 +235,7 @@
         "spire.module.shell"
         [
          preflight process-result make-env-string
-         make-exists-string
-         read-avail-string-from-input-stream
-         read-stream-until-eof
-         process-streams
-         #_ shell*
-         ]))
+         make-exists-string]))
 
       (into
        (make-plain-lookup
@@ -395,6 +394,7 @@
          string-escape
          string-quote
          changed?
+         md5
          ]))
 
       (into
