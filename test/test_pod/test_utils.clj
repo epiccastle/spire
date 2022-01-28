@@ -204,3 +204,6 @@ Codename:	bionic
 
 (deftest debug
   (is (macroexpand-1 '(utils/debug true))))
+
+(deftest md5
+  (is (= "90c55a38064627dca337dfa5fc5be120" (utils/md5 "dummy content"))))
