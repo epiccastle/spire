@@ -372,3 +372,6 @@ keys.  All other option key pairs will be passed as SSH config options."
   (if-not (string? host-description)
     (fill-in-host-description-defaults host-description)
     (fill-in-host-description-defaults (parse-host-string host-description))))
+
+(defn wait-for-channel-exit [channel]
+  (.getExitStatus ^com.jcraft.jsch.ChannelExec channel))
