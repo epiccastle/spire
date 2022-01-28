@@ -9,7 +9,6 @@
             [spire.remote :as remote]
             [spire.compare :as compare]
             [spire.module.attrs :as attrs]
-            [digest :as digest]
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
@@ -253,7 +252,7 @@
                ;; straight single copy
                (if content?
                  ;; content upload
-                 (let [local-md5 (digest/md5 content)
+                 (let [local-md5 (utils/md5 content)
                        remote-md5 (some-> (facts/on-shell
                                            :csh (run (format "%s \"%s\"" (facts/md5) dest))
                                            :else (run (format "%s \"%s\"" (facts/md5) dest)))
@@ -274,7 +273,7 @@
                                           ))))
 
                  ;; file upload
-                 (let [local-md5 (digest/md5 content)
+                 (let [local-md5 (utils/md5 content)
                        remote-md5 (some-> (facts/on-shell
                                            :csh (run (format "%s \"%s\"" (facts/md5) dest))
                                            :else (run (format "%s \"%s\"" (facts/md5) dest)))

@@ -1,6 +1,7 @@
 (ns spire.utils
   (:require [spire.state :as state]
             [spire.context :as context]
+            [digest :as digest]
             [clj-time.core :as time]
             [clojure.string :as string]
             [clojure.java.io :as io]
@@ -543,3 +544,6 @@
     `(let [result# (do ~@body)]
        (spire.output.core/debug-result (context/deref* spire.state/output-module) ~file (quote ~&form) ~(meta &form) (spire.state/get-host-config) result#)
        result#)))
+
+(defn md5 [content]
+  (digest/md5 content))
