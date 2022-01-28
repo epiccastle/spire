@@ -125,4 +125,4 @@
                            result#)))))
 
 (defmacro sudo [& body]
-  `(spire.module.spire.sudo/sudo-user {} ~@body))
+  `(spire.module.sudo/sudo-user {} ~@body))
