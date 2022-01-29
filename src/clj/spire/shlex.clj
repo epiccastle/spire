@@ -18,7 +18,7 @@
       remain
       (recur (read-char remain)))))
 
-#_ (skip-until "this is a test foo bar" newline-chars)
+#_ (skip-until "this is a test\n foo bar" newline-chars)
 
 (defn read-double-quotes
   "given the input starting just after an opening double-quote, read and
