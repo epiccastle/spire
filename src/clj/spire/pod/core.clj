@@ -801,10 +801,13 @@
                            ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.module.upload
-                            (utils/make-inlined-public-fns spire.module.upload)
+                            (utils/make-inlined-public-fns
+                             spire.module.upload)
                             (utils/make-inlined-code-set-macros
                              spire.module.upload
-                             {:rename-ns ns-renames})
+                             {:rename-ns ns-renames
+                              :rename-symbol {upload* pod.epiccastle.spire.module.upload/upload*}
+                              })
                             ;; depends on spire.compare
                             (utils/make-inlined-code-set
                              spire.module.upload
