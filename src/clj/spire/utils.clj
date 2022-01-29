@@ -547,3 +547,7 @@
 
 (defn md5 [content]
   (digest/md5 content))
+
+(defn md5-file [filename]
+  (let [f (io/file filename)]
+    (digest/md5 ^java.io.File f)))

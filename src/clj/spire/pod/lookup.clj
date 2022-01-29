@@ -407,6 +407,7 @@
          string-quote
          changed?
          md5
+         md5-file
          ]))
 
       (into
