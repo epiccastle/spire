@@ -510,7 +510,8 @@
         (when (= 1 (int (first cmd)))
           ;; TODO: what to do with the error message?
           (let [[error next-cmd] (string/split (subs cmd 1) #"\n")]
-            (println "WARNING:" error)
+            (binding [*out* *err*]
+              (println "WARNING:" error))
             (recur next-cmd file nil depth context)))))))
 
 
