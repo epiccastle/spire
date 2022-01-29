@@ -207,3 +207,7 @@ Codename:	bionic
 
 (deftest md5
   (is (= "90c55a38064627dca337dfa5fc5be120" (utils/md5 "dummy content"))))
+
+(deftest md5-file
+  (spit "/tmp/test.txt" "dummy content")
+  (is (= "90c55a38064627dca337dfa5fc5be120" (utils/md5-file "/tmp/test.txt"))))

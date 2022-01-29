@@ -23,9 +23,30 @@
 
 (deftest scp-to-ssh
   (transport/ssh "localhost"
-                 (bash "rm /tmp/scp-dest/test.txt")
+                 (bash "rm -rf /tmp/scp-dest")
+                 (bash "mkdir /tmp/scp-dest")
                  (scp/scp-to
                   state/connection ["/tmp/test.txt"] "/tmp/scp-dest"
+                  :exec :ssh
+                  :exec-fn ssh/ssh-exec)
+                 (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt")))))
+
+(deftest scp-content-to-local
+  (transport/ssh "localhost"
+                 (bash "rm -rf /tmp/scp-dest")
+                 (bash "mkdir /tmp/scp-dest")
+                 (scp/scp-content-to
+                  state/connection "foo\n" "/tmp/scp-dest/test.txt"
+                  :exec :local
+                  :exec-fn local/local-exec)
+                 (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt")))))
+
+(deftest scp-content-to-ssh
+  (transport/ssh "localhost"
+                 (bash "rm -rf /tmp/scp-dest")
+                 (bash "mkdir /tmp/scp-dest")
+                 (scp/scp-content-to
+                  state/connection "foo\n" "/tmp/scp-dest/test.txt"
                   :exec :ssh
                   :exec-fn ssh/ssh-exec)
                  (is (= "foo\n" (slurp "/tmp/scp-dest/test.txt")))))
@@ -33,8 +54,8 @@
 (deftest scp-to-ssh-recurse
   (transport/ssh "localhost"
                  (bash "rm /tmp/scp-dest/test.txt")
-                 (bash "rm -rf /tmp/scp-src")
-                 (bash "mkdir -p /tmp/scp-src/test1/empty")
+                 (bash "rm -rf /tmp/scp-src /tmp/scp-dest")
+                 (bash "mkdir -p /tmp/scp-src/test1/empty /tmp/scp-dest")
                  (bash "echo foo > /tmp/scp-src/foo")
                  (bash "echo foo > /tmp/scp-src/test1/foo")
                  (scp/scp-to
@@ -42,6 +63,7 @@
                   :recurse true
                   :exec :ssh
                   :exec-fn ssh/ssh-exec)
+
                  (is (= "foo\n" (slurp "/tmp/scp-dest/scp-src/foo")))
                  (is (= "foo\n" (slurp "/tmp/scp-dest/scp-src/test1/foo")))
                  (is (.isDirectory (io/file "/tmp/scp-dest/scp-src/test1/empty")))))
