@@ -8,6 +8,7 @@
             [spire.state :as state]
             [spire.remote :as remote]
             [spire.compare :as compare]
+            [spire.context :as context]
             [spire.module.attrs :as attrs]
             [clojure.java.io :as io]
             [clojure.string :as string]))
@@ -101,19 +102,19 @@
                                   owner group mode attrs
                                   dir-mode preserve recurse force]
                            :as opts}]
-  [host-config session {:keys [exec exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-config session {:keys [exec exec-fn sudo] :as shell-context}]
   (or
    (preflight opts)
    (let [run (fn [command]
                (let [{:keys [out exit err]}
-                     (exec-fn session (shell-fn "bash") (stdin-fn command) "UTF-8" {})]
+                     (exec-fn session "bash" command "UTF-8" {:sudo sudo})]
                  (when debug
-                   (println "-------")
-                   (prn 'shell (shell-fn "bash"))
-                   (prn 'stdin (stdin-fn command))
-                   (prn 'exit exit)
-                   (prn 'out out)
-                   (prn 'err err))
+                     (println "-------")
+                     (prn 'sudo sudo)
+                     (prn 'command command)
+                     (prn 'exit exit)
+                     (prn 'out out)
+                     (prn 'err err))
                  (if (zero? exit)
                    (string/trim out)
                    "")))
@@ -219,8 +220,7 @@
                                   :skip-files #{}
                                   :exec exec
                                   :exec-fn exec-fn
-                                  :shell-fn shell-fn
-                                  :stdin-fn stdin-fn
+                                  :sudo sudo
                                   )))
 
                    (not remote-file?)
@@ -244,8 +244,7 @@
                                   :skip-files identical-content
                                   :exec exec
                                   :exec-fn exec-fn
-                                  :shell-fn shell-fn
-                                  :stdin-fn stdin-fn
+                                  :sudo sudo
                                   )))))
 
                ;; straight single copy
@@ -267,12 +266,11 @@
                                           :mode (or mode 0644)
                                           :exec exec
                                           :exec-fn exec-fn
-                                          :shell-fn shell-fn
-                                          :stdin-fn stdin-fn
+                                          :sudo sudo
                                           ))))
 
                  ;; file upload
-                 (let [local-md5 (utils/md5 content)
+                 (let [local-md5 (utils/md5-file (.getPath content))
                        remote-md5 (some-> (facts/on-shell
                                            :csh (run (format "%s \"%s\"" (facts/md5) dest))
                                            :else (run (format "%s \"%s\"" (facts/md5) dest)))
@@ -281,19 +279,19 @@
                        ;; _ (println "l:" local-md5 "r:" remote-md5)
                        ;; _ (do (println "\n\n\n"))
                        ]
-                   (comment (prn "local-md5:" local-md5)
-                            (prn "remote-md5:" remote-md5))
+                   (comment
+                     (prn "local-md5:" local-md5)
+                     (prn "remote-md5:" remote-md5))
                    (scp-result
                     (when (not= local-md5 remote-md5)
-                      (scp/scp-to session content dest
+                      (scp/scp-to session [(.getPath content)] dest
                                   :progress-fn progress-fn
                                   :preserve preserve
                                   :dir-mode (or dir-mode 0755)
                                   :mode (or mode 0644)
                                   :exec exec
                                   :exec-fn exec-fn
-                                  :shell-fn shell-fn
-                                  :stdin-fn stdin-fn
+                                  :sudo sudo
                                   ))))))
 
              passed-attrs? (or owner group dir-mode mode attrs)
