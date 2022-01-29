@@ -179,10 +179,9 @@
                                    (->> local-to-remote
                                         (map (comp count #(.getName %) io/file :filename local))
                                         (apply max 0)))
-
              progress-fn (fn [file bytes total frac context]
                            (output/print-progress
-                            @state/output-module
+                            (context/deref* state/output-module)
                             source-code-file form form-meta
                             host-config
                             (utils/progress-stats
