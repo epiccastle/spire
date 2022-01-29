@@ -108,7 +108,7 @@
    (let [run (fn [command]
                (let [{:keys [out exit err]}
                      (exec-fn session "bash" command "UTF-8" {:sudo sudo})]
-                 (when debug
+                 #_(when debug
                      (println "-------")
                      (prn 'sudo sudo)
                      (prn 'command command)

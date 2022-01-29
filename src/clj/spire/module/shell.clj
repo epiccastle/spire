@@ -72,8 +72,7 @@
                     (spire.output.core/print-streams
                      (context/deref* spire.state/output-module)
                      file form meta host-config out nil)))]
-    {:result :ok
-     :exit (if (= "java.lang.ProcessImpl" (.getName (class channel)))
+    {:exit (if (= "java.lang.ProcessImpl" (.getName (class channel)))
              (.waitFor ^java.lang.Process channel)
              (ssh/wait-for-channel-exit channel))
      :out out-data
@@ -91,9 +90,10 @@
 
                           :as opts}]
   [host-string session {:keys [exec-fn sudo] :as shell-context}]
-  (or (preflight opts)
+  (or (preflight (dissoc opts :ok-exit :changed-exit))
       (let [{:keys [agent-forwarding]} (state/get-host-config)
             shell-path (facts/get-fact [:paths (keyword shell)])
+
             remote-script-file (remote/make-temp-filename {:prefix "spire-shell-"
                                                            :extension "sh"})
             default-env (if shell-path
@@ -110,7 +110,8 @@
 
         ;; if stdin is specified we create a remote script to execute
         ;; and pass in out stdin to it. We delete this file after execution
-        (when stdin (upload/upload* nil nil nil {:content script :dest remote-script-file}))
+        (when stdin
+          (upload/upload* nil nil nil {:content script :dest remote-script-file}))
 
         ;; if stdin is not specified, we feed the script directly to the
         ;; process as stdin
@@ -141,26 +142,29 @@
                          ;; options
                          (into {:agent-forwarding agent-forwarding
                                 :sudo sudo}
-                               (or opts {})))]
-            (if print
-              (process-streams {:file (:file stream-key)
-                                :form (:form stream-key)
-                                :meta (:meta stream-key)
-                                :host-config (:host-config stream-key)
-                                :channel channel
-                                :out-stream out-stream
-                                :err-stream err-stream})
-              (if (= :stream out-arg)
-                (assoc result :result :pending)
-                (assoc result
-                       :out-lines (string/split-lines out)
-                       :result (cond
-                                 (ok-exit exit) :ok
-                                 (changed-exit exit) :changed
-                                 :else :failed)))))
+                               (or (dissoc opts :ok-exit :changed-exit) {})))
+                result (if print
+                         (process-streams {:file (:file stream-key)
+                                           :form (:form stream-key)
+                                           :meta (:meta stream-key)
+                                           :host-config (:host-config stream-key)
+                                           :channel channel
+                                           :out-stream out-stream
+                                           :err-stream err-stream})
+                         result)]
+            (if (= :stream out-arg)
+              (assoc result :result :pending)
+              (assoc result
+                     :out-lines (string/split-lines (:out result))
+                     :result (cond
+                               (ok-exit (:exit result)) :ok
+                               (changed-exit (:exit result)) :changed
+                               :else :failed))))
           (finally
-            (when stdin (rm/rm* remote-script-file)))
-          ))))
+            (when stdin
+              (rm/rm* remote-script-file)))
+          )
+        )))
 
 (defmacro shell
   "run commands and shell snippets on the remote hosts.
