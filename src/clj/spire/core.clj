@@ -9,6 +9,7 @@
             [spire.output.default]
             [spire.output.events]
             [spire.output.quiet]
+            [spire.output.silent]
             [puget.printer :as puget]
             [sci.core :as sci]
             [clojure.string :as string]
