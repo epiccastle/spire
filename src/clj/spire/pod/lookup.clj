@@ -239,6 +239,18 @@
 
       (into
        (make-plain-lookup
+        "spire.module.upload"
+        [
+         preflight process-result process-md5-out]))
+
+      (into
+       (make-plain-lookup
+        "spire.module.download"
+        [
+         preflight process-result]))
+
+      (into
+       (make-plain-lookup
         "spire.sh"
         [proc feed-from feed-from-string]))
 
