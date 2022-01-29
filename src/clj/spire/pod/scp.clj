@@ -107,7 +107,10 @@
                         (debug "partial")
                         (io/copy (byte-array (take bytes-read chunk)) send)
                         (.flush send)
-                        (progress-fn file new-offset size (float (/ new-offset size)) context))))))))
+                        (debug "progress..." progress-fn file new-offset size (float (/ new-offset size)) context)
+                        (let [p (progress-fn file new-offset size (float (/ new-offset size)) context)]
+                          (debug p)
+                          p))))))))
           ;; no progress callback
           (do
             (io/copy file send :buffer-size buffer-size)
@@ -130,39 +133,42 @@
      send recv
      (format "C%04o %d %s" mode size dest-name))
     (debugf "Sending %d bytes. data: %s" size data)
-    (if progress-fn
-      (let [input-stream (utils/content-stream data)
-            chunk-size buffer-size
-            chunk (byte-array chunk-size)]
-        ;;(prn 1)
-        (loop [offset 0 context nil]
-          (let [bytes-read (.read input-stream chunk)
-                new-offset (+ bytes-read offset)]
-            (debugf "bytes read: %d" bytes-read)
-            (if (= bytes-read chunk-size)
-              ;; full chunk
-              (do
-                (debug "full")
-                (io/copy chunk send)
-                (.flush send)
-                (recur new-offset (progress-fn data new-offset size (float (/ new-offset size)) context)))
+    (let [final-progress-context
+          (if progress-fn
+            (let [input-stream (utils/content-stream data)
+                  chunk-size buffer-size
+                  chunk (byte-array chunk-size)]
+              ;;(prn 1)
+              (loop [offset 0 context nil]
+                (let [bytes-read (.read input-stream chunk)
+                      new-offset (+ bytes-read offset)]
+                  (debugf "bytes read: %d" bytes-read)
+                  (if (= bytes-read chunk-size)
+                    ;; full chunk
+                    (do
+                      (debug "full")
+                      (io/copy chunk send)
+                      (.flush send)
+                      (recur new-offset (progress-fn data new-offset size (float (/ new-offset size)) context)))
 
-              ;; last partial chunk
-              (do
-                (debug "partial")
-                (io/copy (byte-array (take bytes-read chunk)) send)
-                (.flush send)
-                (progress-fn data new-offset size (float (/ new-offset size)) context))))))
-      ;; no progress callback
-      (do
-        (io/copy (if (bytes? data)
-                   (io/input-stream data)
-                   (io/input-stream (.getBytes data)))
-                 send :buffer-size buffer-size)
-        (.flush send)))
-    (scp-send-ack send)
-    (debug "Receiving ACK after send")
-    (scp-receive-ack recv)))
+                    ;; last partial chunk
+                    (do
+                      (debug "partial")
+                      (io/copy (byte-array (take bytes-read chunk)) send)
+                      (.flush send)
+                      (progress-fn data new-offset size (float (/ new-offset size)) context))))))
+            ;; no progress callback
+            (do
+              (io/copy (if (bytes? data)
+                         (io/input-stream data)
+                         (io/input-stream (.getBytes data)))
+                       send :buffer-size buffer-size)
+              (.flush send)))]
+      (scp-send-ack send)
+      (debug "Receiving ACK after send")
+      (scp-receive-ack recv)
+      (debug "final:" final-progress-context)
+      final-progress-context)))
 
 (defn- scp-copy-dir
   "Send acknowledgement to the specified output stream"
@@ -192,15 +198,15 @@
           #_ (when file
                (println "skip?" (.getPath file) "res:" (boolean (skip-files (.getPath file)))))
           #_(when file
-            (prn "file:" file (.isFile file) (.getPath file) (.isDirectory file) skip-files))
+              (prn "file:" file (.isFile file) (.getPath file) (.isDirectory file) skip-files))
           (if file
             (cond
               (and (.isFile file) (not (skip-files (.getPath file))))
               (do
                 (debug "copy remain:" remain)
-                (recur remain
-                       (update (scp-copy-file send recv file options progress-context)
-                               :fileset-file-start + (.length file))))
+                (let [res (scp-copy-file send recv file options progress-context)]
+                  (recur remain
+                         (when res (update res :fileset-file-start + (.length file))))))
 
               (.isFile file)
               (do
@@ -251,7 +257,6 @@
   (let [local-paths? (sequential? local-paths)
         local-paths (if local-paths? local-paths [local-paths])
         ]
-    ;;(prn sudo)
     (let [[^PipedInputStream in
            ^PipedOutputStream send] (if (= exec :local)
                                       (ssh/streams-for-in)
@@ -385,7 +390,7 @@
           mode (.nextInt scanner 8)
           length (.nextLong scanner)
           filename (.next scanner)]
-      (debug "returning scp-parse-copy:" mode length filename)
+      #_(debug "returning scp-parse-copy:" mode length filename)
       [mode length filename])))
 
 (defn- scp-receive-command
@@ -477,9 +482,11 @@
              ;;(prn 1 nfile mode)
              (nio/create-file (.getPath nfile) mode)
              ;;(prn 2)
-             (let [new-context
-                   (update (scp-sink-file send recv nfile mode length options context)
-                           :fileset-file-start + length)]
+             (let [res (scp-sink-file send recv nfile mode length options context)
+                   new-context
+                   (when res
+                     (update res
+                             :fileset-file-start + length))]
                (when times
                  (nio/set-last-modified-and-access-time nfile (first times) (second times)))
                (if (pos? depth)
