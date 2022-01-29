@@ -3,12 +3,12 @@
             [spire.utils :as utils]))
 
 (utils/defmodule rm* [file-path]
-  [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-string session {:keys [exec-fn sudo] :as shell-context}]
   (let [{:keys [exit out err] :as result}
         (exec-fn session
-                 (shell-fn (format "rm %s" (utils/path-quote file-path)))
-                 (stdin-fn "")
-                 "UTF-8" {})]
+                 (format "rm %s" (utils/path-quote file-path))
+                 ""
+                 "UTF-8" {:sudo sudo})]
     (assoc result
            :result (if (zero? exit) :ok :failed))))
 
