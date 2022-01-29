@@ -8,6 +8,7 @@
             [spire.nio :as nio]
             [spire.remote :as remote]
             [spire.compare :as compare]
+            [spire.context :as context]
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
@@ -68,16 +69,16 @@
 (utils/defmodule download* [source-code-file form form-meta
                             {:keys [src dest recurse preserve
                                     dir-mode mode owner group attrs force] :as opts}]
-  [host-config session {:keys [exec exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-config session {:keys [exec exec-fn sudo] :as shell-context}]
   (or
    (preflight opts)
    (let [run (fn [command]
                (let [{:keys [out err exit]}
-                     (exec-fn session (shell-fn "bash") (stdin-fn command) "UTF-8" {})]
+                     (exec-fn session "bash" command "UTF-8" {})]
                  (when debug
                    (println "-------")
-                   (prn 'shell (shell-fn "bash"))
-                   (prn 'stdin (stdin-fn command))
+                   (prn 'shell "bash")
+                   (prn 'stdin command)
                    (prn 'exit exit)
                    (prn 'out out)
                    (prn 'err err))
@@ -156,16 +157,14 @@
 
        :else
        (let [remote-file? (remote/is-file? run src)
-
              _ (when (and local-file? force)
                  (.delete (io/file dest)))
 
              destination (if dest-ends-with-slash?
                            (io/file dest src-name)
                            (io/file dest))
-
              {:keys [remote-to-local identical-content local remote] :as comparison}
-             (compare/compare-full-info destination run src)
+             (compare/compare-full-info (.getPath destination) run src)
 
              ;; files to transfer
              {:keys [sizes total]} (compare/remote-to-local comparison)
@@ -186,7 +185,7 @@
 
              progress-fn (fn [file bytes total frac context]
                            (output/print-progress
-                            @state/output-module
+                            (context/deref* state/output-module)
                             source-code-file form form-meta
                             host-config
                             (utils/progress-stats
@@ -194,6 +193,7 @@
                              all-files-total
                              max-filename-length
                              context)))
+
 
              copy-result
              (if recurse
@@ -216,8 +216,7 @@
                                         :skip-files identical-content
                                         :exec exec
                                         :exec-fn exec-fn
-                                        :shell-fn shell-fn
-                                        :stdin-fn stdin-fn))
+                                        :sudo sudo))
                         (not (empty?
                               (filter #(not (dirs-structure-local (first %))) dirs-structure-remote))))))
 
@@ -246,8 +245,7 @@
                                           :skip-files identical-content
                                           :exec exec
                                           :exec-fn exec-fn
-                                          :shell-fn shell-fn
-                                          :stdin-fn stdin-fn))
+                                          :sudo sudo))
                           (not (empty?
                                 (filter #(not (dirs-structure-local (first %))) dirs-structure-remote))))))))
 
@@ -263,8 +261,7 @@
                                   :mode (or mode 0644)
                                   :exec exec
                                   :exec-fn exec-fn
-                                  :shell-fn shell-fn
-                                  :stdin-fn stdin-fn)))))
+                                  :sudo sudo)))))
 
              passed-attrs? (or owner group dir-mode mode attrs)
 
@@ -294,6 +291,7 @@
                       (nio/set-attrs-preserve
                        remote
                        (if remote-file? destination path)))]
+
          (process-result
           opts
           copy-result
