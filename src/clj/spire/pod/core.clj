@@ -797,6 +797,25 @@
                             )
 
                            ;;
+                           ;; spire.module.download
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.download
+                            (utils/make-inlined-public-fns
+                             spire.module.download)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.download
+                             {:rename-ns ns-renames
+                              :rename-symbol {download* pod.epiccastle.spire.module.download/download*}
+                              })
+                            ;; depends on spire.compare
+                            (utils/make-inlined-code-set
+                             spire.module.download
+                             [download*]
+                             {:rename-ns ns-renames}))
+
+
+                           ;;
                            ;; spire.module.upload
                            ;;
                            (utils/make-inlined-namespace
