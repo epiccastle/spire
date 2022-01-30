@@ -859,6 +859,27 @@
                              {:rename-ns ns-renames})
                             )
 
+                           ;;
+                           ;; spire.module.apt
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.apt
+                            (utils/make-inlined-public-fns
+                             spire.module.apt
+                             {:exclude
+                              #{}}
+                             )
+                            (utils/make-inlined-code-set-macros
+                             spire.module.apt
+                             {:rename-ns ns-renames
+                              :rename-symbol {apt* pod.epiccastle.spire.module.apt/apt*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.apt
+                             [apt*]
+                             {:rename-ns ns-renames})
+                            )
+
 
 
 
@@ -866,15 +887,7 @@
                             pod.epiccastle.spire.selmer
                             (utils/make-inlined-public-fns spire.selmer))
 
-                           (utils/make-inlined-namespace
-                            pod.epiccastle.spire.module.apt
-                            (utils/make-inlined-public-fns spire.module.apt)
-                            (utils/make-inlined-code-set-macros
-                             spire.module.apt
-                             {:rename-ns ns-renames
-                              :rename-symbol {apt* pod.epiccastle.spire.module.apt/apt*}}
-                             )
-                            )]
+                           ]
                           "id" (read-string id)})
               (recur))
             "load-ns"

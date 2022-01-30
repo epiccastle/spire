@@ -232,6 +232,13 @@
 
       (into
        (make-plain-lookup
+        "spire.module.apt"
+        [
+         preflight process-result make-script
+         process-values process-apt-update-line]))
+
+      (into
+       (make-plain-lookup
         "spire.module.shell"
         [
          preflight process-result make-env-string
@@ -279,13 +286,13 @@
               "pod.epiccastle.spire.scp" "piped-output-stream")]
 
             #_[(mapping/add-strong-instance!
-              strong-piped-input-stream-state
-              is
-              "pod.epiccastle.spire.scp" "piped-input-stream")
-             (mapping/add-strong-instance!
-              strong-piped-output-stream-state
-              os
-              "pod.epiccastle.spire.scp" "piped-output-stream")]
+                strong-piped-input-stream-state
+                is
+                "pod.epiccastle.spire.scp" "piped-input-stream")
+               (mapping/add-strong-instance!
+                strong-piped-output-stream-state
+                os
+                "pod.epiccastle.spire.scp" "piped-output-stream")]
 
             ))
         })
