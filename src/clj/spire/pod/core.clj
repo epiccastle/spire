@@ -898,6 +898,26 @@
                             (utils/make-inlined-code-set
                              spire.module.apt-key
                              [apt-key*]
+                             {:rename-ns ns-renames}))
+
+                           ;;
+                           ;; spire.module.apt-repo
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.apt-repo
+                            (utils/make-inlined-public-fns
+                             spire.module.apt-repo
+                             {:exclude
+                              #{}}
+                             )
+                            (utils/make-inlined-code-set-macros
+                             spire.module.apt-repo
+                             {:rename-ns ns-renames
+                              :rename-symbol {apt-repo* pod.epiccastle.spire.module.apt-repo/apt-repo*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.apt-repo
+                             [apt-repo*]
                              {:rename-ns ns-renames})
                             )
 

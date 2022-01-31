@@ -246,6 +246,14 @@
 
       (into
        (make-plain-lookup
+        "spire.module.apt-repo"
+        [
+         preflight make-script
+         process-result make-filename-from-repo
+         ]))
+
+      (into
+       (make-plain-lookup
         "spire.module.shell"
         [
          preflight process-result make-env-string

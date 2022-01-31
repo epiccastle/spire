@@ -1,5 +1,5 @@
 (ns spire.module.apt-repo
-  (:require [spire.ssh :as ssh]
+  (:require [spire.module.shell :as shell]
             [spire.facts :as facts]
             [spire.utils :as utils]
             [clojure.string :as string]
@@ -157,11 +157,11 @@
 
 
 (utils/defmodule apt-repo* [command opts]
-  [host-config session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-config session {:keys [exec-fn sudo] :as shell-context}]
   (or
    (preflight command opts)
    (->>
-    (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
+    (exec-fn session "bash" (make-script command opts) "UTF-8" {:sudo sudo})
     (process-result command opts))))
 
 (defmacro apt-repo
