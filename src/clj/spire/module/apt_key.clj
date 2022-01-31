@@ -1,5 +1,5 @@
 (ns spire.module.apt-key
-  (:require [spire.ssh :as ssh]
+  (:require [spire.module.shell :as shell]
             [spire.facts :as facts]
             [spire.utils :as utils]
             [clojure.string :as string]
@@ -156,11 +156,12 @@
 
 
 (utils/defmodule apt-key* [command opts]
-  [host-config session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-config session shell-context]
   (or
    (preflight command opts)
    (->>
-    (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
+    #_ (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
+    (spire.module.shell/shell* {:cmd (make-script command opts)})
     (process-result command opts))))
 
 (defmacro apt-key
