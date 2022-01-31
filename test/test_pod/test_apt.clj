@@ -19,11 +19,44 @@
      {:hostname conf/hostname
       :username conf/username}
      (is (thrown? clojure.lang.ExceptionInfo #"module failed"
-                  (apt/apt :update {})))
+                  (apt/apt :update)))
 
      (sudo/sudo-user
       {:password conf/sudo-password}
       (let [{:keys [exit out err update]}
             (apt/apt :update {})]
         (is (zero? exit))
-        (is (every? :method update)))))))
+        (is (every? :method update)))
+
+      (let [{:keys [exit out err packages] :as result}
+            (apt/apt :remove ["traceroute"])]
+        (is (zero? exit))
+        (is (= (into #{} (keys packages)) #{:upgraded :installed :removed})))
+
+      (let [{:keys [exit out err packages] :as result}
+            (apt/apt :install ["traceroute"])]
+        (is (zero? exit))
+        (is (= (into #{} (keys packages)) #{:upgraded :installed :removed})))
+      ))
+
+    (transport/local
+     (is (thrown? clojure.lang.ExceptionInfo #"module failed"
+                  (apt/apt :update)))
+
+     (sudo/sudo-user
+      {:password conf/sudo-password}
+      (let [{:keys [exit out err update]}
+            (apt/apt :update {})]
+        (is (zero? exit))
+        (is (every? :method update)))
+
+      (let [{:keys [exit out err packages] :as result}
+            (apt/apt :remove ["traceroute"])]
+        (is (zero? exit))
+        (is (= (into #{} (keys packages)) #{:upgraded :installed :removed})))
+
+      (let [{:keys [exit out err packages] :as result}
+            (apt/apt :install ["traceroute"])]
+        (is (zero? exit))
+        (is (= (into #{} (keys packages)) #{:upgraded :installed :removed})))
+      ))))
