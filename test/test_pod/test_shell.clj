@@ -25,7 +25,7 @@
                                                  :ok-exit (fn [code] (= code 3))})]
         (is (= exit 3))
         (is (= out "root\n"))
-        ;;(is (= err "a\n"))
+        (is (= err "[sudo] password for " conf/username ": a\n"))
         )))
 
     (transport/local
@@ -36,7 +36,7 @@
                                                  :ok-exit (fn [code] (= code 3))})]
         (is (= exit 3))
         (is (= out "root\n"))
-        ;;(is (= err "a\n"))
+        (is (= err "a\n"))
         )))))
 
 (deftest shell
