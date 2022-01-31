@@ -254,6 +254,14 @@
 
       (into
        (make-plain-lookup
+        "spire.module.attrs"
+        [
+         preflight make-script
+         process-result get-mode-and-times create-attribute-list make-preserve-script
+         ]))
+
+      (into
+       (make-plain-lookup
         "spire.module.shell"
         [
          preflight process-result make-env-string

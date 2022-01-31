@@ -906,10 +906,7 @@
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.module.apt-repo
                             (utils/make-inlined-public-fns
-                             spire.module.apt-repo
-                             {:exclude
-                              #{}}
-                             )
+                             spire.module.apt-repo)
                             (utils/make-inlined-code-set-macros
                              spire.module.apt-repo
                              {:rename-ns ns-renames
@@ -918,6 +915,25 @@
                             (utils/make-inlined-code-set
                              spire.module.apt-repo
                              [apt-repo*]
+                             {:rename-ns ns-renames})
+                            )
+
+                           ;;
+                           ;; spire.module.attrs
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.attrs
+                            (utils/make-inlined-public-fns
+                             spire.module.attrs)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.attrs
+                             {:rename-ns ns-renames
+                              :rename-symbol {attrs* pod.epiccastle.spire.module.attrs/attrs*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.attrs
+                             [set-attrs-preserve
+                              attrs*]
                              {:rename-ns ns-renames})
                             )
 
