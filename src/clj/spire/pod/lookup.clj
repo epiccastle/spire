@@ -239,6 +239,13 @@
 
       (into
        (make-plain-lookup
+        "spire.module.apt-key"
+        [
+         preflight make-script
+         process-apt-key-list-output process-result]))
+
+      (into
+       (make-plain-lookup
         "spire.module.shell"
         [
          preflight process-result make-env-string

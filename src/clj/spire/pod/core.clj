@@ -880,8 +880,26 @@
                              {:rename-ns ns-renames})
                             )
 
-
-
+                           ;;
+                           ;; spire.module.apt-key
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.apt-key
+                            (utils/make-inlined-public-fns
+                             spire.module.apt-key
+                             {:exclude
+                              #{}}
+                             )
+                            (utils/make-inlined-code-set-macros
+                             spire.module.apt-key
+                             {:rename-ns ns-renames
+                              :rename-symbol {apt-key* pod.epiccastle.spire.module.apt-key/apt-key*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.apt-key
+                             [apt-key*]
+                             {:rename-ns ns-renames})
+                            )
 
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.selmer
