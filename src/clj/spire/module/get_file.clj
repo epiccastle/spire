@@ -3,11 +3,11 @@
             [clojure.string :as string]))
 
 (utils/defmodule get-file* [file-path]
-  [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-string session {:keys [exec-fn sudo] :as shell-context}]
   (let [{:keys [exit out err] :as result}
         (exec-fn session
-                 (shell-fn (format "cat %s" (utils/path-quote file-path)))
-                 (stdin-fn "")
+                 (format "cat %s" (utils/path-quote file-path))
+                 ""
                  "UTF-8" {})]
     (assoc result
            :out-lines (string/split-lines out)

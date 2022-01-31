@@ -262,6 +262,28 @@
 
       (into
        (make-plain-lookup
+        "spire.module.authorized-keys"
+        [
+         process-options preflight make-script
+         process-result
+         ]))
+
+      (into
+       (make-plain-lookup
+        "spire.module.get-file"
+        [
+         ]))
+
+      (into
+       (make-plain-lookup
+        "spire.module.curl"
+        [
+         preflight make-script decode-body
+         process-result
+         ]))
+
+      (into
+       (make-plain-lookup
         "spire.module.shell"
         [
          preflight process-result make-env-string

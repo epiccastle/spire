@@ -89,6 +89,7 @@
    "attrs" "pod.epiccastle.spire.module.attrs"
    "rm" "pod.epiccastle.spire.module.rm"
    "upload" "pod.epiccastle.spire.module.upload"
+   "get-file" "pod.epiccastle.spire.module.get-file"
    "nio" "pod.epiccastle.spire.nio"
    "io" "clojure.java.io"
    "output" "pod.epiccastle.spire.output.core"
@@ -934,6 +935,59 @@
                              spire.module.attrs
                              [set-attrs-preserve
                               attrs*]
+                             {:rename-ns ns-renames}))
+
+
+                           ;;
+                           ;; spire.module.authorized-keys
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.authorized-keys
+                            (utils/make-inlined-public-fns
+                             spire.module.authorized-keys)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.authorized-keys
+                             {:rename-ns ns-renames
+                              :rename-symbol {authorized-keys* pod.epiccastle.spire.module.authorized-keys/authorized-keys*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.authorized-keys
+                             [authorized-keys*]
+                             {:rename-ns ns-renames}))
+
+                           ;;
+                           ;; spire.module.get-file
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.get-file
+                            (utils/make-inlined-public-fns
+                             spire.module.get-file)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.get-file
+                             {:rename-ns ns-renames
+                              :rename-symbol {get-file* pod.epiccastle.spire.module.get-file/get-file*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.get-file
+                             [get-file*]
+                             {:rename-ns ns-renames})
+                            )
+
+                           ;;
+                           ;; spire.module.curl
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.curl
+                            (utils/make-inlined-public-fns
+                             spire.module.curl)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.curl
+                             {:rename-ns ns-renames
+                              :rename-symbol {curl* pod.epiccastle.spire.module.curl/curl*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.curl
+                             [curl*]
                              {:rename-ns ns-renames})
                             )
 

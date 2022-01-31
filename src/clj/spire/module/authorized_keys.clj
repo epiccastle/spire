@@ -109,11 +109,11 @@
              :result :failed))))
 
 (utils/defmodule authorized-keys* [command {:keys [user key options file] :as opts}]
-  [host-config session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-config session {:keys [exec-fn sudo] :as shell-context}]
   (or
    (preflight command opts)
    (->>
-    (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
+    (exec-fn session "bash" (make-script command opts) "UTF-8" {:sudo sudo})
     (process-result command opts))))
 
 (defmacro authorized-keys
