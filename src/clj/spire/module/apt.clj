@@ -1,5 +1,5 @@
 (ns spire.module.apt
-  (:require [spire.ssh :as ssh]
+  (:require [spire.module.shell :as shell]
             [spire.facts :as facts]
             [spire.utils :as utils]
             [clojure.string :as string]))
@@ -145,7 +145,7 @@
                        :changed)
              :out-lines (string/split out #"\n")
              :packages {:upgraded upgraded
-                        :removeed installed
+                        :installed installed
                         :removed removed}))
     (assoc result :result :failed)))
 
@@ -185,7 +185,8 @@
   (or
    (preflight command opts)
    (let [result (->>
-                 (exec-fn session (make-script command opts) "" "UTF-8" {:sudo sudo})
+                 #_(exec-fn session (make-script command opts) "" "UTF-8" {:sudo sudo})
+                 (spire.module.shell/shell* {:cmd (make-script command opts)})
                  (process-result command opts))]
      (facts/update-facts-paths!)
      result)))
