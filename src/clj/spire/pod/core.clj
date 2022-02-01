@@ -1031,6 +1031,23 @@
                             (utils/make-inlined-code-set
                              spire.module.curl
                              [curl*]
+                             {:rename-ns ns-renames}))
+
+                           ;;
+                           ;; spire.module.group
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.group
+                            (utils/make-inlined-public-fns
+                             spire.module.group)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.group
+                             {:rename-ns ns-renames
+                              :rename-symbol {group* pod.epiccastle.spire.module.group/group*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.group
+                             [group*]
                              {:rename-ns ns-renames})
                             )
 

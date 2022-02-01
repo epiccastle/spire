@@ -283,6 +283,14 @@
 
       (into
        (make-plain-lookup
+        "spire.module.group"
+        [
+         preflight make-script
+         process-result
+         ]))
+
+      (into
+       (make-plain-lookup
         "spire.module.shell"
         [
          preflight process-result make-env-string
