@@ -161,7 +161,7 @@
 (defmethod decode-body :default [_ body opts]
   nil)
 
-(defn- curl-response->map
+(defn curl-response->map
   "Parses a curl response input stream into a map"
   [result headers decode decode-opts]
   (let [[status headers]
@@ -206,13 +206,12 @@
 
 (utils/defmodule curl* [opts]
   [host-string session {:keys [exec-fn sudo] :as shell-context}]
-  ;;(println "curl*" (make-script command opts))
   (or
    (preflight opts)
    (let [header-file (remote/make-temp-filename {:prefix "spire-curl-headers-"
                                                  :extension "txt"})]
      (let [{:keys [out err exit] :as result}
-           (exec-fn session (make-script opts header-file) "" "UTF-8" {:sudo sudo})]
+           (exec-fn session (make-script (dissoc opts :decode-opts) header-file) "" "UTF-8" {:sudo sudo})]
        (if (zero? exit)
          (let [get-file-result (get-file/get-file* header-file)
                rm-result (rm/rm* header-file)]

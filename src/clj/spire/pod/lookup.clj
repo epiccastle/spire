@@ -278,8 +278,7 @@
        (make-plain-lookup
         "spire.module.curl"
         [
-         preflight make-script decode-body
-         process-result
+         make-script
          ]))
 
       (into

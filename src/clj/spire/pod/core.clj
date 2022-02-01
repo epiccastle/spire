@@ -320,7 +320,7 @@
 
                             [{"name" "_ns_def"
                               "code"
-"
+                              "
 (ns pod.epiccastle.spire.output.silent
   (:require [pod.epiccastle.spire.output.core :as output]))
 
@@ -978,8 +978,51 @@
                            ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.module.curl
+                            [{"name" "_decode-body"
+                              "code"
+                              "
+(defmulti decode-body
+  (fn [headers body opts]
+    (-> headers
+        (get :content-type)
+        (clojure.string/split #\";\")
+        first)))
+
+(defmethod decode-body \"application/json\" [_ body opts]
+  (cheshire.core/parse-string body (get opts :key-fn)))
+
+(defmethod decode-body \"application/transit+json\" [_ body opts]
+  (-> (.getBytes ^String body)
+      java.io.ByteArrayInputStream.
+      (cognitect.transit/reader :json opts)
+      cognitect.transit/read))
+
+(defmethod decode-body \"application/transit+msgpack\" [_ body opts]
+  (-> (.getBytes ^String body)
+      java.io.ByteArrayInputStream.
+      (cognitect.transit/reader :msgpack opts)
+      cognitect.transit/read))
+
+(defmethod decode-body :default [_ body opts]
+  nil)
+
+(def failed-result {:exit 1 :out \"\" :err \"\" :result :failed})
+"}]
+
+                            (utils/make-inlined-code-set
+                             spire.module.curl
+                             [
+                              preflight
+                              curl-response->map
+                              process-result]
+                             {:rename-ns ns-renames})
                             (utils/make-inlined-public-fns
-                             spire.module.curl)
+                             spire.module.curl
+                             {:exclude
+                              #{preflight
+                                process-result
+                                curl-response->map
+                                }})
                             (utils/make-inlined-code-set-macros
                              spire.module.curl
                              {:rename-ns ns-renames
