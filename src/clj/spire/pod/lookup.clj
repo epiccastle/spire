@@ -291,6 +291,14 @@
 
       (into
        (make-plain-lookup
+        "spire.module.line-in-file"
+        [
+         preflight make-script
+         process-result escape-leading-spaces
+         ]))
+
+      (into
+       (make-plain-lookup
         "spire.module.shell"
         [
          preflight process-result make-env-string

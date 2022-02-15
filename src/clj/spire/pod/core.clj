@@ -1048,6 +1048,24 @@
                             (utils/make-inlined-code-set
                              spire.module.group
                              [group*]
+                             {:rename-ns ns-renames}))
+
+                           ;;
+                           ;; spire.module.line-in-file
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.line-in-file
+                            (utils/make-inlined-public-fns
+                             spire.module.line-in-file)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.line-in-file
+                             {:rename-ns ns-renames
+                              :rename-symbol {line-in-file* pod.epiccastle.spire.module.line-in-file/line-in-file*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.line-in-file
+                             [
+                              line-in-file*]
                              {:rename-ns ns-renames})
                             )
 

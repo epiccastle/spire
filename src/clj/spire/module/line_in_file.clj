@@ -70,7 +70,7 @@
   (facts/on-os
    :linux (utils/make-script
            "line_in_file_present.sh"
-           {:REGEX (some->> regexp utils/re-pattern-to-sed)
+           {:REGEX regexp
             :STRING_MATCH (some->> string-match utils/string-escape)
             :LINE_MATCH (some->>
                          (if (or regexp string-match line-match) line-match line)
@@ -88,7 +88,7 @@
             :INSERTAT (some->> insert-at name)})
    :else (utils/make-script
           "line_in_file_present_bsd.sh"
-          {:REGEX (some->> regexp utils/re-pattern-to-sed)
+          {:REGEX regexp
            :STRING_MATCH (some->> string-match utils/string-escape)
            :LINE_MATCH (some->>
                         (if (or regexp string-match line-match) line-match line)
@@ -153,26 +153,29 @@
 
 (defmethod make-script :absent [_ {:keys [path
                                           regexp string-match line-match
-                                          line line-num]}]
+                                          line line-num
+                                          match]}]
   (facts/on-os
    :linux (utils/make-script
            "line_in_file_absent.sh"
-           {:REGEX (some->> regexp utils/re-pattern-to-sed)
+           {:REGEX regexp
             :STRING_MATCH (some->> string-match utils/string-escape)
             :LINE_MATCH (some->>
                          (if (or regexp string-match line-match) line-match line)
                          utils/string-escape)
             :FILE (some->> path utils/path-escape)
-            :LINENUM line-num})
+            :LINENUM line-num
+            })
    :else (utils/make-script
           "line_in_file_absent_bsd.sh"
-          {:REGEX (some->> regexp utils/re-pattern-to-sed)
+          {:REGEX regexp
            :STRING_MATCH (some->> string-match utils/string-escape)
            :LINE_MATCH (some->>
                         (if (or regexp string-match line-match) line-match line)
                         utils/string-escape)
            :FILE (some->> path utils/path-escape)
-           :LINENUM line-num})))
+           :LINENUM line-num
+           })))
 
 (defmethod process-result :absent
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
@@ -232,7 +235,7 @@
                                        line-match line match]}]
   (utils/make-script
    "line_in_file_get.sh"
-   {:REGEX (some->> regexp utils/re-pattern-to-sed)
+   {:REGEX regexp
     :STRING_MATCH (some->> string-match utils/string-escape)
     :LINE_MATCH (some->>
                  (if (or regexp string-match line-match) line-match line)
@@ -284,14 +287,16 @@
            :result :failed)))
 
 (utils/defmodule line-in-file* [command & [{:keys [path regexp line after before]
-                                           :as opts}]]
-  [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
-  ;;(println "line-in-file*" (make-script command opts))
-  (or
-   (preflight command opts)
-   (->>
-    (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
-    (process-result command opts))))
+                                            :as opts}]]
+  [host-string session {:keys [exec-fn sudo] :as shell-context}]
+  (let [opts (if regexp
+               (assoc opts :regexp (utils/re-pattern-to-sed regexp))
+               opts)]
+    (or
+     (preflight command opts)
+     (->>
+      (exec-fn session "bash" (make-script command opts) "UTF-8" {:sudo sudo})
+      (process-result command opts)))))
 
 (defmacro line-in-file
   "Ensures a particular line is in a text file, or can replace an
