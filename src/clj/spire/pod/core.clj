@@ -1086,6 +1086,24 @@
                               mkdir*]
                              {:rename-ns ns-renames}))
 
+                           ;;
+                           ;; spire.module.rm
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.rm
+                            (utils/make-inlined-public-fns
+                             spire.module.rm)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.rm
+                             {:rename-ns ns-renames
+                              :rename-symbol {rm* pod.epiccastle.spire.module.rm/rm*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.rm
+                             [
+                              rm*]
+                             {:rename-ns ns-renames}))
+
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.selmer
                             (utils/make-inlined-public-fns spire.selmer))

@@ -307,6 +307,12 @@
 
       (into
        (make-plain-lookup
+        "spire.module.rm"
+        [
+         ]))
+
+      (into
+       (make-plain-lookup
         "spire.module.shell"
         [
          preflight process-result make-env-string
