@@ -37,12 +37,12 @@
              :result :failed))))
 
 (utils/defmodule mkdir* [{:keys [path owner group mode] :as opts}]
-  [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-string session {:keys [exec-fn sudo] :as shell-context}]
   (or
    (preflight opts)
    (let [result
          (->>
-          (exec-fn session (shell-fn "bash") (stdin-fn (make-script opts)) "UTF-8" {})
+          (exec-fn session "bash" (make-script opts) "UTF-8" {:sudo sudo})
           (process-result opts))]
      result))
   )
