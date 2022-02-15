@@ -1104,6 +1104,24 @@
                               rm*]
                              {:rename-ns ns-renames}))
 
+                           ;;
+                           ;; spire.module.service
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.service
+                            (utils/make-inlined-public-fns
+                             spire.module.service)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.service
+                             {:rename-ns ns-renames
+                              :rename-symbol {service* pod.epiccastle.spire.module.service/service*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.service
+                             [
+                              service*]
+                             {:rename-ns ns-renames}))
+
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.selmer
                             (utils/make-inlined-public-fns spire.selmer))
