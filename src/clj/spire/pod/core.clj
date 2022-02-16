@@ -27,7 +27,7 @@
 (defn read-string [^"[B" v]
   (String. v))
 
-(def debug? true)
+(def debug? false)
 (def debug-file "/tmp/spire-pod-debug.txt")
 
 (defmacro debug [& args]
