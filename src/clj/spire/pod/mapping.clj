@@ -56,7 +56,11 @@
 #_ (def mapping (make-weak-mapping))
 
 (defn add-instance! [weak-mapping instance key-ns key-prefix]
-  (let [{:keys [instance->key key->instance weakref->key queue lock]} weak-mapping]
+  (let [{:keys [^java.util.Collections$SynchronizedMap instance->key
+                ^HashMap key->instance
+                ^HashMap weakref->key
+                ^ReferenceQueue queue
+                lock]} weak-mapping]
     (locking lock
       (if-let [existing-key (.get instance->key instance)]
         existing-key
@@ -72,7 +76,10 @@
 #_ weak-mapping
 
 (defn clear-gc-references! [weak-mapping]
-  (let [{:keys [key->instance weakref->key queue lock]} weak-mapping]
+  (let [{:keys [^HashMap key->instance
+                ^HashMap weakref->key
+                ^ReferenceQueue queue
+                lock]} weak-mapping]
     (locking lock
       (loop [weakref (.poll queue)
              deleted []]
@@ -95,7 +102,8 @@
 
 (defn get-key-for-instance [weak-mapping instance]
   (clear-gc-references! weak-mapping)
-  (let [{:keys [instance->key lock]} weak-mapping]
+  (let [{:keys [^java.util.Collections$SynchronizedMap instance->key
+                lock]} weak-mapping]
     (locking lock
       (.get instance->key instance))))
 
@@ -105,7 +113,8 @@
 
 (defn get-weakref-for-key [weak-mapping key]
   (clear-gc-references! weak-mapping)
-  (let [{:keys [key->instance lock]} weak-mapping]
+  (let [{:keys [^HashMap key->instance
+                lock]} weak-mapping]
     (locking lock
       (.get key->instance key))))
 
@@ -113,7 +122,7 @@
 #_ (get-weakref-for-key weak-mapping :foo)
 
 (defn get-instance-for-key [weak-mapping key]
-  (when-let [weakref (get-weakref-for-key weak-mapping key)]
+  (when-let [^java.lang.ref.WeakReference weakref (get-weakref-for-key weak-mapping key)]
     (.get weakref)))
 
 #_ (= obj (get-instance-for-key weak-mapping (get-key-for-instance weak-mapping obj)))
