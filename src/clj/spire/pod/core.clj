@@ -1165,6 +1165,27 @@
                               sysctl*]
                              {:rename-ns ns-renames}))
 
+
+                           ;;
+                           ;; spire.module.user
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.user
+                            (utils/make-inlined-public-fns
+                             spire.module.user)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.user
+                             {:rename-ns ns-renames
+                              :rename-symbol {user* pod.epiccastle.spire.module.user/user*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.user
+                             [
+                              user*]
+                             {:rename-ns ns-renames}))
+
+
+
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.selmer
                             (utils/make-inlined-public-fns spire.selmer))

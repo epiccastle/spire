@@ -320,9 +320,17 @@
 
          ]))
 
-       (into
+      (into
        (make-plain-lookup
         "spire.module.sysctl"
+        [
+         preflight make-script
+         process-result
+         ]))
+
+      (into
+       (make-plain-lookup
+        "spire.module.user"
         [
          preflight make-script
          process-result
