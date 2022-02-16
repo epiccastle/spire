@@ -71,3 +71,16 @@
      )
     )
   )
+
+(deftest test-upload-set-attrs
+  (binding [state/output-module :silent]
+    (transport/ssh
+     {:hostname conf/hostname
+      :username conf/username}
+     (upload/upload {:content "test"
+                     :dest "/tmp/test-upload-set-attrs"
+                     :mode 0777})
+     ;; reuploading triggers set-attr call
+     (upload/upload {:content "test"
+                     :dest "/tmp/test-upload-set-attrs"
+                     :mode 0777}))))

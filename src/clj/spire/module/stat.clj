@@ -168,7 +168,7 @@
            :err-lines (string/split err #"\n"))))
 
 (utils/defmodule stat* [path]
-  [host-config session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-config session {:keys [exec-fn sudo] :as shell-context}]
   (let [script (facts/on-os :linux (make-script path)
                             :else (make-script-bsd path))]
     (or
@@ -180,13 +180,13 @@
      ;; 0
      ;; so we invoke bash in this case as a work around
      (->> (exec-fn session
-                        (shell-fn (facts/on-shell
-                                   :sh "bash"
-                                   :else script))
-                        (stdin-fn (facts/on-shell
-                                   :sh script
-                                   :else ""))
-                        "UTF-8" {})
+                   (facts/on-shell
+                    :sh "bash"
+                    :else script)
+                   (facts/on-shell
+                    :sh script
+                    :else "")
+                   "UTF-8" {:sudo sudo})
           (process-result path)))))
 
 (defmacro stat
@@ -390,7 +390,7 @@
   "When given the result of a `stat` call, return `true` if the path is
   a regular file. "
   [{{:keys [file-type]} :stat}]
-  (= :regular file-type))
+  (= :regular-file file-type))
 
 (defn socket?
   "When given the result of a `stat` call, return `true` if the path is

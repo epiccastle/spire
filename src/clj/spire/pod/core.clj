@@ -785,7 +785,12 @@
                            ;;
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.module.attrs
-                            (utils/make-inlined-public-fns spire.module.attrs)
+                            (utils/make-inlined-public-fns
+                             spire.module.attrs
+                             {:exclude
+                              #{set-attrs
+                                set-attrs-preserve}}
+                             )
 
                             (utils/make-inlined-code-set-macros
                              spire.module.attrs
@@ -793,7 +798,9 @@
                             ;; depends on spire.compare
                             (utils/make-inlined-code-set
                              spire.module.attrs
-                             [attrs*]
+                             [set-attrs
+                              set-attrs-preserve
+                              attrs*]
                              {:rename-ns ns-renames})
                             )
 
@@ -1120,6 +1127,24 @@
                              spire.module.service
                              [
                               service*]
+                             {:rename-ns ns-renames}))
+
+                           ;;
+                           ;; spire.module.stat
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.module.stat
+                            (utils/make-inlined-public-fns
+                             spire.module.stat)
+                            (utils/make-inlined-code-set-macros
+                             spire.module.stat
+                             {:rename-ns ns-renames
+                              :rename-symbol {stat* pod.epiccastle.spire.module.stat/stat*}}
+                             )
+                            (utils/make-inlined-code-set
+                             spire.module.stat
+                             [
+                              stat*]
                              {:rename-ns ns-renames}))
 
                            (utils/make-inlined-namespace

@@ -307,6 +307,21 @@
 
       (into
        (make-plain-lookup
+        "spire.module.stat"
+        [
+         preflight make-script
+         process-result
+         other-exec? other-write? other-read?
+         group-exec? group-write? group-read?
+         user-exec? user-write? user-read?
+         mode-flags exec? readable? writeable?
+         directory? block-device? char-device?
+         symlink? fifo? regular-file? socket?
+
+         ]))
+
+      (into
+       (make-plain-lookup
         "spire.module.rm"
         [
          ]))

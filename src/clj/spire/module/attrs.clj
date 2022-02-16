@@ -53,8 +53,8 @@
 
 (defn set-attrs [session opts]
   (let [bash-script (make-script opts)
-        {:keys [exec-fn shell-fn stdin-fn]} (state/get-shell-context)]
-    (exec-fn session (shell-fn "bash") (stdin-fn bash-script) "UTF-8" {})))
+        {:keys [exec-fn sudo]} (state/get-shell-context)]
+    (exec-fn session "bash" bash-script "UTF-8" {:sudo sudo})))
 
 
 
@@ -101,12 +101,12 @@
 
 (defn set-attrs-preserve [session src dest]
   (let [script (make-preserve-script (create-attribute-list src) dest)
-        {:keys [exec-fn shell-fn stdin-fn]} (state/get-shell-context)]
+        {:keys [exec-fn sudo]} (state/get-shell-context)]
     ;; (prn 'set-attrs-preserve src dest)
     ;; (println "---------------")
     ;; (println script)
     ;; (println "---------------")
-    (let [result (exec-fn session (shell-fn "bash") (stdin-fn script) "UTF-8" {})]
+    (let [result (exec-fn session "bash" script "UTF-8" {:sudo sudo})]
       ;; (prn 'result (:exit result))
       ;; (println "---------------")
       ;; (println (:out result))
