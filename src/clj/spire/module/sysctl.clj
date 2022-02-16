@@ -80,11 +80,11 @@
 
 
 (utils/defmodule sysctl* [command {:keys [name value reload file] :as opts}]
-  [host-string session {:keys [exec-fn shell-fn stdin-fn] :as shell-context}]
+  [host-string session {:keys [exec-fn sudo] :as shell-context}]
   (or
    (preflight command opts)
    (->>
-    (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
+    (exec-fn session "bash" (make-script command opts) "UTF-8" {:sudo sudo})
     (process-result command opts))))
 
 (defmacro sysctl
