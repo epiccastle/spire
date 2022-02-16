@@ -36,7 +36,7 @@
   (-> (process ["netstat" "-atp"])
       (process ["grep" search])
       (process ["grep" "ESTABLISHED"])
-      (process ["grep" "java"])
+      (process ["grep" "spire\\|java"])
       :out
       slurp
       split-lines
