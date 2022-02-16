@@ -54,6 +54,11 @@
         "allPublicMethods": true
     },
     {
+        "name": "java.io.PipedOutputStream",
+        "allPublicConstructors": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "com.jcraft.jsch.jce.Random",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
@@ -452,8 +457,20 @@
         "allDeclaredMethods": true,
         "allPublicMethods": true
     },
-
-
+    {
+        "name": "com.jcraft.jsch.Channel",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.Channel$1",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
     {
         "name": "com.jcraft.jsch.ChannelExec",
         "allDeclaredConstructors": true,
