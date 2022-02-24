@@ -75,13 +75,6 @@
    (let [run (fn [command]
                (let [{:keys [out err exit]}
                      (exec-fn session "bash" command "UTF-8" {})]
-                 (when debug
-                   (println "-------")
-                   (prn 'shell "bash")
-                   (prn 'stdin command)
-                   (prn 'exit exit)
-                   (prn 'out out)
-                   (prn 'err err))
                  (when (zero? exit)
                    (string/trim out))))
 
