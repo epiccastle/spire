@@ -13,58 +13,59 @@
             [pod.epiccastle.spire.state :as state]
             ))
 
-(deftest apt-key
-  (binding [state/output-module :silent]
-    (transport/ssh
-     {:hostname conf/hostname
-      :username conf/username}
-     (sudo/sudo-user
-      {:password conf/sudo-password}
+(when conf/sudo?
+  (deftest apt-key
+    (binding [state/output-module :silent]
+      (transport/ssh
+       {:hostname conf/hostname
+        :username conf/username}
+       (sudo/sudo-user
+        {:password conf/sudo-password}
 
-      (try
-        (apt-key/apt-key
-         :absent {:public-key-url "https://deb.goaccess.io/gnugpg.key"
-                  :keyring "/etc/apt/trusted.gpg.d/goaccess.gpg"
-                  :fingerprint "C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D"})
-        (catch clojure.lang.ExceptionInfo _)))
+        (try
+          (apt-key/apt-key
+           :absent {:public-key-url "https://deb.goaccess.io/gnugpg.key"
+                    :keyring "/etc/apt/trusted.gpg.d/goaccess.gpg"
+                    :fingerprint "C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D"})
+          (catch clojure.lang.ExceptionInfo _)))
 
-     (sudo/sudo-user
-      {:password conf/sudo-password}
+       (sudo/sudo-user
+        {:password conf/sudo-password}
 
-      (let [{:keys [exit out err] :as result}
-            (apt-key/apt-key :absent {:fingerprint "C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D"})
-            ]
-        ;;      (prn result)
-        (is (zero? exit)))
+        (let [{:keys [exit out err] :as result}
+              (apt-key/apt-key :absent {:fingerprint "C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D"})
+              ]
+          ;;      (prn result)
+          (is (zero? exit)))
 
-      (let [{:keys [exit out err] :as result}
-            (apt-key/apt-key :present {:public-key-url "https://deb.goaccess.io/gnugpg.key"
-                                       :keyring "/etc/apt/trusted.gpg.d/goaccess.gpg"
-                                       :fingerprint "C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D"})
-            ]
-        ;;        (prn result)
-        (is (= 255 exit))))
+        (let [{:keys [exit out err] :as result}
+              (apt-key/apt-key :present {:public-key-url "https://deb.goaccess.io/gnugpg.key"
+                                         :keyring "/etc/apt/trusted.gpg.d/goaccess.gpg"
+                                         :fingerprint "C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D"})
+              ]
+          ;;        (prn result)
+          (is (= 255 exit))))
 
-     (transport/local
-      (sudo/sudo-user
-       {:password conf/sudo-password}
+       (transport/local
+        (sudo/sudo-user
+         {:password conf/sudo-password}
 
-       (let [{:keys [exit out err] :as result}
-             (apt-key/apt-key :present {:public-key-url "https://deb.goaccess.io/gnugpg.key"
-                                       :keyring "/etc/apt/trusted.gpg.d/goaccess.gpg"
-                                       :fingerprint "C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D"})
-             ]
-         ;;      (prn result)
-         (is (zero? exit)))
+         (let [{:keys [exit out err] :as result}
+               (apt-key/apt-key :present {:public-key-url "https://deb.goaccess.io/gnugpg.key"
+                                          :keyring "/etc/apt/trusted.gpg.d/goaccess.gpg"
+                                          :fingerprint "C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D"})
+               ]
+           ;;      (prn result)
+           (is (zero? exit)))
 
-       (let [{:keys [exit out err] :as result}
-            (apt-key/apt-key :absent {:fingerprint "C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D"})
-            ]
-        ;;        (prn result)
-        (is (= 255 exit)))
+         (let [{:keys [exit out err] :as result}
+               (apt-key/apt-key :absent {:fingerprint "C03B 4888 7D5E 56B0 4671 5D32 97BD 1A01 3344 9C3D"})
+               ]
+           ;;        (prn result)
+           (is (= 255 exit)))
 
 
-       ))
-     )
+         ))
+       )
 
-    ))
+      )))

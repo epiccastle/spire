@@ -14,11 +14,12 @@
             [pod.epiccastle.spire.state :as state]
             ))
 
-(deftest service
-  (binding [state/output-module :silent]
-    (transport/ssh
-     {:hostname conf/hostname
-      :username conf/username}
-     (sudo/sudo-user {:password conf/sudo-password}
-                     (is (= (:changed (:result (service/service :restarted {:name "cron"}))))))
-     )))
+(when conf/sudo?
+  (deftest service
+    (binding [state/output-module :silent]
+      (transport/ssh
+       {:hostname conf/hostname
+        :username conf/username}
+       (sudo/sudo-user {:password conf/sudo-password}
+                       (is (= (:changed (:result (service/service :restarted {:name "cron"}))))))
+       ))))

@@ -14,25 +14,26 @@
             [pod.epiccastle.spire.state :as state]
             ))
 
-(deftest test-sysctl
-  (binding [state/output-module :silent]
-    (transport/ssh
-     {:hostname conf/hostname
-      :username conf/username}
+(when conf/sudo?
+  (deftest test-sysctl
+    (binding [state/output-module :silent]
+      (transport/ssh
+       {:hostname conf/hostname
+        :username conf/username}
 
-     (sudo/sudo-user
-      {:password conf/sudo-password}
-      (sysctl/sysctl :present {:name "fs.protected_symlinks"
-                               :value "1"})
-      (is (= :ok
-             (:result (sysctl/sysctl :present
-                                     {:name "fs.protected_symlinks"
-                                      :value "1"}))))
-      (is (= :changed
-             (:result (sysctl/sysctl :present
-                                     {:name "fs.protected_symlinks"
-                                      :value "0"}))))
-      (is (= :ok
-             (:result (sysctl/sysctl :present
-                                     {:name "fs.protected_symlinks"
-                                      :value "0"}))))))))
+       (sudo/sudo-user
+        {:password conf/sudo-password}
+        (sysctl/sysctl :present {:name "fs.protected_symlinks"
+                                 :value "1"})
+        (is (= :ok
+               (:result (sysctl/sysctl :present
+                                       {:name "fs.protected_symlinks"
+                                        :value "1"}))))
+        (is (= :changed
+               (:result (sysctl/sysctl :present
+                                       {:name "fs.protected_symlinks"
+                                        :value "0"}))))
+        (is (= :ok
+               (:result (sysctl/sysctl :present
+                                       {:name "fs.protected_symlinks"
+                                        :value "0"})))))))))

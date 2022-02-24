@@ -257,3 +257,5 @@
                     :sudo (:sudo state/shell-context))
                    (is (not (.exists (clojure.java.io/file "/tmp/scp-dest/test.txt"))))
                    (teardown))))
+
+(teardown)

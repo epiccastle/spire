@@ -106,3 +106,36 @@ session :pod.epiccastle.spire.transport/session-8rena72i4jq86t9s
 result {:channel :pod.epiccastle.spire.ssh/channel-exec-8rxh4t8zwyxqy9tl, :out #object[babashka.impl.proxy.proxy$java.io.PipedInputStream$ff19274a 0x8e402c8 "babashka.impl.proxy.proxy$java.io.PipedInputStream$ff19274a@8e402c8"], :in #object[babashka.impl.proxy.proxy$java.io.PipedOutputStream$ff19274a 0xc75404e "babashka.impl.proxy.proxy$java.io.PipedOutputStream$ff19274a@c75404e"], :err #object[babashka.impl.proxy.proxy$java.io.PipedInputStream$ff19274a 0x4a47929d "babashka.impl.proxy.proxy$java.io.PipedInputStream$ff19274a@4a47929d"]}
 the remote process returns: /home/crispin
 ```
+
+## Running the pod test suite
+
+In order to run the pod test suite you will need to have bb installed. The tests are developed to access the local machine and may perform unwanted changes. Please only run on a clean test system.
+
+To execute, run `make test-pod`. By default this will run all the tests that don't require sudo.
+
+```
+$ make tests-pod
+...
+Ran 96 tests containing 363 assertions.
+0 failures, 0 errors.
+{:test 96, :pass 363, :fail 0, :error 0, :type :summary}
+```
+
+The following environment variables control the test suite execution.
+
+ - TEST_USER: the username to connect ssh clients as. Defaults to present user.
+ - TEST_HOST: the hostname to connect to. Defaults to localhost.
+ - TEST_RUN_SUDO: if set to anything then include sudo tests.
+ - TEST_SUDO_PASSWORD: use this password for the sudo access.
+
+For example, to run the sudo tests aswell:
+
+```
+$ TEST_RUN_SUDO=true TEST_SUDO_PASSWORD="my-sudo-password" make tests-pod
+...
+Ran 118 tests containing 427 assertions.
+0 failures, 0 errors.
+{:test 118, :pass 427, :fail 0, :error 0, :type :summary}
+```
+
+Note: it is normal for the `test-pod.test-sudo` to print some tracebacks to stderr.

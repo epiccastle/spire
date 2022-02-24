@@ -13,27 +13,28 @@
             [pod.epiccastle.spire.state :as state]
             ))
 
-(deftest attrs
-  (binding [state/output-module :silent]
-    (transport/ssh
-     {:hostname conf/hostname
-      :username conf/username}
-     (sudo/sudo-user
-      {:password conf/sudo-password}
+(when conf/sudo?
+  (deftest attrs
+    (binding [state/output-module :silent]
+      (transport/ssh
+       {:hostname conf/hostname
+        :username conf/username}
+       (sudo/sudo-user
+        {:password conf/sudo-password})
 
-      (is (thrown? clojure.lang.ExceptionInfo #"module failed"
-                   (attrs/attrs {:path "/var/www/non-existent-file"
-                                 :owner "www-data"
-                                 :group "www-data"})))
+       (is (thrown? clojure.lang.ExceptionInfo #"module failed"
+                    (attrs/attrs {:path "/var/www/non-existent-file"
+                                  :owner "www-data"
+                                  :group "www-data"})))
 
-      (utils/bash "touch /tmp/foo")
+       (utils/bash "touch /tmp/foo")
 
-      (sudo/sudo-user
-       {:password conf/sudo-password}
-       (let [{:keys [exit out err] :as result}
-             (attrs/attrs {:path "/tmp/foo"
-                           :owner "www-data"
-                           :group "www-data"})]
-         (is (zero? exit))
-         (is (= "www-data\n" (utils/bash "stat -c%U /tmp/foo")))
-         (is (= "www-data\n" (utils/bash "stat -c%G /tmp/foo")))))))))
+       (sudo/sudo-user
+        {:password conf/sudo-password}
+        (let [{:keys [exit out err] :as result}
+              (attrs/attrs {:path "/tmp/foo"
+                            :owner "www-data"
+                            :group "www-data"})]
+          (is (zero? exit))
+          (is (= "www-data\n" (utils/bash "stat -c%U /tmp/foo")))
+          (is (= "www-data\n" (utils/bash "stat -c%G /tmp/foo")))))))))

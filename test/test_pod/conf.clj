@@ -4,3 +4,4 @@
 (def username-n (str username "\n"))
 (def hostname (or (System/getenv "TEST_HOST") "localhost"))
 (def sudo-password (System/getenv "TEST_SUDO_PASSWORD"))
+(def sudo? (System/getenv "TEST_RUN_SUDO"))

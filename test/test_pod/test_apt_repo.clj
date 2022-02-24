@@ -13,17 +13,18 @@
             [pod.epiccastle.spire.state :as state]
             ))
 
-(deftest apt-key
-  (binding [state/output-module :silent]
-    (transport/ssh
-     {:hostname conf/hostname
-      :username conf/username}
-     (sudo/sudo-user
-      {:password conf/sudo-password}
+(when conf/sudo?
+  (deftest apt-key
+    (binding [state/output-module :silent]
+      (transport/ssh
+       {:hostname conf/hostname
+        :username conf/username}
+       (sudo/sudo-user
+        {:password conf/sudo-password}
 
-      (apt-repo/apt-repo :absent {:repo "ppa:ondrej/php"})
+        (apt-repo/apt-repo :absent {:repo "ppa:ondrej/php"})
 
-      (is (= 255 (:exit (apt-repo/apt-repo :present {:repo "ppa:ondrej/php"}))))
-      (is (= 0 (:exit (apt-repo/apt-repo :present {:repo "ppa:ondrej/php"}))))
-      (is (= 255 (:exit (apt-repo/apt-repo :absent {:repo "ppa:ondrej/php"}))))
-      (is (= 0 (:exit (apt-repo/apt-repo :absent {:repo "ppa:ondrej/php"}))))))))
+        (is (= 255 (:exit (apt-repo/apt-repo :present {:repo "ppa:ondrej/php"}))))
+        (is (= 0 (:exit (apt-repo/apt-repo :present {:repo "ppa:ondrej/php"}))))
+        (is (= 255 (:exit (apt-repo/apt-repo :absent {:repo "ppa:ondrej/php"}))))
+        (is (= 0 (:exit (apt-repo/apt-repo :absent {:repo "ppa:ondrej/php"})))))))))

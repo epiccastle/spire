@@ -13,14 +13,15 @@
             [pod.epiccastle.spire.state :as state]
             ))
 
-(deftest authorized-keys
-  (binding [state/output-module :silent]
-    (transport/ssh
-     {:hostname conf/hostname
-      :username conf/username}
-     (sudo/sudo-user
-      {:password conf/sudo-password}
+(when conf/sudo?
+  (deftest authorized-keys
+    (binding [state/output-module :silent]
+      (transport/ssh
+       {:hostname conf/hostname
+        :username conf/username}
+       (sudo/sudo-user
+        {:password conf/sudo-password}
 
-      (let [{:keys [exit out err out-lines result]} (authorized-keys/authorized-keys :get {:user conf/username})]
-        (is (zero? exit))
-        (is (= :ok result)))))))
+        (let [{:keys [exit out err out-lines result]} (authorized-keys/authorized-keys :get {:user conf/username})]
+          (is (zero? exit))
+          (is (= :ok result))))))))

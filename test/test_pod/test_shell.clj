@@ -13,31 +13,32 @@
             [pod.epiccastle.spire.state :as state]
             ))
 
-(deftest sudo-shell
-  (binding [state/output-module :silent]
-    (transport/ssh
-     {:hostname conf/hostname
-      :username conf/username}
-     (sudo/sudo-user
-      {:password conf/sudo-password}
-      (let [{:keys [exit out err]} (shell/shell {:cmd "whoami; echo a 1>&2; exit 3"
-                                                 :print true
-                                                 :ok-exit (fn [code] (= code 3))})]
-        (is (= exit 3))
-        (is (= out "root\n"))
-        (is (= err (str "[sudo] password for " conf/username ": a\n")))
-        )))
+(when conf/sudo?
+  (deftest sudo-shell
+    (binding [state/output-module :silent]
+      (transport/ssh
+       {:hostname conf/hostname
+        :username conf/username}
+       (sudo/sudo-user
+        {:password conf/sudo-password}
+        (let [{:keys [exit out err]} (shell/shell {:cmd "whoami; echo a 1>&2; exit 3"
+                                                   :print true
+                                                   :ok-exit (fn [code] (= code 3))})]
+          (is (= exit 3))
+          (is (= out "root\n"))
+          (is (= err (str "[sudo] password for " conf/username ": a\n")))
+          )))
 
-    (transport/local
-     (sudo/sudo-user
-      {:password conf/sudo-password}
-      (let [{:keys [out exit err]} (shell/shell {:cmd "whoami; echo a 1>&2; exit 3"
-                                                 :print true
-                                                 :ok-exit (fn [code] (= code 3))})]
-        (is (= exit 3))
-        (is (= out "root\n"))
-        (is (= err "a\n"))
-        )))))
+      (transport/local
+       (sudo/sudo-user
+        {:password conf/sudo-password}
+        (let [{:keys [out exit err]} (shell/shell {:cmd "whoami; echo a 1>&2; exit 3"
+                                                   :print true
+                                                   :ok-exit (fn [code] (= code 3))})]
+          (is (= exit 3))
+          (is (= out "root\n"))
+          (is (= err "a\n"))
+          ))))))
 
 (deftest shell
   (binding [state/output-module :silent]

@@ -18,20 +18,20 @@
     (transport/ssh
      {:hostname conf/hostname
       :username conf/username}
-     (sudo/sudo-user
-      {:password conf/sudo-password}
+     #_ (sudo/sudo-user
+      {:password conf/sudo-password})
 
-      (let [{:keys [exit out err out-lines] :as result} (curl/curl {:url "https://epiccastle.io"})]
-        (is (= #{:status :headers :decoded :body :exit :result} (into #{} (keys result))))
-        (is (zero? exit)))
+     (let [{:keys [exit out err out-lines] :as result} (curl/curl {:url "https://epiccastle.io"})]
+       (is (= #{:status :headers :decoded :body :exit :result} (into #{} (keys result))))
+       (is (zero? exit)))
 
-      (let [{:keys [exit out err decoded]}
-            (curl/curl
-             {:url "https://tools.learningcontainer.com/sample-json.json"
-              :decode-opts {:key-fn keyword}})]
-        (is (zero? exit))
-        (is (get decoded :address))
-        (is (get decoded :phoneNumbers))
-        )
+     (let [{:keys [exit out err decoded]}
+           (curl/curl
+            {:url "https://tools.learningcontainer.com/sample-json.json"
+             :decode-opts {:key-fn keyword}})]
+       (is (zero? exit))
+       (is (get decoded :address))
+       (is (get decoded :phoneNumbers))
+       )
 
-      ))))
+      )))

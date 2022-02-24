@@ -14,14 +14,15 @@
             [pod.epiccastle.spire.state :as state]
             ))
 
-(deftest test-user
-  (binding [state/output-module :silent]
-    (transport/ssh
-     {:hostname conf/hostname
-      :username conf/username}
+(when conf/sudo?
+  (deftest test-user
+    (binding [state/output-module :silent]
+      (transport/ssh
+       {:hostname conf/hostname
+        :username conf/username}
 
-     (sudo/sudo-user
-      {:password conf/sudo-password}
-      (is (= :ok (:result (user/user :absent {:name "088527a000c03b0057d5f77757c59dbd"}))))
-      (is (= :ok (:result (user/user :present {:name conf/username}))))
-      ))))
+       (sudo/sudo-user
+        {:password conf/sudo-password}
+        (is (= :ok (:result (user/user :absent {:name "088527a000c03b0057d5f77757c59dbd"}))))
+        (is (= :ok (:result (user/user :present {:name conf/username}))))
+        )))))
