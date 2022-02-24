@@ -178,6 +178,14 @@ There will be many bugs at this early stage. Especially on different target mach
 
 ### Financial Contributors
 
+#### Babashka Pod Support
+
+The work to make spire available as a babashka pod was genorously funded by:
+
+<a href="https://www.adgoji.com/"><img src="https://user-images.githubusercontent.com/265500/155489003-fa5d6a6e-1ec5-4c8e-b6b4-9efd81611b89.png"></a>
+
+<a href="https://nextjournal.com/"><img src="https://user-images.githubusercontent.com/265500/155488646-aa40245e-6cd9-4f2d-bf32-478c3a2ccf68.png"></a>
+
 #### OpenCollective
 Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/spire/contribute)]
 
