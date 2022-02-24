@@ -141,7 +141,7 @@ Lets connect to localhost and generate some client keys. We can break out some o
                        (install)
                        (generate-keypair))
       client-keys (ssh "root@localhost"
-                       (install) ;; comment out this line if not running debian based linux locally
+                       (install) ;; comment out this line if not running a Debian derivative locally
                        (generate-keypair))]
   {:server server-keys
    :client client-keys})
@@ -167,7 +167,7 @@ wireguard.clj:12 (get-file "publickey") root@159.203.119.225 root@localhost
 
 Now we have all the information we need to setup both the client and server configurations.
 
-**Note** This assumes you are running debian linux as a client and will try to apt-get install wrieguard locally. If you are not running debian linux loaclly, comment out line 18 and install wireguard locally by hand.
+**Note** This assumes you are running Debian Linux or a derivative as a client and will try to apt-get install wireguard locally. If you are not running a Debian derivative locally, comment out line 18 and install wireguard locally by hand.
 
 Change `wireguard.clj` to read:
 
@@ -189,7 +189,7 @@ Change `wireguard.clj` to read:
                        (install)
                        (generate-keypair))
       client-keys (ssh "root@localhost"
-                       (install) ;; comment out this line if not running debian based linux locally
+                       (install) ;; comment out this line if not running a Debian derivative locally
                        (generate-keypair))]
   (ssh "root@159.203.119.225"
        (upload {:content (selmer "wireguard-server.conf"

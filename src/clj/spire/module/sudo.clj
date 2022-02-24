@@ -37,9 +37,9 @@
                exit (prn-str err) (prn-str out))))))
 
 (defn sudo-id
-  "actually escallates privileges using sudo and calls the system
+  "actually escalates privileges using sudo and calls the system
   command `id`. This both tests if the password (if needed) is correct,
-  and gathers user/group data for the escallated session that is then
+  and gathers user/group data for the escalated session that is then
   used to update system facts while in the body of the sudo macro."
   [sudo]
   (let [{:keys [exec-fn exec]} (state/get-shell-context)
@@ -113,7 +113,7 @@
        (sudo-id full-conf#)
 
        (context/binding* [state/shell-context
-                          {:privilege :sudo
+                          {:privileges :sudo
                            :sudo full-conf#
                            :exec (:exec (state/get-shell-context))
                            :exec-fn (:exec-fn (state/get-shell-context))

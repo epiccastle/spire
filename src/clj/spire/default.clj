@@ -30,7 +30,7 @@
           (state/set-default-context!
            host-config
            (transport/get-connection (ssh/host-config-to-connection-key host-config))
-           {:privilege :normal
+           {:privileges :normal
             :exec :ssh
             :exec-fn ssh/ssh-exec
             ;;:shell-fn identity
@@ -61,7 +61,7 @@
     (state/set-default-context!
      host-config
      conn
-     {:privilege :normal
+     {:privileges :normal
       :exec :ssh
       :exec-fn ssh/ssh-exec
       ;;:shell-fn identity
