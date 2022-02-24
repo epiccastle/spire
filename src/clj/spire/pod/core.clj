@@ -210,6 +210,28 @@
 
 
                            ;;
+                           ;; spire.nio
+                           ;;
+                           (utils/make-inlined-namespace
+                            pod.epiccastle.spire.nio
+
+                            (utils/make-inlined-public-fns
+                             spire.nio
+                             {:exclude
+                              #{mode->permissions}})
+
+                            ;; spire side multimethods
+                            [{"name" "set-owner"}
+                             {"name" "set-group"}]
+
+                            (utils/make-inlined-code-set
+                             spire.nio
+                             [permission->mode
+                              mode->permissions]
+                             {:rename-ns ns-renames}))
+
+
+                           ;;
                            ;; spire.utils
                            ;;
                            (utils/make-inlined-namespace
@@ -219,7 +241,11 @@
                              {:exclude #{current-file current-file-parent}}
                              )
                             [{"name" "current-file"
-                              "code" "(defn current-file [] *file*)"}]
+                              "code" "
+(defn current-file []
+  (pod.epiccastle.spire.nio/relativise (System/getProperty \"user.dir\") *file*)
+)
+"}]
                             (utils/make-inlined-code-set
                              spire.utils [current-file-parent
                                           colour-map
@@ -644,27 +670,6 @@
                              )
 
                             )
-
-                           ;;
-                           ;; spire.nio
-                           ;;
-                           (utils/make-inlined-namespace
-                            pod.epiccastle.spire.nio
-
-                            (utils/make-inlined-public-fns
-                             spire.nio
-                             {:exclude
-                              #{mode->permissions}})
-
-                            ;; spire side multimethods
-                            [{"name" "set-owner"}
-                             {"name" "set-group"}]
-
-                            (utils/make-inlined-code-set
-                             spire.nio
-                             [permission->mode
-                              mode->permissions]
-                             {:rename-ns ns-renames}))
 
                            ;;
                            ;; spire.remote
