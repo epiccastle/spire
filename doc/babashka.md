@@ -1,4 +1,4 @@
-# Babashka
+# Babashka pod usage
 
 Spire can be used as a pod from within babashka.
 

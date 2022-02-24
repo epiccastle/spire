@@ -78,6 +78,7 @@ $ spire --nrepl-server PORT
 ## Discussion
 
 [Higher level discussion of the use of spire](doc/discussion.md)
+[Babashka pod usage](doc/babashka.md)
 
 ## Source Code
 
@@ -135,6 +136,23 @@ The test suite consists of some unit tests and some module tests that issue a fu
 $ lein test
 ```
 
+## Running as a babashka pod
+
+Load the pod first. Then require the pod.epiccastle.spire namespaces.
+
+```clojure
+(ns my-project.core
+  (:require [babashka.pods :as pods]))
+
+(pods/load-pod "spire" {:transport :socket})
+
+(require '[pod.epiccastle.spire.transport :as transport]
+         '[pod.epiccastle.spire.module.shell :as shell])
+
+(transport/ssh "user@hostname"
+    (prn (shell/shell {:cmd "hostname"})))
+```
+
 ## Platforms
 
 ### Native Client
@@ -159,7 +177,7 @@ There will be many bugs at this early stage. Especially on different target mach
 
 ## License
 
-Copyright © 2019-2020 Crispin Wellington
+Copyright © 2019-2022 Crispin Wellington
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
