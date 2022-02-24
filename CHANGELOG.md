@@ -3,6 +3,17 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.17] - 2022-02-24
+
+### Fixed
+- add babashka pod support - #51
+- rename curl option :decode? into :decode - #104
+- shell non zero exit code doesn't fail - #112
+- line-in-file :string-match has problems with a colon - #113
+- add a :ok-exit and :changed-exit to shell to test the return code - #114
+- Cannot create a new user - #119
+- [shell module] :ok-exit doesn't affect result - #126
+
 ## [0.1.0-alpha.16] - 2022-01-14
 
 ### Fixed
@@ -193,7 +204,9 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.15...HEAD
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.17...HEAD
+[0.1.0-alpha.15]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.16...v0.1.0-alpha.17
+[0.1.0-alpha.15]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.15...v0.1.0-alpha.16
 [0.1.0-alpha.15]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.14...v0.1.0-alpha.15
 [0.1.0-alpha.14]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.13...v0.1.0-alpha.14
 [0.1.0-alpha.13]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.12...v0.1.0-alpha.13
