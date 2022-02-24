@@ -176,6 +176,30 @@ This is the operating systems you will be provisioning, that the spire modules a
 
 There will be many bugs at this early stage. Especially on different target machines. Please open tickets for any issues you find.
 
+### Financial Contributors
+
+#### OpenCollective
+Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/spire/contribute)]
+
+##### Individuals
+
+<a href="https://opencollective.com/spire"><img src="https://opencollective.com/spire/individuals.svg?width=890"></a>
+
+##### Organizations
+
+Support this project with your organization. Your logo will show up here with a link to your website. [[Contribute](https://opencollective.com/spire/contribute)]
+
+<a href="https://opencollective.com/spire/organization/0/website"><img src="https://opencollective.com/spire/organization/0/avatar.svg"></a>
+<a href="https://opencollective.com/spire/organization/1/website"><img src="https://opencollective.com/spire/organization/1/avatar.svg"></a>
+<a href="https://opencollective.com/spire/organization/2/website"><img src="https://opencollective.com/spire/organization/2/avatar.svg"></a>
+<a href="https://opencollective.com/spire/organization/3/website"><img src="https://opencollective.com/spire/organization/3/avatar.svg"></a>
+<a href="https://opencollective.com/spire/organization/4/website"><img src="https://opencollective.com/spire/organization/4/avatar.svg"></a>
+<a href="https://opencollective.com/spire/organization/5/website"><img src="https://opencollective.com/spire/organization/5/avatar.svg"></a>
+<a href="https://opencollective.com/spire/organization/6/website"><img src="https://opencollective.com/spire/organization/6/avatar.svg"></a>
+<a href="https://opencollective.com/spire/organization/7/website"><img src="https://opencollective.com/spire/organization/7/avatar.svg"></a>
+<a href="https://opencollective.com/spire/organization/8/website"><img src="https://opencollective.com/spire/organization/8/avatar.svg"></a>
+<a href="https://opencollective.com/spire/organization/9/website"><img src="https://opencollective.com/spire/organization/9/avatar.svg"></a>
+
 ## License
 
 Copyright © 2019-2022 Crispin Wellington
