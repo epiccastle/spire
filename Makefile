@@ -181,4 +181,5 @@ jar-help:
 	java -Djava.library.path="." -jar target/uberjar/spire-$(VERSION)-standalone.jar -h
 
 tests-pod:
+	rm -rf /tmp/foo #TODO: improve tests so this clean isn't needed
 	umask 022 && BABASHKA_CLASSPATH=test bb test/test_pod/runner.clj
