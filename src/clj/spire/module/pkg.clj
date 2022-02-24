@@ -126,11 +126,11 @@
 
 
 (utils/defmodule pkg* [command opts]
-  [host-string session]
+  [host-string session {:keys [exec-fn sudo] :as shell-context}]
   (or
    (preflight command opts)
    (let [result (->>
-                 (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {})
+                 (ssh/ssh-exec session (make-script command opts) "" "UTF-8" {:sudo sudo})
                  (process-result command opts))]
      (facts/update-facts-paths!)
      result)))
