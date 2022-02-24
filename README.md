@@ -78,6 +78,7 @@ $ spire --nrepl-server PORT
 ## Discussion
 
 [Higher level discussion of the use of spire](doc/discussion.md)
+
 [Babashka pod usage](doc/babashka.md)
 
 ## Source Code
