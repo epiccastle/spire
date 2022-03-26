@@ -155,7 +155,7 @@ else
     EXIT=-1
   fi
 
-  COMMAND="useradd${ARGS} '$NAME'"
+  COMMAND="useradd${ARGS} -N '$NAME'"
 fi
 
 # echo "command:"
