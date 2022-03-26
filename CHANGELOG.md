@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.0-alpha.18] - 2022-03-26
+
+### Fixed
+- debug info output still enabled in spire core when copying - #140
+- upload with sudo broken in alpha.17 - #142
+
 ## [0.1.0-alpha.17] - 2022-02-24
 
 ### Fixed
@@ -204,9 +210,10 @@ All notable changes to this project will be documented in this file. This change
 ## [0.1.0-alpha.1] - 2020-02-26
 Initial release
 
-[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.17...HEAD
-[0.1.0-alpha.15]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.16...v0.1.0-alpha.17
-[0.1.0-alpha.15]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.15...v0.1.0-alpha.16
+[Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.18...HEAD
+[0.1.0-alpha.18]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.17...v0.1.0-alpha.18
+[0.1.0-alpha.17]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.16...v0.1.0-alpha.17
+[0.1.0-alpha.16]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.15...v0.1.0-alpha.16
 [0.1.0-alpha.15]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.14...v0.1.0-alpha.15
 [0.1.0-alpha.14]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.13...v0.1.0-alpha.14
 [0.1.0-alpha.13]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.12...v0.1.0-alpha.13
