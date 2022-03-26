@@ -240,9 +240,9 @@
                       (format "bash -c 'umask 0000; %s'" cmd))
                      (stdin-fn in) :stream opts)
             (do
-              (prn 1)
-              (exec-fn session (str "umask 0000;" (shell-fn cmd)) (stdin-fn in) :stream opts)))
-          _ (prn 2)
+              ;;(prn 1)
+              (exec-fn session (format "bash -c 'umask 0000; %s'" (shell-fn cmd)) (stdin-fn in) :stream opts)))
+          ;;_ (prn 2)
           recv out-stream]
       (debugf "scp-to %s %s" (string/join " " local-paths) remote-path)
       (debug "Receive initial ACK")
