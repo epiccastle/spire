@@ -73,8 +73,6 @@
 
 (defn write-bytes [stream base64]
   (let [a (decode-base64 base64)]
-    (prn base64)
-    (prn stream a 0 (count a))
     (.write stream a 0 (count a))))
 
 
