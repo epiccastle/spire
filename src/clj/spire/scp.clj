@@ -11,13 +11,13 @@
 
 ;; https://web.archive.org/web/20170215184048/https://blogs.oracle.com/janp/entry/how_the_scp_protocol_works
 
-(comment)
-(def debug println)
-(def debugf (comp println format))
-
 (comment
-  (defmacro debug [& args])
-  (defmacro debugf [& args]))
+  (def debug println)
+  (def debugf (comp println format)))
+
+(comment)
+(defmacro debug [& args])
+(defmacro debugf [& args])
 
 (defn- scp-send-ack
   "Send acknowledgement to the specified output stream"
