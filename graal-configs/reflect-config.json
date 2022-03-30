@@ -164,6 +164,13 @@
         "allPublicMethods": true
     },
     {
+        "name": "com.jcraft.jsch.jce.AES128GCM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "com.jcraft.jsch.jce.AES192CBC",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
@@ -192,6 +199,20 @@
         "allPublicMethods": true
     },
     {
+        "name": "com.jcraft.jsch.jce.AES256GCM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.AESGCM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "com.jcraft.jsch.jce.ARCFOUR",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
@@ -214,6 +235,13 @@
     },
     {
         "name": "com.jcraft.jsch.jce.BlowfishCBC",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.BlowfishCTR",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
         "allDeclaredMethods": true,
@@ -276,6 +304,20 @@
         "allPublicMethods": true
     },
     {
+        "name": "com.jcraft.jsch.jce.HMACMD596ETM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.HMACMD5ETM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "com.jcraft.jsch.jce.HMACSHA1",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
@@ -290,6 +332,27 @@
         "allPublicMethods": true
     },
     {
+        "name": "com.jcraft.jsch.jce.HMACSHA196ETM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.HMACSHA1ETM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.HMACSHA224SSHCOM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "com.jcraft.jsch.jce.HMACSHA256",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
@@ -297,7 +360,49 @@
         "allPublicMethods": true
     },
     {
+        "name": "com.jcraft.jsch.jce.HMACSHA2562SSHCOM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.HMACSHA256ETM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.HMACSHA256SSHCOM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.HMACSHA384SSHCOM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "com.jcraft.jsch.jce.HMACSHA512",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.HMACSHA512ETM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.HMACSHA512SSHCOM",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
         "allDeclaredMethods": true,
@@ -353,14 +458,7 @@
         "allPublicMethods": true
     },
     {
-        "name": "com.jcraft.jsch.jce.SHA256",
-        "allDeclaredConstructors": true,
-        "allPublicConstructors": true,
-        "allDeclaredMethods": true,
-        "allPublicMethods": true
-    },
-    {
-        "name": "com.jcraft.jsch.jce.SHA384",
+        "name": "com.jcraft.jsch.jce.SHA224",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
         "allDeclaredMethods": true,
@@ -395,7 +493,70 @@
         "allPublicMethods": true
     },
     {
+        "name": "com.jcraft.jsch.jce.SignatureECDSA256",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.SignatureECDSA384",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.SignatureECDSA512",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
         "name": "com.jcraft.jsch.jce.SignatureRSA",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.SignatureRSASHA224SSHCOM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.SignatureRSASHA256",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.SignatureRSASHA256SSHCOM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.SignatureRSASHA384SSHCOM",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.SignatureRSASHA512",
+        "allDeclaredConstructors": true,
+        "allPublicConstructors": true,
+        "allDeclaredMethods": true,
+        "allPublicMethods": true
+    },
+    {
+        "name": "com.jcraft.jsch.jce.SignatureRSASHA512SSHCOM",
         "allDeclaredConstructors": true,
         "allPublicConstructors": true,
         "allDeclaredMethods": true,
