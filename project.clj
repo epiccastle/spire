@@ -23,7 +23,7 @@
                  [org.clojure/data.json "1.0.0"]
                  [cheshire "5.10.0"]
 
-                 [com.jcraft/jsch "0.1.55"]
+                 [com.github.mwiede/jsch "0.2.0"]
 
                  ;; base64 and password crypt
                  [commons-codec/commons-codec "1.12"]

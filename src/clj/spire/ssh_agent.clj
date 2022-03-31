@@ -72,7 +72,7 @@
         (throw (ex-info "improper response code from ssh-agent" {:code (first read)}))))))
 
 
-(defn sign-request [sock blob data]
+(defn sign-request [sock blob data algorithm]
   ;; write request query
   (send-query
    sock
@@ -80,7 +80,10 @@
     (pack/pack-byte (codes :sign-request))
     (pack/pack-data blob)
     (pack/pack-data data)
-    (pack/pack-int 0)))
+    (pack/pack-int (case algorithm
+                     "rsa-sha2-256" 0x2
+                     "rsa-sha2-512" 0x4
+                     0x0))))
 
   ;; read response
   (let [read (byte-array 4)]
@@ -116,10 +119,10 @@
     (getPublicKeyBlob []
       (when debug (prn 'make-identity 'getPublicKeyBlob))
       (byte-array blob))
-    (getSignature [data]
-      (when debug (prn 'make-identity 'getSignature data))
+    (getSignature [data algorithm]
+      (when debug (prn 'make-identity 'getSignature data algorithm))
       (let [sock (open-auth-socket)
-            signature (sign-request sock blob data)]
+            signature (sign-request sock blob data algorithm)]
         (close-auth-socket sock)
         (byte-array signature)))
     (getName []
