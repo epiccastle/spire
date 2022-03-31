@@ -115,8 +115,6 @@
                             state/shell-context {:privileges :normal
                                                  :exec :ssh
                                                  :exec-fn ssh/ssh-exec
-                                                 ;;:shell-fn identity
-                                                 ;;:stdin-fn identity
                                                  }]
                            (facts/update-facts!)
                            (do ~@body)))
@@ -141,8 +139,6 @@
                                       state/shell-context {:privileges :normal
                                                            :exec :ssh
                                                            :exec-fn ssh/ssh-exec
-                                                           ;;:shell-fn identity
-                                                           ;;:stdin-fn identity
                                                            }]
                                      (facts/update-facts!)
                                      (let [result# (do ~@body)]
@@ -162,7 +158,5 @@
                       state/shell-context {:privileges :normal
                                            :exec :local
                                            :exec-fn local/local-exec
-                                           ;;:shell-fn identity
-                                           ;;:stdin-fn identity
                                            }]
                      (do ~@body)))
