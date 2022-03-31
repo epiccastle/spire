@@ -162,10 +162,13 @@
 Requires hostname.  You can also pass values for :username, :password and :port
 keys.  All other option key pairs will be passed as SSH config options."
   [^JSch agent hostname
-   {:keys [port username password identity passphrase private-key public-key] :or {port 22} :as options}]
+   {:keys [port username password identity passphrase private-key public-key jsch-options]
+    :or {port 22
+         jsch-options {}}
+    :as options}]
   (when debug (prn 'make-session agent hostname options))
   (let [username (or username (System/getProperty "user.name"))
-        session-options (select-keys options [:agent-forwarding :strict-host-key-checking :accept-host-key])
+        session-options (select-keys options [:agent-forwarding :strict-host-key-checking :accept-host-key :jsch-options])
         session (.getSession agent username hostname port)]
     (when password (.setPassword session password))
     ;; jsch.addIdentity(chooser.getSelectedFile().getAbsolutePath())
@@ -192,6 +195,86 @@ keys.  All other option key pairs will be passed as SSH config options."
                                                 true "yes"
                                                 false "no"
                                                 (name v)))))
+
+    ;; jsch-options
+    (doseq [[k v] jsch-options]
+      (let [fs
+            {:kex #(.setConfig %1 "kex" %2)
+             :server-host-key #(.setConfig %1 "server_host_key" %2)
+             :prefer-known-host-key-types #(.setConfig %1 "server_host_key" %2)
+             :enable-server-sig-algs #(.setConfig %1 "enable_server_sig_algs" %2)
+             :cipher #(do
+                        (.setConfig %1 "cipher.s2c" %2)
+                        (.setConfig %1 "cipher.c2s" %2))
+             :cipher-s2c #(.setConfig %1 "cipher.s2c" %2)
+             :cipher-c2s #(.setConfig %1 "cipher.c2s" %2)
+             :mac #(do
+                     (.setConfig %1 "mac.s2c" %2)
+                     (.setConfig %1 "mac.c2s" %2))
+             :mac-s2c #(.setConfig %1 "mac.s2c" %2)
+             :mac-c2s #(.setConfig %1 "mac.c2s" %2)
+             :compression #(do
+                             (.setConfig %1 "compression.s2c" %2)
+                             (.setConfig %1 "compression.c2s" %2))
+             :compression-s2c #(.setConfig %1 "compression.s2c" %2)
+             :compression-c2s #(.setConfig %1 "compression.c2s" %2)
+             :lang #(do
+                      (.setConfig %1 "lang.s2c" %2)
+                      (.setConfig %1 "lang.c2s" %2))
+             :lang-s2c #(.setConfig %1 "lang.s2c" %2)
+             :lang-c2s #(.setConfig %1 "lang.c2s" %2)
+             :dhgex-min #(.setConfig %1 "dhgex_min" %2)
+             :dhgex-max #(.setConfig %1 "dhgex_max" %2)
+             :dhgex-preferred #(.setConfig %1 "dhgex_preferred" %2)
+             :compression-level #(.setConfig %1 "compression_level" %2)
+             :preferred-authentications #(.setConfig %1 "PreferredAuthentications" %2)
+             :client-pubkey #(.setConfig %1 "PubkeyAcceptedAlgorithms" %2)
+             :check-ciphers #(.setConfig %1 "CheckCiphers" %2)
+             :check-macs #(.setConfig %1 "CheckMacs" %2)
+             :check-kexes #(.setConfig %1 "CheckKexes" %2)
+             :check-signatures #(.setConfig %1 "CheckSignatures" %2)
+             :fingerprint-hash #(.setConfig %1 "FingerprintHash" %2)
+             :max-auth-tries #(.setConfig %1 "MaxAuthTries" %2)
+
+             :kex-fn #(.setConfig %1 "kex" (%2 (.getConfig "kex")))
+             :server-host-key-fn #(.setConfig %1 "server_host_key" (%2 (.getConfig "server_host_key")))
+             :prefer-known-host-key-types-fn #(.setConfig %1 "server_host_key" (%2 (.getConfig "server_host_key")))
+             :enable-server-sig-algs-fn #(.setConfig %1 "enable_server_sig_algs" (%2 (.getConfig "enable_server_sig_algs")))
+             :cipher-fn #(do
+                           (.setConfig %1 "cipher.s2c" (%2 (.getConfig "cipher.s2c")))
+                           (.setConfig %1 "cipher.c2s" (%2 (.getConfig "cipher.c2s"))))
+             :cipher-s2c-fn #(.setConfig %1 "cipher.s2c" (%2 (.getConfig "cipher.s2c")))
+             :cipher-c2s-fn #(.setConfig %1 "cipher.c2s" (%2 (.getConfig "cipher.c2s")))
+             :mac-fn #(do
+                        (.setConfig %1 "mac.s2c" (%2 (.getConfig "mac.s2c")))
+                        (.setConfig %1 "mac.c2s" (%2 (.getConfig "mac.c2s"))))
+             :mac-s2c-fn #(.setConfig %1 "mac.s2c" (%2 (.getConfig "mac.s2c")))
+             :mac-c2s-fn #(.setConfig %1 "mac.c2s" (%2 (.getConfig "mac.c2s")))
+             :compression-fn #(do
+                                (.setConfig %1 "compression.s2c" (%2 (.getConfig "compression.s2c")))
+                                (.setConfig %1 "compression.c2s" (%2 (.getConfig "compression.c2s"))))
+             :compression-s2c-fn #(.setConfig %1 "compression.s2c" (%2 (.getConfig "compression.s2c")))
+             :compression-c2s-fn #(.setConfig %1 "compression.c2s" (%2 (.getConfig "compression.c2s")))
+             :lang-fn #(do
+                         (.setConfig %1 "lang.s2c" (%2 (.getConfig "lang.s2c")))
+                         (.setConfig %1 "lang.c2s" (%2 (.getConfig "lang.c2s"))))
+             :lang-s2c-fn #(.setConfig %1 "lang.s2c" (%2 (.getConfig "lang.s2c")))
+             :lang-c2s-fn #(.setConfig %1 "lang.c2s" (%2 (.getConfig "lang.c2s")))
+             :dhgex-min-fn #(.setConfig %1 "dhgex_min" (%2 (.getConfig "dhgex_min")))
+             :dhgex-max-fn #(.setConfig %1 "dhgex_max" (%2 (.getConfig "dhgex_max")))
+             :dhgex-preferred-fn #(.setConfig %1 "dhgex_preferred" (%2 (.getConfig "dhgex_preferred")))
+             :compression-level-fn #(.setConfig %1 "compression_level" (%2 (.getConfig "compression_level")))
+             :preferred-authentications-fn #(.setConfig %1 "PreferredAuthentications" (%2 (.getConfig "PreferredAuthentications")))
+             :client-pubkey-fn #(.setConfig %1 "PubkeyAcceptedAlgorithms" (%2 (.getConfig "PubkeyAcceptedAlgorithms")))
+             :check-ciphers-fn #(.setConfig %1 "CheckCiphers" (%2 (.getConfig "CheckCiphers")))
+             :check-macs-fn #(.setConfig %1 "CheckMacs" (%2 (.getConfig "CheckMacs")))
+             :check-kexes-fn #(.setConfig %1 "CheckKexes" (%2 (.getConfig "CheckKexes")))
+             :check-signatures-fn #(.setConfig %1 "CheckSignatures" (%2 (.getConfig "CheckSignatures")))
+             :fingerprint-hash-fn #(.setConfig %1 "FingerprintHash" (%2 (.getConfig "FingerprintHash")))
+             :max-auth-tries-fn #(.setConfig %1 "MaxAuthTries" (%2 (.getConfig "MaxAuthTries")))}
+            f (fs k)]
+        (when (and f (not (nil? v)))
+          (f v))))
 
     (when debug (prn 'make-session 'returning session))
 
