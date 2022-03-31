@@ -70,6 +70,7 @@
   'test-pod.test-sysctl
   'test-pod.test-user
   'test-pod.test-service
-  (when conf/sudo? 'test-pod.test-sudo)]
+  (when conf/sudo? 'test-pod.test-sudo)
+  ]
  (filter identity)
  (apply test/run-tests))

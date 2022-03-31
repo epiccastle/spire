@@ -14,8 +14,9 @@
             [pod.epiccastle.spire.state :as state]
             ))
 
-(when conf/sudo?
-  (deftest test-user
+
+(deftest test-user
+  (when conf/sudo?
     (binding [state/output-module :silent]
       (transport/ssh
        {:hostname conf/hostname

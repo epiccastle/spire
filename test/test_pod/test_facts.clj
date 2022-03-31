@@ -26,8 +26,8 @@
 
 (deftest fetch-facts
   (let [facts (facts/fetch-facts)]
-    (is (= (keys facts)
-           [:system :paths :uname :ssh-config :shell :user]))
+    (is (= (into #{} (keys facts))
+           #{:system :paths :uname :ssh-config :shell :user}))
 
     (is (= (:ssh-config facts)
            {:key "local"}))))

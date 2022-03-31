@@ -174,13 +174,14 @@ Codename:	bionic
 (deftest current-file
   (is (string/ends-with?
        (utils/current-file)
-       "/test/test_pod/runner.clj")) ;; deftest runs inside runner
+       "test/test_pod/runner.clj")) ;; deftest runs inside runner
   (is (string/ends-with?
        (utils/current-file-parent)
-       "/test/test_pod")))
+       "test/test_pod")))
+
 (is (string/ends-with?
      (utils/current-file)
-     "/test/test_pod/test_utils.clj")) ;; outside deftest does not
+     "test/test_pod/test_utils.clj")) ;; outside deftest does not
 
 (deftest defmodule
   (is (= (utils/defmodule foo [args] [pipeline args] (println "foo"))
