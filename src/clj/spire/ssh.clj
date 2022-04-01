@@ -168,7 +168,7 @@ keys.  All other option key pairs will be passed as SSH config options."
     :as options}]
   (when debug (prn 'make-session agent hostname options))
   (let [username (or username (System/getProperty "user.name"))
-        session-options (select-keys options [:agent-forwarding :strict-host-key-checking :accept-host-key :jsch-options])
+        session-options (select-keys options [:agent-forwarding :strict-host-key-checking :accept-host-key])
         session (.getSession agent username hostname port)]
     (when password (.setPassword session password))
     ;; jsch.addIdentity(chooser.getSelectedFile().getAbsolutePath())
