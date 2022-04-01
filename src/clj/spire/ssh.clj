@@ -274,7 +274,7 @@ keys.  All other option key pairs will be passed as SSH config options."
              :max-auth-tries-fn #(.setConfig %1 "MaxAuthTries" (%2 (.getConfig "MaxAuthTries")))}
             f (fs k)]
         (when (and f (not (nil? v)))
-          (f v))))
+          (f session v))))
 
     (when debug (prn 'make-session 'returning session))
 
