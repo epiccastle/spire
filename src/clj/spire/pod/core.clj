@@ -555,6 +555,8 @@
                              spire.state
                              {:exclude
                               #{
+                                ssh-connections
+                                default-context
                                 host-config
                                 connection
                                 shell-context
