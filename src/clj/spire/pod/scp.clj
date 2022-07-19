@@ -89,7 +89,7 @@
                   ;; we will get an immediate EOF when its a zero byte file
                   (do
                     (debug "EOF")
-                    (progress-fn file offset size 1.0 context))
+                    (progress-fn (make-progress-file-info-hashmap file) offset size 1.0 context))
 
                   ;; some btyes read
                   (let [new-offset (+ bytes-read offset)]
@@ -100,15 +100,32 @@
                         (debug "full")
                         (io/copy chunk send)
                         (.flush send)
-                        (recur new-offset (progress-fn file new-offset size (float (/ new-offset size)) context)))
+                        (recur new-offset (progress-fn
+                                           (make-progress-file-info-hashmap file)
+                                           new-offset
+                                           size
+                                           (float (/ new-offset size))
+                                           context)))
 
                       ;; last partial chunk
                       (do
                         (debug "partial")
                         (io/copy (byte-array (take bytes-read chunk)) send)
                         (.flush send)
-                        (debug "progress..." progress-fn file new-offset size (float (/ new-offset size)) context)
-                        (let [p (progress-fn file new-offset size (float (/ new-offset size)) context)]
+                        (debug "progress..."
+                               {:progress-fn progress-fn
+                                :file file
+                                :new-offset new-offset
+                                :size size
+                                :percent (float (/ new-offset size))
+                                :context context})
+                        (let [p (progress-fn
+                                 (make-progress-file-info-hashmap file)
+                                 new-offset
+                                 size
+                                 (float (/ new-offset size))
+                                 context)]
+                          (debug "progress called")
                           (debug p)
                           p))))))))
           ;; no progress callback
@@ -149,14 +166,14 @@
                       (debug "full")
                       (io/copy chunk send)
                       (.flush send)
-                      (recur new-offset (progress-fn data new-offset size (float (/ new-offset size)) context)))
+                      (recur new-offset (progress-fn (make-progress-file-info-hashmap data) new-offset size (float (/ new-offset size)) context)))
 
                     ;; last partial chunk
                     (do
                       (debug "partial")
                       (io/copy (byte-array (take bytes-read chunk)) send)
                       (.flush send)
-                      (progress-fn data new-offset size (float (/ new-offset size)) context))))))
+                      (progress-fn (make-progress-file-info-hashmap data) new-offset size (float (/ new-offset size)) context))))))
             ;; no progress callback
             (do
               (io/copy (if (bytes? data)
@@ -434,14 +451,14 @@
                   (recur
                    new-offset
                    (if progress-fn
-                     (progress-fn file new-offset length (float (/ new-offset length)) context)
+                     (progress-fn (make-progress-file-info-hashmap file) new-offset length (float (/ new-offset length)) context)
                      context)))
 
                 ;; last chunk written
                 (do
                   (debug 4)
                   (let [res (if progress-fn
-                              (progress-fn file new-offset length
+                              (progress-fn (make-progress-file-info-hashmap file) new-offset length
                                            (if (pos? length)
                                              (float (/ new-offset length))
                                              1.0)

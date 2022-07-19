@@ -760,6 +760,7 @@
                               scp-sink-file
                               scp-sink
                               scp-from
+                              make-progress-file-info-hashmap
                               ]
                              {:rename-ns ns-renames
                               :rename-symbol {OutputStream java.io.OutputStream

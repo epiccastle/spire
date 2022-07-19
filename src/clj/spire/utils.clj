@@ -161,21 +161,25 @@
       (format "%dh%02dm%02ds" h m s))))
 
 (defmulti content-size type)
+(defmethod content-size clojure.lang.PersistentArrayMap [f] (:length f))
 (defmethod content-size java.io.File [f] (.length ^java.io.File f))
 (defmethod content-size java.lang.String [f] (count (.getBytes ^String f)))
 (defmethod content-size (Class/forName "[B") [f] (count f))
 
 (defmulti content-display-name type)
+(defmethod content-display-name clojure.lang.PersistentArrayMap [f] (:name f))
 (defmethod content-display-name java.io.File [f] (.getName ^java.io.File f))
 (defmethod content-display-name java.lang.String [f] "[String Data]")
 (defmethod content-display-name (Class/forName "[B") [f] "[Byte Array]")
 
 (defmulti content-recursive? type)
+(defmethod content-recursive? clojure.lang.PersistentArrayMap [f] (= :directory (:type f)))
 (defmethod content-recursive? java.io.File [f] (.isDirectory ^java.io.File f))
 (defmethod content-recursive? java.lang.String [f] false)
 (defmethod content-recursive? (Class/forName "[B") [f] false)
 
 (defmulti content-file? type)
+(defmethod content-file? clojure.lang.PersistentArrayMap [f] (= :file (:type f)))
 (defmethod content-file? java.io.File [f] (.isFile ^java.io.File f))
 (defmethod content-file? java.lang.String [f] false)
 (defmethod content-file? (Class/forName "[B") [f] false)
@@ -265,7 +269,8 @@
   "given:
 
   `file`: The object currently being copied. A java.io.File, a string
-  of content, a byte array, or something else perhaps.
+  of content, a byte array. For serialisation over the pod boundary
+  it can be a hashmap with (with keys :type, :name, :path, :length)
 
   `bytes`: How many bytes of this file have been transfered so far.
 
