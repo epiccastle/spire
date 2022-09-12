@@ -103,7 +103,7 @@ jobs:
 
   mac:
     macos:
-      xcode: "12.0.0"
+      xcode: "14.0.0"
     environment:
       GRAALVM_HOME: /Users/distiller/graalvm-ce-java11-21.3.0/Contents/Home
       GRAALVM: /Users/distiller/graalvm-ce-java11-21.3.0/Contents/Home
