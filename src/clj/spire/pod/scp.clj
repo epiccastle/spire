@@ -53,6 +53,29 @@
   (scp-receive-ack in)
   (debug "Received ACK"))
 
+(defn make-progress-file-info-hashmap [d]
+  (cond
+    (instance? String d)
+    {:type :string
+     :name "[String Data]"
+     :length (count (.getBytes d))}
+
+    (instance? (Class/forName "[B") d)
+    {:type :byte-array
+     :name "[Byte Array]"
+     :length (count d)}
+
+    (instance? java.io.File d)
+    {:type (cond
+             (.isFile d)
+             :file
+
+             (.isDirectory d)
+             :directory)
+     :name (.getName d)
+     :path (.getPath d)
+     :length (.length d)})
+  )
 
 (defn- scp-copy-file
   "Send acknowledgement to the specified output stream"
