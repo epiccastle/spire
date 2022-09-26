@@ -109,6 +109,7 @@
         _ (spit port-file
                 (str port "\n"))
         socket (.accept server)
+        _ (.setTcpNoDelay socket true)
         in (PushbackInputStream. (.getInputStream socket))
         out (.getOutputStream socket)
         ]
