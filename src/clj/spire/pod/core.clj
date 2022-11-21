@@ -103,11 +103,9 @@
         port (.getLocalPort server)
         pid (.pid (java.lang.ProcessHandle/current))
         port-file (io/file (str ".babashka-pod-" pid ".port"))
-        _ (.addShutdownHook (Runtime/getRuntime)
-                            (Thread. (fn []
-                                       (.delete port-file))))
         _ (spit port-file
                 (str port "\n"))
+        _ (.deleteOnExit port-file)
         socket (.accept server)
         in (PushbackInputStream. (.getInputStream socket))
         out (.getOutputStream socket)
