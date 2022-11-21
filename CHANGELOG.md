@@ -3,6 +3,22 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## [0.1.2] - 2022-11-21
+
+### Fixed
+- use TCP NO_DELAY on socket for increased speed
+- Correctly clean up .babashka-pod files - #153
+
+## [0.1.1] - 2022-09-12
+
+### Fixed
+- BB pod - upload raises exception: Message: No reader function for tag object - #151
+- add ssh connection options to allow setting of JSch connection values - #148
+- passing unused option :in to shell causes cast exception - #144
+- pod: NPE in upload module - #141
+- Can't connect with OpenSSH private keys - #53
+- support ed25519 ssh keys - #35
+
 ## [0.1.0-alpha.18] - 2022-03-26
 
 ### Fixed
@@ -211,6 +227,8 @@ All notable changes to this project will be documented in this file. This change
 Initial release
 
 [Unreleased]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.18...HEAD
+[0.1.2]: https://github.com/epiccastle/spire/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.18...v0.1.1
 [0.1.0-alpha.18]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.17...v0.1.0-alpha.18
 [0.1.0-alpha.17]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.16...v0.1.0-alpha.17
 [0.1.0-alpha.16]: https://github.com/epiccastle/spire/compare/v0.1.0-alpha.15...v0.1.0-alpha.16
