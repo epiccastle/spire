@@ -107,6 +107,7 @@
                 (str port "\n"))
         _ (.deleteOnExit port-file)
         socket (.accept server)
+        _ (.setTcpNoDelay socket true)
         in (PushbackInputStream. (.getInputStream socket))
         out (.getOutputStream socket)
         ]
