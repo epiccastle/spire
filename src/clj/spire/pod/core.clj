@@ -105,7 +105,6 @@
         port-file (io/file (str ".babashka-pod-" pid ".port"))
         _ (spit port-file
                 (str port "\n"))
-        _ (.deleteOnExit port-file)
         socket (.accept server)
         _ (.setTcpNoDelay socket true)
         in (PushbackInputStream. (.getInputStream socket))
@@ -129,6 +128,7 @@
             (do
               (write out {"port" port
                           "format" "edn"
+                          "ops" {"shutdown" {}}
                           "namespaces"
                           [
                            ;;
@@ -1195,16 +1195,13 @@
 
                            (utils/make-inlined-namespace
                             pod.epiccastle.spire.selmer
-                            (utils/make-inlined-public-fns spire.selmer))
-
-                           ]
+                            (utils/make-inlined-public-fns spire.selmer))]
                           "id" (read-string id)})
               (recur))
             "load-ns"
-            (do
-              ;;(prn "load-ns")
-              (recur)
-              )
+            (recur)
+            "shutdown"
+            (.delete port-file)
             "invoke"
             (do
               (try
@@ -1234,6 +1231,8 @@
                     (write out reply))))
               (recur))
             (do
+              (debug "unknown operation")
               (write out {"err" (str "unknown op:" (name op))})
               (recur)))))
+
       (catch java.io.EOFException _ nil))))
