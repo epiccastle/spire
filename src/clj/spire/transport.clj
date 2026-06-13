@@ -1,45 +1,25 @@
 (ns spire.transport
-  (:require [spire.ssh :as ssh]
-            [spire.state :as state]
-            [spire.ssh-agent :as ssh-agent]
+  (:require [spire.state :as state]
             [spire.facts :as facts]
             [spire.local :as local]
-            [spire.known-hosts :as known-hosts]
-            [spire.context :as context]
             [clojure.string :as string]
-            [clojure.stacktrace])
-  (:import [com.jcraft.jsch JSch]))
+            [clojure.stacktrace]
+            [clojuressh.core :as clojuressh]
+            [clojuressh.session :as session]))
 
 (def debug false)
 
-(defn make-agent []
-  (JSch.))
+(defn host-config-to-connection-key [host-config]
+  (select-keys host-config [:username :hostname :port])
+  )
 
 (defn connect [host-config]
   (when debug (prn 'connect host-config))
-  (let [
-        agent (make-agent)
-        session (ssh/make-session agent (:hostname host-config) host-config)
-        irepo (ssh-agent/make-identity-repository)
-        user-info (ssh/make-user-info host-config)
-        ]
-    (when (and (not (:identity host-config))
-               (not (:private-key host-config))
-               (System/getenv "SSH_AUTH_SOCK"))
-      (.setIdentityRepository session irepo))
-    (when debug (prn 'connect 'connecting))
-    (doto session
-      (.setHostKeyRepository (known-hosts/make-host-key-repository))
-      (.setUserInfo user-info)
-      (.connect))
-    (when debug (prn 'connect 'connected))
-    session
-    ))
+  (clojuressh/ssh (:hostname host-config) host-config))
 
-
-(defn disconnect [connection]
-  (when debug (prn 'disconnect connection))
-  (.disconnect connection))
+(defn disconnect [client]
+  (when debug (prn 'disconnect client))
+  (session/disconnect client))
 
 (defn disconnect-all! []
   (let [[connections _] (reset-vals! state/ssh-connections {})]
@@ -49,7 +29,7 @@
 
 (defn open-connection [host-config]
   (when debug (prn 'open-connection host-config))
-  (let [conn-key (ssh/host-config-to-connection-key host-config)
+  (let [conn-key (host-config-to-connection-key host-config)
         new-state (swap! state/ssh-connections
                          update conn-key
                          (fn [{:keys [connection use-count]}]
@@ -59,15 +39,11 @@
                              {:connection connection
                               :use-count (inc use-count)})))
         new-conn (get-in new-state [conn-key :connection])]
-    (when debug
-      (prn 'open-connection 'conn-key conn-key)
-      (prn 'open-connection 'new-state new-state)
-      (prn 'open-connection 'new-conn new-conn))
     new-conn))
 
 (defn close-connection [host-config]
   (when debug (prn 'close-connection host-config))
-  (let [conn-key (ssh/host-config-to-connection-key host-config)]
+  (let [conn-key (host-config-to-connection-key host-config)]
     (swap! state/ssh-connections
            (fn [s]
              (let [{:keys [connection use-count] :as conn} (get s conn-key)]
@@ -77,9 +53,8 @@
                      (disconnect connection)
                      (dissoc s conn-key))
                    (update-in s [conn-key :use-count] dec))))))
+    nil))
 
-    nil ;; this return value will be serialised when used as a pod in nested `ssh` macros
-    ))
 
 (defn get-connection [conn-key]
   (get-in @state/ssh-connections [conn-key :connection]))
@@ -110,14 +85,14 @@
   `(let [host-config# (ssh/host-description-to-host-config ~host-string)]
      (try
        (let [conn# (open-connection host-config#)]
-         (context/binding* [state/host-config host-config#
-                            state/connection conn#
-                            state/shell-context {:privileges :normal
-                                                 :exec :ssh
-                                                 :exec-fn ssh/ssh-exec
-                                                 }]
-                           (facts/update-facts!)
-                           (do ~@body)))
+         (binding [state/*host-config* host-config#
+                   state/*connection* conn#
+                   state/*shell-context* {:privileges :normal
+                                          :exec :ssh
+                                          :exec-fn ssh/ssh-exec
+                                          }]
+           (facts/update-facts!)
+           (do ~@body)))
        (finally
          (close-connection host-config#)))))
 
@@ -132,31 +107,28 @@
               (let [host-config# (ssh/host-description-to-host-config host-string#)]
                 [(:key host-config#)
                  (future
-                   (context/binding* [state/host-config host-config#
-                                      state/connection (get-connection
-                                                        (ssh/host-config-to-connection-key
-                                                         host-config#))
-                                      state/shell-context {:privileges :normal
-                                                           :exec :ssh
-                                                           :exec-fn ssh/ssh-exec
-                                                           }]
-                                     (facts/update-facts!)
-                                     (let [result# (do ~@body)]
-                                       result#)))])))]
+                   (binding [state/*host-config* host-config#
+                             state/*connection* (get-connection
+                                                  (ssh/host-config-to-connection-key
+                                                   host-config#))
+                             state/*shell-context* {:privileges :normal
+                                                    :exec :ssh
+                                                    :exec-fn ssh/ssh-exec
+                                                    }]
+                     (facts/update-facts!)
+                     (let [result# (do ~@body)]
+                       result#)))])))]
        (into {} (map (fn [[host-name# fut#]] [host-name# (safe-deref fut#)]) threads#)))
      (finally
        (doseq [host-string# ~host-strings]
          (let [host-config# (ssh/host-description-to-host-config host-string#)]
            (close-connection host-config#))))))
 
-#_(clojure.lang.RT/loadLibrary "spire")
-#_(ssh "localhost" (spire.facts/get-fact))
-
 (defmacro local [& body]
-  `(context/binding* [state/host-config {:key "local"}
-                      state/connection nil
-                      state/shell-context {:privileges :normal
-                                           :exec :local
-                                           :exec-fn local/local-exec
-                                           }]
-                     (do ~@body)))
+  `(binding [state/*host-config* {:key "local"}
+             state/*connection* nil
+             state/*shell-context* {:privileges :normal
+                                    :exec :local
+                                    :exec-fn local/local-exec
+                                    }]
+     (do ~@body)))
