@@ -1,7 +1,6 @@
 (ns spire.utils
   (:require [spire.state :as state]
             [digest :as digest]
-            [clj-time.core :as time]
             [clojure.string :as string]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
@@ -202,40 +201,26 @@
   (let [width (terminal/get-width)]
     (if (has-terminal?) width 80)))
 
-#_ (defn progress-bar
-  "given the arguments `bytes`, `total`, `frac` and `state`, print to `*out*` a
-  status bar as a side-effect. Then return the new `state` (to be passed back into
-  progress-bar later)
+;; #_ (progress-bar 45 2984 0.2 nil)
+;; ;;stdout: |                                                | 20%
+;; ;;=> {:start-time #inst "2020-05-14T04:55:20.197Z",
+;; ;;    :start-bytes 45}
 
-  (progress-bar 45 2984 0.2 nil)
-  ;;stdout: |                                                | 20%
-  ;;=> {:start-time #clj-time/date-time \"2020-05-14T04:55:20.197Z\",
-  ;;    :start-bytes 45}
+;; Calling with a passed in state adds data transfer rate and eta:
 
-  Calling with a passed in state adds data transfer rate and eta:
-
-  (progress-bar 45 2984 0.2
-    {:start-time (clj-time.core/minus
-                   (clj-time.core/now)
-                   (clj-time.core/seconds 5))
-     :start-bytes 20})
-  ;;stdout: |                                                | 20% 5 B/s eta:9m47s
-  ;;=> {:start-time #clj-time/date-time \"2020-05-14T05:09:33.210Z\",
-        :start-bytes 20}
-  "
-  [bytes total frac {:keys [start-time start-bytes]}]
-  (let [
-        columns (get-terminal-width)
-        now (java.util.Date.)     #_(time/now)
+;; (progress-bar 45 2984 0.2
+;;   {:start-time (java.time.Instant/now)
+;;    :start-bytes 20})
+;; ;;stdout: |                                                | 20% 5 B/s eta:9m47s
+;; ;;=> {:start-time #inst "2020-05-14T05:09:33.210Z",
+;;       :start-bytes 20}
+;; "
+(defn progress-bar [bytes total frac {:keys [start-time start-bytes]}]
+  (let [columns (get-terminal-width)
+        now (java.time.Instant/now)
         first? (not start-time)
-
-        duration (when-not first? (/ (float
-
-                                      (- (.getTime ^java.util.Date now)
-                                         (.getTime ^java.util.Date start-time))
-                                      #_(time/in-millis (time/interval start-time now))
-
-                                      ) 1000))
+        duration (when-not first?
+                   (/ (float (.toMillis (java.time.Duration/between start-time now))) 1000))
         bytes-since-start (when-not first? (- bytes start-bytes))
         bytes-per-second (when (some-> duration pos?) (int (/ bytes-since-start duration)))
         bytes-remaining (- total bytes)
@@ -257,7 +242,6 @@
                          (str " eta:" (eta-string eta))))
         line-len (count line-str)
         eraser (apply str (take (- columns line-len 1) (repeat " ")))
-
         ]
     (.write *out* (str line-str eraser))
     (.flush *out*)
@@ -265,54 +249,17 @@
      :start-bytes (or start-bytes bytes)}))
 
 (defn progress-stats
-  "given:
-
-  `file`: The object currently being copied. A java.io.File, a string
-  of content, a byte array. For serialisation over the pod boundary
-  it can be a hashmap with (with keys :type, :name, :path, :length)
-
-  `bytes`: How many bytes of this file have been transfered so far.
-
-  `total`: the total number of bytes in this file.
-
-  `frac`: the progress bar amount represented as a fraction. TODO: do
-  we need to even pass this in? cant it be calculated?
-
-  `fileset-total`: If the file being copied is part of a set of files,
-  then how many total bytes does the entire set occupy
-
-  `max-filename-length`: Of all the files in the fileset being copied,
-  what is the length of the longest filename. Used for space padding
-  the filenames to be consistent
-
-  `context`: the copy progress state (to be returned and passed back)
-
-  returns:
-
-  A hashmap of two parts:
-
-  `:progress` what gets passed to `progress-bar-from-stats`
-
-  `:context` what gets passed back into the next `progress-stats` call
-  "
   [file bytes total frac
    fileset-total max-filename-length
    {:keys [start-time start-bytes fileset-file-start]}]
-  (let [
-        columns (get-terminal-width)
-        now (java.util.Date.) #_(time/now)
+  (let [columns (get-terminal-width)
+        now (java.time.Instant/now)
         first? (not start-time)
         fileset-file-start (or fileset-file-start 0)
         fileset-total (or fileset-total total)
         fileset-copied-so-far (+ fileset-file-start bytes)
-
-        duration (when-not first? (/ (float
-
-                                      (- (.getTime ^java.util.Date now)
-                                         (.getTime ^java.util.Date start-time))
-                                      #_(time/in-millis (time/interval start-time now))
-
-                                      ) 1000))
+        duration (when-not first?
+                   (/ (float (.toMillis (java.time.Duration/between start-time now))) 1000))
         bytes-since-start (when-not first? (- (+ bytes fileset-file-start) start-bytes))
         bytes-per-second (when (some-> duration pos?) (int (/ bytes-since-start duration)))
         bytes-remaining (- fileset-total fileset-copied-so-far)
@@ -335,18 +282,15 @@
                         (str " eta:" (eta-string eta))))
         line-len (count line-str)
         eraser (apply str (take (- columns line-len 1) (repeat " ")))
-
         ]
     {
-     ;; what gets passed to the progress bar output renderer
      :progress {:file file
                 :max-filename-length max-filename-length
-                :bytes fileset-copied-so-far                  ;;bytes
-                :total fileset-total                          ;;total
-                :frac (/ fileset-copied-so-far fileset-total) ;; frac
+                :bytes fileset-copied-so-far
+                :total fileset-total
+                :frac (/ fileset-copied-so-far fileset-total)
                 :bytes-per-second bytes-per-second
                 :eta eta}
-     ;; what gets passed back in to the next progress-stats call
      :context {:start-time (or start-time now)
                :start-bytes (or start-bytes bytes)
                :fileset-file-start fileset-file-start}}))

@@ -1,6 +1,5 @@
 {:paths ["src/clj"]
  :deps {org.clojure/clojure {:mvn/version "1.12.5"}
-        clj-time/clj-time {:mvn/version "0.15.2"}
         io.epiccastle/clojuressh {:mvn/version "0.7.0"}
 
         ;; org.clojure/core.async {:mvn/version "0.6.532"}

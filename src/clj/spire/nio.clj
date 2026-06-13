@@ -1,15 +1,14 @@
 (ns spire.nio
-  (:require ;;[spire.scp :as scp]
-            [clj-time.core :as time]
-            [clj-time.coerce :as coerce]
-            [digest :as digest]
+  (:require [digest :as digest]
             [clojure.string :as string]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell])
   (:import [java.nio.file Paths Files LinkOption Path FileSystems]
            [java.nio.file.attribute FileAttribute BasicFileAttributes BasicFileAttributeView
             PosixFilePermission PosixFilePermissions PosixFileAttributeView
-            FileTime]))
+            FileTime]
+           [java.time Instant ZoneId]
+           [java.time.format DateTimeFormatter]))
 
 (set! *warn-on-reflection* true)
 
@@ -120,26 +119,18 @@
 (defn timestamp->touch
   "converts an integer timestamp to the format used by GNU touch"
   [ts]
-  (let [datetime (coerce/from-epoch (int ts))
-        year (time/year datetime)
-        month (time/month datetime)
-        day (time/day datetime)
-        hour (time/hour datetime)
-        minute (time/minute datetime)
-        second (time/second datetime)]
-    (format "%d-%02d-%02d %02d:%02d:%02d.000000000 +0000" year month day hour minute second)))
+  (let [instant (Instant/ofEpochSecond (int ts))
+        dt (.atZone instant ZoneId/of "UTC")
+        fmt (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss.SSSSSSSSS Z")]
+    (.format dt fmt)))
 
 (defn timestamp->touch-bsd
   "converts an integer timestamp to the format used by BSD touch"
   [ts]
-  (let [datetime (coerce/from-epoch ts)
-        year (time/year datetime)
-        month (time/month datetime)
-        day (time/day datetime)
-        hour (time/hour datetime)
-        minute (time/minute datetime)
-        second (time/second datetime)]
-    (format "%d%02d%02d%02d%02d.%02d" year month day hour minute second)))
+  (let [instant (Instant/ofEpochSecond (long ts))
+        dt (.atZone instant ZoneId/of "UTC")
+        fmt (DateTimeFormatter/ofPattern "yyyyMMddHHmm.ss")]
+    (.format dt fmt)))
 
 #_ (timestamp->touch 1514779200)
 
