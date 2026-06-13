@@ -1,13 +1,10 @@
 (ns spire.nio
-  (:require [digest :as digest]
+  (:require [babashka.fs :as fs]
+            [digest :as digest]
             [clojure.string :as string]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell])
-  (:import [java.nio.file Paths Files LinkOption Path FileSystems]
-           [java.nio.file.attribute FileAttribute BasicFileAttributes BasicFileAttributeView
-            PosixFilePermission PosixFilePermissions PosixFileAttributeView
-            FileTime]
-           [java.time Instant ZoneId ZonedDateTime]
+  (:import [java.time Instant ZoneId ZonedDateTime]
            [java.time.format DateTimeFormatter]))
 
 (set! *warn-on-reflection* true)
@@ -16,105 +13,79 @@
   "return the relative path that gets you from a working directory
   `source` to the file or directory `target`"
   [source target]
-  (let [source-path (Paths/get (.toURI (io/as-file (.getCanonicalPath (io/as-file source)))))
-        target-path (Paths/get (.toURI (io/as-file (.getCanonicalPath (io/as-file target)))))]
-    (-> source-path
-        (.relativize target-path)
-        .toFile
-        .getPath)))
+  (fs/relativize source target))
 
-(def empty-file-attribute-array
-  (make-array FileAttribute 0))
+(def empty-file-attribute-array [ ])
 
-(def empty-link-options
-  (make-array LinkOption 0))
+(def empty-link-options [])
 
-(def no-follow-links
-  (into-array LinkOption [LinkOption/NOFOLLOW_LINKS]))
+(def no-follow-links [])
 
 (defn last-access-time
   "return the last access time for the passed in file in seconds since the epoch.
   `file` is a string.
   "
   [file]
-  (let [p (.toPath (io/file file))]
-    (int
-     (/ (.toMillis (.lastAccessTime (Files/readAttributes p java.nio.file.attribute.BasicFileAttributes ^"[Ljava.nio.file.LinkOption;" empty-link-options)))
-        1000))))
-
-#_ (last-access-time ".")
+  (int (/ (.toMillis ^java.nio.file.attribute.FileTime (fs/last-modified-time file)) 1000)))
 
 (defn last-modified-time
   "return the last modified time for the passed in file in seconds since the epoch.
   `file` is a string.
   "
   [file]
-  (let [p (.toPath (io/file file))]
-    (int
-     (/ (.toMillis (.lastModifiedTime (Files/readAttributes p java.nio.file.attribute.BasicFileAttributes ^"[Ljava.nio.file.LinkOption;" empty-link-options)))
-        1000))))
+  (int (/ (.toMillis ^java.nio.file.attribute.FileTime (fs/last-modified-time file)) 1000)))
 
 #_ (last-modified-time ".")
-
-(def permission->mode
-  {PosixFilePermission/OWNER_READ     0400
-   PosixFilePermission/OWNER_WRITE    0200
-   PosixFilePermission/OWNER_EXECUTE  0100
-   PosixFilePermission/GROUP_READ     0040
-   PosixFilePermission/GROUP_WRITE    0020
-   PosixFilePermission/GROUP_EXECUTE  0010
-   PosixFilePermission/OTHERS_READ    0004
-   PosixFilePermission/OTHERS_WRITE   0002
-   PosixFilePermission/OTHERS_EXECUTE 0001})
 
 (defn file-mode
   "returns the modification bits of the file as an integer. If you express this in octal
   you will get the representation chmod command uses. eg `(format \"%o\" (file-mode \".\"))` "
   [file]
-  (let [p (.toPath (io/file file))
-        perm-hash-set (.permissions ^java.nio.file.attribute.PosixFileAttributes (Files/readAttributes p java.nio.file.attribute.PosixFileAttributes ^"[Ljava.nio.file.LinkOption;" empty-link-options))]
-    (reduce (fn [acc [perm-mode perm-val]]
-              (if (.contains perm-hash-set perm-mode)
+  (let [perms (fs/posix-file-permissions file)]
+    (reduce (fn [acc [perm-key perm-val]]
+              (if (contains? perms perm-key)
                 (bit-or acc perm-val)
                 acc))
-            0 permission->mode)))
-
-#_ (format "%o" (file-mode "."))
+            0
+            {:owner-read 0400
+             :owner-write 0200
+             :owner-execute 0100
+             :group-read 0040
+             :group-write 0020
+             :group-execute 0010
+             :others-read 0004
+             :others-write 0002
+             :others-execute 0001})))
 
 (defn mode->permissions
-  "given an integer file mode, returns the set of PosixFilePermission instances for nio use."
+  "given an integer file mode, returns the set for babashka.fs use."
   [mode]
   (reduce (fn [acc [perm flag]]
             (if (pos? (bit-and mode flag))
               (conj acc perm)
               acc))
-          #{} permission->mode))
-
-#_ (mode->permissions 0700)
+          #{}
+          {:owner-read 0400
+           :owner-write 0200
+           :owner-execute 0100
+           :group-read 0040
+           :group-write 0020
+           :group-execute 0010
+           :others-read 0004
+           :others-write 0002
+           :others-execute 0001}))
 
 (defn set-file-mode
   "set an existing `file` to the specified `mode`. `file` is a string. `mode` is an integer."
   [file mode]
-  (-> file
-      io/file
-      .toPath
-      (Files/setPosixFilePermissions (mode->permissions mode))
-      str))
-
-#_ (set-file-mode "foo" 0644)
+  (fs/set-posix-file-permissions file (mode->permissions mode))
+  (str file))
 
 (defn create-file
   "create a new empty `file` with specified `mode`. Honours the umask."
   [file mode]
-  (let [p (.toPath (io/file file))]
-    (-> file
-        io/file
-        .toPath
-        (Files/createFile (into-array FileAttribute [(PosixFilePermissions/asFileAttribute
-                                                      (mode->permissions mode))]))
-        str)))
-
-#_ (create-file "foo" 0755)
+  (fs/create-file file {:posix-file-permissions (mode->permissions mode)})
+  (str file))
 
 (defn timestamp->touch
   "converts an integer timestamp to the format used by GNU touch"
@@ -137,36 +108,20 @@
 (defn set-last-modified-time
   "sets the last modified time of `file` to the timestamp `ts`"
   [file ts]
-  (let [file-time (FileTime/fromMillis (* ts 1000))
-        p (.toPath (io/file file))]
-    (str (Files/setLastModifiedTime p file-time))))
-
-#_ (set-last-modified-time "foo" 0)
+  (fs/set-last-modified-time file (fs/instant->file-time (java.time.Instant/ofEpochSecond ts)))
+  (str file))
 
 (defn set-last-access-time
   "sets the last access time of `file` to the timestamp `ts`"
   [file ts]
-  (let [file-time (FileTime/fromMillis (* ts 1000))
-        p (.toPath (io/file file))]
-    (.setTimes ^java.nio.file.attribute.BasicFileAttributeView (Files/getFileAttributeView p BasicFileAttributeView ^"[Ljava.nio.file.LinkOption;" empty-link-options)
-               ;; modified access create
-               nil file-time nil
-               )))
-
-#_ (set-last-access-time "foo" 0)
+  (fs/set-attribute file "lastAccessTime" (fs/instant->file-time (java.time.Instant/ofEpochSecond ts))))
 
 (defn set-last-modified-and-access-time
   "sets the last modified time of `file` to the timestamp `modified` and the last
   access time to the timestamp `access`"
   [file modified access]
-  (let [modified-time (FileTime/fromMillis (* modified 1000))
-        access-time (FileTime/fromMillis (* access 1000))
-        p (.toPath (io/file file))]
-    (.setTimes ^java.nio.file.attribute.BasicFileAttributeView (Files/getFileAttributeView p BasicFileAttributeView ^"[Ljava.nio.file.LinkOption;" empty-link-options)
-               ;; modified access create
-               modified-time access-time nil)))
-
-#_ (set-last-modified-and-access-time "foo" 99999 99999)
+  (fs/set-last-modified-time file (fs/instant->file-time (java.time.Instant/ofEpochSecond modified)))
+  (fs/set-attribute file "lastAccessTime" (fs/instant->file-time (java.time.Instant/ofEpochSecond access))))
 
 (defn idem-set-last-access-time
   "idempotently set the last access time for file `f`. Returns `true` if the file was changed,
@@ -187,11 +142,8 @@
 (defmulti set-owner (fn [path owner] (type owner)))
 
 (defmethod set-owner String [path owner]
-  (let [p (.toPath (io/file path))
-        fs (FileSystems/getDefault)
-        upls (.getUserPrincipalLookupService fs)
-        new-owner (.lookupPrincipalByName upls owner)]
-    (Files/setOwner p new-owner)
+  (let [{:keys [out err exit]} (shell/sh "chown" owner path)]
+    (assert (= 0 exit))
     true))
 
 (defmethod set-owner Long [path owner]
@@ -199,32 +151,20 @@
     (assert (= 0 exit))
     true))
 
-#_ (set-owner "foo" "crispin")
-#_ (set-owner "foo" 1000)
-
 (defn idem-set-owner
   "idempotently sets the owner of a file. returns true if the owner is actually changed."
   [file owner]
-  (let [p (.toPath (io/file file))]
-    (if (number? owner)
-      (let [uid (Files/getAttribute p "unix:uid" ^"[Ljava.nio.file.LinkOption;" empty-link-options)]
-        (when (not= owner uid) (set-owner file owner)))
-      (let [user (Files/getAttribute p "unix:owner" ^"[Ljava.nio.file.LinkOption;" empty-link-options)]
-        (when (not= owner (str user)) (set-owner file owner))))))
+  (if (number? owner)
+    (let [uid (fs/get-attribute file "unix:uid")]
+      (when (not= owner uid) (set-owner file owner)))
+    (let [user (fs/get-attribute file "unix:owner")]
+      (when (not= owner (str user)) (set-owner file owner)))))
 
-#_ (idem-set-owner "foo" "crispin")
-
-;;
-;; set file/directory groups
-;;
 (defmulti set-group (fn [path owner] (type owner)))
 
 (defmethod set-group String [path group]
-  (let [p (.toPath (io/file path))
-        fs (FileSystems/getDefault)
-        upls (.getUserPrincipalLookupService fs)
-        new-group (.lookupPrincipalByGroupName upls group)]
-    (.setGroup ^java.nio.file.attribute.PosixFileAttributeView (Files/getFileAttributeView p PosixFileAttributeView ^"[Ljava.nio.file.LinkOption;" empty-link-options) new-group)
+  (let [{:keys [out err exit]} (shell/sh "chgrp" group path)]
+    (assert (= 0 exit))
     true))
 
 (defmethod set-group Long [path group]
@@ -232,15 +172,12 @@
     (assert (= 0 exit))
     true))
 
-#_ (set-group "foo" 1000)
-
 (defn idem-set-group [file group]
-  (let [p (.toPath (io/file file))]
-    (if (number? group)
-      (let [gid (Files/getAttribute p "unix:gid" ^"[Ljava.nio.file.LinkOption;" empty-link-options)]
-        (when (not= group gid) (set-group file group)))
-      (let [group-name (Files/getAttribute p "unix:group" ^"[Ljava.nio.file.LinkOption;" empty-link-options)]
-        (when (not= group (str group-name)) (set-group file group-name))))))
+  (if (number? group)
+    (let [gid (fs/get-attribute file "unix:gid")]
+      (when (not= group gid) (set-group file group)))
+    (let [group-name (fs/get-attribute file "unix:group")]
+      (when (not= group (str group-name)) (set-group file group)))))
 
 #_ (idem-set-group "foo" "crispin")
 
@@ -266,10 +203,10 @@
            changed? false]
       (if file
         (cond
-          (.isDirectory ^java.io.File file)
+          (fs/directory? file)
           (recur remain (set-attr file owner group dir-mode))
 
-          (.isFile ^java.io.File file)
+          (fs/regular-file? file)
           (recur remain (set-attr file owner group mode))
 
           :else
