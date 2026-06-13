@@ -72,6 +72,7 @@
 (defn process-system [uname-data shell-data]
   (let [detect (:detect shell-data)
         sh (case (:command shell-data)
+             "ash"  :ash
              "bash" :bash
              "dash" :dash
              "yash" :yash
@@ -102,6 +103,7 @@
     new-paths))
 
 (defn process-lsb-release [lsb-out]
+  (assert (= 0 (:exit lsb-out)) "lsb-release failed")
   (let [res (some->> lsb-out
                      :out
                      string/split-lines

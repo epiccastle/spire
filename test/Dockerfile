@@ -12,6 +12,12 @@ RUN wget -O /tmp/gost.gz https://github.com/ginuerzh/gost/releases/download/v2.1
     && gunzip -c -k /tmp/gost.gz > /usr/local/bin/gost \
     && chmod +x /usr/local/bin/gost \
     && rm -f /tmp/gost.gz
+
+# Make shell bash and install lsb-release. TODO: remove need for lsb-release
+RUN apk add bash
+RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community lsb-release
+RUN sed -i 's|root:x:0:0:root:/root:/bin/ash|root:x:0:0:root:/root:/bin/bash|' /etc/passwd
+
 ENTRYPOINT ["/usr/sbin/sshd","-D","-E","/tmp/sshd.log"]
 EXPOSE 22/tcp
 RUN echo "root:$root_password"|chpasswd

@@ -5,13 +5,69 @@
             [clojure.string :as string]
             [clojure.stacktrace]
             [clojuressh.core :as clojuressh]
-            [clojuressh.session :as session]))
+            [clojuressh.session :as session])
+  (:import [java.io
+            PipedInputStream PipedOutputStream
+            ByteArrayInputStream ByteArrayOutputStream
+            ])
+  )
 
 (def debug false)
+
+(def default-port 22)
+
+(defn parse-host-string
+  "parse a host-string and return a hashmap containing the elements.
+  If no username is specified, then the field is not included"
+  [host-string]
+  (let [[_ username hostname port] (re-matches #"(.+)@(.+):(\d+)" host-string)]
+    (if username
+      {:username username
+       :hostname hostname
+       :port (Integer/parseInt port)}
+      (let [[_ username hostname] (re-matches #"(.+)@(.+)" host-string)]
+        (if username
+          {:username username
+           :hostname hostname
+           :port default-port}
+          (let [[_ hostname port] (re-matches #"(.+):(\d+)" host-string)]
+            (if hostname
+              {:hostname hostname
+               :port (Integer/parseInt port)}
+              {:hostname host-string
+               :port default-port})))))))
+
+(defn host-config-to-string [{:keys [hostname username port]}]
+  (cond
+    (and hostname username port (not= 22 port)) (format "%s@%s:%d" username hostname port)
+    (and hostname port (not= 22 port)) (format "%s:%d" hostname port)
+    (and username hostname) (format "%s@%s" username hostname)
+    :else hostname))
 
 (defn host-config-to-connection-key [host-config]
   (select-keys host-config [:username :hostname :port])
   )
+
+(defn fill-in-host-description-defaults [host-description]
+  (assert (not (and (:host-string host-description)
+                    (:hostname host-description)))
+          "cant have both host-string and hostname set in description.")
+  (if (:host-string host-description)
+    (let [{:keys [username hostname port] :as parsed} (parse-host-string (:host-string host-description))]
+      (-> host-description
+          (update :key #(or % (host-config-to-string parsed)))
+          (assoc :username username ;; would be nil if none specified
+                 :hostname hostname
+                 :port port)))
+
+    (-> host-description
+        (update :key #(or % (host-config-to-string host-description)))
+        (assoc :host-string (host-config-to-string host-description)))))
+
+(defn host-description-to-host-config [host-description]
+  (if-not (string? host-description)
+    (fill-in-host-description-defaults host-description)
+    (fill-in-host-description-defaults (parse-host-string host-description))))
 
 (defn connect [host-config]
   (when debug (prn 'connect host-config))
@@ -80,16 +136,28 @@
            :cause-data (some->> e .getCause ex-data)
            })))))
 
+(defn ssh-exec [session command in out opts]
+  #_(prn 'ssh-exec session command in out opts)
+  (let [proc (clojuressh/exec session command
+                             (if (= :bytes out)
+                               {:in in :out :bytes :err :bytes}
+                               {:in in :out-enc out :out :string :err-enc out :err :string}))
+        res @proc]
+    #_(prn 'res res)
+    {:exit (:exit res)
+     :out (:out res)
+     :err (:err res)})
+  )
 
 (defmacro ssh [host-string & body]
-  `(let [host-config# (ssh/host-description-to-host-config ~host-string)]
+  `(let [host-config# (host-description-to-host-config ~host-string)]
      (try
        (let [conn# (open-connection host-config#)]
          (binding [state/*host-config* host-config#
                    state/*connection* conn#
                    state/*shell-context* {:privileges :normal
                                           :exec :ssh
-                                          :exec-fn ssh/ssh-exec
+                                          :exec-fn ssh-exec
                                           }]
            (facts/update-facts!)
            (do ~@body)))
