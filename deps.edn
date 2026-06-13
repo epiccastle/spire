@@ -1,0 +1,61 @@
+{:paths ["src/clj"]
+ :deps {org.clojure/clojure {:mvn/version "1.12.5"}
+        org.clojure/core.async {:mvn/version "0.6.532"}
+        org.clojure/tools.cli {:mvn/version "0.4.2"}
+        org.babashka/sci {:mvn/version "0.3.2"}
+        babashka/babashka.nrepl {:mvn/version "0.0.6"}
+        fipp/fipp {:mvn/version "0.6.23"}
+        mvxcvi/puget {:mvn/version "1.2.0"}
+        digest/digest {:mvn/version "1.4.9"}
+        clj-time/clj-time {:mvn/version "0.15.2"}
+        selmer/selmer {:mvn/version "1.12.18"}
+        io.forward/yaml {:mvn/version "1.0.9"
+                         :exclusions [org.yaml/snakeyaml]}
+        org.yaml/snakeyaml {:mvn/version "1.25"}
+        com.cognitect/transit-clj {:mvn/version "1.0.324"}
+        org.clojure/data.json {:mvn/version "1.0.0"}
+        cheshire/cheshire {:mvn/version "5.10.0"}
+        com.github.mwiede/jsch {:mvn/version "0.2.0"}
+        commons-codec/commons-codec {:mvn/version "1.12"}
+        org.martinklepsch/clj-http-lite {:mvn/version "0.4.3"}}
+ :aliases
+ {:run
+  ;; Grant the JNA-loaded native libraries access without the
+  ;; JDK 24+ "restricted method" warning. Required on JDK 24+,
+  ;; harmless on earlier JDKs.
+  {:main-opts ["-m" "spire"]
+   :jvm-opts  ["--enable-native-access=ALL-UNNAMED"]}
+
+  :test
+  {:extra-paths ["test"]
+   :extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}
+                org.clj-commons/digest {:mvn/version "1.4.100"}
+                babashka/babashka.curl {:mvn/version "0.1.2"}
+                babashka/process {:mvn/version "0.6.25"}
+                }
+   :main-opts ["-m" "cognitect.test-runner"]
+   :jvm-opts  ["--enable-native-access=ALL-UNNAMED"]
+   :exec-fn cognitect.test-runner.api/test}
+
+  :build
+  {:deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}
+          slipset/deps-deploy {:mvn/version "0.2.2"}}
+   :ns-default build}
+
+  :codox {:extra-deps {codox/codox {:mvn/version "0.10.8"}
+                       babashka/fs {:mvn/version "0.1.11"}
+                       io.epiccastle/codox-theme-epiccastle {:mvn/version "0.1.0-SNAPSHOT"}}
+          :exec-fn codox.main/generate-docs
+          :exec-args {:source-paths ["src"]
+                      :metadata {:doc/format :markdown}
+                      :output-path "target/docs"
+                      :doc-paths ["docs"]
+                      :themes [:epiccastle]
+                      :name "spire"
+                      :description "A Clojure library for using SSH in Clojure that is API compatible with bbssh"
+                      :license {:name "Eclipse Public License 2.0"
+                                :url "https://github.com/epiccastle/spire/blob/main/LICENSE"}}}}
+
+ :lib io.epiccastle/spire
+ :description "A Clojure DSL for idempotent provisioning of machines over SSH"
+ }
