@@ -1,12 +1,11 @@
 (ns spire.utils
   (:require [spire.state :as state]
-            [spire.context :as context]
             [digest :as digest]
             [clj-time.core :as time]
             [clojure.string :as string]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
-            [sci.impl.vars :as sci-vars]))
+            [clojuressh.terminal :as terminal]))
 
 (set! *warn-on-reflection* true)
 
@@ -194,13 +193,13 @@
   If there is no terminal (stdout is redirected to a file or /dev/null) then
   return false"
   []
-  (pos? (SpireUtils/is_a_tty)))
+  (terminal/is-terminal?))
 
 (defn get-terminal-width
   "Returns a clean version of the terminal width. If there is no terminal, returns
   a fake width (80)"
   []
-  (let [width (SpireUtils/get_terminal_width)]
+  (let [width (terminal/get-width)]
     (if (has-terminal?) width 80)))
 
 #_ (defn progress-bar
@@ -470,7 +469,7 @@
       double-quote))
 
 (defn current-file []
-  (or @sci-vars/current-file "<repl>"))
+  (assert false))
 
 (defn current-file-parent []
   (or (some-> (current-file) io/file .getParent) "."))

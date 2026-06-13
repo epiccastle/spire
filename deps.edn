@@ -1,23 +1,29 @@
 {:paths ["src/clj"]
  :deps {org.clojure/clojure {:mvn/version "1.12.5"}
-        org.clojure/core.async {:mvn/version "0.6.532"}
-        org.clojure/tools.cli {:mvn/version "0.4.2"}
-        org.babashka/sci {:mvn/version "0.3.2"}
-        babashka/babashka.nrepl {:mvn/version "0.0.6"}
-        fipp/fipp {:mvn/version "0.6.23"}
-        mvxcvi/puget {:mvn/version "1.2.0"}
-        digest/digest {:mvn/version "1.4.9"}
         clj-time/clj-time {:mvn/version "0.15.2"}
-        selmer/selmer {:mvn/version "1.12.18"}
-        io.forward/yaml {:mvn/version "1.0.9"
-                         :exclusions [org.yaml/snakeyaml]}
-        org.yaml/snakeyaml {:mvn/version "1.25"}
-        com.cognitect/transit-clj {:mvn/version "1.0.324"}
-        org.clojure/data.json {:mvn/version "1.0.0"}
-        cheshire/cheshire {:mvn/version "5.10.0"}
-        com.github.mwiede/jsch {:mvn/version "0.2.0"}
-        commons-codec/commons-codec {:mvn/version "1.12"}
-        org.martinklepsch/clj-http-lite {:mvn/version "0.4.3"}}
+        io.epiccastle/clojuressh {:mvn/version "0.7.0"}
+
+        ;; org.clojure/core.async {:mvn/version "0.6.532"}
+        ;; org.clojure/tools.cli {:mvn/version "0.4.2"}
+        ;; org.babashka/sci {:mvn/version "0.3.2"}
+        ;; babashka/babashka.nrepl {:mvn/version "0.0.6"}
+        ;; fipp/fipp {:mvn/version "0.6.23"}
+        ;; mvxcvi/puget {:mvn/version "1.2.0"}
+        ;; digest/digest {:mvn/version "1.4.9"}
+        ;; clj-time/clj-time {:mvn/version "0.15.2"}
+        ;; selmer/selmer {:mvn/version "1.12.18"}
+        ;; io.forward/yaml {:mvn/version "1.0.9"
+        ;;                  :exclusions [org.yaml/snakeyaml]}
+        ;; org.yaml/snakeyaml {:mvn/version "1.25"}
+        ;; com.cognitect/transit-clj {:mvn/version "1.0.324"}
+        ;; org.clojure/data.json {:mvn/version "1.0.0"}
+        ;; cheshire/cheshire {:mvn/version "5.10.0"}
+        ;; com.github.mwiede/jsch {:mvn/version "0.2.0"}
+        ;; commons-codec/commons-codec {:mvn/version "1.12"}
+        ;; org.martinklepsch/clj-http-lite {:mvn/version "0.4.3"}
+
+
+        }
  :aliases
  {:run
   ;; Grant the JNA-loaded native libraries access without the

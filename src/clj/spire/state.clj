@@ -1,7 +1,5 @@
 (ns spire.state
-  (:require [sci.core :as sci]
-            [spire.local :as local]
-            [spire.context :as context]))
+  (:require [spire.local :as local]))
 
 ;; ssh-connections:
 ;; Atom that holds all the open ssh connections. Atom value is a hashmap
@@ -17,16 +15,10 @@
   (atom {}))
 
 ;; the host config hashmap for the present executing context
-(def host-config (sci/new-dynamic-var 'host-config nil))
-
-;; the ssh session
-(def connection (sci/new-dynamic-var 'connection nil))
-
-;; the execution context. Used for priviledge escalation currently
-(def shell-context (sci/new-dynamic-var 'shell-context nil))
-
-;; the output module
-(def output-module (sci/new-dynamic-var 'output-module nil))
+(def ^:dynamic *host-config* nil)
+(def ^:dynamic *connection* nil)
+(def ^:dynamic *shell-context* nil)
+(def ^:dynamic *output-module* nil)
 
 ;; When nothing else is set in the dynamic thread locals, we use
 ;; the default context settings.
@@ -42,35 +34,25 @@
   @default-context)
 
 (defn get-host-config []
-  (if-let [conf (context/deref* host-config)]
-    conf
+  (if (bound? #'*host-config*)
+    *host-config*
     (let [{:keys [host-config]} @default-context]
-      (if host-config
-        host-config
-        {:key "local"}))))
+      (or host-config {:key "local"}))))
 
 (defn get-connection []
-  (if-let [conn (context/deref* connection)]
-    conn
-    (let [{:keys [connection]} @default-context]
-      (if connection
-        connection
-        nil))))
+  (if (bound? #'*connection*)
+    *connection*
+    (:connection @default-context)))
 
 (defn get-shell-context []
-  (if-let [conf (context/deref* shell-context)]
-    conf
-    (let [{:keys [shell-context]} @default-context]
-      (if shell-context
-        shell-context
+  (if (bound? #'*shell-context*)
+    *shell-context*
+    (or (:shell-context @default-context)
         {:exec :local
          :privilege :normal
-         :exec-fn local/local-exec
-         ;;:shell-fn identity
-         ;;:stdin-fn identity
-         }))))
+         :exec-fn local/local-exec})))
 
 (defn get-output-module []
-  (if-let [out (context/deref* output-module)]
-    out
+  (if (bound? #'*output-module*)
+    *output-module*
     nil))

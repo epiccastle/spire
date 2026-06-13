@@ -1,6 +1,7 @@
 (ns spire.ssh
   (:require [clojure.string :as string]
-            [spire.sudo :as sudo])
+            [spire.sudo :as sudo]
+            [clojuressh.terminal :as terminal])
   (:import [com.jcraft.jsch UserInfo]
            [com.jcraft.jsch
             JSch Session ChannelExec]
@@ -21,14 +22,14 @@
   returns: the entered string or nil if ctrl-c pressed
   "
   []
-  (SpireUtils/enter-raw-mode 0)
+  (terminal/enter-raw-mode 0)
   (let [result (loop [text ""]
                  (let [c (.read *in*)]
                    (condp = c
                      ctrl-c nil
                      carridge-return text
                      (recur (str text (char c))))))]
-    (SpireUtils/leave-raw-mode 0)
+    (terminal/leave-raw-mode 0)
     result))
 
 (defn print-flush-ask-yes-no [s]
