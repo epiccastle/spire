@@ -7,7 +7,7 @@
            [java.nio.file.attribute FileAttribute BasicFileAttributes BasicFileAttributeView
             PosixFilePermission PosixFilePermissions PosixFileAttributeView
             FileTime]
-           [java.time Instant ZoneId]
+           [java.time Instant ZoneId ZonedDateTime]
            [java.time.format DateTimeFormatter]))
 
 (set! *warn-on-reflection* true)
@@ -120,17 +120,17 @@
   "converts an integer timestamp to the format used by GNU touch"
   [ts]
   (let [instant (Instant/ofEpochSecond (int ts))
-        dt (.atZone instant ZoneId/of "UTC")
+        dt (.atZone ^Instant instant (ZoneId/of "UTC"))
         fmt (DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss.SSSSSSSSS Z")]
-    (.format dt fmt)))
+    (.format ^ZonedDateTime dt fmt)))
 
 (defn timestamp->touch-bsd
   "converts an integer timestamp to the format used by BSD touch"
   [ts]
   (let [instant (Instant/ofEpochSecond (long ts))
-        dt (.atZone instant ZoneId/of "UTC")
+        dt (.atZone ^Instant instant (ZoneId/of "UTC"))
         fmt (DateTimeFormatter/ofPattern "yyyyMMddHHmm.ss")]
-    (.format dt fmt)))
+    (.format ^ZonedDateTime dt fmt)))
 
 #_ (timestamp->touch 1514779200)
 
