@@ -157,8 +157,7 @@
                    state/*connection* conn#
                    state/*shell-context* {:privileges :normal
                                           :exec :ssh
-                                          :exec-fn ssh-exec
-                                          }]
+                                          :exec-fn ssh-exec}]
            (facts/update-facts!)
            (do ~@body)))
        (finally
