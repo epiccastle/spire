@@ -1,6 +1,5 @@
 (ns spire.module.rm
-  (:require [spire.ssh :as ssh]
-            [spire.utils :as utils]))
+  (:require [spire.utils :as utils]))
 
 (utils/defmodule rm* [file-path]
   [host-string session {:keys [exec-fn sudo] :as shell-context}]

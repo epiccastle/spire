@@ -104,25 +104,25 @@
      ;; TODO: if password is required and not specified, prompt for it at the
      ;; terminal, and block thread here until its available.
      (assert
-      (or (not required?#) (not (nil? password#)))
-      "sudo password is required but not specified")
+       (or (not required?#) (not (nil? password#)))
+       "sudo password is required but not specified")
 
      (swap! passwords assoc store-key# password#)
 
      (let [original-facts# (facts/get-fact)]
        (sudo-id full-conf#)
 
-       (context/binding* [state/shell-context
-                          {:privileges :sudo
-                           :sudo full-conf#
-                           :exec (:exec (state/get-shell-context))
-                           :exec-fn (:exec-fn (state/get-shell-context))
-                           ;;:shell-fn (partial make-sudo-command full-conf# "")
-                           ;;:stdin-fn (partial prefix-sudo-stdin full-conf#)
-                           }]
-                         (let [result# (do ~@body)]
-                           (facts/replace-facts-user! (:user original-facts#))
-                           result#)))))
+       (binding [state/*shell-context*
+                 {:privileges :sudo
+                  :sudo full-conf#
+                  :exec (:exec (state/get-shell-context))
+                  :exec-fn (:exec-fn (state/get-shell-context))
+                  ;;:shell-fn (partial make-sudo-command full-conf# "")
+                  ;;:stdin-fn (partial prefix-sudo-stdin full-conf#)
+                  }]
+         (let [result# (do ~@body)]
+           (facts/replace-facts-user! (:users original-facts#))
+           result#)))))
 
 (defmacro sudo [& body]
   `(spire.module.sudo/sudo-user {} ~@body))

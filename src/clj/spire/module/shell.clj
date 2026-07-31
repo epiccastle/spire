@@ -1,14 +1,11 @@
 (ns spire.module.shell
   (:require [spire.state :as state]
-            [spire.ssh :as ssh]
             [spire.facts :as facts]
             [spire.remote :as remote]
             [spire.utils :as utils]
-            [spire.context :as context]
             [spire.module.rm :as rm]
             [spire.module.upload :as upload]
-            [clojure.string :as string]
-            [clojure.java.io :as io]))
+            [clojure.string :as string]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
@@ -30,6 +27,7 @@
 
 #_ (make-exists-string ["privatekey" "public\"key"])
 
+#_
 (defn read-avail-string-from-input-stream
   "read available string from a stream and return it.
   return nil if nothing is available"
@@ -41,6 +39,7 @@
         (when-not (= -1 res)
           (String. out-array))))))
 
+#_
 (defn read-stream-until-eof [stream callback]
   (loop [out-data ""]
     (if-let [out (read-avail-string-from-input-stream stream)]
@@ -56,22 +55,23 @@
 
           out-data)))))
 
+#_
 (defn process-streams
   "Stream the stdout and stderr to the output module"
   [{:keys [file form meta host-config channel out-stream err-stream]}]
   (let [err-streamer (future
                        (read-stream-until-eof
-                        err-stream
-                        (fn [err]
-                          (spire.output.core/print-streams
-                           (context/deref* spire.state/output-module)
-                           file form meta host-config nil err))))
+                         err-stream
+                         (fn [err]
+                           (spire.output.core/print-streams
+                             (context/deref* spire.state/output-module)
+                             file form meta host-config nil err))))
         out-data (read-stream-until-eof
-                  out-stream
-                  (fn [out]
-                    (spire.output.core/print-streams
-                     (context/deref* spire.state/output-module)
-                     file form meta host-config out nil)))]
+                   out-stream
+                   (fn [out]
+                     (spire.output.core/print-streams
+                       (context/deref* spire.state/output-module)
+                       file form meta host-config out nil)))]
     {:exit (if (= "java.lang.ProcessImpl" (.getName (class channel)))
              (.waitFor ^java.lang.Process channel)
              (ssh/wait-for-channel-exit channel))
@@ -90,6 +90,7 @@
 
                           :as opts}]
   [host-string session {:keys [exec-fn sudo] :as shell-context}]
+  (prn 'SUDO sudo)
   (or (preflight (dissoc opts :ok-exit :changed-exit))
       (let [{:keys [agent-forwarding]} (state/get-host-config)
             shell-path (facts/get-fact [:paths (keyword shell)])
@@ -144,13 +145,14 @@
                                 :sudo sudo}
                                (or (dissoc opts :ok-exit :changed-exit) {})))
                 result (if print
-                         (process-streams {:file (:file stream-key)
-                                           :form (:form stream-key)
-                                           :meta (:meta stream-key)
-                                           :host-config (:host-config stream-key)
-                                           :channel channel
-                                           :out-stream out-stream
-                                           :err-stream err-stream})
+                         result
+                         #_(process-streams {:file (:file stream-key)
+                                             :form (:form stream-key)
+                                             :meta (:meta stream-key)
+                                             :host-config (:host-config stream-key)
+                                             :channel channel
+                                             :out-stream out-stream
+                                             :err-stream err-stream})
                          result)]
             (if (= :stream out-arg)
               (assoc result :result :pending)
@@ -162,9 +164,7 @@
                                :else :failed))))
           (finally
             (when stdin
-              (rm/rm* remote-script-file)))
-          )
-        )))
+              (rm/rm* remote-script-file)))))))
 
 (defmacro shell
   "run commands and shell snippets on the remote hosts.
@@ -207,10 +207,10 @@
   "
   [args]
   `(utils/wrap-report ~&form (shell* (assoc ~args :stream-key
-                                            {:file ~(utils/current-file)
-                                             :form (quote ~&form)
-                                             :meta ~(meta &form)
-                                             :host-config ~(spire.state/get-host-config)}))))
+                                              {:file ~(utils/current-file)
+                                               :form (quote ~&form)
+                                               :meta ~(meta &form)
+                                               :host-config ~(spire.state/get-host-config)}))))
 
 
 (def documentation

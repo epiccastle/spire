@@ -413,7 +413,7 @@
       double-quote))
 
 (defn current-file []
-  (assert false))
+  *file*)
 
 (defn current-file-parent []
   (or (some-> (current-file) io/file .getParent) "."))
@@ -431,13 +431,13 @@
 (defmacro wrap-report [form & body]
   (let [file (current-file)]
     `(do
-       (spire.output.core/print-form (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
+       (spire.output.core/print-form spire.state/*output-module* ~file (quote ~form) ~(meta form) (spire.state/get-host-config))
        (try
          (let [result# (do ~@body)]
-           (spire.output.core/print-result (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) result#)
+           (spire.output.core/print-result spire.state/*output-module* ~file (quote ~form) ~(meta form) (spire.state/get-host-config) result#)
            result#)
          (catch clojure.lang.ExceptionInfo e#
-           (spire.output.core/print-result (context/deref* spire.state/output-module) ~file (quote ~form) ~(meta form) (spire.state/get-host-config) (ex-data e#))
+           (spire.output.core/print-result spire.state/*output-module* ~file (quote ~form) ~(meta form) (spire.state/get-host-config) (ex-data e#))
            (throw e#))))))
 
 #_ (content-size (byte-array [1 2]))

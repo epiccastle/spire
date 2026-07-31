@@ -2,18 +2,36 @@
   (:require [spire.utils :as utils]
             [spire.output.core :as output]
             [puget.printer :as puget]
-            [sci.core :as sci]
             [clojure.string :as string]
-            [clojure.core.async :refer [<!! put! chan thread]]))
+            [clojure.core.async :refer [<!! put! chan thread]]
+            [clojuressh.terminal :as terminal]))
 
 (set! *warn-on-reflection* true)
 
 (def debug false)
 
 ;; truncate the printing of any string literals inside forms.
-(def max-string-length (sci/new-dynamic-var 'max-string-length nil))
+(def ^:dynamic *max-string-length* nil)
 
-(defonce state
+(defonce state  #_(-> (facts/get-fact [])
+      keys)
+
+  ;; state/*host-config*
+  ;; state/*connection*
+  ;; ((:exec-fn state/*shell-context*)
+  ;;  ;; session
+  ;;  state/*connection*
+
+  ;;  ;; command
+  ;;  "whoami"
+
+  ;;  ;; in out opts
+  ;;  "" "utf-8" nil
+
+  ;;  )
+
+  #_(state/get-host-config)
+
   (atom {:log []
          :debug #{}}))
 
@@ -52,10 +70,10 @@
 
 (defn read-cursor-position []
   (print (str "\033[6n"))
-  (SpireUtils/enter-raw-mode 0)
+  (terminal/enter-raw-mode 0)
   (.flush *out*)
   (let [text (read-until "R")]
-    (SpireUtils/leave-raw-mode 0)
+    (terminal/leave-raw-mode 0)
     (let [[_ body] (string/split text #"\[")
           [body _] (string/split body #"R")
           [row col] (string/split body #";")]
@@ -464,7 +482,7 @@
                       :meta file-meta
                       :line (count s)
                       :width (count (pr-str form))
-                      :opts {:max-string-length @max-string-length}
+                      :opts {:max-string-length *max-string-length*}
                       :results []}))))
   )
 

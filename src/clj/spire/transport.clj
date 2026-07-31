@@ -2,6 +2,7 @@
   (:require [spire.state :as state]
             [spire.facts :as facts]
             [spire.local :as local]
+            [spire.sudo :as sudo]
             [clojure.string :as string]
             [clojure.stacktrace]
             [clojuressh.core :as clojuressh]
@@ -136,12 +137,20 @@
            :cause-data (some->> e .getCause ex-data)
            })))))
 
-(defn ssh-exec [session command in out opts]
+(defn ssh-exec [session command in out {:keys [sudo] :as opts}]
   #_(prn 'ssh-exec session command in out opts)
-  (let [proc (clojuressh/exec session command
-                             (if (= :bytes out)
-                               {:in in :out :bytes :err :bytes}
-                               {:in in :out-enc out :out :string :err-enc out :err :string}))
+  (let [in (if (:required? sudo)
+             (spire.sudo/prefix-sudo-stdin sudo in)
+             in)
+
+        command (if sudo
+                  (spire.sudo/make-sudo-command sudo "" command)
+                  command)
+
+        proc (clojuressh/exec session command
+                              (if (= :bytes out)
+                                {:in in :out :bytes :err :bytes}
+                                {:in in :out-enc out :out :string :err-enc out :err :string}))
         res @proc]
     #_(prn 'res res)
     {:exit (:exit res)

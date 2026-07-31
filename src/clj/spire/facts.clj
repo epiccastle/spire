@@ -116,3 +116,32 @@
        :out ""
        :err (format "missing commands: %s" (string/join ", " not-present))
        :result :failed})))
+
+
+(defn process-id-name-substring [substring]
+  (let [[_ id name] (re-matches #"(\d+)\(([\d\w_\.\-]+)\)" substring)]
+    {:id (Integer/parseInt id)
+     :name name}))
+
+(defn process-id [id-out]
+  (let [{:keys [gid uid groups]}
+        (-> id-out first string/trim (string/split #"\s+")
+            (->> (take 3)
+                 (map (fn [line]
+                        (let [[type val] (string/split line #"=" 2)
+                              vals (->> (string/split val #",")
+                                        (mapv process-id-name-substring))]
+                          [(keyword type) vals])))
+                 (into {})))]
+    {:gid (first gid)
+     :uid (first uid)
+     :groups groups
+     :group-ids (into #{} (map :id groups))
+     :group-names (into #{} (map :name groups))
+     }))
+
+(defn update-facts-user! [id-out]
+  (swap! state assoc-in [(:host-string (state/get-host-config)) :user] (process-id id-out)))
+
+(defn replace-facts-user! [user-facts]
+  (swap! state assoc-in [(:host-string (state/get-host-config)) :user] user-facts))

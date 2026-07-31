@@ -1,7 +1,6 @@
 (ns spire.module.attrs
   (:require [spire.utils :as utils]
             [spire.nio :as nio]
-            [spire.ssh :as ssh]
             [spire.facts :as facts]
             [spire.state :as state]
             [clojure.java.io :as io]

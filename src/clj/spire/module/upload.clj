@@ -1,14 +1,12 @@
 (ns spire.module.upload
   (:require [spire.output.core :as output]
-            [spire.ssh :as ssh]
             [spire.facts :as facts]
-            [spire.scp :as scp]
+            [clojuressh.scp :as scp]
             [spire.utils :as utils]
             [spire.local :as local]
             [spire.state :as state]
             [spire.remote :as remote]
             [spire.compare :as compare]
-            [spire.context :as context]
             [spire.module.attrs :as attrs]
             [clojure.java.io :as io]
             [clojure.string :as string]))
@@ -104,236 +102,246 @@
                            :as opts}]
   [host-config session {:keys [exec exec-fn sudo] :as shell-context}]
   (or
-   (preflight opts)
-   (let [run (fn [command]
-               (let [{:keys [out exit err]}
-                     (exec-fn session "bash" command "UTF-8" {:sudo sudo})]
-                 #_(when debug
-                     (println "-------")
-                     (prn 'sudo sudo)
-                     (prn 'command command)
-                     (prn 'exit exit)
-                     (prn 'out out)
-                     (prn 'err err))
-                 (if (zero? exit)
-                   (string/trim out)
-                   "")))
+    (preflight opts)
+    (let [run (fn [command]
+                (let [{:keys [out exit err]}
+                      (exec-fn session "bash" command "UTF-8" {:sudo sudo})]
+                  #_(when debug
+                      (println "-------")
+                      (prn 'sudo sudo)
+                      (prn 'command command)
+                      (prn 'exit exit)
+                      (prn 'out out)
+                      (prn 'err err))
+                  (if (zero? exit)
+                    (string/trim out)
+                    "")))
 
-         content? content
+          content? content
 
-         ;; analyse local and remote paths
-         local-file? (when-not content (local/is-file? src))
-         remote-file? (remote/is-file? run dest)
-         remote-dir? (remote/is-dir? run dest)
+          ;; analyse local and remote paths
+          local-file? (when-not content (local/is-file? src))
+          remote-file? (remote/is-file? run dest)
+          remote-dir? (remote/is-dir? run dest)
 
-         remote-writable? (if (not (string/ends-with? dest "/"))
-                            (remote/is-writable? run (utils/containing-folder dest))
-                            (remote/is-writable? run dest))
-         content (or content
-                     (let [src-file (io/file src)]
-                       (if (.isAbsolute src-file)
-                         src-file
-                         (io/file (utils/current-file-parent) src))))
-         ]
-     (cond
-       (and (not force)
-            (or local-file? content?)
-            (not (string/ends-with? dest "/"))
-            remote-dir?)
-       {:result :failed
-        :err ":src is a single file while :dest is a folder. Append '/' to dest to write into directory or set :force to true to delete destination folder and write as file."
-        :exit 1
-        :out ""}
+          remote-writable? (if (not (string/ends-with? dest "/"))
+                             (remote/is-writable? run (utils/containing-folder dest))
+                             (remote/is-writable? run dest))
+          content (or content
+                      (let [src-file (io/file src)]
+                        (if (.isAbsolute src-file)
+                          src-file
+                          (io/file (utils/current-file-parent) src))))
+          ]
+      (cond
+        (and (not force)
+             (or local-file? content?)
+             (not (string/ends-with? dest "/"))
+             remote-dir?)
+        {:result :failed
+         :err ":src is a single file while :dest is a folder. Append '/' to dest to write into directory or set :force to true to delete destination folder and write as file."
+         :exit 1
+         :out ""}
 
-       (and recurse
-            remote-file?
-            (not force))
-       {:result :failed
-        :err "Cannot copy :src directory over :dest. Destination is a file. Use :force to delete destination file and replace."
-        :exit 1
-        :out ""}
+        (and recurse
+             remote-file?
+             (not force))
+        {:result :failed
+         :err "Cannot copy :src directory over :dest. Destination is a file. Use :force to delete destination file and replace."
+         :exit 1
+         :out ""}
 
-       (not remote-writable?)
-       {:result :failed
-        :err "destination path :dest is unwritable"
-        :exit 1
-        :out ""}
+        (not remote-writable?)
+        {:result :failed
+         :err "destination path :dest is unwritable"
+         :exit 1
+         :out ""}
 
-       :else
-       (let [remote-file? (remote/is-file? run dest)
-             transfers (compare/compare-full-info (str content) run
-                                                  dest
-                                                  #_(if local-file?
-                                                      dest
-                                                      (io/file dest (.getName (io/file (str content))))))
+        :else
+        (let [remote-file? (remote/is-file? run dest)
+              transfers (compare/compare-full-info (str content) run
+                                                   dest
+                                                   #_(if local-file?
+                                                       dest
+                                                       (io/file dest (.getName (io/file (str content))))))
 
-             {:keys [local local-to-remote identical-content remote]} transfers
+              {:keys [local local-to-remote identical-content remote]} transfers
 
-             total-size (if content?
-                          (utils/content-size content)
-                          (->> local-to-remote
-                               (map (comp :size local))
-                               (apply +)))
+              total-size (if content?
+                           (utils/content-size content)
+                           (->> local-to-remote
+                                (map (comp :size local))
+                                (apply +)))
 
-             max-filename-length (if content?
-                                   (count (utils/content-display-name content))
-                                   (->> local-to-remote
-                                        (map (comp count #(.getName %) io/file :filename local))
-                                        (apply max 0)))
-             progress-fn (fn [file bytes total frac context]
-                           (output/print-progress
-                            (context/deref* state/output-module)
-                            source-code-file form form-meta
-                            host-config
-                            (utils/progress-stats
-                             file bytes total frac
-                             total-size
-                             max-filename-length
-                             context)
-                            ))
+              max-filename-length (if content?
+                                    (count (utils/content-display-name content))
+                                    (->> local-to-remote
+                                         (map (comp count #(.getName %) io/file :filename local))
+                                         (apply max 0)))
+              progress-fn (fn [file bytes total frac context]
+                            (output/print-progress
+                              state/*output-module*
+                              source-code-file form form-meta
+                              host-config
+                              (utils/progress-stats
+                                file bytes total frac
+                                total-size
+                                max-filename-length
+                                context)
+                              ))
 
-             copied?
-             (if recurse
-               (let [identical-content (->> identical-content
-                                            (map #(.getPath (io/file src %)))
-                                            (into #{}))
-                     remote-folder-exists? (and (remote "")
-                                                (= :dir (:type (remote ""))))
-                     ]
-                 (comment
-                   (prn "identical:" identical-content)
-                   (prn "local:" local)
-                   (prn "remote:" remote)
-                   (prn "lkeys:" (keys local)))
+              copied?
+              (if recurse
+                (let [identical-content (->> identical-content
+                                             (map #(.getPath (io/file src %)))
+                                             (into #{}))
+                      remote-folder-exists? (and (remote "")
+                                                 (= :dir (:type (remote ""))))
+                      ]
+                  (comment
+                    (prn "identical:" identical-content)
+                    (prn "local:" local)
+                    (prn "remote:" remote)
+                    (prn "lkeys:" (keys local)))
 
-                 (cond
-                   force
-                   (do
-                     (run (format "rm -rf \"%s\"" dest))
-                     (scp-result
-                      (scp/scp-to session content dest
-                                  :progress-fn progress-fn
-                                  :preserve preserve
-                                  :dir-mode (or dir-mode 0755)
-                                  :mode (or mode 0644)
-                                  :recurse true
-                                  :skip-files #{}
-                                  :exec exec
-                                  :exec-fn exec-fn
-                                  :sudo sudo
-                                  )))
+                  (cond
+                    force
+                    (do
+                      (run (format "rm -rf \"%s\"" dest))
+                      (scp-result
+                        #_(scp/scp-to session content dest
+                                      :progress-fn progress-fn
+                                      :preserve preserve
+                                      :dir-mode (or dir-mode 0755)
+                                      :mode (or mode 0644)
+                                      :recurse true
+                                      :skip-files #{}
+                                      :exec exec
+                                      :exec-fn exec-fn
+                                      :sudo sudo)
+                        (scp/scp-to content dest
+                                    {:session session
+                                     :progress-fn progress-fn
+                                     :preserve-mode? preserve
+                                     :preserve-times? preserve
+                                     :dir-mode (or dir-mode 0755)
+                                     :mode (or mode 0644)
+                                     :recurse? true
+                                     ;; shell-fn?
+                                     ;; stdin-fn?
+                                     })
+                        ))
 
-                   (not remote-file?)
-                   (scp-result
-                    (when (not=
-                           (count identical-content)
-                           (count (filter #(= :file (:type (second %))) local))
-                           )
-                      (scp/scp-to session
-                                  (if remote-folder-exists?
-                                    (mapv #(.getPath %) (.listFiles (io/file content)))
-                                    content
-                                    )
+                    (not remote-file?)
+                    (scp-result
+                      (when (not=
+                              (count identical-content)
+                              (count (filter #(= :file (:type (second %))) local))
+                              )
+                        (scp/scp-to
+                          (if remote-folder-exists?
+                            (mapv #(.getPath %) (.listFiles (io/file content)))
+                            content
+                            )
 
-                                  dest
-                                  :progress-fn progress-fn
-                                  :preserve preserve
-                                  :dir-mode (or dir-mode 0755)
-                                  :mode (or mode 0644)
-                                  :recurse true
-                                  :skip-files identical-content
-                                  :exec exec
-                                  :exec-fn exec-fn
-                                  :sudo sudo
-                                  )))))
+                          dest
+                          {:session session
+                           :progress-fn progress-fn
+                           :preserve-mode? preserve
+                           :preserve-times? preserve
+                           :dir-mode (or dir-mode 0755)
+                           :mode (or mode 0644)
+                           :recurse? true
+                           ;;:skip-files identical-content
+                           }
+                          )))))
 
-               ;; straight single copy
-               (if content?
-                 ;; content upload
-                 (let [local-md5 (utils/md5 content)
-                       remote-md5 (some-> (facts/on-shell
-                                           :csh (run (format "%s \"%s\"" (facts/md5) dest))
-                                           :else (run (format "%s \"%s\"" (facts/md5) dest)))
-                                          process-md5-out
-                                          first)
-                       ]
-                   (scp-result
-                    (when (not= local-md5 remote-md5)
-                      (scp/scp-content-to session content dest
-                                          :progress-fn progress-fn
-                                          :preserve preserve
-                                          :dir-mode (or dir-mode 0755)
+                ;; straight single copy
+                (if content?
+                  ;; content upload
+                  (let [local-md5 (utils/md5 content)
+                        remote-md5 (some-> (facts/on-shell
+                                             :csh (run (format "%s \"%s\"" (facts/md5) dest))
+                                             :else (run (format "%s \"%s\"" (facts/md5) dest)))
+                                           process-md5-out
+                                           first)]
+                    (scp-result
+                      (when (not= local-md5 remote-md5)
+                        (scp/scp-to content dest
+                                    {:session session
+                                     :progress-fn progress-fn
+                                     :preserve-mode? preserve
+                                     :preserve-times? preserve
+                                     :dir-mode (or dir-mode 0755)
+                                     :mode (or mode 0644)
+                                     :recurse? true}
+                                    ))))
+
+                  ;; file upload
+                  (let [local-md5 (utils/md5-file (.getPath content))
+                        remote-md5 (some-> (facts/on-shell
+                                             :csh (run (format "%s \"%s\"" (facts/md5) dest))
+                                             :else (run (format "%s \"%s\"" (facts/md5) dest)))
+                                           process-md5-out
+                                           first)
+                        ;; _ (println "l:" local-md5 "r:" remote-md5)
+                        ;; _ (do (println "\n\n\n"))
+                        ]
+                    (comment
+                      (prn "local-md5:" local-md5)
+                      (prn "remote-md5:" remote-md5))
+                    (scp-result
+                      (when (not= local-md5 remote-md5)
+                        (scp/scp-to [(.getPath content)] dest
+                                    {:session session
+                                     :progress-fn progress-fn
+                                     :preserve-mode? preserve
+                                     :preserve-times? preserve
+                                     :dir-mode (or dir-mode 0755)
+                                     :mode (or mode 0644)
+                                     :recurse? true}
+                                    ))))))
+
+              passed-attrs? (or owner group dir-mode mode attrs)
+
+              {:keys [exit err out]} (cond
+                                       ;; generally we assume that if a copy happened, all attributes
+                                       ;; and modes are correctly setup.
+                                       (and (= :ok (:result copied?)) passed-attrs?)
+                                       (attrs/set-attrs
+                                         session
+                                         {:path dest
+                                          :owner owner
+                                          :group group
                                           :mode (or mode 0644)
-                                          :exec exec
-                                          :exec-fn exec-fn
-                                          :sudo sudo
-                                          ))))
+                                          :dir-mode (or dir-mode 0755)
+                                          :attrs attrs
+                                          :recurse recurse})
 
-                 ;; file upload
-                 (let [local-md5 (utils/md5-file (.getPath content))
-                       remote-md5 (some-> (facts/on-shell
-                                           :csh (run (format "%s \"%s\"" (facts/md5) dest))
-                                           :else (run (format "%s \"%s\"" (facts/md5) dest)))
-                                          process-md5-out
-                                          first)
-                       ;; _ (println "l:" local-md5 "r:" remote-md5)
-                       ;; _ (do (println "\n\n\n"))
-                       ]
-                   (comment
-                     (prn "local-md5:" local-md5)
-                     (prn "remote-md5:" remote-md5))
-                   (scp-result
-                    (when (not= local-md5 remote-md5)
-                      (scp/scp-to session [(.getPath content)] dest
-                                  :progress-fn progress-fn
-                                  :preserve preserve
-                                  :dir-mode (or dir-mode 0755)
-                                  :mode (or mode 0644)
-                                  :exec exec
-                                  :exec-fn exec-fn
-                                  :sudo sudo
-                                  ))))))
+                                       preserve
+                                       (attrs/set-attrs-preserve
+                                         session
+                                         src
+                                         dest))]
+          (process-result
+            opts
+            copied?
+            (cond
+              (= 0 exit)
+              {:result :ok}
 
-             passed-attrs? (or owner group dir-mode mode attrs)
+              (= 255 exit)
+              {:result :changed}
 
-             {:keys [exit err out]} (cond
-                                      ;; generally we assume that if a copy happened, all attributes
-                                      ;; and modes are correctly setup.
-                                      (and (= :ok (:result copied?)) passed-attrs?)
-                                      (attrs/set-attrs
-                                       session
-                                       {:path dest
-                                        :owner owner
-                                        :group group
-                                        :mode (or mode 0644)
-                                        :dir-mode (or dir-mode 0755)
-                                        :attrs attrs
-                                        :recurse recurse})
+              (nil? exit)
+              {:result :ok}
 
-                                      preserve
-                                      (attrs/set-attrs-preserve
-                                       session
-                                       src
-                                       dest))]
-         (process-result
-          opts
-          copied?
-          (cond
-            (= 0 exit)
-            {:result :ok}
-
-            (= 255 exit)
-            {:result :changed}
-
-            (nil? exit)
-            {:result :ok}
-
-            :else
-            {:result :failed
-             :exit exit
-             :err err
-             :out out}))))
-     )))
+              :else
+              {:result :failed
+               :exit exit
+               :err err
+               :out out}))))
+      )))
 
 (defmacro upload
   "transfer files and directories from the local client to the remote
