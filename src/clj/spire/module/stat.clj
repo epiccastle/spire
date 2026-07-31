@@ -312,7 +312,7 @@
   "When given the result of a `stat` call, return `true` if you can
   execute the file with your present user and permissions."
   [{{:keys [mode uid gid]} :stat}]
-  (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:user])]
+  (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:users])]
     (if (zero? fact-uid)
       ;; root can execute any file that has any executable bit set
       (pos? (bit-and mode (bit-or 64 8 1)))
@@ -327,7 +327,7 @@
   "When given the result of a `stat` call, return `true` if you can
   read from the file with your present user and permissions."
   [{{:keys [mode uid gid]} :stat}]
-  (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:user])]
+  (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:users])]
     (if (zero? fact-uid)
       ;; root can read any file
       true
@@ -342,7 +342,7 @@
   "When given the result of a `stat` call, return `true` if you can
   write to the file with your present user and permissions."
   [{{:keys [mode uid gid]} :stat}]
-  (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:user])]
+  (let [{{fact-uid :id} :uid group-ids :group-ids} (facts/get-fact [:users])]
     (if (zero? fact-uid)
       ;; root can write to any file
       true

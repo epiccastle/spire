@@ -37,7 +37,7 @@
 
 (defmethod make-script :present [_ {:keys [repo filename]}]
   (let [ppa? (string/starts-with? repo "ppa:")
-        codename (name (facts/get-fact [:system :codename]))]
+        codename (name (facts/get-fact [:os :distro :codename]))]
     (if ppa?
       ;; ppa repository source
       (let [[_ ppa] (string/split repo #":")
@@ -102,7 +102,7 @@
 
 (defmethod make-script :absent [_ {:keys [repo filename]}]
   (let [ppa? (string/starts-with? repo "ppa:")
-        codename (name (facts/get-fact [:system :codename]))]
+        codename (name (facts/get-fact [:os :distro :codename]))]
     (if ppa?
       ;; ppa repository source
       (let [[_ ppa] (string/split repo #":")

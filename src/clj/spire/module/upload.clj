@@ -87,7 +87,7 @@
 
 (defn process-md5-out
   ([line]
-   (process-md5-out (facts/get-fact [:system :os]) line))
+   (process-md5-out (facts/get-fact [:os :family]) line))
   ([os line]
    (cond
      (#{:linux} os)
