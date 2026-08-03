@@ -198,8 +198,9 @@
   "Returns a clean version of the terminal width. If there is no terminal, returns
   a fake width (80)"
   []
-  (let [width (terminal/get-width)]
-    (if (has-terminal?) width 80)))
+  (if (has-terminal?)
+    (terminal/get-width)
+    80))
 
 ;; #_ (progress-bar 45 2984 0.2 nil)
 ;; ;;stdout: |                                                | 20%
