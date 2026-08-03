@@ -54,7 +54,7 @@
                 :lib lib
                 :version version-tag
                 :basis @basis
-                :src-dirs ["src"]
+                :src-dirs ["src/clj"]
                 :scm {:url "https://github.com/epiccastle/spire"
                       :connection "scm:git:git://github.com/epiccastle/spire.git"
                       :developerConnection "scm:git:ssh://git@github.com/epiccastle/spire.git"
@@ -65,7 +65,7 @@
                   [:license
                    [:name "Eclipse Public License 2.0"]
                    [:url "https://www.eclipse.org/legal/epl-2.0/"]]]]})
-  (b/copy-dir {:src-dirs ["src" "resources"]
+  (b/copy-dir {:src-dirs ["src/clj" "resources"]
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
           :jar-file jar-file}))

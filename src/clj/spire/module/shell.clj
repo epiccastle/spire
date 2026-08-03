@@ -90,7 +90,6 @@
 
                           :as opts}]
   [host-string session {:keys [exec-fn sudo] :as shell-context}]
-  (prn 'SUDO sudo)
   (or (preflight (dissoc opts :ok-exit :changed-exit))
       (let [{:keys [agent-forwarding]} (state/get-host-config)
             shell-path (facts/get-fact [:paths (keyword shell)])

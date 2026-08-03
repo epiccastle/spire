@@ -1,4 +1,5 @@
-(ns spire.output.core)
+(ns spire.output.core
+  (:require [spire.state :as state]))
 
 (set! *warn-on-reflection* true)
 
@@ -19,3 +20,17 @@
 
 (defmulti print-streams
   (fn [driver file form form-meta host-string stdout stderr] driver))
+
+(defmulti worker-thread-start
+  (fn [driver] driver))
+
+(defmulti worker-thread-stop
+  (fn [driver worker] driver))
+
+(defmacro with-output [driver & body]
+  `(let [worker# (worker-thread-start ~driver)]
+     (binding [state/*output-module* ~driver]
+       (try
+         ~@body
+         (finally
+           (worker-thread-stop ~driver worker#))))))

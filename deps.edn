@@ -25,7 +25,10 @@
 
         }
  :aliases
- {:run
+ {
+  :dev {:jvm-opts ["-Djdk.attach.allowAttachSelf=true"]}
+
+  :run
   ;; Grant the JNA-loaded native libraries access without the
   ;; JDK 24+ "restricted method" warning. Required on JDK 24+,
   ;; harmless on earlier JDKs.

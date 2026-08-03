@@ -3,7 +3,7 @@
             [spire.output.core :as output]
             [puget.printer :as puget]
             [clojure.string :as string]
-            [clojure.core.async :refer [<!! put! chan thread]]
+            [clojure.core.async :refer [<!! put! chan thread close! <! go]]
             [clojuressh.terminal :as terminal]))
 
 (set! *warn-on-reflection* true)
@@ -443,19 +443,27 @@
 (defn output-print-thread []
   (thread
     (loop []
-      (state-change (<!! state-change-chan))
-      (recur))))
+      (when-let [v (<!! state-change-chan)]
+        (state-change v)
+        (recur)))))
 
 (defmethod output/print-thread :default [_]
   (output-print-thread))
 
+(defmethod output/worker-thread-start :default [_]
+  (output-print-thread))
+
+(defmethod output/worker-thread-stop :default [_ worker]
+  (close! state-change-chan)
+  (<!! worker))
+
 (defonce state-watcher
   (add-watch
-   state :output
-   (fn [_ _ o n]
-     (when (not= o n)
-       (put! state-change-chan [o n]))
-     )))
+    state :output
+    (fn [_ _ o n]
+      (when (not= o n)
+        (put! state-change-chan [o n]))
+      )))
 
 (defn find-forms-matching-index [forms-vec search]
   (let [search-keys (keys search)]
@@ -468,7 +476,6 @@
          (filter identity))))
 
 (defn output-print-form [file form file-meta host-config]
-  ;; (prn 'print-form form file file-meta)
   (swap! state
          update :log
          (fn [s]
@@ -490,7 +497,7 @@
   (output-print-form file form file-meta host-config))
 
 (defn output-print-result [file form file-meta host-config result]
-  ;;(prn 'print-result file form file-meta host-config result)
+  #_(prn 'print-result file form file-meta host-config result)
   (comment
     (prn 'print-result result host-config)
     (prn (find-forms-matching-index @state {:form form :file file :meta file-meta})))
@@ -500,19 +507,19 @@
            (if-let [matching-index (first (find-forms-matching-index s {:form form :file file :meta file-meta}))]
              ;; already a line output. add to it.
              (update
-              s
-              matching-index
-              (fn [{:keys [width results] :as data}]
-                (-> data
-                    (update :copy-progress dissoc (:host-string host-config))
-                    (assoc
-                     :width (+ width (count (:host-string host-config)) 1)
-                     :results (conj results
-                                    {:result result
-                                     :host-config host-config
-                                     :pos width
-                                     }
-                                    )))))
+               s
+               matching-index
+               (fn [{:keys [width results] :as data}]
+                 (-> data
+                     (update :copy-progress dissoc (:host-string host-config))
+                     (assoc
+                       :width (+ width (count (:host-string host-config)) 1)
+                       :results (conj results
+                                      {:result result
+                                       :host-config host-config
+                                       :pos width
+                                       }
+                                      )))))
 
              ;; TODO: this check shouldnt be done here
              ;; in test output handler no key will exist because nothing is stored
