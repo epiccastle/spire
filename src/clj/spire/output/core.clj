@@ -44,7 +44,14 @@
 
 (defmethod print-progress :default [driver file form form-meta host-string {:keys [progress context]}])
 
-(defmethod print-streams :default [driver file form form-meta host-string stdout stderr])
+(defmethod print-streams :default [driver file form form-meta host-string stdout stderr]
+  (when stdout
+    (print stdout)
+    (.flush ^java.io.Writer *out*))
+  (when stderr
+    (binding [*out* *err*]
+      (print stderr)
+      (.flush ^java.io.Writer *err*))))
 
 (defmethod worker-thread-start :default [driver])
 
