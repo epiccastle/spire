@@ -135,48 +135,66 @@
                          :last "last"
                          :all "all")
         insertat (some->> insert-at name)
-        posix-vars {:REGEX (some-> regexp utils/re-pattern-to-sed)
-                    :STRING_MATCH (some->> string-match utils/string-escape)
-                    :LINE_MATCH (some->> line-match-val utils/string-escape)
-                    :FILE (some->> path utils/path-escape)
-                    :LINENUM line-num
-                    :LINE (some->> line utils/string-escape)
-                    :SEDLINE (some->> line escape-leading-spaces utils/string-escape)
-                    :AFTER (some->> after utils/re-pattern-to-sed)
-                    :BEFORE (some->> before utils/re-pattern-to-sed)
-                    :SELECTOR selector-posix
-                    :INSERTAT insertat}
-        ps-vars {:REGEX (regex-pattern-string regexp)
-                 :STRING_MATCH string-match
-                 :LINE_MATCH line-match-val
-                 :FILE path
-                 :LINENUM line-num
-                 :LINE line
-                 :AFTER (regex-pattern-string after)
-                 :BEFORE (regex-pattern-string before)
-                 :SELECTOR selector-ps
-                 :INSERTAT insertat}
-        cmd-vars {:REGEX (regex-pattern-string regexp)
-                  :STRING_MATCH string-match
-                  :LINE_MATCH line-match-val
-                  :FILE path
-                  :LINENUM line-num
-                  :LINE line
-                  :AFTER (regex-pattern-string after)
-                  :BEFORE (regex-pattern-string before)
-                  :SELECTOR selector-shell
-                  :INSERTAT insertat}
-        nu-vars {:REGEX (regex-pattern-string regexp)
-                 :STRING_MATCH string-match
-                 :LINE_MATCH line-match-val
-                 :FILE path
-                 :LINENUM line-num
-                 :LINE line
-                 :AFTER (regex-pattern-string after)
-                 :BEFORE (regex-pattern-string before)
-                 :SELECTOR selector-shell
-                 :INSERTAT insertat}]
-    (line-in-file-script "line_in_file_present" posix-vars posix-vars ps-vars cmd-vars nu-vars)))
+        shell-type (facts/get-fact [:shell :type])
+        shell-vars (case shell-type
+                     (:bash :sh :dash :zsh :ksh :busybox :fish)
+                     {:REGEX (some-> regexp utils/re-pattern-to-sed)
+                      :STRING_MATCH (some->> string-match utils/string-escape)
+                      :LINE_MATCH (some->> line-match-val utils/string-escape)
+                      :FILE (some->> path utils/path-escape)
+                      :LINENUM line-num
+                      :LINE (some->> line utils/string-escape)
+                      :SEDLINE (some->> line escape-leading-spaces utils/string-escape)
+                      :AFTER (some->> after utils/re-pattern-to-sed)
+                      :BEFORE (some->> before utils/re-pattern-to-sed)
+                      :SELECTOR selector-posix
+                      :INSERTAT insertat}
+
+                     :powershell
+                     {:REGEX (regex-pattern-string regexp)
+                      :STRING_MATCH string-match
+                      :LINE_MATCH line-match-val
+                      :FILE path
+                      :LINENUM line-num
+                      :LINE line
+                      :AFTER (regex-pattern-string after)
+                      :BEFORE (regex-pattern-string before)
+                      :SELECTOR selector-ps
+                      :INSERTAT insertat}
+
+                     :cmd-exe
+                     {:REGEX (regex-pattern-string regexp)
+                      :STRING_MATCH string-match
+                      :LINE_MATCH line-match-val
+                      :FILE path
+                      :LINENUM line-num
+                      :LINE line
+                      :AFTER (regex-pattern-string after)
+                      :BEFORE (regex-pattern-string before)
+                      :SELECTOR selector-shell
+                      :INSERTAT insertat}
+
+                     :nu
+                     {:REGEX (regex-pattern-string regexp)
+                      :STRING_MATCH string-match
+                      :LINE_MATCH line-match-val
+                      :FILE path
+                      :LINENUM line-num
+                      :LINE line
+                      :AFTER (regex-pattern-string after)
+                      :BEFORE (regex-pattern-string before)
+                      :SELECTOR selector-shell
+                      :INSERTAT insertat})]
+    (utils/make-script
+      (str "line_in_file/line_in_file_present."
+           (case shell-type
+             :fish "fish"
+             :powershell "ps1"
+             :cmd-exe "bat"
+             :nu "nu"
+             "sh"))
+      shell-vars
+      shell-type)))
 
 (defmethod process-result :present
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
