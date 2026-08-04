@@ -1,6 +1,5 @@
 (ns spire.module.apt-key
-  (:require [spire.module.shell :as shell]
-            [spire.facts :as facts]
+  (:require [spire.facts :as facts]
             [spire.utils :as utils]
             [clojure.string :as string]
             ))
@@ -19,7 +18,7 @@
 
 (defmethod make-script :list [_ {:keys [repo filename]}]
   (utils/make-script
-   "apt_key_list.sh"
+   "apt_key/apt_key_list.sh"
    {}))
 
 (defn process-key [out-lines]
@@ -83,7 +82,7 @@
 
 (defmethod make-script :present [_ {:keys [fingerprint public-key public-key-url keyring]}]
   (utils/make-script
-   "apt_key_present.sh"
+   "apt_key/apt_key_present.sh"
    {:FINGERPRINT (some-> fingerprint
                          name
                          (string/replace #"\s+" "")
@@ -122,7 +121,7 @@
 
 (defmethod make-script :absent [_ {:keys [fingerprint public-key public-key-url]}]
   (utils/make-script
-   "apt_key_absent.sh"
+   "apt_key/apt_key_absent.sh"
    {:FINGERPRINT (some-> fingerprint
                          name
                          (string/replace #"\s+" "")
@@ -156,12 +155,11 @@
 
 
 (utils/defmodule apt-key* [command opts]
-  [host-config session shell-context]
+  [host-config session {:keys [exec-fn sudo] :as shell-context}]
   (or
    (preflight command opts)
    (->>
-    #_ (exec-fn session (shell-fn "bash") (stdin-fn (make-script command opts)) "UTF-8" {})
-    (spire.module.shell/shell* {:cmd (make-script command opts)})
+    (exec-fn session "bash" (make-script command opts) "UTF-8" {:sudo sudo})
     (process-result command opts))))
 
 (defmacro apt-key
