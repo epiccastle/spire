@@ -447,13 +447,13 @@
         (state-change v)
         (recur)))))
 
-(defmethod output/print-thread :default [_]
+(defmethod output/print-thread :verbose [_]
   (output-print-thread))
 
-(defmethod output/worker-thread-start :default [_]
+(defmethod output/worker-thread-start :verbose [_]
   (output-print-thread))
 
-(defmethod output/worker-thread-stop :default [_ worker]
+(defmethod output/worker-thread-stop :verbose [_ worker]
   (close! state-change-chan)
   (<!! worker))
 
@@ -493,7 +493,7 @@
                       :results []}))))
   )
 
-(defmethod output/print-form :default [_ file form file-meta host-config]
+(defmethod output/print-form :verbose [_ file form file-meta host-config]
   (output-print-form file form file-meta host-config))
 
 (defn output-print-result [file form file-meta host-config result]
@@ -527,7 +527,7 @@
              )))
   )
 
-(defmethod output/print-result :default [_ file form file-meta host-config result]
+(defmethod output/print-result :verbose [_ file form file-meta host-config result]
   (output-print-result file form file-meta host-config result)
   )
 
@@ -537,7 +537,7 @@
          update :debug
          conj [file form file-meta host-config result])
   )
-(defmethod output/debug-result :default [_ file form file-meta host-config result]
+(defmethod output/debug-result :verbose [_ file form file-meta host-config result]
   (output-debug-result file form file-meta host-config result))
 
 (defn output-print-progress [file form form-meta host-string {:keys [progress context] :as data}]
@@ -556,7 +556,7 @@
              s)))
   context)
 
-(defmethod output/print-progress :default [_ file form form-meta host-string data]
+(defmethod output/print-progress :verbose [_ file form form-meta host-string data]
   (output-print-progress file form form-meta host-string data))
 
 (defn output-print-streams [file form form-meta host-string stdout stderr]
@@ -575,5 +575,5 @@
              s)))
   )
 
-(defmethod output/print-streams :default [_ file form form-meta host-string stdout stderr]
+(defmethod output/print-streams :verbose [_ file form form-meta host-string stdout stderr]
   (output-print-streams file form form-meta host-string stdout stderr))
