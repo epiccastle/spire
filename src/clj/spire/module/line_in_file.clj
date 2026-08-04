@@ -1,6 +1,5 @@
 (ns spire.module.line-in-file
-  (:require [spire.ssh :as ssh]
-            [spire.facts :as facts]
+  (:require [spire.facts :as facts]
             [spire.utils :as utils]
             [clojure.string :as string]))
 
@@ -10,45 +9,64 @@
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
 
+(def ^:private posix-shell-types #{:bash :sh :dash :zsh :ksh :busybox})
+
+(def ^:private supported-shell-types
+  (into posix-shell-types #{:fish :powershell :cmd-exe :nu}))
+
 (defmulti make-script (fn [command opts] command))
 
 (defmulti preflight (fn [command opts] command))
 
 (defmulti process-result (fn [command opts result] command))
 
-;;
-;; (line-in-file :present ...)
-;;
-(defmethod preflight :present [_ {:keys [path regexp string-match line-match after before match insert-at]}]
-  (cond
-    (empty? path)
-    (assoc failed-result
-           :exit 4
-           :err ":path must be specified")
+(defn check-shell-supported
+  "Return nil if the eyre-detected shell is supported by the
+  line-in-file module, otherwise a failed result map explaining
+  the limitation.
 
-    (and after before)
-    (assoc failed-result
-           :exit 3
-           :err "Cannot specify both :after and :before to :present")
+  The module ships scripts for POSIX shells, fish, powershell,
+  cmd.exe and nushell.  Csh/tcsh and any other exotic shell eyre
+  might report are not supported."
+  []
+  (let [shell-type (facts/get-fact [:shell :type])]
+    (when-not (supported-shell-types shell-type)
+      {:exit 1
+       :out ""
+       :err (format "line-in-file module does not support the '%s' shell"
+                    (name (or shell-type :unknown)))
+       :result :failed})))
 
-    (< 1 (+ (if regexp 1 0)
-            (if string-match 1 0)
-            (if line-match 1 0)))
-    (assoc failed-result
-           :exit 3
-           :err "Can only specify one of :regexp, :string-match and :line-match to :present")
+(defn- regex-pattern-string
+  "Extract the pattern string from a Clojure/Java regex, or return
+  the value as-is if it is already a string."
+  [re]
+  (when re
+    (if (instance? java.util.regex.Pattern re)
+      (.pattern ^java.util.regex.Pattern re)
+      (str re))))
 
-    (not (options-match-choices (or match options-match-default)))
-    (assoc failed-result
-           :exit 3
-           :err (format ":match needs to be one of %s"
-                        (prn-str options-match-choices)))
-
-    (not (#{:bof :eof} (or insert-at :eof)))
-    (assoc failed-result
-           :exit 3
-           :err (format ":insert-at needs to be one of %s"
-                        (prn-str #{:bof :eof})))))
+(defmacro line-in-file-script
+  "Embed all shell variants of a line-in-file script at compile time
+  via `utils/make-script` and select the appropriate one at runtime
+  based on the eyre-detected shell `:type`.  `base-name` is the script
+  basename without directory prefix or extension (e.g.
+  \"line_in_file_present\"); the five `*-vars` arguments are the
+  variable maps for POSIX, fish, powershell, cmd.exe and nushell
+  respectively.  Only the matching branch's vars are evaluated at
+  runtime."
+  [base-name posix-vars fish-vars ps-vars cmd-vars nu-vars]
+  (let [sh-file   (str "line_in_file/" base-name ".sh")
+        fish-file (str "line_in_file/" base-name ".fish")
+        ps-file   (str "line_in_file/" base-name ".ps1")
+        cmd-file  (str "line_in_file/" base-name ".bat")
+        nu-file   (str "line_in_file/" base-name ".nu")]
+    `(case (facts/get-fact [:shell :type])
+       :fish       (utils/make-script ~fish-file ~fish-vars :fish)
+       :powershell (utils/make-script ~ps-file   ~ps-vars   :powershell)
+       :cmd-exe    (utils/make-script ~cmd-file  ~cmd-vars  :cmd)
+       :nu         (utils/make-script ~nu-file  ~nu-vars   :nu)
+       (utils/make-script ~sh-file   ~posix-vars))))
 
 (defn escape-leading-spaces [s]
   (let [[_ space remain] (re-matches #"^(\s*)(.+)$" s)
@@ -59,51 +77,106 @@
                      (apply str))]
     (str escaped (utils/string-escape remain))))
 
+;;
+;; (line-in-file :present ...)
+;;
+(defmethod preflight :present [_ {:keys [path regexp string-match line-match after before match insert-at]}]
+  (let [shell-type (facts/get-fact [:shell :type])]
+    (or
+     (when (or (posix-shell-types shell-type)
+               (= :fish shell-type))
+       (facts/check-bins-present #{:sed :grep :awk}))
+     (cond
+       (empty? path)
+       (assoc failed-result
+              :exit 4
+              :err ":path must be specified")
+
+       (and after before)
+       (assoc failed-result
+              :exit 3
+              :err "Cannot specify both :after and :before to :present")
+
+       (< 1 (+ (if regexp 1 0)
+               (if string-match 1 0)
+               (if line-match 1 0)))
+       (assoc failed-result
+              :exit 3
+              :err "Can only specify one of :regexp, :string-match and :line-match to :present")
+
+       (not (options-match-choices (or match options-match-default)))
+       (assoc failed-result
+              :exit 3
+              :err (format ":match needs to be one of %s"
+                           (prn-str options-match-choices)))
+
+       (not (#{:bof :eof} (or insert-at :eof)))
+       (assoc failed-result
+              :exit 3
+              :err (format ":insert-at needs to be one of %s"
+                           (prn-str #{:bof :eof})))))))
+
 (defmethod make-script :present [_ {:keys [path
                                            regexp string-match line-match
                                            line-num line
                                            after before
                                            match insert-at]}]
-  ;;(prn 'make-script :present (some->> line utils/string-escape))
-  ;;(println (some->> line utils/string-escape))
-  ;;(println line)
-  (facts/on-os
-   :linux (utils/make-script
-           "line_in_file_present.sh"
-           {:REGEX regexp
-            :STRING_MATCH (some->> string-match utils/string-escape)
-            :LINE_MATCH (some->>
-                         (if (or regexp string-match line-match) line-match line)
-                         utils/string-escape)
-            :FILE (some->> path utils/path-escape)
-            :LINENUM line-num
-            :LINE (some->> line utils/string-escape)
-            :SEDLINE (some->> line escape-leading-spaces utils/string-escape)
-            :AFTER (some->> after utils/re-pattern-to-sed)
-            :BEFORE (some->> before utils/re-pattern-to-sed)
-            :SELECTOR (case (or match options-match-default)
-                        :first "head -1"
-                        :last "tail -1"
-                        :all "cat")
-            :INSERTAT (some->> insert-at name)})
-   :else (utils/make-script
-          "line_in_file_present_bsd.sh"
-          {:REGEX regexp
-           :STRING_MATCH (some->> string-match utils/string-escape)
-           :LINE_MATCH (some->>
-                        (if (or regexp string-match line-match) line-match line)
-                         utils/string-escape)
-           :FILE (some->> path utils/path-escape)
-           :LINENUM line-num
-           :LINE (some->> line utils/string-escape)
-           :SEDLINE (some->> line utils/string-escape utils/string-escape)
-           :AFTER (some->> after utils/re-pattern-to-sed)
-           :BEFORE (some->> before utils/re-pattern-to-sed)
-           :SELECTOR (case (or match options-match-default)
-                       :first "head -1"
-                       :last "tail -1"
-                       :all "cat")
-           :INSERTAT (some->> insert-at name)})))
+  (let [line-match-val (if (or regexp string-match line-match) line-match line)
+        selector-posix (case (or match options-match-default)
+                         :first "head -1"
+                         :last "tail -1"
+                         :all "cat")
+        selector-ps (case (or match options-match-default)
+                      :first "First"
+                      :last "Last"
+                      :all "All")
+        selector-shell (case (or match options-match-default)
+                         :first "first"
+                         :last "last"
+                         :all "all")
+        insertat (some->> insert-at name)
+        posix-vars {:REGEX (some-> regexp utils/re-pattern-to-sed)
+                    :STRING_MATCH (some->> string-match utils/string-escape)
+                    :LINE_MATCH (some->> line-match-val utils/string-escape)
+                    :FILE (some->> path utils/path-escape)
+                    :LINENUM line-num
+                    :LINE (some->> line utils/string-escape)
+                    :SEDLINE (some->> line escape-leading-spaces utils/string-escape)
+                    :AFTER (some->> after utils/re-pattern-to-sed)
+                    :BEFORE (some->> before utils/re-pattern-to-sed)
+                    :SELECTOR selector-posix
+                    :INSERTAT insertat}
+        ps-vars {:REGEX (regex-pattern-string regexp)
+                 :STRING_MATCH string-match
+                 :LINE_MATCH line-match-val
+                 :FILE path
+                 :LINENUM line-num
+                 :LINE line
+                 :AFTER (regex-pattern-string after)
+                 :BEFORE (regex-pattern-string before)
+                 :SELECTOR selector-ps
+                 :INSERTAT insertat}
+        cmd-vars {:REGEX (regex-pattern-string regexp)
+                  :STRING_MATCH string-match
+                  :LINE_MATCH line-match-val
+                  :FILE path
+                  :LINENUM line-num
+                  :LINE line
+                  :AFTER (regex-pattern-string after)
+                  :BEFORE (regex-pattern-string before)
+                  :SELECTOR selector-shell
+                  :INSERTAT insertat}
+        nu-vars {:REGEX (regex-pattern-string regexp)
+                 :STRING_MATCH string-match
+                 :LINE_MATCH line-match-val
+                 :FILE path
+                 :LINENUM line-num
+                 :LINE line
+                 :AFTER (regex-pattern-string after)
+                 :BEFORE (regex-pattern-string before)
+                 :SELECTOR selector-shell
+                 :INSERTAT insertat}]
+    (line-in-file-script "line_in_file_present" posix-vars posix-vars ps-vars cmd-vars nu-vars)))
 
 (defmethod process-result :present
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
@@ -128,54 +201,60 @@
 (defmethod preflight :absent [_ {:keys [path
                                         regexp string-match line-match
                                         line-num]}]
-  (cond
-    (empty? path)
-    (assoc failed-result
-           :exit 4
-           :err ":path must be specified")
+  (let [shell-type (facts/get-fact [:shell :type])]
+    (or
+     (when (or (posix-shell-types shell-type)
+               (= :fish shell-type))
+       (facts/check-bins-present #{:sed :grep :awk}))
+     (cond
+       (empty? path)
+       (assoc failed-result
+              :exit 4
+              :err ":path must be specified")
 
-    (< 1 (+ (if regexp 1 0)
-            (if string-match 1 0)
-            (if line-match 1 0)))
-    (assoc failed-result
-           :exit 3
-           :err "Can only specify one of :regexp, :string-match and :line-match to :absent")
+       (< 1 (+ (if regexp 1 0)
+               (if string-match 1 0)
+               (if line-match 1 0)))
+       (assoc failed-result
+              :exit 3
+              :err "Can only specify one of :regexp, :string-match and :line-match to :absent")
 
-    (and regexp string-match)
-    (assoc failed-result
-           :exit 3
-           :err "Cannot specify both :regexp and :string-match to :absent")
+       (and regexp string-match)
+       (assoc failed-result
+              :exit 3
+              :err "Cannot specify both :regexp and :string-match to :absent")
 
-    (not (or regexp line-num))
-    (assoc failed-result
-           :exit 3
-           :err "must specify :regexp or :line-num")))
+       (not (or regexp line-num))
+       (assoc failed-result
+              :exit 3
+              :err "must specify :regexp or :line-num")))))
 
 (defmethod make-script :absent [_ {:keys [path
                                           regexp string-match line-match
                                           line line-num
                                           match]}]
-  (facts/on-os
-   :linux (utils/make-script
-           "line_in_file_absent.sh"
-           {:REGEX regexp
-            :STRING_MATCH (some->> string-match utils/string-escape)
-            :LINE_MATCH (some->>
-                         (if (or regexp string-match line-match) line-match line)
-                         utils/string-escape)
-            :FILE (some->> path utils/path-escape)
-            :LINENUM line-num
-            })
-   :else (utils/make-script
-          "line_in_file_absent_bsd.sh"
-          {:REGEX regexp
-           :STRING_MATCH (some->> string-match utils/string-escape)
-           :LINE_MATCH (some->>
-                        (if (or regexp string-match line-match) line-match line)
-                        utils/string-escape)
-           :FILE (some->> path utils/path-escape)
-           :LINENUM line-num
-           })))
+  (let [line-match-val (if (or regexp string-match line-match) line-match line)
+        posix-vars {:REGEX (some-> regexp utils/re-pattern-to-sed)
+                    :STRING_MATCH (some->> string-match utils/string-escape)
+                    :LINE_MATCH (some->> line-match-val utils/string-escape)
+                    :FILE (some->> path utils/path-escape)
+                    :LINENUM line-num}
+        ps-vars {:REGEX (regex-pattern-string regexp)
+                 :STRING_MATCH string-match
+                 :LINE_MATCH line-match-val
+                 :FILE path
+                 :LINENUM line-num}
+        cmd-vars {:REGEX (regex-pattern-string regexp)
+                  :STRING_MATCH string-match
+                  :LINE_MATCH line-match-val
+                  :FILE path
+                  :LINENUM line-num}
+        nu-vars {:REGEX (regex-pattern-string regexp)
+                 :STRING_MATCH string-match
+                 :LINE_MATCH line-match-val
+                 :FILE path
+                 :LINENUM line-num}]
+    (line-in-file-script "line_in_file_absent" posix-vars posix-vars ps-vars cmd-vars nu-vars)))
 
 (defmethod process-result :absent
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
@@ -201,101 +280,130 @@
 (defmethod preflight :get [_ {:keys [path
                                      line-num regexp string-match
                                      line-match match]}]
-  (cond
-    (empty? path)
-    (assoc failed-result
-           :exit 4
-           :err ":path must be specified")
+  (let [shell-type (facts/get-fact [:shell :type])]
+    (or
+     (when (or (posix-shell-types shell-type)
+               (= :fish shell-type))
+       (facts/check-bins-present #{:sed :grep :awk}))
+     (cond
+       (empty? path)
+       (assoc failed-result
+              :exit 4
+              :err ":path must be specified")
 
-    (and line-num regexp)
-    (assoc failed-result
-           :exit 3
-           :err "Cannot specify both :line-num and :regexp to :get")
+       (and line-num regexp)
+       (assoc failed-result
+              :exit 3
+              :err "Cannot specify both :line-num and :regexp to :get")
 
-    (< 1 (+ (if regexp 1 0)
-            (if string-match 1 0)
-            (if line-match 1 0)))
-    (assoc failed-result
-           :exit 3
-           :err "Can only specify one of :regexp, :string-match and :line-match to :get")
+       (< 1 (+ (if regexp 1 0)
+               (if string-match 1 0)
+               (if line-match 1 0)))
+       (assoc failed-result
+              :exit 3
+              :err "Can only specify one of :regexp, :string-match and :line-match to :get")
 
-    (not (options-match-choices (or match options-match-default)))
-    (assoc failed-result
-           :exit 3
-           :err (format ":match needs to be one of %s"
-                        (prn-str options-match-choices)))
+       (not (options-match-choices (or match options-match-default)))
+       (assoc failed-result
+              :exit 3
+              :err (format ":match needs to be one of %s"
+                           (prn-str options-match-choices)))
 
-    (= 0 line-num)
-    (assoc failed-result
-           :exit 2
-           :err "No line number 0 in file. File line numbers are 1 offset.")))
+       (= 0 line-num)
+       (assoc failed-result
+              :exit 2
+              :err "No line number 0 in file. File line numbers are 1 offset.")))))
 
 (defmethod make-script :get [_ {:keys [path
                                        line-num regexp string-match
                                        line-match line match]}]
-  (utils/make-script
-   "line_in_file_get.sh"
-   {:REGEX regexp
-    :STRING_MATCH (some->> string-match utils/string-escape)
-    :LINE_MATCH (some->>
-                 (if (or regexp string-match line-match) line-match line)
-                 utils/string-escape)
-    :FILE (some->> path utils/path-escape)
-    :LINENUM line-num
-    :SELECTOR (case (or match options-match-default)
-                :first "head -1"
-                :last "tail -1"
-                :all "cat")}))
+  (let [line-match-val (if (or regexp string-match line-match) line-match line)
+        selector-posix (case (or match options-match-default)
+                         :first "head -1"
+                         :last "tail -1"
+                         :all "cat")
+        selector-ps (case (or match options-match-default)
+                      :first "First"
+                      :last "Last"
+                      :all "All")
+        selector-shell (case (or match options-match-default)
+                         :first "first"
+                         :last "last"
+                         :all "all")
+        posix-vars {:REGEX (some-> regexp utils/re-pattern-to-sed)
+                    :STRING_MATCH (some->> string-match utils/string-escape)
+                    :LINE_MATCH (some->> line-match-val utils/string-escape)
+                    :FILE (some->> path utils/path-escape)
+                    :LINENUM line-num
+                    :SELECTOR selector-posix}
+        ps-vars {:REGEX (regex-pattern-string regexp)
+                 :STRING_MATCH string-match
+                 :LINE_MATCH line-match-val
+                 :FILE path
+                 :LINENUM line-num
+                 :SELECTOR selector-ps}
+        cmd-vars {:REGEX (regex-pattern-string regexp)
+                  :STRING_MATCH string-match
+                  :LINE_MATCH line-match-val
+                  :FILE path
+                  :LINENUM line-num
+                  :SELECTOR selector-shell}
+        nu-vars {:REGEX (regex-pattern-string regexp)
+                 :STRING_MATCH string-match
+                 :LINE_MATCH line-match-val
+                 :FILE path
+                 :LINENUM line-num
+                 :SELECTOR selector-shell}]
+    (line-in-file-script "line_in_file_get" posix-vars posix-vars ps-vars cmd-vars nu-vars)))
 
 (defmethod process-result :get [_
                                 {:keys [path line-num regexp]}
                                 {:keys [out err exit] :as result}]
   (if (zero? exit)
-    (if regexp
-      (if (= "no match" out)
-        {:exit 0
-         :result :ok
-         :line-num nil
-         :line nil
-         :line-nums []
-         :lines []
-         :matches {}}
-        (let [out-lines (string/split out #"\n")
-              line-nums (-> out-lines first (string/split #"\s+")
-                            (->> (map #(Integer/parseInt %)) (into [])))
-              lines (into [] (rest out-lines))]
+    (let [out (-> out (string/replace "\r\n" "\n") (string/replace "\r" ""))]
+      (if regexp
+        (if (= "no match" out)
           {:exit 0
            :result :ok
-           :line-num (last line-nums)
-           :line (last lines)
-           :line-nums line-nums
-           :lines lines
-           :matches (into {} (mapv vector line-nums lines))
-           })
-        )
-      (let [out-lines (string/split out #"\n")
-            [line-num line] out-lines
-            line-num (Integer/parseInt line-num)]
-        {:exit 0
-         :result :ok
-         :line-num line-num
-         :line line
-         :line-nums [line-num]
-         :lines [line]
-         :matches {line-num line}}))
+           :line-num nil
+           :line nil
+           :line-nums []
+           :lines []
+           :matches {}}
+          (let [out-lines (string/split out #"\n")
+                line-nums (-> out-lines first (string/split #"\s+")
+                              (->> (map #(Integer/parseInt %)) (into [])))
+                lines (into [] (rest out-lines))]
+            {:exit 0
+             :result :ok
+             :line-num (last line-nums)
+             :line (last lines)
+             :line-nums line-nums
+             :lines lines
+             :matches (into {} (mapv vector line-nums lines))
+             }))
+        (let [out-lines (string/split out #"\n")
+              [line-num line] out-lines
+              line-num (Integer/parseInt line-num)]
+          {:exit 0
+           :result :ok
+           :line-num line-num
+           :line line
+           :line-nums [line-num]
+           :lines [line]
+           :matches {line-num line}})))
     (assoc result
            :result :failed)))
 
 (utils/defmodule line-in-file* [command & [{:keys [path regexp line after before]
                                             :as opts}]]
   [host-string session {:keys [exec-fn sudo] :as shell-context}]
-  (let [opts (if regexp
-               (assoc opts :regexp (utils/re-pattern-to-sed regexp))
-               opts)]
-    (or
-     (preflight command opts)
+  (or
+   (check-shell-supported)
+   (preflight command opts)
+   (let [shell-path (facts/get-fact [:shell :shell])]
      (->>
-      (exec-fn session "bash" (make-script command opts) "UTF-8" {:sudo sudo})
+      (exec-fn session shell-path (make-script command opts) "UTF-8" {:sudo sudo})
       (process-result command opts)))))
 
 (defmacro line-in-file

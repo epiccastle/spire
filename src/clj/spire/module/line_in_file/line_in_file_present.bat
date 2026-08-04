@@ -59,16 +59,16 @@ set "MATCH_CMD="
 if defined REGEX (
   set "MATCH_CMD=findstr /n /r /c:"!REGEX!" "%FILE%""
 ) else if defined STRING_MATCH (
-  set "MATCH_CMD=findstr / n /c:"!STRING_MATCH!" "%FILE%""
+  set "MATCH_CMD=findstr /n /c:"!STRING_MATCH!" "%FILE%""
 ) else if defined LINE_MATCH (
-  set "MATCH_CMD=findstr / n /x /c:"!LINE_MATCH!" "%FILE%""
+  set "MATCH_CMD=findstr /n /x /c:"!LINE_MATCH!" "%FILE%""
 )
 
 if defined MATCH_CMD (
   REM Collect matching line numbers
   set "MATCHES_TMP=%TEMP%\spire_lif_m_%RANDOM%"
   !MATCH_CMD! > "%MATCHES_TMP%" 2>nul
-  for /f %%a in ('type "%MATCHES_TMP%" ^| find / c / v ""') do set "MATCH_COUNT=%%a"
+  for /f %%a in ('type "%MATCHES_TMP%" ^| find /c /v ""') do set "MATCH_COUNT=%%a"
 
   if !MATCH_COUNT! gtr 0 (
     REM Apply selector and mark lines for replacement
@@ -90,7 +90,7 @@ if defined MATCH_CMD (
 
     REM Process file, replacing marked lines
     set "COUNT=0"
-    for /f "delims= eol=*" %%a in ('find / n /v "" ^< "%FILE%"') do (
+    for /f "delims= eol=*" %%a in ('find /n /v "" ^< "%FILE%"') do (
       set /a COUNT+=1
       set "RAW=%%a"
       set "CONTENT=!RAW:*]=!"
@@ -118,15 +118,15 @@ if defined MATCH_CMD (
 
   del "%MATCHES_TMP%" >nul 2>&1
 
-  REM No match found — check AFTER / BEFORE / INSERTAT
+  REM No match found - check AFTER / BEFORE / INSERTAT
   if defined AFTER goto :handle_after
   if defined BEFORE goto :handle_before
   goto :handle_insertat
 
   :handle_after
   set "AFTER_TMP=%TEMP%\spire_lif_af_%RANDOM%"
-  findstr / n / r /c:"!AFTER!" "%FILE%" > "%AFTER_TMP%" 2>nul
-  for /f %%a in ('type "%AFTER_TMP%" ^| find / c / v ""') do set "AFTER_COUNT=%%a"
+  findstr /n /r /c:"!AFTER!" "%FILE%" > "%AFTER_TMP%" 2>nul
+  for /f %%a in ('type "%AFTER_TMP%" ^| find /c /v ""') do set "AFTER_COUNT=%%a"
   if !AFTER_COUNT! gtr 0 (
     if "!SELECTOR!"=="first" (
       set "DONE=0"
@@ -144,7 +144,7 @@ if defined MATCH_CMD (
   del "%AFTER_TMP%" >nul 2>&1
   set "COUNT=0"
   set "PREV_AFTER_MATCH=0"
-  for /f "delims= eol=*" %%a in ('find / n /v "" ^< "%FILE%"') do (
+  for /f "delims= eol=*" %%a in ('find /n /v "" ^< "%FILE%"') do (
     set /a COUNT+=1
     set "RAW=%%a"
     set "CONTENT=!RAW:*]=!"
@@ -171,8 +171,8 @@ if defined MATCH_CMD (
 
   :handle_before
   set "BEFORE_TMP=%TEMP%\spire_lif_bf_%RANDOM%"
-  findstr / n / r /c:"!BEFORE!" "%FILE%" > "%BEFORE_TMP%" 2>nul
-  for /f %%a in ('type "%BEFORE_TMP%" ^| find / c / v ""') do set "BEFORE_COUNT=%%a"
+  findstr /n /r /c:"!BEFORE!" "%FILE%" > "%BEFORE_TMP%" 2>nul
+  for /f %%a in ('type "%BEFORE_TMP%" ^| find /c /v ""') do set "BEFORE_COUNT=%%a"
   if !BEFORE_COUNT! gtr 0 (
     if "!SELECTOR!"=="first" (
       set "DONE=0"
@@ -190,7 +190,7 @@ if defined MATCH_CMD (
   del "%BEFORE_TMP%" >nul 2>&1
   set "COUNT=0"
   set "PREV_CONTENT="
-  for /f "delims= eol=*" %%a in ('find / n /v "" ^< "%FILE%"') do (
+  for /f "delims= eol=*" %%a in ('find /n /v "" ^< "%FILE%"') do (
     set /a COUNT+=1
     set "RAW=%%a"
     set "CONTENT=!RAW:*]=!"
@@ -213,7 +213,7 @@ if defined MATCH_CMD (
   if "!INSERTAT!"=="bof" (
     set "OUTPUT=!LINE!"
     if "!OUTPUT!"=="" ( >> "%TMPFILE%" echo. ) else ( >> "%TMPFILE%" echo !OUTPUT! )
-    for /f "delims= eol=*" %%a in ('find / n /v "" ^< "%FILE%"') do (
+    for /f "delims= eol=*" %%a in ('find /n /v "" ^< "%FILE%"') do (
       set "RAW=%%a"
       set "CONTENT=!RAW:*]=!"
       set "OUTPUT=!CONTENT!"
@@ -222,7 +222,7 @@ if defined MATCH_CMD (
     move /y "%TMPFILE%" "%FILE%" >nul
     exit 255
   ) else (
-    for /f "delims= eol=*" %%a in ('find / n /v "" ^< "%FILE%"') do (
+    for /f "delims= eol=*" %%a in ('find /n /v "" ^< "%FILE%"') do (
       set "RAW=%%a"
       set "CONTENT=!RAW:*]=!"
       set "OUTPUT=!CONTENT!"

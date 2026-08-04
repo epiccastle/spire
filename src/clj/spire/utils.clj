@@ -372,6 +372,9 @@
   `(str
     ~(case shell
        :fish `(apply str (for [[k# v#] ~vars] (str "set "(name k#) " \"" v# "\"\n")))
+       :powershell `(apply str (for [[k# v#] ~vars] (str "$" (name k#) " = '" (some-> v# (string/replace "'" "''")) "'\n")))
+       :cmd `(apply str (for [[k# v#] ~vars] (str "set \"" (name k#) "=" (some-> v# (string/replace "%" "%%")) "\"\n")))
+       :nu `(apply str (for [[k# v#] ~vars] (str "mut " (name k#) " = \"" v# "\"\n")))
        `(apply str (for [[k# v#] ~vars] (str (name k#) "=\"" v# "\"\n"))))
     (spire.utils/embed-src ~fname)))
 
