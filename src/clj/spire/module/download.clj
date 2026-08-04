@@ -1,6 +1,6 @@
 (ns spire.module.download
   (:require [spire.output.core :as output]
-            [spire.scp :as scp]
+            [clojuressh.scp :as scp]
             [spire.facts :as facts]
             [spire.utils :as utils]
             [spire.local :as local]
@@ -8,7 +8,6 @@
             [spire.nio :as nio]
             [spire.remote :as remote]
             [spire.compare :as compare]
-            [spire.context :as context]
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
@@ -176,16 +175,19 @@
 
              all-files-total total
 
-             progress-fn (fn [file bytes total frac context]
-                           (output/print-progress
-                            (context/deref* state/output-module)
-                            source-code-file form form-meta
-                            host-config
-                            (utils/progress-stats
-                             file bytes total frac
-                             all-files-total
-                             max-filename-length
-                             context)))
+             progress-fn (fn [progress-context {:keys [dest offset size]}]
+                           (let [frac (if (zero? size) 0 (/ (float offset) size))
+                                 stats (utils/progress-stats
+                                        dest offset size frac
+                                        all-files-total
+                                        max-filename-length
+                                        progress-context)]
+                             (output/print-progress
+                              state/*output-module*
+                              source-code-file form form-meta
+                              host-config
+                              stats)
+                             (:context stats)))
 
 
              copy-result
@@ -200,16 +202,14 @@
                     (or (when (not=
                                (count identical-content)
                                (count (filter #(= :file (:type (second %))) remote)))
-                          (scp/scp-from session src (str dest)
-                                        :progress-fn progress-fn
-                                        :preserve preserve
-                                        :dir-mode (or dir-mode 0755)
-                                        :mode (or mode 0644)
-                                        :recurse true
-                                        :skip-files identical-content
-                                        :exec exec
-                                        :exec-fn exec-fn
-                                        :sudo sudo))
+                          (scp/scp-from src (str dest)
+                                        {:session session
+                                         :progress-fn progress-fn
+                                         :preserve-mode? preserve
+                                         :preserve-times? preserve
+                                         :dir-mode (or dir-mode 0755)
+                                         :mode (or mode 0644)
+                                         :recurse? true}))
                         (not (empty?
                               (filter #(not (dirs-structure-local (first %))) dirs-structure-remote))))))
 
@@ -229,16 +229,16 @@
                               (into []))]
                      (scp-result
                       (or (when (not (empty? base-dir-copy-set))
-                            (scp/scp-from session base-dir-copy-set (str destination)
-                                          :progress-fn progress-fn
-                                          :preserve preserve
-                                          :dir-mode (or dir-mode 0755)
-                                          :mode (or mode 0644)
-                                          :recurse true
-                                          :skip-files identical-content
-                                          :exec exec
-                                          :exec-fn exec-fn
-                                          :sudo sudo))
+                            (some identity
+                                  (for [p base-dir-copy-set]
+                                    (scp/scp-from p (str destination)
+                                                 {:session session
+                                                  :progress-fn progress-fn
+                                                  :preserve-mode? preserve
+                                                  :preserve-times? preserve
+                                                  :dir-mode (or dir-mode 0755)
+                                                  :mode (or mode 0644)
+                                                  :recurse? true}))))
                           (not (empty?
                                 (filter #(not (dirs-structure-local (first %))) dirs-structure-remote))))))))
 
@@ -247,14 +247,13 @@
                      remote-md5sum (get-in remote ["" :md5sum])]
                  (scp-result
                   (when (not= local-md5sum remote-md5sum)
-                    (scp/scp-from session src (str destination)
-                                  :progress-fn progress-fn
-                                  :preserve preserve
-                                  :dir-mode (or dir-mode 0755)
-                                  :mode (or mode 0644)
-                                  :exec exec
-                                  :exec-fn exec-fn
-                                  :sudo sudo)))))
+                    (scp/scp-from src (str destination)
+                                  {:session session
+                                   :progress-fn progress-fn
+                                   :preserve-mode? preserve
+                                   :preserve-times? preserve
+                                   :dir-mode (or dir-mode 0755)
+                                   :mode (or mode 0644)})))))
 
              passed-attrs? (or owner group dir-mode mode attrs)
 
