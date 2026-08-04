@@ -1,4 +1,4 @@
-(ns spire.output.default
+(ns spire.output.verbose
   (:require [spire.utils :as utils]
             [spire.output.core :as output]
             [puget.printer :as puget]
