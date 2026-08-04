@@ -1,6 +1,5 @@
 (ns spire.module.apt
-  (:require [spire.module.shell :as shell]
-            [spire.facts :as facts]
+  (:require [spire.facts :as facts]
             [spire.utils :as utils]
             [clojure.string :as string]))
 
@@ -16,6 +15,24 @@
 
 (defmulti process-result (fn [command opts result] command))
 
+(defn make-env-command
+  "Build an apt-get command string that sets DEBIAN_FRONTEND=noninteractive
+  in a manner appropriate to the shell detected by eyre.
+
+  The dispatch is based on the eyre shell `:type`. The csh/tcsh and
+  sh-family variants invoke the running shell using the `:shell` path
+  returned by eyre (rather than hardcoding `csh`/`tcsh`/`bash`), while
+  the fish and fallback cases use an env-prefix or inline assignment
+  form respectively."
+  [apt-command]
+  (let [shell-type (facts/get-fact [:shell :type])
+        shell-path (facts/get-fact [:shell :shell])]
+    (case shell-type
+      :fish (str "env DEBIAN_FRONTEND=noninteractive " apt-command)
+      (:csh :tcsh) (str shell-path " -c 'setenv DEBIAN_FRONTEND noninteractive; " apt-command "'")
+      (:sh :bash :dash :zsh :ksh :busybox) (str shell-path " -c 'DEBIAN_FRONTEND=noninteractive " apt-command "'")
+      (str "DEBIAN_FRONTEND=noninteractive " apt-command))))
+
 ;;
 ;; (apt :install ...)
 ;;
@@ -26,12 +43,7 @@
   (let [package-string (if (string? package-or-packages)
                          package-or-packages
                          (string/join " " package-or-packages))]
-    (facts/on-shell
-     :fish (str "env DEBIAN_FRONTEND=noninteractive apt-get install -y " package-string)
-     :csh (str "csh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get install -y " package-string "'")
-     :tcsh (str "tcsh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get install -y " package-string "'")
-     :sh (str "bash -c 'DEBIAN_FRONTEND=noninteractive apt-get install -y " package-string "'")
-     :else (str "DEBIAN_FRONTEND=noninteractive apt-get install -y " package-string))))
+    (make-env-command (str "apt-get install -y " package-string))))
 
 (defmethod process-result :install
   [_ _ {:keys [out err exit] :as result}]
@@ -63,12 +75,7 @@
   (facts/check-bins-present #{:apt-get}))
 
 (defmethod make-script :update [_ _]
-  (facts/on-shell
-   :fish "env DEBIAN_FRONTEND=noninteractive apt-get update -y"
-   :csh (str "csh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get update -y")
-   :tcsh (str "tcsh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get update -y")
-   :sh (str "bash -c 'DEBIAN_FRONTEND=noninteractive apt-get update -y")
-   :else "DEBIAN_FRONTEND=noninteractive apt-get update -y"))
+  (make-env-command "apt-get update -y"))
 
 (defn process-values [result func]
   (->> result
@@ -120,12 +127,7 @@
   (let [package-string (if (string? package-or-packages)
                          package-or-packages
                          (string/join " " package-or-packages))]
-    (facts/on-shell
-     :fish (str "env DEBIAN_FRONTEND=noninteractive apt-get remove -y " package-string)
-     :csh (str "csh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get remove -y " package-string "'")
-     :tcsh (str "tcsh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get remove -y " package-string "'")
-     :sh (str "bash -c 'DEBIAN_FRONTEND=noninteractive apt-get remove -y " package-string "'")
-     :else (str "DEBIAN_FRONTEND=noninteractive apt-get remove -y " package-string))))
+    (make-env-command (str "apt-get remove -y " package-string))))
 
 (defmethod process-result :remove
   [_ _ {:keys [out err exit] :as result}]
@@ -157,12 +159,7 @@
   (facts/check-bins-present #{:apt-get}))
 
 (defmethod make-script :upgrade [_ _]
-  (facts/on-shell
-   :fish "env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"
-   :csh (str "csh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get upgrade -y")
-   :tcsh (str "tcsh -c 'setenv DEBIAN_FRONTEND noninteractive; apt-get upgrade -y")
-   :sh (str "bash -c 'DEBIAN_FRONTEND=noninteractive apt-get upgrade -y")
-   :else "DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"))
+  (make-env-command "apt-get upgrade -y"))
 
 (defmethod process-result :upgrade
   [_ _ {:keys [out err exit] :as result}]
@@ -185,8 +182,7 @@
   (or
    (preflight command opts)
    (let [result (->>
-                 #_(exec-fn session (make-script command opts) "" "UTF-8" {:sudo sudo})
-                 (spire.module.shell/shell* {:cmd (make-script command opts)})
+                 (exec-fn session (make-script command opts) "" "UTF-8" {:sudo sudo})
                  (process-result command opts))]
      (facts/update-facts-paths!)
      result)))
