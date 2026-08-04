@@ -10,16 +10,48 @@
 
 (defmulti process-result (fn [command opts result] command))
 
+(def ^:private posix-shell-types #{:bash :sh :dash :zsh :ksh :busybox})
+
+(defn check-shell-supported
+  "Return nil if the eyre-detected shell is supported by the apt-key
+  module, otherwise a failed result map explaining the limitation.
+
+  The apt-key scripts rely on POSIX shell syntax or fish syntax.  Csh,
+  tcsh, nushell and the Windows shells (powershell, cmd.exe) are not
+  supported because the scripts would need a complete rewrite for
+  their incompatible command languages."
+  []
+  (let [shell-type (facts/get-fact [:shell :type])]
+    (when-not (or (posix-shell-types shell-type)
+                  (= :fish shell-type))
+      {:exit 1
+       :out ""
+       :err (format "apt-key module does not support the '%s' shell"
+                    (name shell-type))
+       :result :failed})))
+
+(defmacro apt-key-script
+  "Embed both the POSIX (.sh) and fish (.fish) variants of an apt-key
+  script at compile time via `utils/make-script`.  At runtime the
+  appropriate embedded script is selected based on the shell type
+  reported by eyre facts.  `base-name` is the script basename without
+  directory prefix or extension (e.g. \"apt_key_list\"); `vars` is the
+  variable map passed to `make-script`."
+  [base-name vars]
+  (let [posix-file (str "apt_key/" base-name ".sh")
+        fish-file  (str "apt_key/" base-name ".fish")]
+    `(case (facts/get-fact [:shell :type])
+       :fish (utils/make-script ~fish-file ~vars :fish)
+       (utils/make-script ~posix-file ~vars))))
+
 ;;
 ;; (apt-key :list ...)
 ;;
 (defmethod preflight :list [_ _]
-  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl :bash}))
+  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl}))
 
 (defmethod make-script :list [_ {:keys [repo filename]}]
-  (utils/make-script
-   "apt_key/apt_key_list.sh"
-   {}))
+  (apt-key-script "apt_key_list" {}))
 
 (defn process-key [out-lines]
   (loop [[line & remains] out-lines
@@ -78,18 +110,17 @@
 ;; (apt-key :present ...)
 ;;
 (defmethod preflight :present [_ _]
-  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl :bash}))
+  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl}))
 
 (defmethod make-script :present [_ {:keys [fingerprint public-key public-key-url keyring]}]
-  (utils/make-script
-   "apt_key/apt_key_present.sh"
-   {:FINGERPRINT (some-> fingerprint
-                         name
-                         (string/replace #"\s+" "")
-                         (string/upper-case))
-    :PUBLIC_KEY public-key
-    :PUBLIC_KEY_URL public-key-url
-    :KEYRING keyring}))
+  (apt-key-script "apt_key_present"
+                  {:FINGERPRINT (some-> fingerprint
+                                        name
+                                        (string/replace #"\s+" "")
+                                        (string/upper-case))
+                   :PUBLIC_KEY public-key
+                   :PUBLIC_KEY_URL public-key-url
+                   :KEYRING keyring}))
 
 (defmethod process-result :present
   [_ _ {:keys [out err exit] :as result}]
@@ -117,17 +148,16 @@
 ;; (apt-key :absent ...)
 ;;
 (defmethod preflight :absent [_ _]
-  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl :bash}))
+  (facts/check-bins-present #{:sed :grep :awk :apt-key :curl}))
 
 (defmethod make-script :absent [_ {:keys [fingerprint public-key public-key-url]}]
-  (utils/make-script
-   "apt_key/apt_key_absent.sh"
-   {:FINGERPRINT (some-> fingerprint
-                         name
-                         (string/replace #"\s+" "")
-                         (string/upper-case))
-    :PUBLIC_KEY public-key
-    :PUBLIC_KEY_URL public-key-url}))
+  (apt-key-script "apt_key_absent"
+                  {:FINGERPRINT (some-> fingerprint
+                                        name
+                                        (string/replace #"\s+" "")
+                                        (string/upper-case))
+                   :PUBLIC_KEY public-key
+                   :PUBLIC_KEY_URL public-key-url}))
 
 (defmethod process-result :absent
   [_ _ {:keys [out err exit] :as result}]
@@ -157,10 +187,12 @@
 (utils/defmodule apt-key* [command opts]
   [host-config session {:keys [exec-fn sudo] :as shell-context}]
   (or
+   (check-shell-supported)
    (preflight command opts)
-   (->>
-    (exec-fn session "bash" (make-script command opts) "UTF-8" {:sudo sudo})
-    (process-result command opts))))
+   (let [shell-path (facts/get-fact [:shell :shell])]
+     (->>
+      (exec-fn session shell-path (make-script command opts) "UTF-8" {:sudo sudo})
+      (process-result command opts)))))
 
 (defmacro apt-key
   "manage the presence or absence of extra apt repositories.
