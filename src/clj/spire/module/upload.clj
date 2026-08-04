@@ -178,17 +178,19 @@
                                     (->> local-to-remote
                                          (map (comp count #(.getName %) io/file :filename local))
                                          (apply max 0)))
-              progress-fn (fn [file bytes total frac context]
-                            (output/print-progress
-                              state/*output-module*
-                              source-code-file form form-meta
-                              host-config
-                              (utils/progress-stats
-                                file bytes total frac
-                                total-size
-                                max-filename-length
-                                context)
-                              ))
+              progress-fn (fn [progress-context {:keys [source offset size]}]
+                            (let [frac (if (zero? size) 0 (/ (float offset) size))
+                                  stats (utils/progress-stats
+                                          source offset size frac
+                                          total-size
+                                          max-filename-length
+                                          progress-context)]
+                              (output/print-progress
+                                state/*output-module*
+                                source-code-file form form-meta
+                                host-config
+                                stats)
+                              (:context stats)))
 
               copied?
               (if recurse
@@ -219,7 +221,7 @@
                                       :exec exec
                                       :exec-fn exec-fn
                                       :sudo sudo)
-                        (scp/scp-to content dest
+                        (scp/scp-to [content] dest
                                     {:session session
                                      :progress-fn progress-fn
                                      :preserve-mode? preserve
@@ -240,9 +242,8 @@
                               )
                         (scp/scp-to
                           (if remote-folder-exists?
-                            (mapv #(.getPath %) (.listFiles (io/file content)))
-                            content
-                            )
+                            (vec (.listFiles (io/file content)))
+                            [content])
 
                           dest
                           {:session session
@@ -267,15 +268,18 @@
                                            first)]
                     (scp-result
                       (when (not= local-md5 remote-md5)
-                        (scp/scp-to content dest
-                                    {:session session
-                                     :progress-fn progress-fn
-                                     :preserve-mode? preserve
-                                     :preserve-times? preserve
-                                     :dir-mode (or dir-mode 0755)
-                                     :mode (or mode 0644)
-                                     :recurse? true}
-                                    ))))
+                        (let [scp-source (if (instance? java.io.File content)
+                                           [content]
+                                           [[content {:filename (.getName (io/file dest))}]])]
+                          (scp/scp-to scp-source dest
+                                      {:session session
+                                       :progress-fn progress-fn
+                                       :preserve-mode? preserve
+                                       :preserve-times? preserve
+                                       :dir-mode (or dir-mode 0755)
+                                       :mode (or mode 0644)
+                                       :recurse? false}
+                                      )))))
 
                   ;; file upload
                   (let [local-md5 (utils/md5-file (.getPath content))
@@ -292,14 +296,14 @@
                       (prn "remote-md5:" remote-md5))
                     (scp-result
                       (when (not= local-md5 remote-md5)
-                        (scp/scp-to [(.getPath content)] dest
+                        (scp/scp-to [content] dest
                                     {:session session
                                      :progress-fn progress-fn
                                      :preserve-mode? preserve
                                      :preserve-times? preserve
                                      :dir-mode (or dir-mode 0755)
                                      :mode (or mode 0644)
-                                     :recurse? true}
+                                     :recurse? false}
                                     ))))))
 
               passed-attrs? (or owner group dir-mode mode attrs)
@@ -340,8 +344,7 @@
               {:result :failed
                :exit exit
                :err err
-               :out out}))))
-      )))
+               :out out})))))
 
 (defmacro upload
   "transfer files and directories from the local client to the remote
@@ -488,4 +491,4 @@
 
 
     ]
-   })
+   })))
