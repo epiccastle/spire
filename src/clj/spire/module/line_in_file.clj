@@ -46,28 +46,6 @@
       (.pattern ^java.util.regex.Pattern re)
       (str re))))
 
-(defmacro line-in-file-script
-  "Embed all shell variants of a line-in-file script at compile time
-  via `utils/make-script` and select the appropriate one at runtime
-  based on the eyre-detected shell `:type`.  `base-name` is the script
-  basename without directory prefix or extension (e.g.
-  \"line_in_file_present\"); the five `*-vars` arguments are the
-  variable maps for POSIX, fish, powershell, cmd.exe and nushell
-  respectively.  Only the matching branch's vars are evaluated at
-  runtime."
-  [base-name posix-vars fish-vars ps-vars cmd-vars nu-vars]
-  (let [sh-file   (str "line_in_file/" base-name ".sh")
-        fish-file (str "line_in_file/" base-name ".fish")
-        ps-file   (str "line_in_file/" base-name ".ps1")
-        cmd-file  (str "line_in_file/" base-name ".bat")
-        nu-file   (str "line_in_file/" base-name ".nu")]
-    `(case (facts/get-fact [:shell :type])
-       :fish       (utils/make-script ~fish-file ~fish-vars :fish)
-       :powershell (utils/make-script ~ps-file   ~ps-vars   :powershell)
-       :cmd-exe    (utils/make-script ~cmd-file  ~cmd-vars  :cmd)
-       :nu         (utils/make-script ~nu-file  ~nu-vars   :nu)
-       (utils/make-script ~sh-file   ~posix-vars))))
-
 (defn escape-leading-spaces [s]
   (let [[_ space remain] (re-matches #"^(\s*)(.+)$" s)
         escaped (->> space
@@ -252,27 +230,45 @@
                                           line line-num
                                           match]}]
   (let [line-match-val (if (or regexp string-match line-match) line-match line)
-        posix-vars {:REGEX (some-> regexp utils/re-pattern-to-sed)
-                    :STRING_MATCH (some->> string-match utils/string-escape)
-                    :LINE_MATCH (some->> line-match-val utils/string-escape)
-                    :FILE (some->> path utils/path-escape)
-                    :LINENUM line-num}
-        ps-vars {:REGEX (regex-pattern-string regexp)
-                 :STRING_MATCH string-match
-                 :LINE_MATCH line-match-val
-                 :FILE path
-                 :LINENUM line-num}
-        cmd-vars {:REGEX (regex-pattern-string regexp)
-                  :STRING_MATCH string-match
-                  :LINE_MATCH line-match-val
-                  :FILE path
-                  :LINENUM line-num}
-        nu-vars {:REGEX (regex-pattern-string regexp)
-                 :STRING_MATCH string-match
-                 :LINE_MATCH line-match-val
-                 :FILE path
-                 :LINENUM line-num}]
-    (line-in-file-script "line_in_file_absent" posix-vars posix-vars ps-vars cmd-vars nu-vars)))
+        shell-type (facts/get-fact [:shell :type])
+        shell-vars (case shell-type
+                     (:bash :sh :dash :zsh :ksh :busybox :fish)
+                     {:REGEX (some-> regexp utils/re-pattern-to-sed)
+                      :STRING_MATCH (some->> string-match utils/string-escape)
+                      :LINE_MATCH (some->> line-match-val utils/string-escape)
+                      :FILE (some->> path utils/path-escape)
+                      :LINENUM line-num}
+
+                     :powershell
+                     {:REGEX (regex-pattern-string regexp)
+                      :STRING_MATCH string-match
+                      :LINE_MATCH line-match-val
+                      :FILE path
+                      :LINENUM line-num}
+
+                     :cmd-exe
+                     {:REGEX (regex-pattern-string regexp)
+                      :STRING_MATCH string-match
+                      :LINE_MATCH line-match-val
+                      :FILE path
+                      :LINENUM line-num}
+
+                     :nu
+                     {:REGEX (regex-pattern-string regexp)
+                      :STRING_MATCH string-match
+                      :LINE_MATCH line-match-val
+                      :FILE path
+                      :LINENUM line-num})]
+    (utils/make-script
+      (str "line_in_file/line_in_file_absent."
+           (case shell-type
+             :fish "fish"
+             :powershell "ps1"
+             :cmd-exe "bat"
+             :nu "nu"
+             "sh"))
+      shell-vars
+      shell-type)))
 
 (defmethod process-result :absent
   [_ {:keys [path line-num regexp]} {:keys [out err exit] :as result}]
@@ -348,31 +344,49 @@
                          :first "first"
                          :last "last"
                          :all "all")
-        posix-vars {:REGEX (some-> regexp utils/re-pattern-to-sed)
-                    :STRING_MATCH (some->> string-match utils/string-escape)
-                    :LINE_MATCH (some->> line-match-val utils/string-escape)
-                    :FILE (some->> path utils/path-escape)
-                    :LINENUM line-num
-                    :SELECTOR selector-posix}
-        ps-vars {:REGEX (regex-pattern-string regexp)
-                 :STRING_MATCH string-match
-                 :LINE_MATCH line-match-val
-                 :FILE path
-                 :LINENUM line-num
-                 :SELECTOR selector-ps}
-        cmd-vars {:REGEX (regex-pattern-string regexp)
-                  :STRING_MATCH string-match
-                  :LINE_MATCH line-match-val
-                  :FILE path
-                  :LINENUM line-num
-                  :SELECTOR selector-shell}
-        nu-vars {:REGEX (regex-pattern-string regexp)
-                 :STRING_MATCH string-match
-                 :LINE_MATCH line-match-val
-                 :FILE path
-                 :LINENUM line-num
-                 :SELECTOR selector-shell}]
-    (line-in-file-script "line_in_file_get" posix-vars posix-vars ps-vars cmd-vars nu-vars)))
+        shell-type (facts/get-fact [:shell :type])
+        shell-vars (case shell-type
+                     (:bash :sh :dash :zsh :ksh :busybox :fish)
+                     {:REGEX (some-> regexp utils/re-pattern-to-sed)
+                      :STRING_MATCH (some->> string-match utils/string-escape)
+                      :LINE_MATCH (some->> line-match-val utils/string-escape)
+                      :FILE (some->> path utils/path-escape)
+                      :LINENUM line-num
+                      :SELECTOR selector-posix}
+
+                     :powershell
+                     {:REGEX (regex-pattern-string regexp)
+                      :STRING_MATCH string-match
+                      :LINE_MATCH line-match-val
+                      :FILE path
+                      :LINENUM line-num
+                      :SELECTOR selector-ps}
+
+                     :cmd-exe
+                     {:REGEX (regex-pattern-string regexp)
+                      :STRING_MATCH string-match
+                      :LINE_MATCH line-match-val
+                      :FILE path
+                      :LINENUM line-num
+                      :SELECTOR selector-shell}
+
+                     :nu
+                     {:REGEX (regex-pattern-string regexp)
+                      :STRING_MATCH string-match
+                      :LINE_MATCH line-match-val
+                      :FILE path
+                      :LINENUM line-num
+                      :SELECTOR selector-shell})]
+    (utils/make-script
+      (str "line_in_file/line_in_file_get."
+           (case shell-type
+             :fish "fish"
+             :powershell "ps1"
+             :cmd-exe "bat"
+             :nu "nu"
+             "sh"))
+      shell-vars
+      shell-type)))
 
 (defmethod process-result :get [_
                                 {:keys [path line-num regexp]}
