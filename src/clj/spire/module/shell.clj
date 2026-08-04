@@ -5,6 +5,7 @@
             [spire.utils :as utils]
             [spire.module.rm :as rm]
             [spire.module.upload :as upload]
+            [spire.output.core :as output]
             [clojure.string :as string]))
 
 (def failed-result {:exit 1 :out "" :err "" :result :failed})
@@ -27,7 +28,6 @@
 
 #_ (make-exists-string ["privatekey" "public\"key"])
 
-#_
 (defn read-avail-string-from-input-stream
   "read available string from a stream and return it.
   return nil if nothing is available"
@@ -39,7 +39,6 @@
         (when-not (= -1 res)
           (String. out-array))))))
 
-#_
 (defn read-stream-until-eof [stream callback]
   (loop [out-data ""]
     (if-let [out (read-avail-string-from-input-stream stream)]
@@ -55,7 +54,6 @@
 
           out-data)))))
 
-#_
 (defn process-streams
   "Stream the stdout and stderr to the output module"
   [{:keys [file form meta host-config channel out-stream err-stream]}]
@@ -63,18 +61,18 @@
                        (read-stream-until-eof
                          err-stream
                          (fn [err]
-                           (spire.output.core/print-streams
-                             (context/deref* spire.state/output-module)
+                           (output/print-streams
+                             state/*output-module*
                              file form meta host-config nil err))))
         out-data (read-stream-until-eof
                    out-stream
                    (fn [out]
-                     (spire.output.core/print-streams
-                       (context/deref* spire.state/output-module)
+                     (output/print-streams
+                       state/*output-module*
                        file form meta host-config out nil)))]
     {:exit (if (= "java.lang.ProcessImpl" (.getName (class channel)))
              (.waitFor ^java.lang.Process channel)
-             (ssh/wait-for-channel-exit channel))
+             (:exit @channel))
      :out out-data
      :out-lines (string/split-lines out-data)
      :err @err-streamer}))
@@ -144,14 +142,13 @@
                                 :sudo sudo}
                                (or (dissoc opts :ok-exit :changed-exit) {})))
                 result (if print
-                         result
-                         #_(process-streams {:file (:file stream-key)
-                                             :form (:form stream-key)
-                                             :meta (:meta stream-key)
-                                             :host-config (:host-config stream-key)
-                                             :channel channel
-                                             :out-stream out-stream
-                                             :err-stream err-stream})
+                         (process-streams {:file (:file stream-key)
+                                           :form (:form stream-key)
+                                           :meta (:meta stream-key)
+                                           :host-config (:host-config stream-key)
+                                           :channel channel
+                                           :out-stream out-stream
+                                           :err-stream err-stream})
                          result)]
             (if (= :stream out-arg)
               (assoc result :result :pending)

@@ -137,7 +137,7 @@
            :cause-data (some->> e .getCause ex-data)
            })))))
 
-(defn ssh-exec [session command in out {:keys [sudo] :as opts}]
+(defn ssh-exec [session command in out {:keys [sudo agent-forwarding] :as opts}]
   #_(prn 'ssh-exec session command in out opts)
   (let [in (if (:required? sudo)
              (spire.sudo/prefix-sudo-stdin sudo in)
@@ -147,16 +147,21 @@
                   (spire.sudo/make-sudo-command sudo "" command)
                   command)
 
+        common {:in in :agent-forwarding agent-forwarding}
         proc (clojuressh/exec session command
-                              (if (= :bytes out)
-                                {:in in :out :bytes :err :bytes}
-                                {:in in :out-enc out :out :string :err-enc out :err :string}))
-        res @proc]
-    #_(prn 'res res)
-    {:exit (:exit res)
-     :out (:out res)
-     :err (:err res)})
-  )
+                              (cond
+                                (= :stream out) (assoc common :out :stream :err :stream)
+                                (= :bytes out) (assoc common :out :bytes :err :bytes)
+                                :else (assoc common :out-enc out :out :string :err-enc out :err :string)))]
+    (if (= :stream out)
+      {:channel proc
+       :out-stream (:out proc)
+       :err-stream (:err proc)}
+      (let [res @proc]
+        #_(prn 'res res)
+        {:exit (:exit res)
+         :out (:out res)
+         :err (:err res)}))))
 
 (defmacro ssh [host-string & body]
   `(let [host-config# (host-description-to-host-config ~host-string)]
