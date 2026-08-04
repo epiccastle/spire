@@ -34,3 +34,18 @@
          ~@body
          (finally
            (worker-thread-stop ~driver worker#))))))
+
+;; default implementation prints nothing
+(defmethod print-form :default [driver file form file-meta host-config])
+
+(defmethod print-result :default [driver file form file-meta host-config result])
+
+(defmethod debug-result :default [driver file form file-meta host-config result])
+
+(defmethod print-progress :default [driver file form form-meta host-string {:keys [progress context]}])
+
+(defmethod print-streams :default [driver file form form-meta host-string stdout stderr])
+
+(defmethod worker-thread-start :default [driver])
+
+(defmethod worker-thread-stop :default [driver worker])
