@@ -14,3 +14,7 @@
 (defmethod output/print-progress :silent [driver file form form-meta host-string {:keys [progress context]}])
 
 (defmethod output/print-streams :silent [driver file form form-meta host-string stdout stderr])
+
+(defmethod output/worker-thread-start :silent [driver])
+
+(defmethod output/worker-thread-stop :silent [driver worker])
