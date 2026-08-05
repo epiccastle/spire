@@ -210,7 +210,7 @@ Support this project with your organization. Your logo will show up here with a 
 
 ## License
 
-Copyright © 2019-2022 Crispin Wellington
+Copyright © 2019-2026 Crispin Wellington
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
