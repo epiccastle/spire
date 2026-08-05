@@ -48,3 +48,12 @@ codox:
 
 codox-upload:
 	rsync -av --delete target/docs/ www-data@epiccastle.io:~/epiccastle.io/public/clojuressh/${VERSION}
+
+docker-start:
+	bb -cp test-images/ -m spire-test.docker/start-all-docker
+
+docker-stop:
+	bb -cp test-images/ -m spire-test.docker/stop-all-docker
+
+docker-clean:
+	bb -cp test-images/ -m spire-test.docker/clean-all-docker

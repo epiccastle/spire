@@ -1,29 +1,24 @@
 (ns spire-test.remote-test
   (:require [clojure.test :refer :all]
+            [clojure.spec.alpha :as s]
             [spire.remote :refer :all]
             [spire.transport :as transport]
             [spire.facts :as facts]
             [spire.state :as state]
             [clojure.pprint :as pprint]
-            [spire-test.docker :as docker]))
+            [spire-test.config :as config]
+            [spire-test.facts-spec :as facts-spec]))
 
 (deftest ssh-transport
-  (docker/cleanup)
-  (docker/build {:root-password "root-access-please"})
-  (docker/start {:ssh-port 9876})
-
-  (transport/ssh {:username "root"
-                  :port 9876
-                  :hostname "localhost"
-                  :password "root-access-please"
-                  :strict-host-key-checking false}
-                 (println "Yes")
-                 (prn '*connection* state/*connection*)
-                 (prn '*host-config* state/*host-config*)
-                 (prn '*shell-context* state/*shell-context*)
-                 (prn 'facts)
-                 (clojure.pprint/pprint @facts/state)
-                 )
-
-  (docker/cleanup)
+  (doseq [host (config/select-hosts {:only #{:macos :alpine* :ubuntu* :windows}})]
+    (let [{:keys [port username]} (config/host-ports host)]
+      (testing (str "facts for " host)
+        (transport/ssh {:username (or username "root")
+                        :port port
+                        :hostname "localhost"
+                        :password "root-access-please"
+                        :strict-host-key-checking false}
+                       (let [facts (@facts/state (str (or username "root") "@localhost:" port))]
+                         (is (s/valid? ::facts-spec/system facts)
+                             (s/explain-str ::facts-spec/system facts)))))))
   )
