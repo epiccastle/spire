@@ -13,7 +13,7 @@
   "return the relative path that gets you from a working directory
   `source` to the file or directory `target`"
   [source target]
-  (fs/relativize source target))
+  (str (fs/relativize source target)))
 
 (def empty-file-attribute-array [ ])
 
