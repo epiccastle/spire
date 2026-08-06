@@ -344,7 +344,7 @@
               {:result :failed
                :exit exit
                :err err
-               :out out})))))
+               :out out})))))))
 
 (defmacro upload
   "transfer files and directories from the local client to the remote
@@ -491,4 +491,4 @@
 
 
     ]
-   })))
+   })
