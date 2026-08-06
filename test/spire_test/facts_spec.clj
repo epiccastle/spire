@@ -110,11 +110,11 @@
 
 (s/def :fs/device string?)
 (s/def :fs/mount-point string?)
-(s/def :fs/type string?)
-(s/def :fs/options string?)
-(s/def :fs/size nat-int?)
-(s/def :fs/used nat-int?)
-(s/def :fs/available nat-int?)
+(s/def :fs/type (s/nilable string?))   ;; nil on some windows volumes
+(s/def :fs/options (s/nilable string?)) ;; nil on windows
+(s/def :fs/size (s/nilable nat-int?))  ;; nil if unknown
+(s/def :fs/used (s/nilable nat-int?))   ;; nil if unknown
+(s/def :fs/available (s/nilable nat-int?)) ;; nil if unknown
 (s/def :fs/capacity (s/double-in :min 0.0 :max 1.0 :NaN? false :infinite? false))
 
 (s/def ::filesystem-entry
