@@ -4,6 +4,7 @@
             [spire.remote :refer :all]
             [spire.transport :as transport]
             [spire.module.upload :as upload]
+            [spire.module.shell :as shell]
             [spire.module.download :as download]
             [spire.facts :as facts]
             [spire.state :as state]
@@ -25,19 +26,22 @@
                              (s/explain-str ::facts-spec/system facts)))))))
   )
 
-(deftest ssh-2
+(deftest ssh-uploadd-download
   (doseq [host (config/select-hosts {:only #{:ubuntu}})]
     (let [{:keys [port username]} (config/host-ports host)]
       (testing (str "upload and download for " host)
         (transport/ssh
-          {:username (or username "root")
-           :port port
-           :hostname "localhost"
-           :password "root-access-please"
-           :strict-host-key-checking false}
-          (prn (upload/upload {:content "sample data"
-                               :dest "/tmp/sample.txt"}))
-
-          ))))
+            {:username (or username "root")
+             :port port
+             :hostname "localhost"
+             :password "root-access-please"
+             :strict-host-key-checking false}
+            (upload/upload {:content "sample data"
+                            :dest "/tmp/sample.txt"})
+            (is (= "sample data" (:out (shell/shell {:cmd "cat /tmp/sample.txt"}))))
+            (download/download {:src "/tmp/sample.txt"
+                                :dest "/tmp/sample-copy.txt"})
+            (is (= "sample data" (slurp "/tmp/sample-copy.txt")))
+            ))))
 
   )
