@@ -23,8 +23,7 @@
                         :strict-host-key-checking false}
                        (let [facts (@facts/state (str (or username "root") "@localhost:" port))]
                          (is (s/valid? ::facts-spec/system facts)
-                             (s/explain-str ::facts-spec/system facts)))))))
-  )
+                             (s/explain-str ::facts-spec/system facts))))))))
 
 (deftest ssh-uploadd-download
   (doseq [host (config/select-hosts {:only #{:ubuntu}})]
@@ -41,7 +40,4 @@
             (is (= "sample data" (:out (shell/shell {:cmd "cat /tmp/sample.txt"}))))
             (download/download {:src "/tmp/sample.txt"
                                 :dest "/tmp/sample-copy.txt"})
-            (is (= "sample data" (slurp "/tmp/sample-copy.txt")))
-            ))))
-
-  )
+            (is (= "sample data" (slurp "/tmp/sample-copy.txt"))))))))
