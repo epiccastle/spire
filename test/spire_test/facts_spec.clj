@@ -90,14 +90,14 @@
 ;; Users
 ;; ---------------------------------------------------------------
 
-(s/def :id-name/id int?)
+(s/def :id-name/id (some-fn int? string?)) ;; int on unix, SID string on windows
 (s/def :id-name/name string?)
 (s/def ::id-name (s/keys :req-un [:id-name/id :id-name/name]))
 
 (s/def :users/gid ::id-name)
 (s/def :users/uid ::id-name)
 (s/def :users/groups (s/coll-of ::id-name :kind vector?))
-(s/def :users/group-ids (s/coll-of int? :kind set?))
+(s/def :users/group-ids (s/coll-of (some-fn int? string?) :kind set?)) ;; int on unix, SID string on windows
 (s/def :users/group-names (s/coll-of string? :kind set?))
 
 (s/def ::users
