@@ -160,8 +160,9 @@
 
 (s/def :gateway/interface string?)
 (s/def :network/default-gateway
-  (s/keys :req-un [:gateway/interface]
-          :opt-un [:gateway/network :gateway/gateway]))
+  (s/nilable
+    (s/keys :req-un [:gateway/interface]
+            :opt-un [:gateway/network :gateway/gateway])))
 
 (s/def :dns/nameservers (s/coll-of string? :kind vector?))
 (s/def :dns/search (s/coll-of string? :kind vector?))
