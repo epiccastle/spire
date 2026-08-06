@@ -10,7 +10,7 @@
             [spire-test.facts-spec :as facts-spec]))
 
 (deftest ssh-transport
-  (doseq [host (config/select-hosts {:only #{:macos :alpine* :ubuntu* :windows}})]
+  (doseq [host (config/select-hosts {})]
     (let [{:keys [port username]} (config/host-ports host)]
       (testing (str "facts for " host)
         (transport/ssh {:username (or username "root")
