@@ -36,7 +36,7 @@
          (get-facts))
 
 (defn os []
-  (get-fact [:system :os]))
+  (get-fact [:os :family]))
 
 (defn md5 []
   (or
@@ -45,7 +45,7 @@
 
 (defmacro on-os [ & pairs]
   (let [os (gensym)]
-    `(let [~os (get-fact [:system :os])]
+    `(let [~os (get-fact [:os :family])]
        (cond
          ~@(apply concat
                   (for [[pred form] (partition 2 pairs)]
@@ -64,7 +64,7 @@
 
 (defmacro on-shell [ & pairs]
   (let [shell (gensym)]
-    `(let [~shell (get-fact [:system :shell])]
+    `(let [~shell (get-fact [:shell :type])]
        (cond
          ~@(apply concat
                   (for [[pred form] (partition 2 pairs)]
@@ -83,7 +83,7 @@
 
 (defmacro on-distro [ & pairs]
   (let [shell (gensym)]
-    `(let [~shell (get-fact [:system :distro])]
+    `(let [~shell (get-fact [:os :distro :id])]
        (cond
          ~@(apply concat
                   (for [[pred form] (partition 2 pairs)]
