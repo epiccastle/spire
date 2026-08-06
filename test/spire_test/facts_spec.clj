@@ -6,7 +6,7 @@
 ;; ---------------------------------------------------------------
 
 (s/def :shell/type keyword?)
-(s/def :shell/version string?)
+(s/def :shell/version (s/nilable string?))   ;; nil for plain POSIX sh on BSDs
 (s/def :shell/shell string?)
 (s/def :shell/login-shell string?)
 (s/def :shell/canonical-path string?)
@@ -25,22 +25,26 @@
 (s/def :kernel/release string?)
 (s/def :kernel/version string?)
 (s/def :os/kernel
-  (s/keys :req-un [:kernel/name :kernel/release :kernel/version]))
+  (s/keys :req-un [:kernel/name :kernel/release]
+          :opt-un [:kernel/version])) ;; absent on windows
 
 (s/def :os/machine string?)
 
 (s/def :distro/id keyword?)
 (s/def :distro/name string?)
+(s/def :distro/caption string?)       ;; windows uses caption instead of name
 (s/def :distro/release string?)
 (s/def :distro/codename (s/nilable keyword?))
 (s/def :distro/description string?)
 (s/def :distro/build string?)
 (s/def :os/distro
-  (s/keys :req-un [:distro/id :distro/name :distro/release :distro/codename]
-          :opt-un [:distro/description :distro/build]))
+  (s/keys :req-un [:distro/id :distro/release]
+          :opt-un [:distro/name :distro/caption :distro/codename
+                   :distro/description :distro/build]))
 
 (s/def ::os
-  (s/keys :req-un [:os/family :os/kernel :os/machine :os/distro]))
+  (s/keys :req-un [:os/family :os/kernel :os/machine]
+          :opt-un [:os/distro]))  ;; absent on BSD-family systems
 
 ;; ---------------------------------------------------------------
 ;; Hardware / CPU
@@ -94,7 +98,7 @@
 (s/def :id-name/name string?)
 (s/def ::id-name (s/keys :req-un [:id-name/id :id-name/name]))
 
-(s/def :users/gid ::id-name)
+(s/def :users/gid (s/nilable ::id-name)) ;; nil on windows (no gid concept)
 (s/def :users/uid ::id-name)
 (s/def :users/groups (s/coll-of ::id-name :kind vector?))
 (s/def :users/group-ids (s/coll-of (some-fn int? string?) :kind set?)) ;; int on unix, SID string on windows
