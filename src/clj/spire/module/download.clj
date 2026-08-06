@@ -72,10 +72,11 @@
   (or
    (preflight opts)
    (let [run (fn [command]
-               (let [{:keys [out err exit]}
-                     (exec-fn session "bash" command "UTF-8" {})]
-                 (when (zero? exit)
-                   (string/trim out))))
+               (let [{:keys [out exit err]}
+                     (exec-fn session "bash" command "UTF-8" {:sudo sudo})]
+                 (if (zero? exit)
+                   (string/trim out)
+                   "")))
 
          ;; analyse local and remote paths
          local-file? (local/is-file? dest)
