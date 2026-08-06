@@ -25,7 +25,7 @@
                          (is (s/valid? ::facts-spec/system facts)
                              (s/explain-str ::facts-spec/system facts))))))))
 
-(deftest ssh-uploadd-download
+(deftest ssh-upload-download
   (doseq [host (config/select-hosts {:only #{:ubuntu}})]
     (let [{:keys [port username]} (config/host-ports host)]
       (testing (str "upload and download for " host)
